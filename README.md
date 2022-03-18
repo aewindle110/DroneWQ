@@ -1,7 +1,7 @@
 # UAS_WQ
 
-UAS multispectral remote sensing
-____ is a Python package that can be used to analyze multispectral data collected from a UAS. These scripts are specific for the MicaSense RedEdge-MX camera. 
+
+____ is a Python package that can be used to analyze multispectral data collected from a UAS. These scripts are specific for the MicaSense RedEdge cameras. You will need to also download the MicaSense imageprocessing scripts that can be found [here](https://github.com/micasense/imageprocessing). The entire imageprocessing repo will need to be downloaded locally in the same directory as this package. 
 
 ## ***Important*** 
 Once all MicaSense images have been downloaded into a local directory, please seperate images into 3 sub-directories labeled:
