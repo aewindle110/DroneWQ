@@ -3,6 +3,8 @@
 
 ____ is a Python package that can be used to analyze multispectral data collected from a UAS. These scripts are specific for the MicaSense RedEdge cameras. 
 
+[[I think we need a figure here that shows the workflow even something simple]]
+
 ## Installation
 To install you will need to clone this repo to your local machine: `git clone https://github.com/aewindle110/UAS_WQ.git`. We recommend you run all this via Docker so you have the exact same environment that it was developed and tested in. This can be done via
 
@@ -12,6 +14,10 @@ This command will pull this Docker image if you don't already have it, then run 
 
 `docker build -t uas_wq_img .`
 `docker run --name uas_wq_cont -it -p 8888:8888 -v <local directory>:/home/jovyan uas_wq_img`
+
+Then from the command line run:
+
+`jupyter notebook --allow-root --ip 0.0.0.0 /home/jovyan`
 
 Though it is likely quicker to just pull it from Dockerhub with the first command.
 
