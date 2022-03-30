@@ -1,4 +1,4 @@
-# DroneWQ: A Python package for measuring water quality with a multispectral drone sensor
+# DroneWQ: A Python library for measuring water quality with a multispectral drone sensor
 
 
 ____ is a Python package that can be used to analyze multispectral data collected from a UAS. These scripts are specific for the MicaSense RedEdge cameras. 
