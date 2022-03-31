@@ -6,7 +6,7 @@ ____ is a Python package that can be used to analyze multispectral data collecte
 [[I think we need a figure here that shows the workflow even something simple]]
 
 ## Installation
-To install you will need to clone this repo to your local machine: `git clone https://github.com/aewindle110/UAS_WQ.git`. We recommend you run all this via Docker so you have the exact same environment that it was developed and tested in. This can be done by going to the terminal (OSX or Linux) or Powershell (Windows) and running:
+To install you will need to clone this repo to your local machine: `git clone https://github.com/aewindle110/DroneWQ.git`. We recommend you run all this via Docker so you have the exact same environment that it was developed and tested in. This can be done by going to the terminal (OSX or Linux) or Powershell (Windows) and running:
 
 `docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/drone_wq:v1`
 
