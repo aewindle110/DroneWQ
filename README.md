@@ -6,20 +6,25 @@ ____ is a Python package that can be used to analyze multispectral data collecte
 [[I think we need a figure here that shows the workflow even something simple]]
 
 ## Installation
-To install you will need to clone this repo to your local machine: `git clone https://github.com/aewindle110/UAS_WQ.git`. We recommend you run all this via Docker so you have the exact same environment that it was developed and tested in. This can be done via
+To install you will need to clone this repo to your local machine: `git clone https://github.com/aewindle110/UAS_WQ.git`. We recommend you run all this via Docker so you have the exact same environment that it was developed and tested in. This can be done by going to the terminal (OSX or Linux) or Powershell (Windows) and running:
 
-`docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/uas_wq:2022.03.25 jupyter lab --ip 0.0.0.0`
+`docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/drone_wq:v1`
 
-This command will pull this Docker image if you don't already have it, then run it, then mount your local directory, then expose the jupyter lab to your local IP address. You can then run this in Jupyter as if it were local on your hardware but in the exact same environment it was developed with all the necessary packages installed and configured. You can also build the Docker image for yourself by following:
+This will launch the Docker container and then you need to activate the conda environment via:
 
-`docker build -t uas_wq_img .`
-`docker run --name uas_wq_cont -it -p 8888:8888 -v <local directory>:/home/jovyan uas_wq_img`
+`conda activate micasense`
 
-Then from the command line run:
+Then run jupyter via:
 
 `jupyter notebook --allow-root --ip 0.0.0.0 /home/jovyan`
 
-Though it is likely quicker to just pull it from Dockerhub with the first command.
+Then just navigate to the URL that is generated and pointed to in the terminal. This should take the form of roughly `http://127.0.0.1:8888/?token=<auto generated token>`
+
+This series of commands will pull this Docker image if you don't already have it, then run it, then mount your local directory, then expose the jupyter lab to your local IP address. You can then run this in Jupyter as if it were local on your hardware but in the exact same environment it was developed with all the necessary packages installed and configured. 
+
+You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html
+
+Though it is likely quicker and more reproducible to just pull it from Dockerhub with the first command.
 
 You will need to also download the MicaSense imageprocessing scripts that can be found [here](https://github.com/micasense/imageprocessing). The entire imageprocessing repo will need to be downloaded locally in the same directory as this package. 
 
