@@ -1,5 +1,5 @@
 ---
-title: 'UAS_WQ: A Python package for processing MicaSense multispectral drone imagery for aquatic remote sensing'
+title: 'DroneWQ: A Python package for processing MicaSense multispectral drone imagery for aquatic remote sensing'
 tags:
   - Python
   - UAS
@@ -23,10 +23,6 @@ affiliations:
 date: 16 March 2022
 bibliography: paper.bib
 
-# Optional fields if submitting to a AAS journal too, see this blog post:
-# https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
-aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
 
 # Summary
@@ -43,30 +39,19 @@ individual drone images.
 
 # Statement of need
 
-`UAS_WQ` is a Python package for drone imagery processing for effective water quality monitoring. 
-`UAS_WQ` was designed to be used by managers, researchers, and students who wish to utilize drone 
+`DroneWQ` is a Python package for drone imagery processing for effective water quality monitoring. 
+`DroneWQ` was designed to be used by managers, researchers, and students who wish to utilize drone 
 multispectral remote sensing to analyze water quality. The combination of processing, georeferencing, 
 and mapping drone imagery will enable effective water quality monitoring at fine spatial resolutions.
-The simple functionality of `UAS_WQ` will enable exciting scientific exploration of drone remote sensing 
+The simple functionality of `DroneWQ` will enable exciting scientific exploration of drone remote sensing 
 by students and experts alike. 
 
 
-# Mathematics
+# Functions
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
+`DroneWQ` is made up of __ functions that 
 
-Double dollars make self-standing equations:
 
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
-
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
 
 # Citations
 
