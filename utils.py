@@ -169,9 +169,6 @@ def save_images(img_set, outputPath, thumbnailPath, panel_irradiance, warp_img_c
         fullThumbnailPath= os.path.join(thumbnailPath, thumbnailFilename)
         if (not os.path.exists(fullOutputPath)) or overwrite:
             if(len(capture.images) == len(img_set.captures[0].images)):
-                #TODO make this pull in automatically
-                # this is a correction factor
-                #irradiance = capture.dls_irradiance() * np.array([0.521835  , 0.56514118, 0.59965098, 0.58979034, 0.59371461, 0])
                 if img_type == 'rrs':
                     capture.compute_undistorted_reflectance(irradiance_list=irradiance,force_recompute=True)
                     capture.create_aligned_capture(irradiance_list=irradiance, warp_matrices=warp_matrices)
@@ -288,7 +285,7 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
             idxs.append(i)
     
     imgs = load_images([img_metadata[i]['full_filename'] for i in idxs])
-    imgs = np.array(imgs) / 32768 # this corrects it back to the actual values (rrs or lt or lw) from the converted value for space  efficiency on the hard drive
+    imgs = np.array(imgs)
     # give the metadata the index of each image it is connected to so that I can sort them later and still
     # pull out ids to visualize from imgs
     img_metadata = [img_metadata[i] for i in idxs]
@@ -741,29 +738,28 @@ def basic_std_glint_correction(lt_dir, glint_corrected_lt_dir, glint_std_factor 
             for i in range(1,6):
                 # todo this is probably faster if we read them all and divide by the vector
                 lt_deglint = Lt_src.read(i)
-                lt_deglint = lt_deglint/32768.0
-                # right now we keep these at uint16 but this means we can't use nans
-                # TODO it is up for debate if the space savings is worth the potential errors
-                # for now I think it is
-                lt_deglint[lt_deglint > lt_mean[i-1]+lt_std[i-1]*glint_std_factor] = -999
+
+                lt_deglint[lt_deglint > lt_mean[i-1]+lt_std[i-1]*glint_std_factor] = np.nan
                 lt_deglint_all.append(lt_deglint) #append all for each band
             stacked_lt_deglint = np.stack(lt_deglint_all) #stack into np.array
-
+            
             #write new stacked lw tifs
             im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(glint_corrected_lt_dir, im_name), 'w', **profile) as dst:
-                dst.write(stacked_lt_deglint*32768)
+                dst.write(stacked_lt_deglint)
     return(True)
 
 def fixed_lsky_correction(sky_lt_dir, lt_dir, lw_dir, rho = 0.028): 
     # use a single (or small set of) Lsky image(s) and rho to calculate Lw
 
-    # the default rho of 0.027 is based on Mobley et al 1999
+    # the default rho of 0.028 is based on Mobley et al 1999
 
     # grab the first ten of these images, average them, then delete this from memory
     sky_imgs, sky_img_metadata = retrieve_imgs_and_metadata(sky_lt_dir, count=10, start=0, altitude_cutoff=0)
     lsky_mean = np.median(sky_imgs,axis=(0,2,3)) # here we want the median of each band
     del sky_imgs # free up the memory
+    print('lsky mean is')
+    print(lsky_mean)
 
     # go through each Lt image in the dir and subtract out rho*lsky to account for sky reflection
     for im in glob.glob(lt_dir + "/*.tif"):
@@ -773,8 +769,10 @@ def fixed_lsky_correction(sky_lt_dir, lt_dir, lw_dir, rho = 0.028):
             for i in range(1,6):
                 # todo this is probably faster if we read them all and divide by the vector
                 lt = Lt_src.read(i)
-                lt = lt/32768.0
-                
+                print('lt for band ' + str(i+1))
+                print(lt)
+                print('rho * lsky for band ' + str(i+1))
+                print((rho*lsky_mean[i-1]))
                 lw = lt - (rho*lsky_mean[i-1])
                 lw_all.append(lw) #append each band
             stacked_lw = np.stack(lw_all) #stack into np.array
@@ -782,7 +780,7 @@ def fixed_lsky_correction(sky_lt_dir, lt_dir, lw_dir, rho = 0.028):
             #write new stacked lw tifs
             im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(lw_dir, im_name), 'w', **profile) as dst:
-                dst.write(stacked_lw*32768)
+                dst.write(stacked_lw)
                 
     return(True)
 
@@ -805,7 +803,6 @@ def panel_irradiance_normalizaton(panel_dir, lw_dir, rrs_dir):
             # could vectorize this for speed
             for i in range(1,6):
                 lw = Lw_src.read(i)
-                lw = lw/32768.0
                 
                 rrs = lw/Ed[i-1]
                 rrs_all.append(rrs) #append each band
@@ -816,7 +813,7 @@ def panel_irradiance_normalizaton(panel_dir, lw_dir, rrs_dir):
             #write new stacked Rrs tifs w/ Rrs units
             im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(rrs_dir, im_name), 'w', **profile) as dst:
-                dst.write(stacked_rrs*32768)
+                dst.write(stacked_rrs)
     return(True)
 
 def write_rrs_exif_data(lt_dir, rrs_dir):
@@ -858,17 +855,17 @@ def process_raw_to_rrs(main_dir, ed_method='panel', glint_correct=True, reflecti
     
     ### convert raw imagery to radiance (Lt)
     print("Converting raw images to radiance (raw -> Lt).")
-    process_micasense_subset(raw_water_img_dir, panel_names, warp_img_dir=main_dir+'/align_img', 
-                                           img_type='radiance', overwrite=False)
+    process_micasense_subset(raw_water_img_dir, panelNames=None, warp_img_dir=main_dir+'/align_img', 
+                                           img_type='radiance', overwrite=True)
     
     # deciding if we need to process raw sky images to radiance 
-    if reflection_correct in ['single_lsky_correction']:
+    if reflection_correct in ['single_lsky']:
         print("Converting raw sky images to radiance (raw sky -> Lsky).")
         # we're making an assumption here that the sky panel Ed is the same as the surface panel
         # we're also making an assumption that we don't need to align/warp these images properly because they'll be medianed
-        process_micasense_subset(raw_sky_img_dir, panel_names, warp_img_dir=None, 
-                                           img_type='radiance', overwrite=False, sky=True)
-    
+        process_micasense_subset(raw_sky_img_dir, panelNames=None, warp_img_dir=None, 
+                                           img_type='radiance', overwrite=True, sky=True)
+
     ########################################
     ### correct for glint in the imagery ###
     ########################################

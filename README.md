@@ -1,7 +1,7 @@
 # DroneWQ: A Python library for measuring water quality with a multispectral drone sensor
 
 
-DroneWQ is a Python package that can be used to analyze multispectral data collected from a UAS. These scripts are specific for the MicaSense RedEdge cameras. 
+DroneWQ is a Python package that can be used to analyze multispectral data collected from a UAS of water quality and ocean color. These scripts are specific for the MicaSense RedEdge and Altum cameras. 
 
 [[I think we need a figure here that shows the workflow even something simple]]
 
@@ -26,7 +26,7 @@ You can also build the environment yourself by following the instructions from t
 
 Though it is likely quicker and more reproducible to just pull it from Dockerhub with the first command.
 
-You will need to also download the MicaSense imageprocessing scripts that can be found [here](https://github.com/micasense/imageprocessing). The entire imageprocessing repo will need to be downloaded locally in the same directory as this package. 
+We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found [here](https://github.com/micasense/imageprocessing), but our version is slightly modified to put out radiance in Float32 format instead of Uint16. Future versions of the Micasense package are planned to make this an option and at that point we will remove it from our library and simply import the up to date maintained version.
 
 ## ***Data Setup*** 
 Once all MicaSense images have been downloaded into a local directory (e.g. `\data`), separate images into 3 sub-directories as below:
