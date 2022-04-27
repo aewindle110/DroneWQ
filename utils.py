@@ -26,6 +26,10 @@ import micasense.plotutils as plotutils
 ############ general functions for processing micasense imagery ############
 
 def process_panel_img(panelNames, panelCorners=None, useDLS = True):
+    """
+    This function processes the panel images, but actually is only used in the process_micasense_subset() function if asking for reflectance. Kept here in case users want to use that function for irradiance reflectance but otherwise not used.
+    """
+    
     location = None
     utc_time = None
     panel_irradiance = None
@@ -42,8 +46,7 @@ def process_panel_img(panelNames, panelCorners=None, useDLS = True):
         if panelCap.panel_albedo() is not None and not any(v is None for v in panelCap.panel_albedo()):
             panel_reflectance_by_band = panelCap.panel_albedo()
         else:
-            #panel_reflectance_by_band = [0.67, 0.69, 0.68, 0.61, 0.67] #RedEdge band_index order
-            panel_reflectance_by_band = [0.493, 0.493, 0.492, 0.489, 0.491]
+            raise IOError("Could not determine the albedo of each panel automatically.")
 
         panel_irradiance = panelCap.panel_irradiance(panel_reflectance_by_band)    
         img_type = "reflectance"
@@ -55,8 +58,10 @@ def process_panel_img(panelNames, panelCorners=None, useDLS = True):
     return(panel_irradiance, img_type, location, utc_time)
 
 def get_warp_matrix(img_capture, max_alignment_iterations = 50):
-    # TODO does this need img_type???
-    # TODO ensure this is good for the Altum
+    """
+    This function aligns the images and outputs a warp matrix. These settings could be changed but generally work well on a variety of images.
+    """
+    
     ## Alignment settings
     match_index = 0 # Index of the band 
     warp_mode = cv2.MOTION_HOMOGRAPHY # MOTION_HOMOGRAPHY or MOTION_AFFINE. For Altum images only use HOMOGRAPHY
@@ -74,6 +79,8 @@ def get_warp_matrix(img_capture, max_alignment_iterations = 50):
 
 
 def decdeg2dms(dd):
+    """ Convert from decimal degrees to degrees minutes seconds"""
+    
     is_positive = dd >= 0
     dd = abs(dd)
     minutes,seconds = divmod(dd*3600,60)
@@ -83,6 +90,10 @@ def decdeg2dms(dd):
 
 
 def write_exif_csv(img_set, outputPath):
+    """
+    This is the specific EXIF format we write into the images. More could be added based on what is needed in your workflow.
+    """
+    
     header = "SourceFile,\
     GPSDateStamp,GPSTimeStamp,\
     GPSLatitude,GpsLatitudeRef,\
@@ -133,12 +144,10 @@ def write_exif_csv(img_set, outputPath):
 
 def save_images(img_set, outputPath, thumbnailPath, panel_irradiance, warp_img_capture, img_type, generateThumbnails = True, overwrite=False):
     """
-    This function does ther actual processing of running through each capture within an imageset
+    This function does the actual processing of running through each capture within an imageset, undistorting it, aligning via a warp matrix, and all the necessary Micasense processing.
     and saving as a .tiff.
-    
-    TODO change this to save images with rasterio as proper rasters
-        only really necessary if we're going to map as opposed to use imgs as samples
     """
+    
     # TODO this isn't working, these image alignments are terrible...
     # actually on the Altum they are very good
     # you need a relatively flat image and it should be at the same altitude
@@ -187,6 +196,11 @@ def save_images(img_set, outputPath, thumbnailPath, panel_irradiance, warp_img_c
     return(True)
 
 def write_img_exif(fullCsvPath, outputPath):  
+    """
+    write out the EXIF data into the images using the tool installed in this docker container.
+    If you don't use docker you might need to change the path of this tool
+    """
+    
     exiftool_cmd = '/usr/local/envs/micasense/bin/exiftool'
 
     cmd = '{} -csv="{}" -overwrite_original {}'.format(exiftool_cmd, fullCsvPath, outputPath)
@@ -194,13 +208,13 @@ def write_img_exif(fullCsvPath, outputPath):
     subprocess.check_call(cmd, shell=True)
     return(True)
 
-def process_micasense_subset(img_dir, panelNames, warp_img_dir=None,  img_type='rrs', overwrite=False, panelCorners=None, sky=False):
+def process_micasense_subset(img_dir, panelNames, warp_img_dir=None,  img_type='radiance', overwrite=False, panelCorners=None, sky=False):
     """
-    Testing function that takes in an image directorie and saves out processed imagery
+    This function takes in an image directory and saves warped and croped images, corrected for vignetting.
     
-    Various visualization functions for deciding ideal processing parameters
-    
+    It can take images and no panels and calculate radiance or panels/DLS data and process it to irradiance reflectance (R) using the Micasense code. R isn't often used in ocean color work so we typically process to radiance and then have custom functions for going to Lw and then Rrs.
     """
+    
     # ideally this goes through and picks out all panels and then chooses the closest one
     # right now it just takes one
     if img_type == 'radiance':
@@ -243,10 +257,15 @@ def process_micasense_subset(img_dir, panelNames, warp_img_dir=None,  img_type='
 
 def key_function(item_dictionary):
     '''Extract datetime string from given dictionary, and return the parsed datetime object'''
+    
     datetime_string = item_dictionary['UTC-Time']
     return datetime.datetime.strptime(datetime_string, '%H:%M:%S')
 
 def load_img_fn_and_meta(img_dir, count=10000, start=0):
+    """
+    This function simply returns a list of metadata in case a user wants to visualize hundreds or thousands of images worth of metadata that couldn't be loaded fully into memory with the images.
+    """
+    
     df = pd.read_csv(img_dir + '/log.csv')
     df['filename'] = df['SourceFile'].str.split('/').str[-1]
     df = df.set_index('filename')
@@ -271,6 +290,10 @@ def load_img_fn_and_meta(img_dir, count=10000, start=0):
     return(img_metadata)
 
 def load_images(img_list):
+    """
+    simple helper function for grabbing images from a filename list
+    """
+    
     all_imgs = []
     for im in img_list:
         with rasterio.open(im, 'r') as src:
@@ -278,6 +301,10 @@ def load_images(img_list):
     return(all_imgs)
 
 def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 0):
+    """
+    This function is the main interface we expect the user to use when grabbing a subset of imagery from any stage in processing. This returns the images as a numpy array and metadata as a pandas dataframe. 
+    """
+    
     img_metadata = load_img_fn_and_meta(img_dir, count=count, start=start)
     idxs = []
     for i, md in enumerate(img_metadata):
@@ -299,170 +326,27 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     return(imgs, df)
 
 
-############ processing imagery ############
-
-# many of these fcns are no longer used since they were based on a simple darkness proportion
-
-def brightest_tube_pix(img, percent=0.0001):
-    # this finds the brightest N% of pixels in each band
-    brightest = []
-    for band in range(0,5):
-        flat_img = img[band].flatten()
-        count = int(-1*len(flat_img)*percent)
-        ind = np.argpartition(flat_img, count)[count:]
-        brightest.append(np.mean(flat_img[ind]))
-    print('brightest pixels used:', count*-1)
-    return(brightest)
-
-def calculate_spectra_from_darkest_px(imgs, lowest_percent=0.75, band=4, return_imgs=False, visualize=False, sky=False):
-    list_of_spectra = []
-    sorted_img_list = []
-    dark_idxs = []
-    
-    for i in range(0,imgs.shape[0]):
-        print(i)
-        if np.mean(imgs[i,0]) > 5 and not sky: # why am I doing this? I assume for thermal
-            print(np.mean(imgs[i,0]))
-            print('hitting this filter for brightness')
-            continue
-        # choose the percent to sort
-        spectra = []
-        #print(imgs.shape)
-        num_to_sort = int(imgs[i,band].size * lowest_percent)
-        #print('sorting ', num_to_sort)
-
-        # efficiently sort the array
-        flat_array = imgs[i,band].flatten()
-        flat_array[flat_array == 0 ] = 1 # everything already equal to zero set to 1 to be ignored
-        flat_array[flat_array < 0.0001 ] = 1 # take out dark pixels to be ignored
-        idx = np.argpartition(flat_array, num_to_sort)[:num_to_sort]
-        
-        img_sorted = []
-        blue_spec = None
-        for img_idx in range(0,5):
-            sorted_band = imgs[i,img_idx].flatten()
-            if return_imgs:
-                # add the sorted band to
-                img_sorted.append(sorted_band)
-            # take the mean of the darkest pixels from each band to add to the spectra
-            spectra.append(np.mean(sorted_band[idx]))
-            if img_idx == 0:
-                blue_spec = np.mean(sorted_band[idx])
-        if return_imgs:
-            sorted_img_list.append(np.array(img_sorted))
-        #if blue_spec <0.02:
-        list_of_spectra.append(spectra)
-        dark_idxs.append(i)
-        
-        if visualize:
-            plt.hist(flat_array[idx], density=False)
-            plt.axvline(x=np.mean(flat_array[idx]), color='red')
-            plt.axvline(x=np.median(flat_array[idx]), color='black')
-            print(i, np.median(flat_array[idx]))
-            
-    if return_imgs:
-        return(sorted_img_list, idx)
-    else:
-        return(list_of_spectra, dark_idxs)
-    
-def remove_bright_pix(im, lowest_percent=0.75, band=0):
-
-    sorted_imgs, lowest_idx = calculate_spectra_from_darkest_px(np.array([im]), lowest_percent=lowest_percent, band=band, return_imgs=True)
-    
-    dark_pix = np.zeros(np.array(sorted_imgs[0]).shape)
-    dark_pix[:,lowest_idx] = sorted_imgs[0][:,lowest_idx]
-    
-    # cut out the super dark pix
-    dark_pix[dark_pix < 0.0005] = 0
-    dark_pix[dark_pix > 1 ] = 0
-    dark_pix[dark_pix == 0] = np.nan
-    
-    return(dark_pix)
-
-
-def visualize_darkest_pixels(im, lowest_percent=0.5, band=0, max_clim=0.1, min_clim=0, only_img=False):
-    if im.shape[0] == 6: # because these are altum images
-        im_flat = im[:-1].reshape(5,-1)
-    else:
-        im_flat = im.reshape(5,-1)
-    # sort to get the darkest x pixels
-    
-    # visualize all bands and an RGB composite
-    
-
-    band_names = ['blue', 'green', 'red', 'red edge', 'nir']
-    colors = ['blue', 'green', 'red', 'maroon', 'grey']
-    
-    fig, ax = plt.subplots(1,5, figsize=(16,14))
-    for i,a in enumerate(ax):
-        ims = a.imshow(im[i], cmap='jet', interpolation='none', vmax=max_clim, vmin=min_clim)
-        a.set_title(band_names[i])
-        fig.colorbar(ims, ax=a, fraction=0.046, pad=0.04)
-        a.set_xticks([])
-        a.set_yticks([])
-#     ims = ax[5].imshow(im[0]/im[1], cmap='jet', vmax=10, vmin=0)
-#     ax[5].set_title('blue/green')
-#     ax[5].set_xticks([])
-#     ax[5].set_yticks([])
-#     fig.colorbar(ims, ax=ax[5], fraction=0.046, pad=0.04)
-    #plt.savefig('openoceanfull.png')
-    plt.show()
-        
-    if not only_img:
-        
-        # visualize all bands with the darkest pixels removed
-        dark_pix = remove_bright_pix(im, lowest_percent=lowest_percent, band=band)
-
-
-        fig, ax = plt.subplots(1,5, figsize=(16,14))
-        for i,a in enumerate(ax):
-            ims = a.imshow(dark_pix[i].reshape(im.shape[1:3]), interpolation='none', cmap='jet', vmax=max_clim, vmin=min_clim)
-            a.set_title(band_names[i])
-            fig.colorbar(ims, ax=a, fraction=0.046, pad=0.04)
-            a.set_xticks([])
-            a.set_yticks([])
-        #plt.savefig('openoceanfilter.png')
-        fig.show()
-
-
-        fig, ax = plt.subplots(figsize=(12,8))
-        colors = ['blue', 'green', 'red', 'grey', 'black']
-        for i in range(0,5):
-            ax.hist(dark_pix[i].flatten(), density=True, bins=50, color=colors[i], alpha=0.5)
-
-        for i in range(0,5):
-            print(np.count_nonzero(~np.isnan(dark_pix[i])))
-        ax.set_xlim(0,0.1)
-
-        return(dark_pix.reshape(5,im.shape[1], im.shape[2]))
-    else:
-        return(None)
 
 ############ chla retrieval algorithms ############
 
-ci1 = -0.49
-ci2 = 191.6590
-
-# ci1 = -0.38152295986028695
-# ci2 = 271.37634868
-
-# average of 443*.5 + 489*1.5
-# ci1 = -0.30002281538304754
-# ci2 = 310.5772338
-
-# ci1 = -0.21380600002416383
-# ci2 = 572.01573044
-
 def oc_index(blue, green, red):
+    """
+    This is just the Ocean Color Index algorithm (Hu et al. 2012)
+    """
+    
+    ci1 = -0.4909
+    ci2 = 191.6590
+
     CI = green - ( blue + (555 - 477)/(667 - 477) * (red - blue) )
     ChlCI = 10**(ci1 + ci2*CI)
     return(ChlCI)
 
 def L2chlor_a(Rrs443, Rrs488, Rrs547, Rrs555, Rrs667):
-    ''' Use weighted MODIS Aqua bands to calculate chlorophyll concentration
-    using oc3m blended algorithm with CI (Hu et al. 2012) '''
+    ''' 
+    This is the full NASA oc3m blended algorithm with CI (Hu et al. 2012) 
+    This specific code is grabbed from https://github.com/nasa/HyperInSPACE.
+    '''
 
-    # TODO update this with the proper coefficients
     thresh = [0.15, 0.20]
     a0 = 0.1977
     a1 = -1.8117
@@ -530,15 +414,17 @@ def convert_to_ocean_color_gdf(chla_list, spectra_list, img_metadata):
 
 
 def vec_chla_img(blue, green):
-    # this is a more efficient chla algorithm vectorized for numpy arrays
-    # current coefficients are based on L8 OC2
+    # this is a vectorized version of the OCx chla algorithm
+    # documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/
+    
+    # L8 OC2 coefficients
     a0 = 0.1977
     a1 = -1.8117
     a2 = 1.9743
     a3 = 2.5635
     a4 = -0.7218
     
-#     # OC3m
+#     # OC3m coefficients
     
 #     a0 = 0.2424
 #     a1 = -2.7423
@@ -546,7 +432,7 @@ def vec_chla_img(blue, green):
 #     a3 = 0.0015
 #     a4 = -1.2280
     
-#     #OC2m
+#     #OC2m coefficients
 #     a0 = 0.2500
 #     a1 = -2.4752
 #     a2 = 1.4061
@@ -561,168 +447,13 @@ def vec_chla_img(blue, green):
     oc3m = np.power(10, log10chl)
     return(oc3m)
 
-def chla_img(sky_spectra, dark_pix, wind_speed = 5):
-    dp_shape = dark_pix.shape
-    sky_rad_correction = np.reshape(np.array(sky_spectra) * (0.0256 + 0.00039 * wind_speed + 0.000034 * wind_speed * wind_speed), (5,1))
-    water_leaving = dark_pix.reshape(5,-1) - sky_rad_correction
-    
-#     chlas = []
-#     for i in range(water_leaving.shape[-1]):
-#         chlas.append(L2chlor_a(water_leaving[0,i],water_leaving[0,i],water_leaving[1,i],water_leaving[1,i],water_leaving[2,i]))
-#     chlas = np.array(chlas)
-#     return(chlas.reshape(dp_shape[1:3]))
-    chla_vec = vec_chla_img(water_leaving[0], water_leaving[1])
-    return(chla_vec.reshape(dp_shape[1:3]))
-    
-def visualize_chla_across_thresholds(im, sky_spectra):
-    thresholds = np.arange(0.1,1,0.1)
-    fig, ax = plt.subplots(len(thresholds),1, figsize=(12,40))
-    for i,lowest_percent in enumerate(thresholds):
-        dark_pix = remove_bright_pix(im, lowest_percent=lowest_percent, band=0)
-        full_chla_img = chla_img(sky_spectra, dark_pix.reshape(im.shape), wind_speed = 5)
-        
-        ims = ax[i].imshow(full_chla_img, interpolation='nearest', cmap='jet', vmax=0.5)
-        ax[i].set_title(lowest_percent)
-        #current_cmap = matplotlib.cm.get_cmap()
-        #current_cmap.set_bad(color='yellow')
-        fig.colorbar(ims, ax=ax[i], fraction=0.046, pad=0.04)
-    
-############ sun glint and reflected skylight removal algorithms ############
-
-def sun_glint_removal(sea_spectra, sky_spectra, wind_speed, method='ruddick2006'):
-    # this is the old approach based on ruddick and Mobley
-    sky_spectra = np.median(sky_spectra,axis=0)
-    water_leaving_spectra = []
-    # TODO will add in Zhang and other approaches
-    print((0.0256 + 0.00039 * wind_speed + 0.000034 * wind_speed * wind_speed))
-    if method == 'ruddick2006':
-        for water_spec in sea_spectra:
-            water_leaving = np.array(water_spec) - np.array(sky_spectra) * (0.0256 + 0.00039 * wind_speed + 0.000034 * wind_speed * wind_speed)
-            #water_leaving = water_leaving - water_leaving[4]
-            # TODO if red edge is greater than ~.1 then it is cloudy and don't need wind correction just use 0.0256
-            water_leaving_spectra.append(water_leaving)
-    return(water_leaving_spectra)
-
-def calculate_rho(sea_imgs, sky_imgs, blocked_spec, visualize=True):
-    # this is the current approach to calculating rho based on sunblocked spectra
-    
-    # sea and sky img arrays are shape [img count, bands, rows, cols]
-    # TODO calculate blurred sea and blurred sky for multiple images
-    # TODO this could also be a surface fit to the image
-    
-    # note the smoothing process is quite slow and takes a while if you have too many images
-    Lt_smooth_imgs = []
-    for i in range(sea_imgs.shape[0]):
-        Lt_smooth = ndimage.gaussian_filter(sea_imgs[i], sigma=(0, 20, 20), order=0)
-        Lt_smooth_imgs.append(Lt_smooth)
-    print(np.array(Lt_smooth_imgs).shape)
-    Lt_smooth = np.mean(np.array(Lt_smooth_imgs), axis=0)
-    # get lt minus lw
-    Lt_Lw = (Lt_smooth.T - blocked_spec).T
-
-    Lsky_smooth_imgs = []
-    for i in range(sky_imgs.shape[0]):
-        # flip lsky because the lowest part of the sea img is reflecting off the highest part of the sky
-        Lsky = sky_imgs[i,:,::-1,:] # this flips the rows
-        # smooth it out TODO could fit a surface to this too
-        Lsky_smooth = ndimage.gaussian_filter(Lsky, sigma=(0, 20, 20), order=0)
-        Lsky_smooth_imgs.append(Lsky_smooth)
-        
-    Lsky_smooth = np.mean(np.array(Lsky_smooth_imgs), axis=0)
-    
-    # divide this by the smoothed lsky
-    rho = Lt_Lw / Lsky_smooth
-    
-    if visualize:
-        fig, ax = plt.subplots(4,5, figsize=(18,16))
-        for i in range(5):
-            im = ax[0,i].imshow(Lt_smooth[i],cmap='jet', vmin=0.001, vmax=.07)
-            fig.colorbar(im, ax=ax[0,i], fraction=0.046, pad=0.04)
-            ax[0,i].set_xticks([])
-            ax[0,i].set_yticks([])
-            ax[0,i].set_title('original Lt (smooth)')
-
-            im = ax[1,i].imshow(Lt_Lw[i],cmap='jet', vmin=0.0, vmax=.04)
-            fig.colorbar(im, ax=ax[1,i], fraction=0.046, pad=0.04)
-            ax[1,i].set_xticks([])
-            ax[1,i].set_yticks([])
-            ax[1,i].set_title('lt - lw (spec)')
-
-            im = ax[2,i].imshow(Lsky_smooth[i],cmap='jet', vmin=0.05, vmax=.4)
-            fig.colorbar(im, ax=ax[2,i], fraction=0.046, pad=0.04)
-            ax[2,i].set_xticks([])
-            ax[2,i].set_yticks([])
-            ax[2,i].set_title('lsky smooth (flip)')
-
-            im = ax[3,i].imshow(rho[i],cmap='jet', vmin=0.0, vmax=.25)
-            fig.colorbar(im, ax=ax[3,i], fraction=0.046, pad=0.04)
-            ax[3,i].set_xticks([])
-            ax[3,i].set_yticks([])
-            ax[3,i].set_title('rho')
-            fig.show()
-        
-    return(rho)
-
-
-def apply_rho(sea_img, sky_img, rho, visualize=True):
-
-    # flip lsky because the lowest part of the sea img is reflecting off the highest part of the sky
-    lsky = sky_img[:,::-1,:] # this flips the rows
-    # smooth it out TODO could fit a surface to this too
-    lsky_smooth = ndimage.gaussian_filter(lsky, sigma=(0, 20, 20), order=0)
-    
-    # rho needs to be the same size and it isn't when from the RedEdge
-    
-    rho_resized = []
-    for i in range(rho.shape[0]):
-        rho_resized.append(resize(rho[i], (sea_img.shape[1], sea_img.shape[2]), anti_aliasing=True))
-    rho_resized = np.array(rho_resized)
-    
-    lw_img = sea_img - rho_resized * lsky_smooth
-    print(lw_img.shape)
-    
-    if visualize:
-        fig, ax = plt.subplots(5,5, figsize=(18,16))
-        for i in range(5):
-            im = ax[0,i].imshow(sea_img[i],cmap='jet', vmin=0.001, vmax=.06)
-            fig.colorbar(im, ax=ax[0,i], fraction=0.046, pad=0.04)
-            ax[0,i].set_xticks([])
-            ax[0,i].set_yticks([])
-            ax[0,i].set_title('original Lt')
-
-
-            im = ax[1,i].imshow(lsky_smooth[i],cmap='jet', vmin=0.05, vmax=.3)
-            fig.colorbar(im, ax=ax[1,i], fraction=0.046, pad=0.04)
-            ax[1,i].set_xticks([])
-            ax[1,i].set_yticks([])
-            ax[1,i].set_title('lsky smooth (flip)')
-
-            im = ax[2,i].imshow(rho_resized[i],cmap='jet', vmin=0.0, vmax=.15)
-            fig.colorbar(im, ax=ax[2,i], fraction=0.046, pad=0.04)
-            ax[2,i].set_xticks([])
-            ax[2,i].set_yticks([])
-            ax[2,i].set_title('rho (resized)')
-            
-            im = ax[3,i].imshow(rho_resized[i] * lsky_smooth[i],cmap='jet', vmin=0.0, vmax=.05)
-            fig.colorbar(im, ax=ax[3,i], fraction=0.046, pad=0.04)
-            ax[3,i].set_xticks([])
-            ax[3,i].set_yticks([])
-            ax[3,i].set_title('rho_resized * lsky_smooth')
-
-            im = ax[4,i].imshow(lw_img[i],cmap='jet', vmin=0.005, vmax=.05)
-            fig.colorbar(im, ax=ax[4,i], fraction=0.046, pad=0.04)
-            ax[4,i].set_xticks([])
-            ax[4,i].set_yticks([])
-            ax[4,i].set_title('full lw')
-            fig.show()
-    return(lw_img)
-
 
 ######## workflow functions for cleanly running all of this ########
 
-def basic_std_glint_correction(lt_dir, glint_corrected_lt_dir, glint_std_factor = 2):
-    # the glint_std_factor is anything > than mean+std*glint_std_factor will be filtered out
-    # so the lower it is the more will be filtered
+def basic_std_glint_correction(lt_dir, glint_corrected_lt_dir, glint_std_factor):
+    """
+    the glint_std_factor is anything > than mean+std*glint_std_factor will be filtered out so the lower it is the more will be filtered
+    """
     
     # grab the first ten images, find the mean and std, then anything 3x that is classified as glint
     lt_imgs, lt_img_metadata = retrieve_imgs_and_metadata(lt_dir, count=10, start=0, altitude_cutoff=0)
@@ -749,17 +480,17 @@ def basic_std_glint_correction(lt_dir, glint_corrected_lt_dir, glint_std_factor 
                 dst.write(stacked_lt_deglint)
     return(True)
 
-def fixed_lsky_correction(sky_lt_dir, lt_dir, lw_dir, rho = 0.028): 
-    # use a single (or small set of) Lsky image(s) and rho to calculate Lw
+def single_lsky_mobley(sky_lt_dir, lt_dir, lw_dir, rho = 0.028): 
+    """use a single (or small set of) Lsky image(s) and rho to calculate Lw for each image this approach is good if sky conditions aren't changing substantially during the flight
+    
+    the default rho of 0.028 is based on Mobley et al 1999
+    """
 
-    # the default rho of 0.028 is based on Mobley et al 1999
 
     # grab the first ten of these images, average them, then delete this from memory
     sky_imgs, sky_img_metadata = retrieve_imgs_and_metadata(sky_lt_dir, count=10, start=0, altitude_cutoff=0)
     lsky_mean = np.median(sky_imgs,axis=(0,2,3)) # here we want the median of each band
     del sky_imgs # free up the memory
-    print('lsky mean is')
-    print(lsky_mean)
 
     # go through each Lt image in the dir and subtract out rho*lsky to account for sky reflection
     for im in glob.glob(lt_dir + "/*.tif"):
@@ -769,10 +500,7 @@ def fixed_lsky_correction(sky_lt_dir, lt_dir, lw_dir, rho = 0.028):
             for i in range(1,6):
                 # todo this is probably faster if we read them all and divide by the vector
                 lt = Lt_src.read(i)
-                print('lt for band ' + str(i+1))
-                print(lt)
-                print('rho * lsky for band ' + str(i+1))
-                print((rho*lsky_mean[i-1]))
+
                 lw = lt - (rho*lsky_mean[i-1])
                 lw_all.append(lw) #append each band
             stacked_lw = np.stack(lw_all) #stack into np.array
@@ -785,12 +513,14 @@ def fixed_lsky_correction(sky_lt_dir, lt_dir, lw_dir, rho = 0.028):
     return(True)
 
 def panel_irradiance_normalizaton(panel_dir, lw_dir, rrs_dir):
+    """
+    This grabs Ed from the panel and then divides the Lw images by that irradiance to calculate Rrs.
+    """
     panel_imgset = imageset.ImageSet.from_directory(panel_dir).captures
     panels = np.array(panel_imgset)                
     for i in range(len(panels)):         
         #calculate panel Ed from every panel capture
-        # TODO Anna are you sure that this needs to be scaled? L is ~ 0.1 and Ed is ~1 which seems correct
-        Ed = np.array(panels[i].panel_irradiance()) # * 1000 scale to mW
+        Ed = np.array(panels[i].panel_irradiance()) # this function automatically finds the panel albedo and uses that to calcuate Ed, otherwise rases an error
         #Ed[3], Ed[4] = Ed[4], Ed[3] #flip last two bands
         break # for now we just grab the first panel but we could easily median a bunch
 
@@ -816,17 +546,30 @@ def panel_irradiance_normalizaton(panel_dir, lw_dir, rrs_dir):
                 dst.write(stacked_rrs)
     return(True)
 
-def write_rrs_exif_data(lt_dir, rrs_dir):
-    # first copy the log from lt_imgs to rrs_imgs and change the file path within the csv line
+def rewrite_exif_data(lt_dir, output_dir):
+    """
+    we want the metadata in each directory but we need to customize it to have the correct path when writing so doing that for each step
+    """
+    # first copy the log from lt_imgs where is it output by the micasense processing code to the dir of choice and change the file path within the csv line
     with open(lt_dir+"/log.csv", "rt") as fin:
-        with open(rrs_dir+"/log.csv", "wt") as fout:
+        with open(output_dir+"/log.csv", "wt") as fout:
             for line in fin:
-                fout.write(line.replace('lt_imgs', 'rrs_imgs'))
+                # here we just grab the final sub-directory name and replace it, so this could look like fout.write(line.replace('lt_imgs', 'rrs_imgs'))
+                fout.write(line.replace(lt_dir.split('/')[-1], output_dir.split('/')[-1]))
                 
     # then write the exif data into these images
-    write_img_exif(rrs_dir+"/log.csv", rrs_dir)
+    write_img_exif(output_dir+"/log.csv", output_dir)
 
-def process_raw_to_rrs(main_dir, ed_method='panel', glint_correct=True, reflection_correct='nir_baseline', convert_to_points=False):
+def process_raw_to_rrs(main_dir, ed_method='panel', glint_correct=True, glint_std_factor=2, sky_reflection_correction='nir_baseline'):
+    """
+    This is the main processing script
+    arguments are:
+    
+    ed_method='panel' 
+    glint_correct=True 
+    glint_std_factor=2 
+    sky_reflection_correction='nir_baseline'
+    """
     
     ############################
     #### setup the workspace ###
@@ -838,9 +581,9 @@ def process_raw_to_rrs(main_dir, ed_method='panel', glint_correct=True, reflecti
     raw_sky_img_dir = main_dir+'/raw_sky_imgs'
     
     
-    lt_dir = main_dir+'/lt_imgs/'
+    lt_dir = main_dir+'/lt_imgs'
     sky_lt_dir = main_dir+"/sky_lt_imgs"
-    glint_corrected_lt_dir = main_dir+'/lt_glint_corrected_imgs/'
+    glint_corrected_lt_dir = main_dir+'/lt_glint_corrected_imgs'
     lw_dir = main_dir+'/lw_imgs'
     rrs_dir = main_dir+'/rrs_imgs'
     panel_dir = main_dir+'/panel'
@@ -859,7 +602,7 @@ def process_raw_to_rrs(main_dir, ed_method='panel', glint_correct=True, reflecti
                                            img_type='radiance', overwrite=True)
     
     # deciding if we need to process raw sky images to radiance 
-    if reflection_correct in ['single_lsky']:
+    if sky_reflection_correction in ['single_lsky_mobley']:
         print("Converting raw sky images to radiance (raw sky -> Lsky).")
         # we're making an assumption here that the sky panel Ed is the same as the surface panel
         # we're also making an assumption that we don't need to align/warp these images properly because they'll be medianed
@@ -871,7 +614,9 @@ def process_raw_to_rrs(main_dir, ed_method='panel', glint_correct=True, reflecti
     ########################################
     
     if glint_correct == True:
-        basic_std_glint_correction(lt_dir, glint_corrected_lt_dir)
+        basic_std_glint_correction(lt_dir, glint_corrected_lt_dir, glint_std_factor)
+        # write all the exif data into the new files
+        rewrite_exif_data(lt_dir, glint_corrected_lt_dir)
         print('Finished Lt glint correction.')
                     
     else: # if we don't do the glint correction then just change the pointer to the lt_dir
@@ -882,16 +627,18 @@ def process_raw_to_rrs(main_dir, ed_method='panel', glint_correct=True, reflecti
     ### correct for sky reflection ###
     ##################################
     
-    if reflection_correct == 'nir_baseline':
+    if sky_reflection_correction == 'nir_baseline':
         # apply the nir_baseline correction
         print('The NIR baseline subtraction is not implemented yet.')
         return(False)
     
-    elif reflection_correct == 'single_lsky':
-        fixed_lsky_correction(sky_lt_dir, lt_dir, lw_dir)
-        print('Doing the fixed lsky correction (Lt -> Lw).')
+    elif sky_reflection_correction == 'single_lsky_mobley':
+        single_lsky_mobley(sky_lt_dir, lt_dir, lw_dir)
+        print('Doing the single_lsky_mobley correction (Lt -> Lw).')
+        # write all the exif data into the new files
+        rewrite_exif_data(lt_dir, lw_dir)
         
-    elif reflection_correct == 'insitu_correction':
+    elif sky_reflection_correction == 'insitu_correction':
         print('The insitu_correction is not implemented yet.')
         # use the empirical sublight blocked approach from Gray et al 2022 to correct to Lw
         # this one might not be feasible to have in a single function since it needs some hand holding
@@ -907,24 +654,21 @@ def process_raw_to_rrs(main_dir, ed_method='panel', glint_correct=True, reflecti
     if ed_method == 'panel':
         print('Normalizing by panel irradiance (Lw -> Rrs).')
         panel_irradiance_normalizaton(panel_dir, lw_dir, rrs_dir)
+        # write all the exif data into the new rrs files
+        rewrite_exif_data(lt_dir, rrs_dir)
 
     else:
         print('No other irradiance normalization methods implemented yet, panel is recommended.')
         return(False)
     
     ################################################
-    ### finalize with exif data and point output ###
+    ### finalize and add point output ###
     ################################################
-    
-    ### write all the exif data into the new rrs files
-    write_rrs_exif_data(lt_dir, rrs_dir)
         
     ### decide if the final output should be imagery or medianed points in a datafame
     print('All data has been output as Rrs imagery with '+ str(glint_correct) + ' glint removal, XXX sky reflection and normalized by XXX irradiance.')
     
-    if convert_to_points:
-        # add function here that will convert the rrs data to points 
-        pass
+    # add function here that will convert the rrs data to points 
     
     return(True)
             
