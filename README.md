@@ -29,13 +29,18 @@ Though it is likely quicker and more reproducible to just pull it from Dockerhub
 We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found [here](https://github.com/micasense/imageprocessing), but our version is slightly modified to put out radiance in Float32 format instead of Uint16. Future versions of the Micasense package are planned to make this an option and at that point we will remove it from our library and simply import the up to date maintained version.
 
 ## ***Data Setup*** 
-Once all MicaSense images have been downloaded into a local directory (e.g. `\data`), separate images into 3 sub-directories as below:
+Once all MicaSense images have been downloaded into a local directory (e.g. `\data`), separate images into 4 sub-directories as below:
 ```
 \data
     \panel
-    \sky
-    \flight
+    \raw_sky_imgs
+    \raw_water_imgs
+    \align_img
 ```
+* The panel directory should contain all image captures of the Micasense calibrated reflectance panel taken either before or after the flight \
+* The raw_sky_imgs direcotry should contain all image captures taken of the sky at a 40/135 angle \
+* The raw_water_imgs directory should contain all image captures taken during flight \
+* The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The ___ from this image capture is used to align all image captures in raw_water_imgs. 
 
 ## **Descriptions of functions:**
 * `store_metadata()`: Store metadata from all flight captures to use for plotting and georeferencing
