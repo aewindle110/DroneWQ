@@ -33,50 +33,48 @@ def write_exif_csv(img_set, outputPath):
     """
 
     header = "SourceFile,\
-    GPSDateStamp,GPSTimeStamp,\
+    GPSDateStamp,\
+    GPSTimeStamp,\
     GPSLatitude,\
+    GPSLatitudeRef,\
     GPSLongitude,\
-    GPSAltitude(m),\
+    GPSLongitudeRef,\
+    GPSAltitude,\
     FocalLength,\
     XResolution,YResolution,ResolutionUnits,\
-    GPSYaw,GPSPitch,GPSRoll\n"
+    GPSImgDirection,GPSPitch,GPSRoll\n"
 
     lines = [header]
     for i,capture in enumerate(img_set.captures):
         #get lat,lon,alt,time
         #outputFilename = capture.uuid+'.tif'
-        outputFilename = 'capture_' + str(i+1)
+        outputFilename = 'capture_' + str(i+1)+'.tif'
         fullOutputPath = os.path.join(outputPath, outputFilename)
         lat,lon,alt = capture.location()
-        #write to csv in format:
-        # IMG_0199_1.tif,"33 deg 32' 9.73"" N","111 deg 51' 1.41"" W",526 m Above Sea Level
-        '''
-        latdeg, latmin, latsec = lat
-        londeg, lonmin, lonsec = lon
         
-        latdir = 'North'
-        if latdeg < 0:
-            latdeg = -latdeg
-            latdir = 'South'
-        londir = 'East'
-        if londeg < 0:
-            londeg = -londeg
-            londir = 'West'
-        '''
         resolution = capture.images[0].focal_plane_resolution_px_per_mm
         
         yaw, pitch, roll = capture.dls_pose()
         yaw, pitch, roll = np.array([yaw, pitch, roll]) * 180/math.pi
 
         linestr = '"{}",'.format(fullOutputPath)
-        linestr += capture.utc_time().strftime("%Y:%m:%d,%H:%M:%S,")
+        linestr += capture.utc_time().strftime("%Y:%m:%d,")
+        linestr += capture.utc_time().strftime("%H:%M:%S,")
         linestr += '{},'.format(capture.location()[0])
+        if capture.location()[0] > 0:
+            linestr += 'N,'
+        else:
+            linestr += 'S,'
         linestr += '{},'.format(capture.location()[1])
+        if capture.location()[1] > 0:
+            linestr += 'E,'
+        else:
+            linestr += 'W,'
         linestr += '{},'.format(capture.location()[2])
         #linestr += '"{:d} deg {:d}\' {:.2f}"" {}",{},'.format(int(latdeg),int(latmin),latsec,latdir[0],latdir)
         #linestr += '"{:d} deg {:d}\' {:.2f}"" {}",{},{:.1f} m Above Sea Level,Above Sea Level,'.format(int(londeg),int(lonmin),lonsec,londir[0],londir,alt)
         linestr += '{},'.format(capture.images[0].focal_length)
-        linestr += '{},mm,'.format(resolution)
+        linestr += '{},{},mm,'.format(resolution[0],resolution[1])
         linestr += '{},{},{}'.format(yaw, pitch, roll)
         linestr += '\n' # when writing in text mode, the write command will convert to os.linesep
         lines.append(linestr)
@@ -167,17 +165,22 @@ def write_img_exif(fullCsvPath, outputPath):
     exiftool_cmd = '/usr/local/envs/micasense/bin/exiftool'
    
     cmd = '{} -csv="{}" -overwrite_original {}'.format(exiftool_cmd, fullCsvPath, outputPath)
-    #print(cmd)
+    print(cmd)
     subprocess.check_call(cmd, shell=True)
     return(True)
 
-def process_micasense_subset(img_dir, warp_img_dir=None, overwrite=False, sky=False):
+def process_micasense_subset(project_dir, warp_img_dir=None, overwrite=False, sky=False):
     """
     This function takes in an image directory and saves warped and cropped images, corrected for vignetting.
     
     It can take images and no panels and calculate radiance or panels/DLS data and process it to irradiance reflectance (R) using the Micasense code. R isn't often used in ocean color work so we typically process to radiance and then have custom functions for going to Lw and then Rrs.
     """
-
+    
+    if sky:
+        img_dir = project_dir+'/raw_sky_imgs'
+    else:
+        img_dir = project_dir+'/raw_water_imgs'
+    
     imgset = imageset.ImageSet.from_directory(img_dir)
     
     if warp_img_dir:
@@ -188,15 +191,20 @@ def process_micasense_subset(img_dir, warp_img_dir=None, overwrite=False, sky=Fa
     
     # just have the sky images go into a different dir and the water imgs go into a default 'lt_imgs' dir 
     if sky:
-        outputPath = os.path.join(img_dir,'../sky_lt_imgs')
-        thumbnailPath = os.path.join(img_dir, '../sky_lt_thumbnails')
+        outputPath = os.path.join(project_dir,'sky_lt_imgs')
+        thumbnailPath = os.path.join(project_dir, 'sky_lt_thumbnails')
     else:
-        outputPath = os.path.join(img_dir,'../lt_imgs')
-        thumbnailPath = os.path.join(img_dir, '../lt_thumbnails')
+        outputPath = os.path.join(project_dir,'lt_imgs')
+        thumbnailPath = os.path.join(project_dir, 'lt_thumbnails')
+        
+    print('output path is:')
+    print(outputPath)
     
     if save_images(imgset, outputPath, thumbnailPath, warp_img_capture, overwrite=overwrite) == True:
         print("Finished saving images.")
         fullCsvPath = write_exif_csv(imgset, outputPath)
+        print('fullCsvPath is:')
+        print(fullCsvPath)
         if write_img_exif(fullCsvPath, outputPath) == True:
             print("Finished saving image metadata.")
             
@@ -228,7 +236,7 @@ def load_img_fn_and_meta(img_dir, count=10000, start=0):
         filename = file.split('/')[-1]
         md['filename'] = filename
         # this isn't correctly loaded into the exifdata so pulling it into my own md
-        md['yaw']   = (df.loc[filename]['    GPSYaw'] + 360) % 360
+        md['yaw']   = (df.loc[filename]['    GPSImgDirection'] + 360) % 360
         md['pitch'] = (df.loc[filename]['GPSPitch'] + 360) % 360
         md['roll']  = (df.loc[filename]['GPSRoll'] + 360) % 360
 
@@ -682,14 +690,14 @@ def rewrite_exif_data(lt_dir, output_dir):
     we want the metadata in each directory but we need to customize it to have the correct path when writing so doing that for each step
     """
     # first copy the log from lt_imgs where is it output by the micasense processing code to the dir of choice and change the file path within the csv line
-    with open(lt_dir+"/log.csv", "rt") as fin:
-        with open(output_dir+"/log.csv", "wt") as fout:
+    with open(lt_dir+"/metadata.csv", "rt") as fin:
+        with open(output_dir+"/metadata.csv", "wt") as fout:
             for line in fin:
                 # here we just grab the final sub-directory name and replace it, so this could look like fout.write(line.replace('lt_imgs', 'rrs_imgs'))
                 fout.write(line.replace(lt_dir.split('/')[-1], output_dir.split('/')[-1]))
                 
     # then write the exif data into these images
-    write_img_exif(output_dir+"/log.csv", output_dir)
+    write_img_exif(output_dir+"/metadata.csv", output_dir)
 
 def process_raw_to_rrs(main_dir, ed_method='panel', glint_correct=True, glint_std_factor=2, sky_reflection_correction='nir_baseline'):
     """
