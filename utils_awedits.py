@@ -71,8 +71,6 @@ def write_exif_csv(img_set, outputPath):
         else:
             linestr += 'W,'
         linestr += '{},'.format(capture.location()[2])
-        #linestr += '"{:d} deg {:d}\' {:.2f}"" {}",{},'.format(int(latdeg),int(latmin),latsec,latdir[0],latdir)
-        #linestr += '"{:d} deg {:d}\' {:.2f}"" {}",{},{:.1f} m Above Sea Level,Above Sea Level,'.format(int(londeg),int(lonmin),lonsec,londir[0],londir,alt)
         linestr += '{},'.format(capture.images[0].focal_length)
         linestr += '{},{},mm,'.format(resolution[0],resolution[1])
         linestr += '{},{},{}'.format(yaw, pitch, roll)
@@ -165,7 +163,7 @@ def write_img_exif(fullCsvPath, outputPath):
     exiftool_cmd = '/usr/local/envs/micasense/bin/exiftool'
    
     cmd = '{} -csv="{}" -overwrite_original {}'.format(exiftool_cmd, fullCsvPath, outputPath)
-    print(cmd)
+    #print(cmd)
     subprocess.check_call(cmd, shell=True)
     return(True)
 
@@ -196,15 +194,10 @@ def process_micasense_subset(project_dir, warp_img_dir=None, overwrite=False, sk
     else:
         outputPath = os.path.join(project_dir,'lt_imgs')
         thumbnailPath = os.path.join(project_dir, 'lt_thumbnails')
-        
-    print('output path is:')
-    print(outputPath)
     
     if save_images(imgset, outputPath, thumbnailPath, warp_img_capture, overwrite=overwrite) == True:
         print("Finished saving images.")
         fullCsvPath = write_exif_csv(imgset, outputPath)
-        print('fullCsvPath is:')
-        print(fullCsvPath)
         if write_img_exif(fullCsvPath, outputPath) == True:
             print("Finished saving image metadata.")
             
@@ -235,7 +228,8 @@ def load_img_fn_and_meta(img_dir, count=10000, start=0):
         md['full_filename'] = file
         filename = file.split('/')[-1]
         md['filename'] = filename
-        # this isn't correctly loaded into the exifdata so pulling it into my own md
+        
+        # this isn't correctly loaded into the exifdata so pulling it manually into the dataframe
         md['yaw']   = (df.loc[filename]['    GPSImgDirection'] + 360) % 360
         md['pitch'] = (df.loc[filename]['GPSPitch'] + 360) % 360
         md['roll']  = (df.loc[filename]['GPSRoll'] + 360) % 360
