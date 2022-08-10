@@ -41,9 +41,10 @@ def write_exif_csv(img_set, outputPath):
     GPSLongitudeRef,\
     GPSAltitude,\
     FocalLength,\
+    ImageWidth,ImageHeight,\
     GPSImgDirection,GPSPitch,GPSRoll\n"
     
-    # ImageWidth,ImageHeight,\
+    
 
     lines = [header]
     for i,capture in enumerate(img_set.captures):
@@ -72,7 +73,7 @@ def write_exif_csv(img_set, outputPath):
             linestr += 'W,'
         linestr += '{},'.format(capture.location()[2])
         linestr += '{},'.format(capture.images[0].focal_length)
-        #linestr += '{},{},'.format(imagesize[0],imagesize[1])
+        linestr += '{},{},'.format(imagesize[0],imagesize[1])
         linestr += '{},{},{}'.format(yaw, pitch, roll)
         linestr += '\n' # when writing in text mode, the write command will convert to os.linesep
         lines.append(linestr)
@@ -137,17 +138,17 @@ def save_images(img_set, outputPath, thumbnailPath, warp_img_capture, generateTh
     print("Alignment+Saving rate: {:.2f} images per second".format(float(len(img_set.captures))/float((end-start).total_seconds())))
     return(True)
 
-def write_img_exif(fullCsvPath, outputPath):  
-    """
-    write out the EXIF data into the images using the tool installed in this docker container.
-    If you don't use docker you might need to change the path of this tool
-    """
+# def write_img_exif(fullCsvPath, outputPath):  
+#     """
+#     write out the EXIF data into the images using the tool installed in this docker container.
+#     If you don't use docker you might need to change the path of this tool
+#     """
     
-    exiftool_cmd = '/usr/local/envs/micasense/bin/exiftool'
+#     exiftool_cmd = '/usr/local/envs/micasense/bin/exiftool'
    
-    cmd = '{} -csv="{}" -overwrite_original {}'.format(exiftool_cmd, fullCsvPath, outputPath)
-    subprocess.check_call(cmd, shell=True)
-    return(True)
+#     cmd = '{} -csv="{}" -overwrite_original {}'.format(exiftool_cmd, fullCsvPath, outputPath)
+#     subprocess.check_call(cmd, shell=True)
+#     return(True)
 
 def process_micasense_subset(project_dir, warp_img_dir=None, overwrite=False, sky=False):
     """
@@ -179,8 +180,7 @@ def process_micasense_subset(project_dir, warp_img_dir=None, overwrite=False, sk
     if save_images(imgset, outputPath, thumbnailPath, warp_img_capture, overwrite=overwrite) == True:
         print("Finished saving images.")
         fullCsvPath = write_exif_csv(imgset, outputPath)
-        if write_img_exif(fullCsvPath, outputPath) == True:
-            print("Finished saving image metadata.")
+        print("Finished saving image metadata.")
             
     return(outputPath)
 
@@ -201,25 +201,26 @@ def load_img_fn_and_meta(img_dir, count=10000, start=0):
     df = pd.read_csv(img_dir + '/metadata.csv')
     df['filename'] = df['SourceFile'].str.split('/').str[-1]
     df = df.set_index('filename')
-    img_metadata = []
-    for file in glob.glob(img_dir + "/*.tif"):
-        md = gpsphoto.getGPSData(file)
-        md['full_filename'] = file
-        filename = file.split('/')[-1]
-        md['filename'] = filename
+#     img_metadata = []
+#     for file in glob.glob(img_dir + "/*.tif"):
+#         md = gpsphoto.getGPSData(file)
+#         md['full_filename'] = file
+#         filename = file.split('/')[-1]
+#         md['filename'] = filename
         
-        # this isn't correctly loaded into the exifdata so pulling it manually into the dataframe
-        md['yaw']   = (df.loc[filename]['    GPSImgDirection'] + 360) % 360
-        md['pitch'] = (df.loc[filename]['GPSPitch'] + 360) % 360
-        md['roll']  = (df.loc[filename]['GPSRoll'] + 360) % 360
+#         # this isn't correctly loaded into the exifdata so pulling it manually into the dataframe
+#         md['yaw']   = (df.loc[filename]['    GPSImgDirection'] + 360) % 360
+#         md['pitch'] = (df.loc[filename]['GPSPitch'] + 360) % 360
+#         md['roll']  = (df.loc[filename]['GPSRoll'] + 360) % 360
 
-        img_metadata.append(md)
+#         img_metadata.append(md)
 
     # sort it by time now
-    img_metadata.sort(key=key_function)
+#     img_metadata.sort(key=key_function)
+    df['UTC-Time'] = pd.to_datetime(df['    GPSTimeStamp'])    
     # cut off if necessary
-    img_metadata = img_metadata[start:start+count]
-    return(img_metadata)
+    df = df.iloc[start:start+count]
+    return(df)
 
 def load_images(img_list):
     """
@@ -230,32 +231,25 @@ def load_images(img_list):
     for im in img_list:
         with rasterio.open(im, 'r') as src:
             all_imgs.append(src.read())
-    return(all_imgs)
+    return(np.array(all_imgs))
 
 def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 0):
     """
     This function is the main interface we expect the user to use when grabbing a subset of imagery from any stage in processing. This returns the images as a numpy array and metadata as a pandas dataframe. 
     """
     
+    # this returns a pandas dataframe with the metadata of this image directory
     img_metadata = load_img_fn_and_meta(img_dir, count=count, start=start)
-    idxs = []
-    for i, md in enumerate(img_metadata):
-        if md['Altitude'] > altitude_cutoff:
-            idxs.append(i)
+
+    img_metadata_subset = img_metadata[img_metadata['    GPSAltitude'] > altitude_cutoff]
     
-    imgs = load_images([img_metadata[i]['full_filename'] for i in idxs])
-    imgs = np.array(imgs)
-    # give the metadata the index of each image it is connected to so that I can sort them later and still
-    # pull out ids to visualize from imgs
-    img_metadata = [img_metadata[i] for i in idxs]
-    i = 0
-    for md in img_metadata:
-        md['id'] = i
-        i += 1
+    imgs = load_images(img_metadata_subset['SourceFile'].values)
         
-    df = pd.DataFrame.from_records(img_metadata, index='id')
-    df['DateTimeStamp'] = pd.to_datetime(df['Date']+' '+df['UTC-Time'])
-    return(imgs, df)
+    ids = np.arange(1,len(img_metadata_subset)+1)
+    img_metadata_subset['id'] = ids    
+    img_metadata_subset.set_index('id')
+
+    return(imgs, img_metadata_subset)
 
 ######## workflow functions for cleanly running all of this ########
 
@@ -264,11 +258,11 @@ def std_glint_removal_method(lt_dir, glint_corrected_lt_dir, glint_std_factor=1)
     the glint_std_factor filters NIR pixels > than mean+std*glint_std_factor. The lower it is, the more pixels will be filtered. Same pixel indicies are masked across all bands. 
    
     """
-    # grab the first ten images, find the mean and std, then anything times the glint factor is classified as glint
-    lt_imgs, lt_img_metadata = retrieve_imgs_and_metadata(lt_dir, count=50, start=0, altitude_cutoff=0)
+    # grab the first 30 images, find the mean and std, then anything times the glint factor is classified as glint
+    lt_imgs, lt_img_metadata = retrieve_imgs_and_metadata(lt_dir, count=30, start=0, altitude_cutoff=0)
     lt_nir_mean = np.mean(lt_imgs,axis=(0,2,3))[4] # mean of NIR band
     lt_nir_std = np.std(lt_imgs,axis=(0,2,3))[4] # std of NIR band
-    print('The mean and std of Lt from first 50 images is: ', lt_nir_mean, lt_nir_std)
+    print('The mean and std of Lt from first 30 images is: ', lt_nir_mean, lt_nir_std)
     print('Pixels will be masked where Lt(NIR) > ', lt_nir_mean+lt_nir_std*glint_std_factor)
     del lt_imgs # free up the memory
 
@@ -282,17 +276,18 @@ def std_glint_removal_method(lt_dir, glint_corrected_lt_dir, glint_std_factor=1)
             nan_index = np.isnan(lt_nir_deglint)
             #filter nan pixel indicies across all bands
             for i in range(1,6):
+                
                 lt_deglint = Lt_src.read(i)
                 lt_deglint[nan_index] = np.nan 
-
                 lt_deglint_all.append(lt_deglint) #append all for each band
+                
             stacked_lt_deglint = np.stack(lt_deglint_all) #stack into np.array
 
             #write new stacked lw tifs
             im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(glint_corrected_lt_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_lt_deglint)
-        return(True)
+    return(True)
 
 def mobley_rho_method(sky_lt_dir, lt_dir, lw_dir, rho = 0.028): 
     """use a single (or small set of) Lsky image(s) and rho to calculate Lw for each image this approach is good if sky conditions aren't changing substantially during the flight
@@ -481,9 +476,6 @@ def rewrite_exif_data(lt_dir, output_dir):
             for line in fin:
                 # here we just grab the final sub-directory name and replace it, so this could look like fout.write(line.replace('lt_imgs', 'rrs_imgs'))
                 fout.write(line.replace(lt_dir.split('/')[-1], output_dir.split('/')[-1]))
-                
-    # then write the exif data into these images
-    write_img_exif(output_dir+"/metadata.csv", output_dir)
 
 def process_raw_to_rrs(main_dir, output_csv_path, glint_correct=True, glint_std_factor=2, surface_reflection_correction='mobley_rho_method', ed_method='panel'):
     """
@@ -527,7 +519,6 @@ def process_raw_to_rrs(main_dir, output_csv_path, glint_correct=True, glint_std_
     # deciding if we need to process raw sky images to radiance 
     if surface_reflection_correction in ['mobley_rho_method','blackpixel_method']:
         print("Converting raw sky images to radiance (raw sky -> Lsky).")
-        # we're making an assumption here that the sky panel Ed is the same as the surface panel
         # we're also making an assumption that we don't need to align/warp these images properly because they'll be medianed
         process_micasense_subset(main_dir, warp_img_dir=None, overwrite=True, sky=True)
 
