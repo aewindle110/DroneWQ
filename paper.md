@@ -7,50 +7,76 @@ tags:
   - remote sensing
   - water quality
 authors:
-  - name: Anna E. Windle^[Corresponding author]  # note this makes a footnote saying 'Corresponding author'
+  - name: Anna E. Windle
     orcid: 0000-0000-0000-0000
-    affiliation: 1 # 
+    affiliation: 1 
+    equal-contrib: true
+    corresponding: true
   - name: Patrick Gray 
-  - orcid: 0000-0000-0000-0000
+    orcid: 0000-0000-0000-0000
     affiliation: 2
+    equal_contrib:true
   - name: Greg M. Silsbe
+    orcid: 0000-0000-0000-0000
     affiliation: 1
 affiliations:
  - name: Horn Point Laboratory, University of Maryland Center for Environmental Science, Cambridge, MD, United States
    index: 1
  - name:  Division of Marine Science and Conservation, Nicholas School of the Environment, Duke University Marine Laboratory, Beaufort, NC, United States
    index: 2
-date: 16 March 2022
+date: 4 October 2022
 bibliography: paper.bib
 
 ---
 
 # Summary
 
-Small aerial drones conveniently achieve scales of observation between satellite 
-resolutions and in- situ sampling, and effectively diminish the “blind spot” between 
-these established measurement techniques. Drones equipped with off-the-shelf multispectral
-sensors originally designed for terrestrial applications are being increasingly used to 
-derive water quality in water bodies. Drone imagery requires post processing to radiometrically
-calibrate raw pixel values and obtain useful reflectance measurements. Accounting  
-for sun glint and reflected skylight remain obstacles as well as georeferencing and mosaicking
-individual drone images. 
+Small aerial drones conveniently achieve scales of observation between satellite resolutions and in situ sampling, effectively diminishing the “blind spot” between these established measurement techniques. Drones equipped with off-the-shelf multispectral sensors originally designed for terrestrial applications are being increasingly used to derive water quality properties. Multispectral drone imagery requires post processing to radiometrically calibrate raw pixel values to useful radiometric units, remove sun glint and surface reflected light, and map spatial patterns of water quality parameters. 
 
 
 # Statement of need
 
-`DroneWQ` is a Python package for drone imagery processing for effective water quality monitoring. 
-`DroneWQ` was designed to be used by managers, researchers, and students who wish to utilize drone 
-multispectral remote sensing to analyze water quality. The combination of processing, georeferencing, 
-and mapping drone imagery will enable effective water quality monitoring at fine spatial resolutions.
-The simple functionality of `DroneWQ` will enable exciting scientific exploration of drone remote sensing 
-by students and experts alike. 
+`DroneWQ` is a Python package for multispectral drone imagery processing to obtain and map estimates of water quality concentrations. `DroneWQ` was designed to be used by managers, researchers, and students who wish to utilize drone multispectral remote sensing to analyze water quality. The combination of processing, georeferencing, 
+and mapping drone imagery will enable effective water quality monitoring at fine spatial resolutions. The simple functionality of `DroneWQ` will enable exciting scientific exploration of drone remote sensing by students and experts alike. 
 
+# Background/Theory
 
-# Functions
+Following a large body of research borne from earth observing satellites (Werdell and McClain, 2019), drones can measure remote sensing reflectance (R<sub>rs</sub>) defined as:
 
-`DroneWQ` is made up of __ functions that 
+<div align="center">
+R<sub>rs</sub> (θ, φ, λ) = L<sub>W</sub>(θ, φ, λ) / E<sub>d</sub>(θ, φ, λ)  Eq. 1 
+</div>
+<br/>
 
+where L<sub>W</sub> (W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) is water-leaving radiance, Ed (W m<sup>-2</sup> nm<sup>-1</sup>) is downwelling irradiance, θ represents the sensor viewing angle between the sun and the vertical (zenith), φ represents the angular direction realtive to the sun (azimuth) and λ represents wavelength. 
+
+Like all above-water optical measurements, drones do not measure R<sub>rs</sub> directly as the at-sensor total radiance (L<sub>T</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) constitues the sum of L<sub>W</sub> and incident radiance reflected off the sea surface into the detecto's field of view, referred to as surface reflected radiance (L<sub>SR</sub>). L<sub>W</sub> is radiance that emanates from the water and contains a spectral shape and magnitude governed by optically active water constituents interacting with downwelling irradiance, while L<sub>SR</sub> is independent of water constituents and is instead governed by a given sea-state surface reflecting light; a familiar example is sun glint. Here we define UAS total reflectance (R<sub>UAS</sub>) as:
+
+<div align="center">
+R<sub>UAS</sub>(θ, Φ, λ)=L<sub>T</sub>(θ, Φ, λ)E<sub>d</sub>(λ) Eq. 2
+<br/>
+</div>
+where
+<br/>
+<div align="center">
+L<sub>T</sub>(θ, Φ, λ)= L<sub>W</sub>(θ, Φ, λ)+ L<sub>SR</sub>(θ, Φ, λ) Eq. 3 
+</div>
+<br/>
+
+If a water surface was perfectly flat, incident light would reflect specularly and could be measured with known viewing geometries. This specular reflection of a level surface is known as the Fresnel reflection; however, most water bodies are not flat as winds and currents create tilting surface wave facets. Due to differing orientation of wave facets reflecting radiance from different parts of the sky, L<sub>SR</sub> can vary widely within a single image. A common approach to model LSR is to express it as the product of sky radiance (L<sub>sky</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) and ⍴, the effective sea-surface reflectance of the wave facet (Mobley, 1999 ; Lee et al., 2010):
+
+<div align="center">
+L<sub>SR</sub>(θ, Φ, λ)= ρ(θ, Φ, λ)∗ L<sub>sky</sub>(θ, Φ, λ) Eq. 4
+<br/>
+</div>
+Rearranging Eqs. 3 Eqs. 4, ⍴ can be derived by:
+<br/>
+<div align="center">
+ρ(θ, Φ, λ) = L<sub>T</sub>(θ, Φ, λ)− L<sub>W</sub>(θ, Φ, λ) L<sub>sky</sub>(θ, Φ, λ) Eq. 5
+</div>
+<br/>
+Given measurements of L<sub>sky</sub>, an accurate determination of ⍴ is critical to derive R<sub>rs</sub> by:
+R<sub>rs</sub>(θ, Φ, λ) = R<sub>UAS</sub>(θ, Φ, λ)− (L<sub>sky</sub>(θ, Φ, λ)∗ρ(θ, Φ, λ) / E<sub>d</sub>(λ))  Eq. 6
 
 
 # Citations
