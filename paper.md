@@ -86,7 +86,9 @@ R<sub>rs</sub>(θ, Φ, λ) = R<sub>UAS</sub>(θ, Φ, λ) − (L<sub>sky</sub>(θ
 
 The inclusion of sun glint and L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> and remotely sensed water quality retrievals, as shown in Figure _. `DroneWQ` provides a sun glint masking procedure to remove instances of specular sun glint and three common approaches to remove LSR as described below:
 
-![Caption for example figure.\label{fig:example}](figure.png)
+![Caption for example figure.\label{fig:removal_Lsr_fig}](removal_Lsr_fig.jpg)
+<br/>
+Figure 1. Example of an individual drone image (green band) with different radiometric values: (A) RUAS, (B) RUAS with initial sun glint masking and (C–F) remote sensing reflectance (Rrs) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR >0, (F) Deglingting methods following Hochberg et al. (2003).
 
 `mobley_rho_method()`
 <br/>
@@ -100,6 +102,9 @@ An alternative method to remove L<sub>SR</sub> relies on the so-called black pix
 <br/>
 Other methods include removing sun glint and L<sub>sky</sub> by utilization of the NIR band by calculating an 'ambient' NIR brightness level, representing the NIR brightness with no sun glint or LSR (Hochberg et al., 2003; Hedley et al., 2005). A linear relationship between Lt(NIR) and Lt in the visible bands is established, and for each pixel, the slope of this line is multiplied by the difference between the pixel NIR value and the ambient NIR level. 
 
+# Water quality retrievals
+
+# Georeferencing and mapping
 
 # Acknowledgements
 
