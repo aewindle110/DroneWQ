@@ -84,34 +84,22 @@ R<sub>rs</sub>(θ, Φ, λ) = R<sub>UAS</sub>(θ, Φ, λ) − (L<sub>sky</sub>(θ
 
 # Removal of surface reflected light (L<sub>SR</sub>) 
 
+The inclusion of sun glint and L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> and remotely sensed water quality retrievals, as shown in Figure _. `DroneWQ` provides a sun glint masking procedure to remove instances of specular sun glint and three common approaches to remove LSR as described below:
+
+![Caption for example figure.\label{fig:example}](figure.png)
+
+`mobley_rho_method()`
+<br/>
 Tabulated ρ values have been derived from numerical simulations with modelled sea surfaces, Cox and Munk wave states (wind), and viewing geometries (Cox and Munk, 1954; Mobley, 1999; Mobley, 2015). Mobley (1999) provides the recommendation of collecting radiance measurements at viewing directions of θ = 40° from nadir and ɸ = 135° from the sun to minimize the effects of sun glint and nonuniform sky radiance with a ⍴ value of 0.028. These suggested viewing geometries and ⍴ value from Mobley (1999) have been used to estimate and remove L<sub>SR</sub> in many remote sensing studies (Ruddick et al., 2006; Shang S. et al., 2017; Baek et al., 2019; Kim et al., 2020).
 
-An alternative method to remove L<sub>SR</sub> relies on the so-called dark pixel assumption that assumes L<sub>W</sub> in the near infrared (NIR) is negligible due to strong absorption of water. Where this assumption holds, at-sensor radiance measured in the NIR is solely L<sub>SR</sub> (Gordon and Wang, 1994; Siegel et al., 2000) and allows ⍴ to be calculated if L<sub>sky</sub> is known. Studies have used this assumption to estimate and remove L<sub>SR</sub>; however, the assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and L<sub>W</sub> in the NIR (Siegel et al., 2000; Lavender et al., 2005).
+`blackpixel_method()`
+<br/>
+An alternative method to remove L<sub>SR</sub> relies on the so-called black pixel assumption that assumes L<sub>W</sub> in the near infrared (NIR) is negligible due to strong absorption of water. Where this assumption holds, at-sensor radiance measured in the NIR is solely L<sub>SR</sub> (Gordon and Wang, 1994; Siegel et al., 2000) and allows ⍴ to be calculated if L<sub>sky</sub> is known. Studies have used this assumption to estimate and remove L<sub>SR</sub>; however, the assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and L<sub>W</sub> in the NIR (Siegel et al., 2000; Lavender et al., 2005).
 
-Additional methods include 
+`hedley_method()`
+<br/>
+Other methods include removing sun glint and L<sub>sky</sub> by utilization of the NIR band by calculating an 'ambient' NIR brightness level, representing the NIR brightness with no sun glint or LSR (Hochberg et al., 2003; Hedley et al., 2005). A linear relationship between Lt(NIR) and Lt in the visible bands is established, and for each pixel, the slope of this line is multiplied by the difference between the pixel NIR value and the ambient NIR level. 
 
-# Citations
-
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
-
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
-
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
-
-# Figures
-
-Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
-
-Figure sizes can be customized by adding an optional second parameter:
-![Caption for example figure.](figure.png){ width=20% }
 
 # Acknowledgements
 
