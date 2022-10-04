@@ -20,7 +20,7 @@ Then run jupyter via:
 
 Then just navigate to the URL that is generated and pointed to in the terminal. This should take the form of roughly `http://127.0.0.1:8888/?token=<auto generated token>`
 
-This series of commands will pull this Docker image if you don't already have it, then run it, then mount your local directory, then expose the jupyter lab to your local IP address. You can then run this in Jupyter as if it were local on your hardware but in the exact same environment it was developed with all the necessary packages installed and configured. 
+This series of commands will pull this Docker image if you don't already have it, run it, mount your local directory, then expose the jupyter lab to your local IP address. You can then run this in Jupyter as if it were local on your hardware but in the exact same environment it was developed with all the necessary packages installed and configured. 
 
 You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html
 
