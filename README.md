@@ -1,7 +1,17 @@
 # DroneWQ: A Python library for measuring water quality with a multispectral drone sensor
 
 
-DroneWQ is a Python package that can be used to analyze multispectral data collected from a UAS of water quality and ocean color. These scripts are specific for the MicaSense RedEdge and Altum cameras. 
+DroneWQ is a Python package that can be used to analyze multispectral data collected from a drone to derive ocean color radiometry and water quality properties. These scripts are specific for the MicaSense RedEdge and Altum cameras. 
+
+The main processing script converts raw multispectral imagery to total radiance (Lt) with units of W/m2/nm/sr, removes sun glint and surface reflected light (Lsr) to calculate water leaving radiance (Lw), measures downwelling irradiance (Ed) from either the calibrated reflectance panel or downwelling light sensor, and calculates remote sensing reflectance (Rrs) by dividing Ed by Lw. Rrs can be used as input into various bio-optical algorithms to derive chlorophyll a and total suspended sediment concentrations. Images can also be georeferenced using image metadata to orient and map to a known coordinate system. 
+
+
+More information on the methods found in this package can be found in:
+
+Gray, P.C., Windle, A.E., Dale, J., Savelyev, I.B., Johnson, Z.I., Silsbe, G.M., Larsen, G.D. and Johnston, D.W., 2022. Robust ocean color from drones: Viewing geometry, sky reflection removal, uncertainty analysis, and a survey of the Gulf Stream front. Limnology and Oceanography: Methods. doi:10.1002/lom3.10511
+
+Windle, A.E. and Silsbe, G.M., 2021. Evaluation of unoccupied aircraft system (UAS) remote sensing reflectance retrievals for water quality monitoring in coastal waters. Frontiers in Environmental Science, p.182. doi:10.3389/fenvs.2021.674247
+
 
 [[I think we need a figure here that shows the workflow even something simple]]
 
@@ -37,10 +47,10 @@ Once all MicaSense images have been downloaded into a local directory (e.g. `\da
     \raw_water_imgs
     \align_img
 ```
-* The panel directory should contain all image captures of the Micasense calibrated reflectance panel taken either before or after the flight \
-* The raw_sky_imgs direcotry should contain all image captures taken of the sky at a 40/135 angle \
-* The raw_water_imgs directory should contain all image captures taken during flight \
-* The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The ___ from this image capture is used to align all image captures in raw_water_imgs. 
+* The panel directory should contain all image captures of the Micasense calibrated reflectance panel taken either before or after the flight 
+* The raw_sky_imgs directory should contain all image captures taken of the sky at a 40 deg angle from zenith and an apprximate 135 deg azimuthal viewing direction
+* The raw_water_imgs directory should contain all image captures of water taken during flight 
+* The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The warp_matrix derived from this image capture is used to align all image captures in raw_water_imgs. 
 
 ## **Descriptions of functions:**
 * `store_metadata()`: Store metadata from all flight captures to use for plotting and georeferencing
