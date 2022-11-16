@@ -19,31 +19,31 @@ Windle, A.E. and Silsbe, G.M., 2021. Evaluation of unoccupied aircraft system (U
 
 ### Requirements
 
-We recommend running this package in a Docker container, which is the environment that it was developed and tested in. See https://docs.docker.com/ for installation files. You also need to install git (https://github.com/git-guides/install-git).
+We recommend running this package in a Docker container, which is the environment that it was developed and tested in. See https://docs.docker.com/ for installation files. You will also need to install git (https://github.com/git-guides/install-git). Total file size is ~ 1.6 GB.
 
 ### Initial Setup
 
-Once Docker and git are installed, setup a <local directory>, and navigate to this directory through terminal (OSX or Linux) or Powershell (Windows). The first step is cloning the repo to your local machine: 
+Once Docker and git are installed, setup a <local directory>. We recommend that <local directory> does not contain any spaces (e.g. C:\micasense but not C:\Users\foo bar\micasense). Navigate to <local directory> through terminal (OSX or Linux) or Powershell (Windows). Clone the repo to your local machine: 
 
 `git clone https://github.com/aewindle110/DroneWQ.git`.  
 
+## Launching code
+    
+With the Docker app running on your desktop, you need to launch the Docker container. Note that the first execution of this line of code will install the Docker image  and setup and configure all required software (python, jupyter notebooks) and packages. 
+    
 `docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/drone_wq:v1`
 
-## Launching code
-This will launch the Docker container and then you need to activate the conda environment via:
+ Activate the micasense environment and launch a jupyter notebook: 
 
 `conda activate micasense`
 
-Then run jupyter via:
-
 `jupyter notebook --allow-root --ip 0.0.0.0 /home/jovyan`
 
-Then just navigate to the URL that is generated and pointed to in the terminal. This should take the form of roughly `http://127.0.0.1:8888/?token=<auto generated token>`
+Copy the generated URL in the terminal (e.g. `http://127.0.0.1:8888/?token=<auto generated token>`) into a web browser.
 
-This series of commands will pull this Docker image if you don't already have it, run it, mount your local directory, then expose the jupyter lab to your local IP address. You can then run this in Jupyter as if it were local on your hardware but in the exact same environment it was developed with all the necessary packages installed and configured. 
+## Alternative Installation
 
 You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html
-
 Though it is likely quicker and more reproducible to just pull it from Dockerhub with the first command.
 
 We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found [here](https://github.com/micasense/imageprocessing), but our version is slightly modified to put out radiance in Float32 format instead of Uint16. Future versions of the Micasense package are planned to make this an option and at that point we will remove it from our library and simply import the up to date maintained version.
