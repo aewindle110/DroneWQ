@@ -16,10 +16,20 @@ Windle, A.E. and Silsbe, G.M., 2021. Evaluation of unoccupied aircraft system (U
 [[I think we need a figure here that shows the workflow even something simple]]
 
 ## Installation
-To install you will need to clone this repo to your local machine: `git clone https://github.com/aewindle110/DroneWQ.git`. We recommend you run all this via Docker so you have the exact same environment that it was developed and tested in. This can be done by going to the terminal (OSX or Linux) or Powershell (Windows) and running:
+
+### Requirements
+
+We recommend running this package in a Docker container, which is the environment that it was developed and tested in. See https://docs.docker.com/ for installation files. You also need to install git (https://github.com/git-guides/install-git).
+
+### Initial Setup
+
+Once Docker and git are installed, setup a <local directory>, and navigate to this directory through terminal (OSX or Linux) or Powershell (Windows). The first step is cloning the repo to your local machine: 
+
+`git clone https://github.com/aewindle110/DroneWQ.git`.  
 
 `docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/drone_wq:v1`
 
+## Launching code
 This will launch the Docker container and then you need to activate the conda environment via:
 
 `conda activate micasense`
