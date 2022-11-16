@@ -43,12 +43,9 @@ Copy the generated URL in the terminal (e.g. `http://127.0.0.1:8888/?token=<auto
 
 ## Alternative Installation
 
-You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html
-Though it is likely quicker and more reproducible to just pull it from Dockerhub with the first command.
+You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found [here](https://github.com/micasense/imageprocessing). Note that our imageprocessing scripts are slightly modified in that radiance data type is expressed as Float32 instead of Uint16. Micasense is planning on a future package with user specified radiance data types, at which point we will revert to their package version.
 
-We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found [here](https://github.com/micasense/imageprocessing), but our version is slightly modified to put out radiance in Float32 format instead of Uint16. Future versions of the Micasense package are planned to make this an option and at that point we will remove it from our library and simply import the up to date maintained version.
-
-## ***Data Setup*** 
+## ***MicaSense Folder Structure*** 
 Once all MicaSense images have been downloaded into a local directory (e.g. `\data`), separate images into 4 sub-directories as below:
 ```
 \data
@@ -61,4 +58,3 @@ Once all MicaSense images have been downloaded into a local directory (e.g. `\da
 * The raw_sky_imgs directory should contain all image captures taken of the sky at a 40 deg angle from zenith and an apprximate 135 deg azimuthal viewing direction
 * The raw_water_imgs directory should contain all image captures of water taken during flight 
 * The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The warp_matrix derived from this image capture is used to align all image captures in raw_water_imgs. 
-
