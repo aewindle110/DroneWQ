@@ -23,7 +23,7 @@ We recommend running this package in a Docker container, which is the environmen
 
 ### Initial Setup
 
-Once Docker and git are installed, setup a <local directory>. We recommend that <local directory> does not contain any spaces (e.g. C:\micasense but not C:\Users\foo bar\micasense). Navigate to <local directory> through terminal (OSX or Linux) or Powershell (Windows). Clone the repo to your local machine: 
+Once Docker and git are installed, setup a local directory. We recommend that the directory does not contain any spaces (e.g. C:\micasense but not C:\Users\foo bar\micasense). Navigate to the directory through terminal (OSX or Linux) or Powershell (Windows). Clone the repo to your local machine: 
 
 `git clone https://github.com/aewindle110/DroneWQ.git`.  
 
