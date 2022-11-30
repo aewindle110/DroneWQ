@@ -26,7 +26,7 @@ from micasense import panel
 from micasense import image as image
 
 
-def write_metadata_csv(img_set, outputPath, csv_output_path):
+def write_metadata_csv(img_set, img_output_path, csv_output_path):
     """
     This function grabs the EXIF metadata from img_set and writes it to outputPath/metadata.csv. Other metadata could be added based on what is needed in your workflow.
     
@@ -51,7 +51,7 @@ def write_metadata_csv(img_set, outputPath, csv_output_path):
     for i,capture in enumerate(img_set.captures):
         #get lat,lon,alt,time
         outputFilename = 'capture_' + str(i+1)+'.tif'
-        fullOutputPath = os.path.join(outputPath, outputFilename)
+        fullOutputPath = os.path.join(img_output_path, outputFilename)
         lat,lon,alt = capture.location()
         
         imagesize  = capture.images[0].meta.image_size()
@@ -143,8 +143,10 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     ids = np.arange(1,len(df)+1)
     df['id'] = ids    
     df.set_index('id')
-        
-    all_imgs = load_images(df['SourceFile'].values)
+    
+    # this grabs the filenames from the subset of the dataframe we've selected, then preprends the image_dir that we want.
+    # the filename is the index
+    all_imgs = load_images([os.path.join(img_dir,fn) for fn in df.index.values])
   
     return(all_imgs, df)
 
@@ -179,14 +181,14 @@ def get_warp_matrix(img_capture, max_alignment_iterations = 50):
     return(warp_matrices)
 
 
-def save_images(img_set, outputPath, thumbnailPath, warp_img_capture, generateThumbnails = True, overwrite=False):
+def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, generateThumbnails = True, overwrite=False):
     """
     This function processes each capture in an imageset to compute radiace, apply a warp matrix, and save new .tifs with units of radiance (W/sr/nm) and optional RGB .jpgs.
     
     Inputs: 
     
     img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py 
-    outputPath: A string containing the filepath to store a new folder of radiance .tifs
+    img_output_path: A string containing the filepath to store a new folder of radiance .tifs
     thumbnailPath: A string containing the filepath to store a new folder of RGB thumnail .jpgs
     warp_img_capture: A Capture chosen to align all images. Can be created by using Micasense's ImageSet-from_directory().captures function
     generateThumbnails: Option to create RGB .jpgs of all the images. Default is True
@@ -197,8 +199,8 @@ def save_images(img_set, outputPath, thumbnailPath, warp_img_capture, generateTh
 
     warp_matrices = get_warp_matrix(warp_img_capture)
 
-    if not os.path.exists(outputPath):
-        os.makedirs(outputPath)
+    if not os.path.exists(img_output_path):
+        os.makedirs(img_output_path)
     if generateThumbnails and not os.path.exists(thumbnailPath):
         os.makedirs(thumbnailPath)
 
@@ -206,7 +208,7 @@ def save_images(img_set, outputPath, thumbnailPath, warp_img_capture, generateTh
     for i,capture in enumerate(img_set.captures):
         outputFilename = 'capture_' + str(i+1) + '.tif'
         thumbnailFilename = 'capture_' + str(i+1) + '.jpg'
-        fullOutputPath = os.path.join(outputPath, outputFilename)
+        fullOutputPath = os.path.join(img_output_path, outputFilename)
         fullThumbnailPath= os.path.join(thumbnailPath, thumbnailFilename)
         if (not os.path.exists(fullOutputPath)) or overwrite:
             if(len(capture.images) == len(img_set.captures[0].images)):
@@ -601,7 +603,7 @@ Could not figure out how they did it here: https://github.com/micasense/imagepro
 
 """
 
-def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method', clean_intermediats=True, glint_correct=False, glint_std_factor=1, ed_method='dls_ed', overwrite=False):
+def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method', clean_intermediates=True, glint_correct=False, glint_std_factor=1, ed_method='dls_ed', overwrite=False):
     """
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
     
@@ -621,18 +623,20 @@ def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method',
     
     # specify the locations of the different levels of imagery
     # I do this partially so I can just change these pointers to the data and not have to copy it or have complex logic repeated
-    raw_water_img_dir = main_dir+'/raw_water_imgs'
-    raw_sky_img_dir = main_dir+'/raw_sky_imgs'
     
-    lt_dir = main_dir+'/lt_imgs'
-    sky_lt_dir = main_dir+"/sky_lt_imgs"
-    glint_corrected_lt_dir = main_dir+'/lt_glint_corrected_imgs'
-    lw_dir = main_dir+'/lw_imgs'
-    rrs_dir = main_dir+'/rrs_imgs'
-    panel_dir = main_dir+'/panel'
+    ### os join here
+    raw_water_img_dir = os.path.join(main_dir,'raw_water_imgs')
+    raw_sky_img_dir = os.path.join(main_dir,'raw_sky_imgs')
+    
+    lt_dir = os.path.join(main_dir,'lt_imgs')
+    sky_lt_dir = os.path.join(main_dir,'sky_lt_imgs')
+    glint_corrected_lt_dir = os.path.join(main_dir,'lt_glint_corrected_imgs')
+    lw_dir = os.path.join(main_dir,'lw_imgs')
+    rrs_dir = os.path.join(main_dir,'rrs_imgs')
+    panel_dir = os.path.join(main_dir,'panel')
     
     # make all these directories if they don't already exist
-    all_dirs = [lt_dir, lw_dir, rrs_dir, panel_dir]
+    all_dirs = [lt_dir, glint_corrected_lt_dir, lw_dir, rrs_dir, panel_dir]
     for directory in all_dirs:
         Path(directory).mkdir(parents=True, exist_ok=True)
     
@@ -641,7 +645,7 @@ def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method',
     
     ### convert raw imagery to radiance (Lt)
     print("Converting raw images to radiance (raw -> Lt).")
-    process_micasense_images(main_dir, warp_img_dir=main_dir+'/align_img', overwrite=overwrite, sky=False)
+    process_micasense_images(main_dir, warp_img_dir=os.path.join(main_dir,'align_img'), overwrite=overwrite, sky=False)
     
     # deciding if we need to process raw sky images to radiance 
     if lw_method in ['mobley_rho_method','blackpixel_method']:
@@ -708,9 +712,8 @@ def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method',
     if clean_intermediates:
         dirs_to_delete = [lt_dir, sky_lt_dir, glint_corrected_lt_dir, lw_dir]
         for d in dirs_to_delete:
-            shutil.rmtree(d)
+            shutil.rmtree(d,ignore_errors=True)
             
-    ### decide if the final output should be imagery or medianed points in a datafame
     print('All data has been saved as Rrs using the ' + str(lw_method)  + ' to calcualte Lw and normalized by '+ str(ed_method)+ ' irradiance.')
     
     # add function here that will convert the rrs data to points? 
