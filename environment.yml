@@ -5,15 +5,15 @@ dependencies:
   - python=3.7
   - opencv=4.5.5
   - gdal
-  - jupyter=1.0.0
-  - jupyterlab=3.5.0
+  - jupyter
+  - jupyterlab
   - matplotlib=3.5.1
   - scikit-image=0.19.2
   - imageio
   - git
   - git-lfs
-  - pandas=1.3.5
-  - nb_conda=2.2.1
+  - pandas
+  - nb_conda
   - pytest
   - pytest-xdist
   - pip
@@ -22,7 +22,7 @@ dependencies:
   - tqdm
   - rasterio=1.1.8
   - geopandas=0.10.2
-  - pyzbar=0.1.9
+  - pyzbar
   - pip:
       - pysolar
       - pyexiftool==0.4.13
