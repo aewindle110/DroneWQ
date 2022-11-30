@@ -480,14 +480,14 @@ class Capture(object):
                             For Altum images only use HOMOGRAPHY.
         :return: ndarray with alignment changes
         """
-        if img_type is 'radiance':
+        if img_type == 'radiance':
             self.compute_undistorted_radiance()
-        elif img_type is None:
+        elif img_type == None:
             if irradiance_list is None:
                 irradiance_list = self.dls_irradiance() + [0]
             self.compute_undistorted_reflectance(irradiance_list)
             img_type = 'reflectance'
-        if warp_matrices is None:
+        if warp_matrices == None:
             warp_matrices = self.get_warp_matrices()
         cropped_dimensions, _ = imageutils.find_crop_bounds(self, warp_matrices, warp_mode=motion_type)
         self.__aligned_capture = imageutils.aligned_capture(self,

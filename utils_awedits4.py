@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import cv2
 import exiftool
 import rasterio
-from GPSPhoto import gpsphoto
+# from GPSPhoto import gpsphoto
 import scipy.ndimage as ndimage
 from skimage.transform import resize
 from pathlib import Path
@@ -26,9 +26,9 @@ from micasense import panel
 from micasense import image as image
 
 
-def write_exif_csv(img_set, outputPath):
+def write_metadata_csv(img_set, outputPath, csv_output_path):
     """
-    This function writes specific EXIF metadata from img_set to outputPath/metadata.csv. Other metadata could be added based on what is needed in your workflow.
+    This function grabs the EXIF metadata from img_set and writes it to outputPath/metadata.csv. Other metadata could be added based on what is needed in your workflow.
     
     Inputs: img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py 
     
@@ -80,13 +80,46 @@ def write_exif_csv(img_set, outputPath):
         lines.append(linestr)
         
 
-    fullCsvPath = os.path.join(outputPath,'metadata.csv')
+    fullCsvPath = os.path.join(csv_output_path,'metadata.csv')
     with open(fullCsvPath, 'w') as csvfile: #create CSV
         csvfile.writelines(lines)
-        
+    
+    # let's convert the timestamp to a proper Datetime object and make the filenames the index
+    df = pd.read_csv(fullCsvPath)
+    df['filename'] = df['SourceFile'].str.split('/').str[-1]
+    df = df.set_index('filename')
+    df['UTC-Time'] = pd.to_datetime(df['    GPSTimeStamp'])    
+    df.to_csv(fullCsvPath)
+    
     return(fullCsvPath)
 
-def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 0):
+def load_images(img_list):
+    """
+    This function loads all images in a directory as a multidimensional numpy array. 
+    
+    Inputs: img_list: A list of .tif files, usually called by using glob.glob(filepath) or grabbed from the metadata file
+    Outputs: A multidimensional numpy array of all image captures in a directory 
+    
+    """
+    all_imgs = []
+    for im in img_list:
+        with rasterio.open(im, 'r') as src:
+            all_imgs.append(src.read())
+    return(np.array(all_imgs))
+
+def load_img_fn_and_meta(csv_path, count=10000, start=0):
+    """
+    This function returns a pandas dataframe of captures and associated metadata with the options of how many to list and what nunmber of image to start on.  
+    """    
+    df = pd.read_csv(csv_path)
+    df = df.set_index('filename')
+    df['UTC-Time'] = pd.to_datetime(df['UTC-Time'])    
+    # cut off if necessary
+    df = df.iloc[start:start+count]
+
+    return(df)
+
+def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 0, sky=False):
     """
     This function is the main interface we expect the user to use when grabbing a subset of imagery from any stage in processing. This returns the images as a numpy array and metadata as a pandas dataframe. 
     
@@ -97,25 +130,23 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     Output: Pandas dataframe of metadata. 
     
     """
-    df = pd.read_csv(img_dir + '/metadata.csv')
-    df['filename'] = df['SourceFile'].str.split('/').str[-1]
-    df = df.set_index('filename')
-    df['UTC-Time'] = pd.to_datetime(df['    GPSTimeStamp'])    
-    # cut off if necessary
-    df = df.iloc[start:start+count]
-
-    img_metadata = df[df['    GPSAltitude'] > altitude_cutoff]
-    
-    ids = np.arange(1,len(img_metadata)+1)
-    img_metadata['id'] = ids    
-    img_metadata.set_index('id')
+    if sky:
+        csv_path = img_dir + '/metadata.csv'
+    else:
+        csv_path = img_dir + '/../metadata.csv'
         
-    all_imgs = []
-    for im in glob.glob(img_dir+'/*.tif')[start:start+count]:
-        with rasterio.open(im, 'r') as src:
-            all_imgs.append(src.read())
+    df = load_img_fn_and_meta(csv_path, count=count, start=start)
+    
+    # apply altitiude threshold and set IDs as the indez
+    df = df[df['    GPSAltitude'] > altitude_cutoff]
+    
+    ids = np.arange(1,len(df)+1)
+    df['id'] = ids    
+    df.set_index('id')
+        
+    all_imgs = load_images(df['SourceFile'].values)
   
-    return(np.array(all_imgs), img_metadata)
+    return(all_imgs, df)
 
 
 def get_warp_matrix(img_capture, max_alignment_iterations = 50):
@@ -223,20 +254,117 @@ def process_micasense_images(project_dir, warp_img_dir=None, overwrite=False, sk
     # just have the sky images go into a different dir and the water imgs go into a default 'lt_imgs' dir 
     if sky:
         outputPath = os.path.join(project_dir,'sky_lt_imgs')
+        csv_output_path = outputPath
         thumbnailPath = os.path.join(project_dir, 'sky_lt_thumbnails')
     else:
         outputPath = os.path.join(project_dir,'lt_imgs')
+        csv_output_path = project_dir
         thumbnailPath = os.path.join(project_dir, 'lt_thumbnails')
     
     if save_images(imgset, outputPath, thumbnailPath, warp_img_capture, overwrite=overwrite) == True:
         print("Finished saving images.")
-        fullCsvPath = write_exif_csv(imgset, outputPath)
+        fullCsvPath = write_metadata_csv(imgset, outputPath, csv_output_path)
         print("Finished saving image metadata.")
             
     return(outputPath)
 
 
 ######## workflow functions ########
+
+# glint removal
+def rrs_pixel_masking(main_dir, nir_threshold = 0.01, green_threshold = 0.005):
+    """
+    This function masks pixels based on a user supplied Rrs thresholds in an effort to remove instances of specular sun glint and land when present in the images. 
+    
+    Inputs: 
+    lt_dir: A string containing the directory filepath of images to be processed
+    nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features.
+    green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing. 
+    
+    Output: New masked .tifs
+    
+    """    
+    # make masked_rrs_dir directory 
+    masked_rrs_dir = main_dir+'/masked_rrs_imgs'
+    if not os.path.exists(masked_rrs_dir):
+        os.makedirs(masked_rrs_dir)
+    
+    # go through each rrs image in the dir and mask pixels > nir_threshold and < green_threshold
+    for im in glob.glob(main_dir+'/rrs_imgs' + "/*.tif"):
+        with rasterio.open(im, 'r') as rrs_src:
+            profile = rrs_src.profile
+            profile['count']=5
+            rrs_mask_all = []
+            nir = rrs_src.read(5)
+            green = rrs_src.read(2)
+            nir[nir > nir_threshold] = np.nan
+            green[green < green_threshold] = np.nan
+
+            nir_nan_index = np.isnan(nir)
+            green_nan_index = np.isnan(green)
+
+            #filter nan pixel indicies across all bands
+            for i in range(1,6):
+
+                rrs_mask = rrs_src.read(i)
+                rrs_mask[nir_nan_index] = np.nan 
+                rrs_mask[green_nan_index] = np.nan 
+
+                rrs_mask_all.append(rrs_mask)
+
+            stacked_rrs_mask = np.stack(rrs_mask_all) #stack into np.array
+
+            #write new stacked rrs tifs
+            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+            with rasterio.open(os.path.join(main_dir+'/masked_rrs_imgs', im_name), 'w', **profile) as dst:
+                dst.write(stacked_rrs_mask)
+    
+    #copy metadata from raw_water_imgs into folder
+    img_set = imageset.ImageSet.from_directory(main_dir+'/raw_water_imgs')         
+    fullCsvPath = write_exif_csv(img_set, masked_rrs_dir)
+                
+    return(True)
+
+def std_glint_removal_method(lt_dir, glint_corrected_lt_dir, num_images=10, glint_std_factor=1):
+    """
+    This function masks pixels based on a user supplied NIR threshold in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std*glint_std_factor is masked across all bands. The lower the glint_std_factor, the more pixels will be masked. 
+    
+    Inputs: 
+    lt_dir: A string containing the directory filepath of images to be processed
+    glint_corrected_lt_dir: A string containing the directory filepath to write the new masked .tifs
+    glint_std_factor: A factor to multiply to the standard deviation of NIR values
+    
+    Output: New masked .tifs
+    
+    """
+    # grab the first num_images images, finds the mean and std of NIR, then anything times the glint factor is classified as glint
+    lt_imgs, lt_img_metadata = retrieve_imgs_and_metadata(lt_dir, count=num_images, start=0, altitude_cutoff=0)
+    lt_nir_mean = np.mean(lt_imgs,axis=(0,2,3))[4] # mean of NIR band
+    lt_nir_std = np.std(lt_imgs,axis=(0,2,3))[4] # std of NIR band
+    print('The mean and std of Lt from first N images is: ', lt_nir_mean, lt_nir_std)
+    print('Pixels will be masked where Lt(NIR) > ', lt_nir_mean+lt_nir_std*glint_std_factor)
+    del lt_imgs # free up the memory
+
+    # go through each Lt image in the dir and mask any pixels > mean+std*glint factor
+    for im in glob.glob(lt_dir + "/*.tif"):
+        with rasterio.open(im, 'r') as Lt_src:
+            profile = Lt_src.profile
+            profile['count']=5
+            lt_deglint_all = []
+            lt_nir_deglint = Lt_src.read(5) #nir band
+            lt_nir_deglint[lt_nir_deglint > (lt_nir_mean+lt_nir_std*glint_std_factor)] = np.nan
+            nan_index = np.isnan(lt_nir_deglint)
+            #filter nan pixel indicies across all bands
+            for i in range(1,6):
+                lt_deglint = Lt_src.read(i)
+                lt_deglint[nan_index] = np.nan 
+                lt_deglint_all.append(lt_deglint) #append all for each band
+            stacked_lt_deglint = np.stack(lt_deglint_all) #stack into np.array
+            #write new stacked lw tifs
+            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+            with rasterio.open(os.path.join(glint_corrected_lt_dir, im_name), 'w', **profile) as dst:
+                dst.write(stacked_lt_deglint)
+    return(True)
 
 def mobley_rho_method(sky_lt_dir, lt_dir, lw_dir, rho = 0.028): 
     """
@@ -252,7 +380,7 @@ def mobley_rho_method(sky_lt_dir, lt_dir, lw_dir, rho = 0.028):
     """
 
     # grab the first ten of these images, average them, then delete this from memory
-    sky_imgs, sky_img_metadata = retrieve_imgs_and_metadata(sky_lt_dir, count=10, start=0, altitude_cutoff=0)
+    sky_imgs, sky_img_metadata = retrieve_imgs_and_metadata(sky_lt_dir, count=10, start=0, altitude_cutoff=0, sky=True)
     lsky_median = np.median(sky_imgs,axis=(0,2,3)) # here we want the median of each band
     del sky_imgs # free up the memory
 
@@ -260,6 +388,7 @@ def mobley_rho_method(sky_lt_dir, lt_dir, lw_dir, rho = 0.028):
     for im in glob.glob(lt_dir + "/*.tif"):
         with rasterio.open(im, 'r') as Lt_src:
             profile = Lt_src.profile
+            profile['count']=5
             lw_all = []
             for i in range(1,6):
                 # todo this is probably faster if we read them all and divide by the vector
@@ -288,13 +417,14 @@ def blackpixel_method(sky_lt_dir, lt_dir, lw_dir):
         
     """
     # grab the first ten of these images, average them, then delete this from memory
-    sky_imgs, sky_img_metadata = retrieve_imgs_and_metadata(sky_lt_dir, count=10, start=0, altitude_cutoff=0)
+    sky_imgs, sky_img_metadata = retrieve_imgs_and_metadata(sky_lt_dir, count=10, start=0, altitude_cutoff=0, sky=True)
     lsky_median = np.median(sky_imgs,axis=(0,2,3)) # here we want the median of each band
     del sky_imgs
 
     for im in glob.glob(lt_dir + "/*.tif"):
         with rasterio.open(im, 'r') as Lt_src:
             profile = Lt_src.profile
+            profile['count']=5
            
             Lt = Lt_src.read(4)
             rho = Lt/lsky_median[4-1]
@@ -353,6 +483,7 @@ def hedley_method(lt_dir, lw_dir):
             lw_all.append(lw)
 
         stacked_lw = np.stack(lw_all) #stack into np.array
+        profile['count']=5
 
         #write new stacked Rrs tif w/ reflectance units
         with rasterio.open(os.path.join(lw_dir, im_name), 'w', **profile) as dst:
@@ -396,6 +527,7 @@ def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
     for im in glob.glob(lw_dir + "/*.tif"):
         with rasterio.open(im, 'r') as Lw_src:
             profile = Lw_src.profile
+            profile['count']=5
             rrs_all = []
             # could vectorize this for speed
             for i in range(1,6):
@@ -444,6 +576,7 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path):
     for im in glob.glob(lw_dir + "/*.tif"):
         with rasterio.open(im, 'r') as Lw_src:
             profile = Lw_src.profile
+            profile['count']=5
             rrs_all = []
             # could vectorize this for speed
             for i in range(1,6):
@@ -468,20 +601,7 @@ Could not figure out how they did it here: https://github.com/micasense/imagepro
 
 """
 
-def rewrite_exif_data(lt_dir, output_dir):
-    """
-    This function saves new metadata in the folder of processed imagery. 
-    
-    *********AW_question: do we need this function anymore?? 
-    """
-    # first copy the log from lt_imgs where is it output by the micasense processing code to the dir of choice and change the file path within the csv line
-    with open(lt_dir+"/metadata.csv", "rt") as fin:
-        with open(output_dir+"/metadata.csv", "wt") as fout:
-            for line in fin:
-                # here we just grab the final sub-directory name and replace it, so this could look like fout.write(line.replace('lt_imgs', 'rrs_imgs'))
-                fout.write(line.replace(lt_dir.split('/')[-1], output_dir.split('/')[-1]))
-
-def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method', ed_method='dls_ed', overwrite=False):
+def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method', clean_intermediats=True, glint_correct=False, glint_std_factor=1, ed_method='dls_ed', overwrite=False):
     """
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
     
@@ -506,6 +626,7 @@ def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method',
     
     lt_dir = main_dir+'/lt_imgs'
     sky_lt_dir = main_dir+"/sky_lt_imgs"
+    glint_corrected_lt_dir = main_dir+'/lt_glint_corrected_imgs'
     lw_dir = main_dir+'/lw_imgs'
     rrs_dir = main_dir+'/rrs_imgs'
     panel_dir = main_dir+'/panel'
@@ -528,6 +649,20 @@ def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method',
         # we're also making an assumption that we don't need to align/warp these images properly because they'll be medianed
         process_micasense_images(main_dir, warp_img_dir=None, overwrite=overwrite, sky=True)
     
+    
+    ########################################
+    ### correct for glint in the imagery ###
+    ########################################
+    if glint_correct == True:
+        std_glint_removal_method(lt_dir, glint_corrected_lt_dir, glint_std_factor)
+        # write all the exif data into the new files
+        rewrite_exif_data(lt_dir, glint_corrected_lt_dir)
+        print('Finished Lt glint correction.')
+                    
+    else: # if we don't do the glint correction then just change the pointer to the lt_dir
+        glint_corrected_lt_dir = lt_dir
+        print('No glint correction.')
+    
     ##################################
     ### correct for surface reflected light ###
     ##################################
@@ -535,20 +670,15 @@ def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method',
     if  lw_method == 'mobley_rho_method':
         mobley_rho_method(sky_lt_dir, lt_dir, lw_dir)
         print('Doing the mobley_rho_method (Lt -> Lw).')
-        # write all the exif data into the new files
-        rewrite_exif_data(lt_dir, lw_dir)
-    
+     
     elif lw_method == 'blackpixel_method':
         blackpixel_method(sky_lt_dir, lt_dir, lw_dir)
         print('Doing the blackpixel_method (Lt -> Lw)')
-        # write all the exif data into the new files
-        rewrite_exif_data(lt_dir, lw_dir)
+     
     
     elif lw_method == 'hedley_method':
         hedley_method(lt_dir, lw_dir)
-        print('Doing the hedley_method (Lt -> Lw)')
-        # write all the exif data into the new files
-        rewrite_exif_data(lt_dir, lw_dir)
+  
             
     else: # just change this pointer if we didn't do anything the lt over to the lw dir
         print('Not doing any Lw calculation.')
@@ -561,14 +691,10 @@ def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method',
     if ed_method == 'panel_ed':
         print('Normalizing by panel irradiance (Lw/Ed -> Rrs).')
         panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path)
-        # write all the exif data into the new rrs files
-        rewrite_exif_data(lt_dir, rrs_dir)
         
     elif ed_method == 'dls_ed':
         print('Normalizing by DLS irradiance (Lw/Ed -> Rrs).')
         dls_ed(raw_water_img_dir, lw_dir, rrs_dir, output_csv_path)
-        # write all the exif data into the new rrs files
-        rewrite_exif_data(lt_dir, rrs_dir) 
 
     else:
         print('No other irradiance normalization methods implemented yet, panel_ed is recommended.')
@@ -578,66 +704,17 @@ def process_raw_to_rrs(main_dir, output_csv_path, lw_method='mobley_rho_method',
     ################################################
     ### finalize and add point output ###
     ################################################
-        
+    
+    if clean_intermediates:
+        dirs_to_delete = [lt_dir, sky_lt_dir, glint_corrected_lt_dir, lw_dir]
+        for d in dirs_to_delete:
+            shutil.rmtree(d)
+            
     ### decide if the final output should be imagery or medianed points in a datafame
     print('All data has been saved as Rrs using the ' + str(lw_method)  + ' to calcualte Lw and normalized by '+ str(ed_method)+ ' irradiance.')
     
     # add function here that will convert the rrs data to points? 
     
-    return(True)
-
-
-########## Optional glint removal #########
-def rrs_pixel_masking(main_dir, nir_threshold = 0.01, green_threshold = 0.005):
-    """
-    This function masks pixels based on a user supplied Rrs thresholds in an effort to remove instances of specular sun glint and land when present in the images. 
-    
-    Inputs: 
-    lt_dir: A string containing the directory filepath of images to be processed
-    nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features.
-    green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing. 
-    
-    Output: New masked .tifs
-    
-    """    
-    # make masked_rrs_dir directory 
-    masked_rrs_dir = main_dir+'/masked_rrs_imgs'
-    if not os.path.exists(masked_rrs_dir):
-        os.makedirs(masked_rrs_dir)
-    
-    # go through each rrs image in the dir and mask pixels > nir_threshold and < green_threshold
-    for im in glob.glob(main_dir+'/rrs_imgs' + "/*.tif"):
-        with rasterio.open(im, 'r') as rrs_src:
-            profile = rrs_src.profile
-            rrs_mask_all = []
-            nir = rrs_src.read(5)
-            green = rrs_src.read(2)
-            nir[nir > nir_threshold] = np.nan
-            green[green < green_threshold] = np.nan
-
-            nir_nan_index = np.isnan(nir)
-            green_nan_index = np.isnan(green)
-
-            #filter nan pixel indicies across all bands
-            for i in range(1,6):
-
-                rrs_mask = rrs_src.read(i)
-                rrs_mask[nir_nan_index] = np.nan 
-                rrs_mask[green_nan_index] = np.nan 
-
-                rrs_mask_all.append(rrs_mask)
-
-            stacked_rrs_mask = np.stack(rrs_mask_all) #stack into np.array
-
-            #write new stacked rrs tifs
-            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
-            with rasterio.open(os.path.join(main_dir+'/masked_rrs_imgs', im_name), 'w', **profile) as dst:
-                dst.write(stacked_rrs_mask)
-    
-    #copy metadata from raw_water_imgs into folder
-    img_set = imageset.ImageSet.from_directory(main_dir+'/raw_water_imgs')         
-    fullCsvPath = write_exif_csv(img_set, masked_rrs_dir)
-                
     return(True)
 
                   
