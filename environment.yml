@@ -3,12 +3,14 @@ channels:
   - conda-forge
 dependencies:
   - python=3.7
-  - opencv=4.5.5
   - gdal
+  - rasterio=1.1.8
+  - geopandas
+  - opencv
   - jupyter
   - jupyterlab
-  - matplotlib=3.5.1
-  - scikit-image=0.19.2
+  - matplotlib
+  - scikit-image
   - imageio
   - git
   - git-lfs
@@ -20,13 +22,11 @@ dependencies:
   - requests
   - packaging
   - tqdm
-  - rasterio=1.1.8
-  - geopandas=0.10.2
   - pyzbar
   - pip:
+      - cameratransform
       - pysolar
-      - pyexiftool==0.4.13
       - mapboxgl
+      - pyexiftool<=0.4.13
       - jenkspy
       - rawpy
-      - cameratransform
