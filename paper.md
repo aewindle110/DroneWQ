@@ -152,6 +152,17 @@ This algorithm estimates chlorophyll a concentrations using a 2-band algorithm w
 This algorithm estimates total suspended matter (TSM) concentrations using the Nechad et al. (2010) algorithm. doi:10.1016/j.rse.2009.11.022.
 <br/>
 
+# Pixel masking
+<br/>
+`rrs_pixel_masking()`
+<br/>
+This function masks pixels based on a user supplied Rrs thresholds in an effort to remove instances of specular sun glint, shadowing, or adjacent land when present in the images. It is designed to be applied to processed Rrs images. 
+<br/>
+
+`std_glint_removal_method()`
+<br/>
+This function masks pixels based on a user supplied NIR threshold in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std x glint_std_factor is masked across all bands. The lower the glint_std_factor, the more pixels will be masked. It is designed to 
+<br/>
 
 # Georeferencing and mapping
 
