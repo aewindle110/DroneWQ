@@ -105,6 +105,21 @@ Other methods to remove L<sub>SR</sub> include modelling a constant 'ambient' NI
 <br/>
 Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>)), where *i* is each band
 <br/>
+  
+# Normalizing by downwelling irradiance (E<sub>d</sub>)
+ 
+After Lsr is removed from Lt, Lw needs to be normalized by Ed to calculate Rrs (Eq. 6). The downwelling light sensor (DLS) or calibration reflectane panel should be used depending on weather conditions. 
+
+<br/>
+`dls_ed()`
+<br/>
+According to MicaSense, the DLS is better at estimating changing light conditions (e.g. variable cloud cover) since it records DLS throughout a flight; however, it is not a perfect measurement due to movement of the drone. However, the the MicaSense function Capture.dls_irradiance() incorporates tilt-compensated DLS values from the onboard orientation sensor. 
+  
+<br/>
+`panel_ed()`
+When flying on a clear sunny day or a completely overcast cloudy day, the calibration reflectance panel should be used. This method uses the MicaSense function Capture.panel_irraidiance() which returns a list of mean panel irradiance values. 
+<br/> 
+  
 
 # Water quality retrievals
 
