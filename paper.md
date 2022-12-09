@@ -90,17 +90,21 @@ The inclusion of sun glint and L<sub>SR</sub> can lead to an overestimation of R
 <br/>
 Figure 1. Example of an individual drone image (green band) with different radiometric values: (A) RUAS, (B) RUAS with initial sun glint masking and (C–F) remote sensing reflectance (Rrs) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR >0, (F) Deglingting methods following Hochberg et al. (2003).
 
-`mobley_rho_method()`
-<br/>
-Tabulated ρ values have been derived from numerical simulations with modelled sea surfaces, Cox and Munk wave states (wind), and viewing geometries (Cox and Munk, 1954; Mobley, 1999; Mobley, 2015). Mobley (1999) provides the recommendation of collecting radiance measurements at viewing directions of θ = 40° from nadir and ɸ = 135° from the sun to minimize the effects of sun glint and nonuniform sky radiance with a ⍴ value of 0.028. These suggested viewing geometries and ⍴ value from Mobley (1999) have been used to estimate and remove L<sub>SR</sub> in many remote sensing studies (Ruddick et al., 2006; Shang S. et al., 2017; Baek et al., 2019; Kim et al., 2020).
-
 `blackpixel_method()`
 <br/>
-An alternative method to remove L<sub>SR</sub> relies on the so-called black pixel assumption that assumes L<sub>W</sub> in the near infrared (NIR) is negligible due to strong absorption of water. Where this assumption holds, at-sensor radiance measured in the NIR is solely L<sub>SR</sub> (Gordon and Wang, 1994; Siegel et al., 2000) and allows ⍴ to be calculated if L<sub>sky</sub> is known. Studies have used this assumption to estimate and remove L<sub>SR</sub>; however, the assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and L<sub>W</sub> in the NIR (Siegel et al., 2000; Lavender et al., 2005).
+One method to remove L<sub>SR</sub> relies on the so-called black pixel assumption that assumes L<sub>W</sub> in the near infrared (NIR) is negligible due to strong absorption of water. Where this assumption holds, at-sensor radiance measured in the NIR is solely L<sub>SR</sub> (Gordon and Wang, 1994; Siegel et al., 2000) and allows ⍴ to be calculated if L<sub>sky</sub> is known. Studies have used this assumption to estimate and remove L<sub>SR</sub>; however, the assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and L<sub>W</sub> in the NIR (Siegel et al., 2000; Lavender et al., 2005). *Therefore, this method should only be used in waters whos optical propeties are dominated and co-vary with phytoplankton (e.g. Case 1, open ocean waters).* 
+
+`mobley_rho_method()`
+<br/>
+Tabulated ρ values have been derived from numerical simulations with modelled sea surfaces, Cox and Munk wave states (wind), and viewing geometries (Cox and Munk, 1954; Mobley, 1999; Mobley, 2015). Mobley (1999) provides the recommendation of collecting radiance measurements at viewing directions of θ = 40° from nadir and ɸ = 135° from the sun to minimize the effects of sun glint and nonuniform sky radiance with a ⍴ value of 0.028 for wind speeds less than 5 m/s. These suggested viewing geometries and ⍴ value from Mobley (1999) have been used to estimate and remove L<sub>SR</sub> in many remote sensing studies (Ruddick et al., 2006; Shang S. et al., 2017; Baek et al., 2019; Kim et al., 2020). *This method should only be used if using a drone sensor that is angled 30-40° from nadir and if wind speed is less than 5 m/s.*
 
 `hedley_method()`
 <br/>
-Other methods include removing sun glint and L<sub>sky</sub> by utilization of the NIR band by calculating an 'ambient' NIR brightness level, representing the NIR brightness with no sun glint or LSR (Hochberg et al., 2003; Hedley et al., 2005). A linear relationship between Lt(NIR) and Lt in the visible bands is established, and for each pixel, the slope of this line is multiplied by the difference between the pixel NIR value and the ambient NIR level. 
+Other methods to remove L<sub>SR</sub> include modelling a constant 'ambient' NIR signal that is removed from all pixels. This method relies on two assumptions: 1) The brightness in the NIR is composed only of sun glint and a spatially constant 'ambient' NIR component, and 2) The amount of L<sub>SR</sub> in the visible bands is linearly related to the amount in the NIR band (Hedley et al., 2005). Briefly, the minimum 10% of NIR radiance, min(Lt<sub>NIR</sub>), is calcualted from a random subset of images (number of images is user selected). Next, linear relationships are established between the Lt<sub>NIR</sub> and the visible band values, which would be homogenous if not for the presence of L<sub>SR</sub>. Then, the slope (*b*) of the regressions are used to predict L<sub>SR</sub> for all pixels in the visible bands that would be expected if those pixels had a Lt<sub>NIR</sub> value of min(Lt<sub>NIR</sub>):
+<div align="center">
+<br/>
+Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>)), where *i* is each band
+<br/>
 
 # Water quality retrievals
 
