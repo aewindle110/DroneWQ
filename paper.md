@@ -82,7 +82,7 @@ R<sub>rs</sub>(θ, Φ, λ) = R<sub>UAS</sub>(θ, Φ, λ) − (L<sub>sky</sub>(θ
 </div>
 <br/>
 
-# Removal of surface reflected light (L<sub>SR</sub>) 
+# Removal of surface reflected light (L<sub>T</sub> - L<sub>SR</sub> = L<sub>W</sub>) 
 
 The inclusion of sun glint and L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> and remotely sensed water quality retrievals, as shown in Figure _. `DroneWQ` provides a sun glint masking procedure to remove instances of specular sun glint and three common approaches to remove LSR as described below:
 
@@ -105,8 +105,9 @@ Other methods to remove L<sub>SR</sub> include modelling a constant 'ambient' NI
 <br/>
 Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>)), where *i* is each band
 <br/>
+</div>
   
-# Normalizing by downwelling irradiance (E<sub>d</sub>)
+# Normalizing by downwelling irradiance (L<sub>W</sub> / E<sub>d</sub> =  R<sub>rs</sub>) 
  
 After Lsr is removed from Lt, Lw needs to be normalized by Ed to calculate Rrs (Eq. 6). The downwelling light sensor (DLS) or calibration reflectane panel should be used depending on weather conditions. 
 
@@ -121,7 +122,36 @@ When flying on a clear sunny day or a completely overcast cloudy day, the calibr
 <br/> 
   
 
-# Water quality retrievals
+# Water quality retrievals 
+<br/>
+R<sub>rs</sub> is often used as input into various bio-optical algorithms to obtain concentrations of optically active water quality constituents such as chlorophyll a or total suspended matter (TSM). Several functions can be applied to calculate concentrations. 
+<br/>
+
+`chl_hu()`
+<br/>
+This is the Ocean Color Index (CI) three-band reflectance difference algorithm (Hu et al. 2012). This should only be used for chlorophyll retrievals below 0.15 mg m^-3. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. doi:10.1029/2011jc007395
+<br/>
+
+`chl_ocx()`
+<br/>
+This is the OCx algorithm which uses a fourth-order polynomial relationship (O'Reilly et al. 1998). This should be used for chlorophyll retrievals above 0.2 mg m^-3. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. The coefficients for OC2 (OLI/Landsat 8) are used as default. doi:10.1029/98JC02160.
+<br/>
+
+`chl_hu_ocx()`
+<br/>
+This is the blended NASA chlorophyll algorithm which combines Hu color index (CI) algorithm (chl_hu) and the O'Reilly band ratio OCx algortihm (chl_ocx). This specific code is grabbed from https://github.com/nasa/HyperInSPACE. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/.
+<br/>
+
+`chl_gitelson()`
+<br/>
+This algorithm estimates chlorophyll a concentrations using a 2-band algorithm with coefficients from Gitelson et al. 2007. This algorithm is recommended for coastal (Case 2) waters. doi:10.1016/j.rse.2007.01.016
+<br/>
+
+`nechad_tsm()`
+<br/>
+This algorithm estimates total suspended matter (TSM) concentrations using the Nechad et al. (2010) algorithm. doi:10.1016/j.rse.2009.11.022.
+<br/>
+
 
 # Georeferencing and mapping
 
