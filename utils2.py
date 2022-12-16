@@ -94,7 +94,7 @@ def write_metadata_csv(img_set, csv_output_path):
     df = pd.read_csv(fullCsvPath)
     df['filename'] = df['SourceFile'].str.split('/').str[-1]
     df = df.set_index('filename')
-    df['UTC-Time'] = pd.to_datetime(df['    GPSTimeStamp'])    
+    df['UTC-Time'] = pd.to_datetime(df['    GPSDateStamp'] +' '+ df['    GPSTimeStamp'],format="%Y:%m:%d %H:%M:%S")    
     df.to_csv(fullCsvPath)
     
     return(fullCsvPath)
