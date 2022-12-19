@@ -326,12 +326,13 @@ def rrs_threshold_pixel_masking(rrs_dir, masked_rrs_dir, nir_threshold = 0.01, g
 
 def rrs_std_pixel_masking(rrs_dir, masked_rrs_dir, num_images=10, mask_std_factor=1):
     """
-    This function masks pixels based on a user supplied NIR threshold in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std*glint_std_factor is masked across all bands. The lower the glint_std_factor, the more pixels will be masked. 
+    This function masks pixels based on a user supplied value in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std*mask_std_factor is masked across all bands. The lower the mask_std_factor, the more pixels will be masked. 
     
     Inputs: 
     rrs_dir: A string containing the directory filepath of images to be processed
     masked_rrs_dir: A string containing the directory filepath to write the new masked .tifs
-    std_factor: A factor to multiply to the standard deviation of NIR values
+    num_images: Number of images in the dataset to calculate the mean and std of NIR
+    mask_std_factor: A factor to multiply to the standard deviation of NIR values
     
     Output: New masked .tifs
     
@@ -621,6 +622,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method()
     ed_method: Method used to calculate downwelling irradiance. Default is dls_ed(). 
     
+    Output: 
     """
     
     ############################
@@ -821,6 +823,11 @@ def chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred):
 def chl_gitelson(Rrsred, Rrsrededge):
     """
     This algorithm estimates chlorophyll a concentrations using a 2-band algorithm with coefficients from Gitelson et al. 2007. This algorithm is recommended for coastal (Case 2) waters. doi:10.1016/j.rse.2007.01.016
+    
+    Inputs:
+    Rrs_x: numpy array of Rrs in each band. 
+    
+    Output: numpy array of derived chlorophyll
     """
     
     chl = 59.826 * (Rrsrededge/Rrsred) - 17.546
@@ -832,6 +839,10 @@ def nechad_tsm(Rrsred):
     """
     This algorithm estimates total suspended matter (TSM) concentrations using the Nechad et al. (2010) algorithm. doi:10.1016/j.rse.2009.11.022
     
+    Inputs:
+    Rrs_x: numpy array of Rrs(red)
+    
+    Output: numpy array of derived chlorophyll
     """
     A = 374.11
     B = 1.61
@@ -846,7 +857,15 @@ def nechad_tsm(Rrsred):
 
 def spacetotopdown(top_im, cam, image_size, scaling):
     """
+    This function 
     
+    Inputs:
+    top_im: top view of image derived from the getTopViewOfImage() function in CameraTransform
+    cam: 
+    image_size: 
+    scaling: 
+    
+    Output: numpy array of 
     """
     x1 = top_im.shape[0]/2 + cam.spaceFromImage([0,0])[0] / scaling
     y1 = top_im.shape[1]/2 - cam.spaceFromImage([0,0])[1] / scaling
@@ -866,7 +885,18 @@ def spacetotopdown(top_im, cam, image_size, scaling):
 
 def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, flip=False, plot=False):
     """
-
+    This function applies georeferencing based on MicaSense image metadata (altitude, pitch, roll, yaw, lat, lon). 
+    
+    Inputs:
+    main_dir: A string containing main directory 
+    img_dir: A string containing directory to georeference
+    output_dir_name: A string containing directory of georeferenced images 
+    start: The number of image to start on. Default is 0 (first image in img_dir). 
+    count: The amount of images you want to list. Default is 10000.
+    flip: Option to flip camera orientation if camera is integrated 180 deg from DLS. Default is False.
+    plot: Option to plot georeferenced images. Default is False.
+    
+    Output: New georeferenced .tifs 
     """
     
     # make georeference directory 
@@ -965,7 +995,16 @@ def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, flip=
 
 def mosaic(main_dir, img_dir, output_name, save=True, plot=True, band_to_plot=0):
     """
+    This function mosaics georeferenced .tifs to create one large .tif
+    Inputs: 
+    main_dir: String containing main directory
+    img_dir: String containing image directory of .tifs to mosaic. 
+    output_name: Text of mosaicked .tif
+    save=True: Option to save mosaicked .tif in main_dir. Default is True.
+    plot=True: Option to plot mosaicked tif. Default is True. 
+    band_to_plot: What band to plot. Default is 0 (blue)  
     
+    Output: numpy array of mosaicked georeferenced images 
     """
     mosaic_tifs = []
     for i in glob.glob(img_dir + "/*.tif"):
