@@ -15,7 +15,7 @@ authors:
   - name: Patrick Gray 
     orcid: 0000-0000-0000-0000
     affiliation: 2
-    equal_contrib:true
+    equal_contrib: true
   - name: Greg M. Silsbe
     orcid: 0000-0000-0000-0000
     affiliation: 1
@@ -33,11 +33,9 @@ bibliography: paper.bib
 
 Small aerial drones conveniently achieve scales of observation between satellite resolutions and in situ sampling, effectively diminishing the “blind spot” between these established measurement techniques. Drones equipped with off-the-shelf multispectral sensors originally designed for terrestrial applications are being increasingly used to derive water quality properties. Multispectral drone imagery requires post processing to radiometrically calibrate raw pixel values to useful radiometric units, remove sun glint and surface reflected light, and map spatial patterns of water quality parameters. 
 
-
 # Statement of need
 
-`DroneWQ` is a Python package for multispectral drone imagery processing to obtain and map estimates of water quality concentrations. `DroneWQ` was designed to be used by managers, researchers, and students who wish to utilize drone multispectral remote sensing to analyze water quality. The combination of processing, georeferencing, 
-and mapping drone imagery will enable effective water quality monitoring at fine spatial resolutions. The simple functionality of `DroneWQ` will enable exciting scientific exploration of drone remote sensing by students and experts alike. 
+`DroneWQ` is a Python package for multispectral drone imagery processing to obtain remote sensing reflectance (R<sub>rs</sub>), the fundamental input into ocean color retrievals which is used to estimate and map water quality concentrations. `DroneWQ` was designed to be used by managers, researchers, and students who wish to utilize drone multispectral remote sensing to analyze water quality. The combination of processing, georeferencing, and mapping drone imagery will enable effective water quality monitoring at fine spatial resolutions. The simple functionality of `DroneWQ` will enable exciting scientific exploration of drone remote sensing by students and experts alike. 
 
 # Background/Theory
 
@@ -63,7 +61,7 @@ L<sub>T</sub>(θ, Φ, λ)= L<sub>W</sub>(θ, Φ, λ) + L<sub>SR</sub>(θ, Φ, λ
 </div>
 <br/>
 
-If a water surface was perfectly flat, incident light would reflect specularly and could be measured with known viewing geometries. This specular reflection of a level surface is known as the Fresnel reflection; however, most water bodies are not flat as winds and currents create tilting surface wave facets. Due to differing orientation of wave facets reflecting radiance from different parts of the sky, L<sub>SR</sub> can vary widely within a single image. A common approach to model LSR is to express it as the product of sky radiance (L<sub>sky</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) and ⍴, the effective sea-surface reflectance of the wave facet (Mobley, 1999 ; Lee et al., 2010):
+If a water surface was perfectly flat, incident light would reflect specularly and could be measured with known viewing geometries. This specular reflection of a level surface is known as the Fresnel reflection; however, most water bodies are not flat as winds and currents create tilting surface wave facets. Due to differing orientation of wave facets reflecting radiance from different parts of the sky, L<sub>SR</sub> can vary widely within a single image. A common approach to model L<sub>SR</sub> is to express it as the product of sky radiance (L<sub>sky</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) and ⍴, the effective sea-surface reflectance of the wave facet (Mobley, 1999; Lee et al., 2010):
 
 <div align="center">
 L<sub>SR</sub>(θ, Φ, λ)= ρ(θ, Φ, λ) ∗ L<sub>sky</sub>(θ, Φ, λ) Eq. 4
@@ -84,7 +82,7 @@ R<sub>rs</sub>(θ, Φ, λ) = R<sub>UAS</sub>(θ, Φ, λ) − (L<sub>sky</sub>(θ
 
 # Removal of surface reflected light (L<sub>T</sub> - L<sub>SR</sub> = L<sub>W</sub>) 
 
-The inclusion of sun glint and L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> and remotely sensed water quality retrievals, as shown in Figure _. `DroneWQ` provides a sun glint masking procedure to remove instances of specular sun glint and three common approaches to remove LSR as described below:
+The inclusion of sun glint and L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> and remotely sensed water quality retrievals, as shown in Figure 1. `DroneWQ` provides three common approaches to remove LSR as described below:
 
 ![Caption for example figure.\label{fig:removal_Lsr_fig}](removal_Lsr_fig.jpg)
 <br/>
@@ -106,7 +104,7 @@ Other methods to remove L<sub>SR</sub> include modelling a constant 'ambient' NI
 Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>)), where *i* is each band
 <br/>
 </div>
-  
+
 # Normalizing by downwelling irradiance (L<sub>W</sub> / E<sub>d</sub> =  R<sub>rs</sub>) 
  
 After Lsr is removed from Lt, Lw needs to be normalized by Ed to calculate Rrs (Eq. 6). The downwelling light sensor (DLS) or calibration reflectane panel should be used depending on weather conditions. 
@@ -118,10 +116,24 @@ According to MicaSense, the DLS is better at estimating changing light condition
   
 <br/>
 `panel_ed()`
+<br/> 
 When flying on a clear sunny day or a completely overcast cloudy day, the calibration reflectance panel should be used. This method uses the MicaSense function Capture.panel_irraidiance() which returns a list of mean panel irradiance values. 
 <br/> 
   
+# R<sub>rs</sub> pixel masking
+<br/>
+An optional pixel masking procedure can be applied to R<sub>rs</sub> data to remove instances of specular sun glint and other artifacts in the imagery such as adjacent land, vegetation shadowing, or boats when present in the imagery. Pixels can be masked two ways: 
+<br/>
+`rrs_threshold_pixel_masking()`
+<br/> 
+This function masks pixels based on a user supplied Rrs thresholds to mask pixels containing values > R<sub>rs</sub>(NIR) threshold and < R<sub>rs</sub>(green) threshold.  
+<br/>  
 
+`rrs_std_pixel_masking()`
+<br/>
+This function masks pixels based on a user supplied NIR factor. The mean and standard deviation of NIR is calculated from a user supplied amount of images, and pixels contain a NIR value > mean + std * mask_std_factor are masked. The lower the mask_std_factor, the more pixels will be masked.
+<br/>
+ 
 # Water quality retrievals 
 <br/>
 R<sub>rs</sub> is often used as input into various bio-optical algorithms to obtain concentrations of optically active water quality constituents such as chlorophyll a or total suspended matter (TSM). Several functions can be applied to calculate concentrations. 
@@ -152,19 +164,17 @@ This algorithm estimates chlorophyll a concentrations using a 2-band algorithm w
 This algorithm estimates total suspended matter (TSM) concentrations using the Nechad et al. (2010) algorithm. doi:10.1016/j.rse.2009.11.022.
 <br/>
 
-# Pixel masking
-<br/>
-`rrs_pixel_masking()`
-<br/>
-This function masks pixels based on a user supplied Rrs thresholds in an effort to remove instances of specular sun glint, shadowing, or adjacent land when present in the images. It is designed to be applied to processed Rrs images. 
-<br/>
-
-`std_glint_removal_method()`
-<br/>
-This function masks pixels based on a user supplied NIR threshold in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std x glint_std_factor is masked across all bands. The lower the glint_std_factor, the more pixels will be masked. It is designed to 
-<br/>
 
 # Georeferencing and mapping
+<br/>
+`georeference()`
+<br/>
+This function uses MicaSense metadata to georeference all images to a known coordinate space. 
+<br/>
+
+`mosaic()`
+<br/>
+This function mosaics georeferenced .tifs into one .tif. 
 
 # Acknowledgements
 
