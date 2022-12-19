@@ -106,8 +106,7 @@ Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>))
 </div>
 
 # Normalizing by downwelling irradiance (L<sub>W</sub> / E<sub>d</sub> =  R<sub>rs</sub>) 
- 
-After Lsr is removed from Lt, Lw needs to be normalized by Ed to calculate Rrs (Eq. 6). The downwelling light sensor (DLS) or calibration reflectane panel should be used depending on weather conditions. 
+ After Lsr is removed from Lt, Lw needs to be normalized by Ed to calculate Rrs (Eq. 6). The downwelling light sensor (DLS) or calibration reflectane panel should be used depending on weather conditions. 
 
 `dls_ed()`
 <br/>
@@ -119,13 +118,11 @@ When flying on a clear sunny day or a completely overcast cloudy day, the calibr
 <br/> 
   
 # R<sub>rs</sub> pixel masking
-<br/>
 An optional pixel masking procedure can be applied to R<sub>rs</sub> data to remove instances of specular sun glint and other artifacts in the imagery such as adjacent land, vegetation shadowing, or boats when present in the imagery. Pixels can be masked two ways: 
 
 `rrs_threshold_pixel_masking()`
 <br/> 
 This function masks pixels based on a user supplied Rrs thresholds to mask pixels containing values > R<sub>rs</sub>(NIR) threshold and < R<sub>rs</sub>(green) threshold.  
-<br/>  
 
 `rrs_std_pixel_masking()`
 <br/>
@@ -133,9 +130,7 @@ This function masks pixels based on a user supplied NIR factor. The mean and sta
 <br/>
  
 # Water quality retrievals 
-<br/>
 R<sub>rs</sub> is often used as input into various bio-optical algorithms to obtain concentrations of optically active water quality constituents such as chlorophyll a or total suspended matter (TSM). Several functions can be applied to calculate concentrations. 
-<br/>
 
 `chl_hu()`
 <br/>
@@ -164,11 +159,9 @@ This algorithm estimates total suspended matter (TSM) concentrations using the N
 
 
 # Georeferencing and mapping
-<br/>
 `georeference()`
 <br/>
 This function uses MicaSense metadata to georeference all images to a known coordinate space. 
-<br/>
 
 `mosaic()`
 <br/>
