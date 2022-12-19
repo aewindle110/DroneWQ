@@ -101,7 +101,7 @@ Tabulated ρ values have been derived from numerical simulations with modelled s
 Other methods to remove L<sub>SR</sub> include modelling a constant 'ambient' NIR signal that is removed from all pixels. This method relies on two assumptions: 1) The brightness in the NIR is composed only of sun glint and a spatially constant 'ambient' NIR component, and 2) The amount of L<sub>SR</sub> in the visible bands is linearly related to the amount in the NIR band (Hedley et al., 2005). Briefly, the minimum 10% of NIR radiance, min(Lt<sub>NIR</sub>), is calcualted from a random subset of images (number of images is user selected). Next, linear relationships are established between the Lt<sub>NIR</sub> and the visible band values, which would be homogenous if not for the presence of L<sub>SR</sub>. Then, the slope (*b*) of the regressions are used to predict L<sub>SR</sub> for all pixels in the visible bands that would be expected if those pixels had a Lt<sub>NIR</sub> value of min(Lt<sub>NIR</sub>):
 <div align="center">
 <br/>
-Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>)), where *i* is each band
+Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>)), where i is each band
 <br/>
 </div>
 
@@ -109,12 +109,10 @@ Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>))
  
 After Lsr is removed from Lt, Lw needs to be normalized by Ed to calculate Rrs (Eq. 6). The downwelling light sensor (DLS) or calibration reflectane panel should be used depending on weather conditions. 
 
-<br/>
 `dls_ed()`
 <br/>
 According to MicaSense, the DLS is better at estimating changing light conditions (e.g. variable cloud cover) since it records DLS throughout a flight; however, it is not a perfect measurement due to movement of the drone. However, the the MicaSense function Capture.dls_irradiance() incorporates tilt-compensated DLS values from the onboard orientation sensor. 
   
-<br/>
 `panel_ed()`
 <br/> 
 When flying on a clear sunny day or a completely overcast cloudy day, the calibration reflectance panel should be used. This method uses the MicaSense function Capture.panel_irraidiance() which returns a list of mean panel irradiance values. 
@@ -123,7 +121,7 @@ When flying on a clear sunny day or a completely overcast cloudy day, the calibr
 # R<sub>rs</sub> pixel masking
 <br/>
 An optional pixel masking procedure can be applied to R<sub>rs</sub> data to remove instances of specular sun glint and other artifacts in the imagery such as adjacent land, vegetation shadowing, or boats when present in the imagery. Pixels can be masked two ways: 
-<br/>
+
 `rrs_threshold_pixel_masking()`
 <br/> 
 This function masks pixels based on a user supplied Rrs thresholds to mask pixels containing values > R<sub>rs</sub>(NIR) threshold and < R<sub>rs</sub>(green) threshold.  
