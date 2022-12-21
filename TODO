@@ -1,4 +1,4 @@
-- install geopandas, basemap? into Docker
+
 - Including function to combine DLS and panel Ed
 - The description of spacetotopdown() function in utils.py
 - Description and annotating georeference() in utils.py
