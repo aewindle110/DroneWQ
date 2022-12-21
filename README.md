@@ -31,7 +31,7 @@ Once Docker and git are installed, setup a local directory. We recommend that th
     
 With the Docker app running on your desktop, you need to launch the Docker container. Note that the first execution of this line of code will install the Docker image  and setup and configure all required software (python, jupyter notebooks) and packages. 
     
-`docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v1`
+`docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v2`
 
  Activate the micasense environment and launch a jupyter notebook: 
 
