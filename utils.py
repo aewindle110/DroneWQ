@@ -543,7 +543,7 @@ def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
     return(True)
 
 
-def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel=False):
+def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir, corr_from_panel=False):
     """
     This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is derived from the downwelling light sensor (DLS). This method does not perform well when light is constant due to movement of the drone which creates biased data. This method should be used during variable cloud conditions. 
     
@@ -567,7 +567,7 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel=False):
         ed_row = ['capture_'+str(i+1)]+[np.mean(ed[0]*1000)]+[np.mean(ed[1]*1000)]+[np.mean(ed[2]*1000)]+[np.mean(ed[3]*1000)]+[np.mean(ed[4]*1000)] #multiply by 1000 to scale to mW 
         ed_data.append(ed_row)
 
-        if dls_corr == True:
+        if corr_from_panel == True:
             panel_imgset = imageset.ImageSet.from_directory(panel_dir).captures
             panels = np.array(panel_imgset)  
 
