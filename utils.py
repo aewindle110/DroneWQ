@@ -84,7 +84,7 @@ def write_metadata_csv(img_set, csv_output_path):
     df = pd.read_csv(fullCsvPath)
     df['filename'] = df['SourceFile'].str.split('/').str[-1]
     df = df.set_index('filename')
-    df['UTC-Time'] = pd.to_datetime(df['    GPSDateStamp'] +' '+ df['    GPSTimeStamp'],format="%Y:%m:%d %H:%M:%S")    
+    df['UTC-Time'] = pd.to_datetime(df['GPSDateStamp'] +' '+ df['GPSTimeStamp'],format="%Y:%m:%d %H:%M:%S")    
     df.to_csv(fullCsvPath)
     
     return(fullCsvPath)
@@ -134,7 +134,7 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     df = load_img_fn_and_meta(csv_path, count=count, start=start)
     
     # apply altitiude threshold and set IDs as the indez
-    df = df[df['    GPSAltitude'] > altitude_cutoff]
+    df = df[df['GPSAltitude'] > altitude_cutoff]
     
     #ids = np.arange(1,len(df)+1)
     #df['id'] = ids    
@@ -543,7 +543,7 @@ def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
     return(True)
 
 
-def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir, corr_from_panel=False):
+def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir, dls_corr=False):
     """
     This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is derived from the downwelling light sensor (DLS). This method does not perform well when light is constant due to movement of the drone which creates biased data. This method should be used during variable cloud conditions. 
     
@@ -567,7 +567,7 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir, corr_from
         ed_row = ['capture_'+str(i+1)]+[np.mean(ed[0]*1000)]+[np.mean(ed[1]*1000)]+[np.mean(ed[2]*1000)]+[np.mean(ed[3]*1000)]+[np.mean(ed[4]*1000)] #multiply by 1000 to scale to mW 
         ed_data.append(ed_row)
 
-        if corr_from_panel == True:
+        if dls_corr == True:
             panel_imgset = imageset.ImageSet.from_directory(panel_dir).captures
             panels = np.array(panel_imgset)  
 
@@ -623,7 +623,7 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir, corr_from
                 dst.write(stacked_rrs)
     return(True)
 
-def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', overwrite=False, clean_intermediates=True):
+def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', dls_corr=False, overwrite=False, clean_intermediates=True):
     """
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
     
@@ -714,6 +714,10 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
         print('Normalizing by DLS irradiance (Lw/Ed -> Rrs).')
         dls_ed(raw_water_img_dir, lw_dir, rrs_dir, output_csv_path)
 
+    elif ed_method == 'dls_and_panel_ed':
+        print('Normalizing by DLS corrected by panel irradiance (Lw/Ed -> Rrs).')
+        dls_ed(raw_water_img_dir, lw_dir, rrs_dir, panel_dir, output_csv_path, dls_corr = True)
+    
     else:
         print('No other irradiance normalization methods implemented yet, panel_ed is recommended.')
         return(False)
@@ -921,15 +925,15 @@ def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, scali
     imgs, img_metadata = retrieve_imgs_and_metadata(img_dir = img_dir, start=start, count=count)
 
     for i in range(len(img_metadata)):
-        f = img_metadata.iloc[i]['    FocalLength']
-        image_size = [img_metadata.iloc[i]['    ImageWidth'], img_metadata.iloc[i]['ImageHeight']]
+        f = img_metadata.iloc[i]['FocalLength']
+        image_size = [img_metadata.iloc[i]['ImageWidth'], img_metadata.iloc[i]['ImageHeight']]
         sensor_size = (4.8,3.6) #got from MicaSense specs
         pitch = img_metadata.iloc[i]['GPSPitch']
         roll = img_metadata.iloc[i]['GPSRoll']
-        yaw = img_metadata.iloc[i]['    GPSImgDirection']
-        alt = img_metadata.iloc[i]['    GPSAltitude']
-        lat = img_metadata.iloc[i]['    GPSLatitude']
-        lon = img_metadata.iloc[i]['    GPSLongitude']
+        yaw = img_metadata.iloc[i]['GPSImgDirection']
+        alt = img_metadata.iloc[i]['GPSAltitude']
+        lat = img_metadata.iloc[i]['GPSLatitude']
+        lon = img_metadata.iloc[i]['GPSLongitude']
 
         cam = ct.Camera(ct.RectilinearProjection(focallength_mm=f,
                                              sensor=sensor_size,
