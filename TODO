@@ -3,3 +3,4 @@
 - Edit mosaic() to have start and count option 
 - Scale of Lw, Ed - mW or W?
 - Figure out how to not overwrite Lw, rrs images
+- Finalize all descriptions, inputs, and outputs in utils
