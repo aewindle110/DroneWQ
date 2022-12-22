@@ -560,18 +560,50 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel=False):
     capture_imgset = imageset.ImageSet.from_directory(raw_water_dir).captures
     ed_data = []
     ed_columns = ['image', 'ed_475', 'ed_560', 'ed_668', 'ed_717', 'ed_842']
-    
+
     for i,capture in enumerate(capture_imgset):
         ed = capture.dls_irradiance()
         ed[3], ed[4] = ed[4], ed[3] #flip last two bands (red edge and NIR)
         ed_row = ['capture_'+str(i+1)]+[np.mean(ed[0]*1000)]+[np.mean(ed[1]*1000)]+[np.mean(ed[2]*1000)]+[np.mean(ed[3]*1000)]+[np.mean(ed[4]*1000)] #multiply by 1000 to scale to mW 
         ed_data.append(ed_row)
-        
+
+        if dls_corr == True:
+            panel_imgset = imageset.ImageSet.from_directory(panel_dir).captures
+            panels = np.array(panel_imgset)  
+
+            panel_ed_data = []  
+            dls_ed_data = []
+            for i, capture in enumerate(panels): 
+                #calculate panel Ed from every panel capture
+                panel_ed = np.array(panels[i].panel_irradiance()) # this function automatically finds the panel albedo and uses that to calcuate Ed, otherwise raises an error
+                panel_ed[3], panel_ed[4] = panel_ed[4], panel_ed[3] #flip last two bands
+                panel_ed_row = ['capture_'+str(i+1)]+[np.mean(panel_ed[0]*1000)]+[np.mean(panel_ed[1]*1000)]+[np.mean(panel_ed[2]*1000)]+[np.mean(panel_ed[3]*1000)]+[np.mean(panel_ed[4]*1000)] #multiply by 1000 to scale to mW (but want ed to still be in W to divide by Lw which is in W)
+                panel_ed_data.append(panel_ed_row)
+
+                #calculate DLS Ed from every panel capture
+                dls_ed = capture.dls_irradiance()
+                dls_ed[3], dls_ed[4] = dls_ed[4], dls_ed[3] #flip last two bands (red edge and NIR)
+                dls_ed_row = ['capture_'+str(i+1)]+[np.mean(dls_ed[0]*1000)]+[np.mean(dls_ed[1]*1000)]+[np.mean(dls_ed[2]*1000)]+[np.mean(dls_ed[3]*1000)]+[np.mean(dls_ed[4]*1000)] #multiply by 1000 to scale to mW 
+                dls_ed_data.append(dls_ed_row)         
+
+            dls_ed_corr = np.array(panel_ed)/np.array(dls_ed[0:5])
+            ed = ed[0:5]*dls_ed_corr*1000
+            ed = np.append(ed, [0]) #add zero because other ed ends with a 0
+
+            dls_ed_corr_data = []
+            for i,capture in enumerate(capture_imgset):
+                dls_ed_corr_row = ['capture_'+str(i+1)]+[ed[0]]+[ed[1]]+[ed[2]]+[ed[3]]+[ed[4]]
+                dls_ed_corr_data.append(dls_ed_corr_row)
+
+
     ed_data = pd.DataFrame.from_records(ed_data, index='image', columns = ed_columns)
     ed_data.to_csv(output_csv_path+'/dls_ed.csv')
-    
+
+    dls_ed_corr_data = pd.DataFrame.from_records(dls_ed_corr_data, index='image', columns = ed_columns)
+    dls_ed_corr_data.to_csv(output_csv_path+'/dls_corr_ed.csv')
+
+
     # now divide the lw_imagery by ed to get rrs
-    # go through each Lt image in the dir and divide it by the lsky
     for im in glob.glob(lw_dir + "/*.tif"):
         with rasterio.open(im, 'r') as Lw_src:
             profile = Lw_src.profile
@@ -580,7 +612,7 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel=False):
             # could vectorize this for speed
             for i in range(1,6):
                 lw = Lw_src.read(i)
-                
+
                 rrs = lw/ed[i-1]
                 rrs_all.append(rrs) #append each band
             stacked_rrs = np.stack(rrs_all) #stack into np.array 
@@ -590,15 +622,6 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel=False):
             with rasterio.open(os.path.join(rrs_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_rrs)
     return(True)
-
-#def combine_panel_dls()
-
-"""
-**********AW_question: would like to create a function that combines both the DLS and panel data since MicaSense recommends it: https://support.micasense.com/hc/en-us/articles/360025336894-Using-Panels-and-or-DLS-in-Post-Processing
-
-Could not figure out how they did it here: https://github.com/micasense/imageprocessing/blob/master/MicaSense%20Image%20Processing%20Tutorial%203.ipynb
-
-"""
 
 def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', overwrite=False, clean_intermediates=True):
     """
