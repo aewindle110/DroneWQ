@@ -899,7 +899,7 @@ def spacetotopdown(top_im, cam, image_size, scaling):
     return(np.array([[x1,y1], [x2,y2], [x3,y3], [x4,y4]]))
 
 
-def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, scaling=0.2, extent=80, flip=False, plot=False):
+def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, scaling=0.2, extent=80, flip=False, plot=False, yaw='GPSImgDirection',pitch='GPSPitch',roll='GPSRoll'):
     """
     This function applies georeferencing based on MicaSense image metadata (altitude, pitch, roll, yaw, lat, lon). 
     
@@ -928,9 +928,9 @@ def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, scali
         f = img_metadata.iloc[i]['FocalLength']
         image_size = [img_metadata.iloc[i]['ImageWidth'], img_metadata.iloc[i]['ImageHeight']]
         sensor_size = (4.8,3.6) #got from MicaSense specs
-        pitch = img_metadata.iloc[i]['GPSPitch']
-        roll = img_metadata.iloc[i]['GPSRoll']
-        yaw = img_metadata.iloc[i]['GPSImgDirection']
+        pitch = img_metadata.iloc[i][pitch]
+        roll = img_metadata.iloc[i][roll]
+        yaw = img_metadata.iloc[i][yaw]
         alt = img_metadata.iloc[i]['GPSAltitude']
         lat = img_metadata.iloc[i]['GPSLatitude']
         lon = img_metadata.iloc[i]['GPSLongitude']
