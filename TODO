@@ -1,7 +1,5 @@
 
 - Including function to combine DLS and panel Ed
-- The description of spacetotopdown() function in utils.py
-- Description and annotating georeference() in utils.py
 - Edit mosaic() to have start and count option 
-- Include function that saves mean Rrs/WQ as pandas geodataframe?
 - Scale of Lw, Ed - mW or W?
+- Figure out how to not overwrite Lw, rrs images
