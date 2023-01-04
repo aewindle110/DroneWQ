@@ -12,7 +12,7 @@ Gray, P.C., Windle, A.E., Dale, J., Savelyev, I.B., Johnson, Z.I., Silsbe, G.M.,
 Windle, A.E. and Silsbe, G.M., 2021. Evaluation of unoccupied aircraft system (UAS) remote sensing reflectance retrievals for water quality monitoring in coastal waters. Frontiers in Environmental Science, p.182. doi:10.3389/fenvs.2021.674247
 
 
-[[I think we need a figure here that shows the workflow even something simple]]
+![Caption for example figure.\label{fig:DroneWQ_workflow}](DroneWQ_workflow.png)
 
 ## Installation
 
