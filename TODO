@@ -1,6 +1,5 @@
 
-- Including function to combine DLS and panel Ed
-- Edit mosaic() to have start and count option 
+- Including function to combine DLS and panel Ed 
 - Scale of Lw, Ed - mW or W?
 - Figure out how to not overwrite Lw, rrs images
 - Finalize all descriptions, inputs, and outputs in utils
