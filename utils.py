@@ -136,10 +136,6 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     # apply altitiude threshold and set IDs as the indez
     df = df[df['GPSAltitude'] > altitude_cutoff]
     
-    #ids = np.arange(1,len(df)+1)
-    #df['id'] = ids    
-    #df.set_index('id', inplace=True)
-    
     # this grabs the filenames from the subset of the dataframe we've selected, then preprends the image_dir that we want.
     # the filename is the index
     all_imgs = load_images([os.path.join(img_dir,fn) for fn in df.index.values])
@@ -176,7 +172,7 @@ def get_warp_matrix(img_capture, max_alignment_iterations = 50):
     return(warp_matrices)
 
 
-def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, generateThumbnails = True, overwrite=False):
+def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, generateThumbnails=True, overwrite=False):
     """
     This function processes each capture in an imageset to compute radiace, apply a warp matrix, and save new .tifs with units of radiance (W/sr/nm) and optional RGB .jpgs.
     
@@ -423,7 +419,7 @@ def blackpixel_method(sky_lt_dir, lt_dir, lw_dir):
             for i in range(1,6):
                 # todo this is probably faster if we read them all and divide by the vector
                 lt = Lt_src.read(i)
-                lw = lt - (rho*lsky_median[i-1])
+                lw = lt - (rho*lsky_median[i-1]) 
                 lw_all.append(lw) #append each band
             stacked_lw = np.stack(lw_all) #stack into np.array
 
@@ -717,7 +713,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     elif ed_method == 'dls_and_panel_ed':
         print('Normalizing by DLS corrected by panel irradiance (Lw/Ed -> Rrs).')
         dls_ed(raw_water_img_dir, lw_dir, rrs_dir, panel_dir, output_csv_path, dls_corr = True)
-    
+
     else:
         print('No other irradiance normalization methods implemented yet, panel_ed is recommended.')
         return(False)
@@ -868,7 +864,53 @@ def nechad_tsm(Rrsred):
     tsm = (A*Rrsred/(1-(Rrsred/C))) + B
     return(tsm)
 
-#def ondrusek_tsm(Rrsred):
+def save_wq_imgs(main_dir, img_dir, wq_dir_name, wq_alg='chl_gitelson', start=0, count=10000)
+    """
+    This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
+    Inputs:
+    main_dir:
+    project_dir:
+    wq_dir_name:
+    
+    Outputs:
+    """
+    # make wq_dir directory 
+    wq_dir = main_dir + '/' + wq_dir_name
+    if not os.path.exists(wq_dir):
+        os.makedirs(wq_dir)
+
+    for im in glob.glob(img_dir + "/*.tif")[start:count]:
+        with rasterio.open(im, 'r') as Rrs_src:
+            profile = Rrs_src.profile
+            profile['count']=5
+            Rrsblue=Rrs_src.read(1)
+            Rrsgreen=Rrs_src.read(2)
+            Rrsred=Rrs_src.read(3)
+            Rrsrededge=Rrs_src.read(4)
+            Rrsnir=Rrs_src.read(5)
+
+        if wq_alt == 'chl_hu':
+            wq = chl_hu(Rrsblue, Rrsgreen, Rrsred)
+
+        elif wq_alg == 'chl_ocx':
+            wq = chl_ocx(Rrsblue, Rrsgreen)
+
+        elif wq_alg == 'chl_hu_ocx':
+            wq = chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred)
+
+        elif wq_alg == 'chl_gitelson':
+            wq = chl_gitelson(Rrsred, Rrsrededge)
+
+        elif wq_alg == 'nechad_tsm':
+            wq = nechad_tsm(Rrsred)
+
+
+        profile.update(count=1)
+
+        #write new stacked tifs w
+        im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+        with rasterio.open(os.path.join(wq_dir, im_name), 'w', **profile) as dst:
+            dst.write(wq, 1)
     
 #################### Georeferencing #########################
 
@@ -1016,8 +1058,9 @@ def mosaic(main_dir, img_dir, output_name, start=0, count=10000, save=True, plot
     
     Output: numpy array of mosaicked georeferenced images 
     """
+        
     mosaic_tifs = []
-    for i in glob.glob(img_dir + "/*.tif"):
+    for i in glob.glob(img_dir + "/*.tif")[start:count]:
         src = rasterio.open(i)
         mosaic_tifs.append(src)
 
