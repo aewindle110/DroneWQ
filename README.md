@@ -60,8 +60,4 @@ Once all MicaSense images have been downloaded into a local directory (e.g. `\da
 
 ## 
 
-including wording about when to use DLS or panel. 
-completely sunny- panel
-completely overcast- DLS or DLS+panel
-variable cloud with cloud shadows- beware
-minor clouds- panel
+## Please see paper.md for detailed information on image processing.
