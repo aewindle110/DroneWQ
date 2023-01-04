@@ -3,8 +3,7 @@
 
 DroneWQ is a Python package that can be used to analyze multispectral data collected from a drone to derive ocean color radiometry and water quality properties. These scripts are specific for the MicaSense RedEdge and Altum cameras. 
 
-The main processing script converts raw multispectral imagery to total radiance (L<sub>t</sub>) with units of W/m2/nm/sr, removes sun glint and surface reflected light (L<sub>sr</sub>) to calculate water leaving radiance (L<sub>w</sub>), measures downwelling irradiance (E<sub>d</sub>) from either the calibrated reflectance panel or downwelling light sensor, and calculates remote sensing reflectance (R<sub>rs</sub>) by dividing E<sub>d</sub> by L<sub>w</sub>. R<sub>rs</sub> can be used as input into various bio-optical algorithms to derive chlorophyll a and total suspended sediment concentrations. Images can also be georeferenced using image metadata to orient and map to a known coordinate system. 
-
+The main processing script has the ability to 1) convert raw multispectral imagery to total radiance (L<sub>t</sub>) with units of W/m2/nm/sr, 2) remove surface reflected light (L<sub>sr</sub>) to calculate water leaving radiance (L<sub>w</sub>), 3) measure downwelling irradiance (E<sub>d</sub>) from either the calibrated reflectance panel, downwelling light sensor (DLS), or a combination of the two, 4) calculate remote sensing reflectance (R<sub>rs</sub>) by dividing E<sub>d</sub> by L<sub>w</sub>, and 5) mask pixels containing specular sun glint or instances of vegetation, shadowing, etc., 6) use R<sub>rs</sub> as input into various bio-optical algorithms to derive chlorophyll a and total suspended sediment concentrations, and 6) georeference using image metadata to orient and map to a known coordinate system. 
 
 More information on the methods found in this package can be found in:
 
@@ -59,6 +58,7 @@ Once all MicaSense images have been downloaded into a local directory (e.g. `\da
 * The raw_water_imgs directory should contain all image captures of water taken during flight 
 * The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The warp_matrix derived from this image capture is used to align all image captures in raw_water_imgs. 
 
+## 
 
 including wording about when to use DLS or panel. 
 completely sunny- panel
