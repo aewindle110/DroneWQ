@@ -539,7 +539,7 @@ def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
     return(True)
 
 
-def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir, dls_corr=False):
+def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, , panel_dir, dls_corr=False):
     """
     This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is derived from the downwelling light sensor (DLS). This method does not perform well when light is constant due to movement of the drone which creates biased data. This method should be used during variable cloud conditions. 
     
@@ -556,51 +556,53 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir, dls_corr=
     capture_imgset = imageset.ImageSet.from_directory(raw_water_dir).captures
     ed_data = []
     ed_columns = ['image', 'ed_475', 'ed_560', 'ed_668', 'ed_717', 'ed_842']
-
+    
     for i,capture in enumerate(capture_imgset):
         ed = capture.dls_irradiance()
         ed[3], ed[4] = ed[4], ed[3] #flip last two bands (red edge and NIR)
         ed_row = ['capture_'+str(i+1)]+[np.mean(ed[0]*1000)]+[np.mean(ed[1]*1000)]+[np.mean(ed[2]*1000)]+[np.mean(ed[3]*1000)]+[np.mean(ed[4]*1000)] #multiply by 1000 to scale to mW 
         ed_data.append(ed_row)
-
-        if dls_corr == True:
-            panel_imgset = imageset.ImageSet.from_directory(panel_dir).captures
-            panels = np.array(panel_imgset)  
-
-            panel_ed_data = []  
-            dls_ed_data = []
-            for i, capture in enumerate(panels): 
-                #calculate panel Ed from every panel capture
-                panel_ed = np.array(panels[i].panel_irradiance()) # this function automatically finds the panel albedo and uses that to calcuate Ed, otherwise raises an error
-                panel_ed[3], panel_ed[4] = panel_ed[4], panel_ed[3] #flip last two bands
-                panel_ed_row = ['capture_'+str(i+1)]+[np.mean(panel_ed[0]*1000)]+[np.mean(panel_ed[1]*1000)]+[np.mean(panel_ed[2]*1000)]+[np.mean(panel_ed[3]*1000)]+[np.mean(panel_ed[4]*1000)] #multiply by 1000 to scale to mW (but want ed to still be in W to divide by Lw which is in W)
-                panel_ed_data.append(panel_ed_row)
-
-                #calculate DLS Ed from every panel capture
-                dls_ed = capture.dls_irradiance()
-                dls_ed[3], dls_ed[4] = dls_ed[4], dls_ed[3] #flip last two bands (red edge and NIR)
-                dls_ed_row = ['capture_'+str(i+1)]+[np.mean(dls_ed[0]*1000)]+[np.mean(dls_ed[1]*1000)]+[np.mean(dls_ed[2]*1000)]+[np.mean(dls_ed[3]*1000)]+[np.mean(dls_ed[4]*1000)] #multiply by 1000 to scale to mW 
-                dls_ed_data.append(dls_ed_row)         
-
-            dls_ed_corr = np.array(panel_ed)/np.array(dls_ed[0:5])
-            ed = ed[0:5]*dls_ed_corr*1000
-            ed = np.append(ed, [0]) #add zero because other ed ends with a 0
-
-            dls_ed_corr_data = []
-            for i,capture in enumerate(capture_imgset):
-                dls_ed_corr_row = ['capture_'+str(i+1)]+[ed[0]]+[ed[1]]+[ed[2]]+[ed[3]]+[ed[4]]
-                dls_ed_corr_data.append(dls_ed_corr_row)
-
-
+        
     ed_data = pd.DataFrame.from_records(ed_data, index='image', columns = ed_columns)
     ed_data.to_csv(output_csv_path+'/dls_ed.csv')
+
+    if dls_corr == True:
+        panel_imgset = imageset.ImageSet.from_directory(panel_dir).captures
+        panels = np.array(panel_imgset)  
+
+        panel_ed_data = []  
+        dls_ed_data = []
+        for i, capture in enumerate(panels): 
+            #calculate panel Ed from every panel capture
+            panel_ed = np.array(panels[i].panel_irradiance()) # this function automatically finds the panel albedo and uses that to calcuate Ed, otherwise raises an error
+            panel_ed[3], panel_ed[4] = panel_ed[4], panel_ed[3] #flip last two bands
+            panel_ed_row = ['capture_'+str(i+1)]+[np.mean(panel_ed[0]*1000)]+[np.mean(panel_ed[1]*1000)]+[np.mean(panel_ed[2]*1000)]+[np.mean(panel_ed[3]*1000)]+[np.mean(panel_ed[4]*1000)] #multiply by 1000 to scale to mW (but want ed to still be in W to divide by Lw which is in W)
+            panel_ed_data.append(panel_ed_row)
+
+            #calculate DLS Ed from every panel capture
+            dls_ed = capture.dls_irradiance()
+            dls_ed[3], dls_ed[4] = dls_ed[4], dls_ed[3] #flip last two bands (red edge and NIR)
+            dls_ed_row = ['capture_'+str(i+1)]+[np.mean(dls_ed[0]*1000)]+[np.mean(dls_ed[1]*1000)]+[np.mean(dls_ed[2]*1000)]+[np.mean(dls_ed[3]*1000)]+[np.mean(dls_ed[4]*1000)] #multiply by 1000 to scale to mW 
+            dls_ed_data.append(dls_ed_row)         
+
+        dls_ed_corr = np.array(panel_ed)/np.array(dls_ed[0:5])
+
+        # this is the DLS ed corrected by the panel correction factor
+        dls_ed_corr_data = []
+        for i,capture in enumerate(capture_imgset):
+            ed = capture.dls_irradiance()
+            ed = ed[0:5]*dls_ed_corr*1000
+            ed = np.append(ed, [0]) #add zero because other ed ends with a 0
+            dls_ed_corr_row = ['capture_'+str(i+1)]+[ed[0]]+[ed[1]]+[ed[2]]+[ed[3]]+[ed[4]]
+            dls_ed_corr_data.append(dls_ed_corr_row)
 
     dls_ed_corr_data = pd.DataFrame.from_records(dls_ed_corr_data, index='image', columns = ed_columns)
     dls_ed_corr_data.to_csv(output_csv_path+'/dls_corr_ed.csv')
 
-
+    
     # now divide the lw_imagery by ed to get rrs
-    for im in glob.glob(lw_dir + "/*.tif"):
+    # go through each Lt image in the dir and divide it by the lsky
+    for idx, im in enumerate(glob.glob(lw_dir + "/*.tif")):
         with rasterio.open(im, 'r') as Lw_src:
             profile = Lw_src.profile
             profile['count']=5
@@ -608,8 +610,10 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir, dls_corr=
             # could vectorize this for speed
             for i in range(1,6):
                 lw = Lw_src.read(i)
-
-                rrs = lw/ed[i-1]
+                if dls_corr:
+                    rrs = lw/dls_ed_corr_data[idx][i-1]
+                else:
+                    rrs = lw/ed_data[idx][i-1]
                 rrs_all.append(rrs) #append each band
             stacked_rrs = np.stack(rrs_all) #stack into np.array 
 
@@ -618,7 +622,6 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir, dls_corr=
             with rasterio.open(os.path.join(rrs_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_rrs)
     return(True)
-
 def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', dls_corr=False, overwrite=False, clean_intermediates=True):
     """
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
@@ -630,6 +633,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     glint_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1.
     lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method()
     ed_method: Method used to calculate downwelling irradiance. Default is dls_ed(). 
+    dls_corr: This option corrects the DLS method of measuring Ed with the panel value and then applies that correction across all images. 
     
     Output: 
     """
@@ -864,53 +868,54 @@ def nechad_tsm(Rrsred):
     tsm = (A*Rrsred/(1-(Rrsred/C))) + B
     return(tsm)
 
-def save_wq_imgs(main_dir, img_dir, wq_dir_name, wq_alg='chl_gitelson', start=0, count=10000)
-    """
-    This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
-    Inputs:
-    main_dir:
-    project_dir:
-    wq_dir_name:
+
+# def save_wq_imgs(main_dir, img_dir, wq_dir_name, wq_alg="chl_gitelson", start=0, count=10000)
+#     """
+#     This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
+#     Inputs:
+#     main_dir:
+#     project_dir:
+#     wq_dir_name:
     
-    Outputs:
-    """
-    # make wq_dir directory 
-    wq_dir = main_dir + '/' + wq_dir_name
-    if not os.path.exists(wq_dir):
-        os.makedirs(wq_dir)
+#     Outputs:
+#     """
+#     # make wq_dir directory 
+#     wq_dir = main_dir + '/' + wq_dir_name
+#     if not os.path.exists(wq_dir):
+#         os.makedirs(wq_dir)
 
-    for im in glob.glob(img_dir + "/*.tif")[start:count]:
-        with rasterio.open(im, 'r') as Rrs_src:
-            profile = Rrs_src.profile
-            profile['count']=5
-            Rrsblue=Rrs_src.read(1)
-            Rrsgreen=Rrs_src.read(2)
-            Rrsred=Rrs_src.read(3)
-            Rrsrededge=Rrs_src.read(4)
-            Rrsnir=Rrs_src.read(5)
+#     for im in glob.glob(img_dir + "/*.tif")[start:count]:
+#         with rasterio.open(im, 'r') as Rrs_src:
+#             profile = Rrs_src.profile
+#             profile['count']=5
+#             Rrsblue=Rrs_src.read(1)
+#             Rrsgreen=Rrs_src.read(2)
+#             Rrsred=Rrs_src.read(3)
+#             Rrsrededge=Rrs_src.read(4)
+#             Rrsnir=Rrs_src.read(5)
 
-        if wq_alt == 'chl_hu':
-            wq = chl_hu(Rrsblue, Rrsgreen, Rrsred)
+#         if wq_alt == 'chl_hu':
+#             wq = chl_hu(Rrsblue, Rrsgreen, Rrsred)
 
-        elif wq_alg == 'chl_ocx':
-            wq = chl_ocx(Rrsblue, Rrsgreen)
+#         elif wq_alg == 'chl_ocx':
+#             wq = chl_ocx(Rrsblue, Rrsgreen)
 
-        elif wq_alg == 'chl_hu_ocx':
-            wq = chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred)
+#         elif wq_alg == 'chl_hu_ocx':
+#             wq = chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred)
 
-        elif wq_alg == 'chl_gitelson':
-            wq = chl_gitelson(Rrsred, Rrsrededge)
+#         elif wq_alg == 'chl_gitelson':
+#             wq = chl_gitelson(Rrsred, Rrsrededge)
 
-        elif wq_alg == 'nechad_tsm':
-            wq = nechad_tsm(Rrsred)
+#         elif wq_alg == 'nechad_tsm':
+#             wq = nechad_tsm(Rrsred)
 
 
-        profile.update(count=1)
+#         profile.update(count=1)
 
-        #write new stacked tifs w
-        im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
-        with rasterio.open(os.path.join(wq_dir, im_name), 'w', **profile) as dst:
-            dst.write(wq, 1)
+#         #write new stacked tifs w
+#         im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+#         with rasterio.open(os.path.join(wq_dir, im_name), 'w', **profile) as dst:
+#             dst.write(wq, 1)
     
 #################### Georeferencing #########################
 
