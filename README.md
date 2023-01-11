@@ -50,8 +50,9 @@ You can also build the environment yourself by following the instructions from t
 
 This will configure an anaconda environment with all of the required tools and libraries. 
 When it's done, run `conda activate dronewq` to activate the environment configured.
-Each time you run start a new anaconda prompt, you'll need to run `conda activate dronewq`
+Each time you run start a new anaconda prompt, you'll need to run `conda activate dronewq`.
 
+To access jupyter notebook or lab, run `jupyter lab` or `jupyter notebook`
 
 
 ## ***MicaSense Folder Structure*** 
