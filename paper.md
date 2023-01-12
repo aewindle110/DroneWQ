@@ -24,7 +24,7 @@ affiliations:
    index: 1
  - name:  Division of Marine Science and Conservation, Nicholas School of the Environment, Duke University Marine Laboratory, Beaufort, NC, United States
    index: 2
-date: 4 October 2022
+date: 12 January 2023
 bibliography: paper.bib
 
 ---
