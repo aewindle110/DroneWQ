@@ -5,3 +5,4 @@
 - Do we want rrs_std_pixel_masking() to calculate mean and std of Rrs(NIR) from first 10 images (current) or random 10 images?
 - Do we need overwrite=False in process_raw_to_rrs()?
 - Finalize save_wq_imgs()
+- Figure out references and citations in paper.md and paper.bib
