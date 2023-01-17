@@ -536,7 +536,7 @@ class Capture(object):
                 out_band = out_raster.GetRasterBand(out_band + 1)
                 out_data = self.__aligned_capture[:, :, in_band]
                 out_data[out_data < 0] = 0
-                out_data[out_data > 2] = 2  # limit reflectance data to 200% to allow some specular reflections
+                #out_data[out_data > 2] = 2  # limit reflectance data to 200% to allow some specular reflections
                 #out_band.WriteArray(out_data * 32768)  # scale reflectance images so 100% = 32768
                 out_band.WriteArray(out_data)  # PGedits we're not scaling for now
                 out_band.FlushCache()

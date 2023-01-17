@@ -309,7 +309,8 @@ class Image(object):
             L = V * R * (image_raw - self.black_level)
             L[L < 0] = 0
             max_raw_dn = float(2**self.bits_per_pixel)
-            radiance_image = L.astype(float)/(self.gain * self.exposure_time)*a1/max_raw_dn
+            # pgedit multiplying by 1000 at the end to convert to mW rather than W
+            radiance_image = (L.astype(float)/(self.gain * self.exposure_time)*a1/max_raw_dn)*1000 
         else:
             L = image_raw - (273.15*100.0) # convert to C from K
             radiance_image = L.astype(float) * 0.01

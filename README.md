@@ -42,7 +42,7 @@ Copy the generated URL in the terminal (e.g. `http://127.0.0.1:8888/?token=<auto
 
 ## Alternative Installation
 
-You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found [here](https://github.com/micasense/imageprocessing). Note that our imageprocessing scripts are slightly modified in that radiance data type is expressed as Float32 instead of Uint16. Micasense is planning on a future package with user specified radiance data types, at which point we will revert to their package version.
+You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found [here](https://github.com/micasense/imageprocessing). Note that our `micasense` scripts are slightly modified in that radiance data type is expressed as Float32 instead of Uint16 and we change the output of image.radiance() to output mW instead of Watts and finally we then modify capture.save_capture_as_stack() accordingly to not scale and filter the data. Micasense is planning on a future package with user specified radiance data types, at which point we will revert to their package version.
 
 ## ***MicaSense Folder Structure*** 
 Once all MicaSense images have been downloaded into a local directory (e.g. `\data`), separate images into 4 sub-directories as below:

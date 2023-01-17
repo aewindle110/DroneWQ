@@ -539,7 +539,7 @@ def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
     return(True)
 
 
-def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, , panel_dir, dls_corr=False):
+def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=None, dls_corr=False):
     """
     This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is derived from the downwelling light sensor (DLS). This method does not perform well when light is constant due to movement of the drone which creates biased data. This method should be used during variable cloud conditions. 
     
@@ -557,16 +557,17 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, , panel_dir, dls_cor
     ed_data = []
     ed_columns = ['image', 'ed_475', 'ed_560', 'ed_668', 'ed_717', 'ed_842']
     
-    for i,capture in enumerate(capture_imgset):
-        ed = capture.dls_irradiance()
-        ed[3], ed[4] = ed[4], ed[3] #flip last two bands (red edge and NIR)
-        ed_row = ['capture_'+str(i+1)]+[np.mean(ed[0]*1000)]+[np.mean(ed[1]*1000)]+[np.mean(ed[2]*1000)]+[np.mean(ed[3]*1000)]+[np.mean(ed[4]*1000)] #multiply by 1000 to scale to mW 
-        ed_data.append(ed_row)
-        
-    ed_data = pd.DataFrame.from_records(ed_data, index='image', columns = ed_columns)
-    ed_data.to_csv(output_csv_path+'/dls_ed.csv')
+    if not dls_corr:
+        for i,capture in enumerate(capture_imgset):
+            ed = capture.dls_irradiance()
+            ed[3], ed[4] = ed[4], ed[3] #flip last two bands (red edge and NIR)
+            ed_row = ['capture_'+str(i+1)]+[np.mean(ed[0]*1000)]+[np.mean(ed[1]*1000)]+[np.mean(ed[2]*1000)]+[np.mean(ed[3]*1000)]+[np.mean(ed[4]*1000)] #multiply by 1000 to scale to mW 
+            ed_data.append(ed_row)
 
-    if dls_corr == True:
+        ed_data_df = pd.DataFrame.from_records(ed_data, index='image', columns = ed_columns)
+        ed_data_df.to_csv(output_csv_path+'/dls_ed.csv')
+
+    if dls_corr:
         panel_imgset = imageset.ImageSet.from_directory(panel_dir).captures
         panels = np.array(panel_imgset)  
 
@@ -591,13 +592,13 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, , panel_dir, dls_cor
         dls_ed_corr_data = []
         for i,capture in enumerate(capture_imgset):
             ed = capture.dls_irradiance()
-            ed = ed[0:5]*dls_ed_corr*1000
+            ed = (ed[0:5]*dls_ed_corr)*1000
             ed = np.append(ed, [0]) #add zero because other ed ends with a 0
             dls_ed_corr_row = ['capture_'+str(i+1)]+[ed[0]]+[ed[1]]+[ed[2]]+[ed[3]]+[ed[4]]
             dls_ed_corr_data.append(dls_ed_corr_row)
 
-    dls_ed_corr_data = pd.DataFrame.from_records(dls_ed_corr_data, index='image', columns = ed_columns)
-    dls_ed_corr_data.to_csv(output_csv_path+'/dls_corr_ed.csv')
+        dls_ed_corr_data_df = pd.DataFrame.from_records(dls_ed_corr_data, index='image', columns = ed_columns)
+        dls_ed_corr_data_df.to_csv(output_csv_path+'/dls_corr_ed.csv')
 
     
     # now divide the lw_imagery by ed to get rrs
@@ -611,9 +612,9 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, , panel_dir, dls_cor
             for i in range(1,6):
                 lw = Lw_src.read(i)
                 if dls_corr:
-                    rrs = lw/dls_ed_corr_data[idx][i-1]
+                    rrs = lw/dls_ed_corr_data[idx][i]
                 else:
-                    rrs = lw/ed_data[idx][i-1]
+                    rrs = lw/ed_data[idx][i]
                 rrs_all.append(rrs) #append each band
             stacked_rrs = np.stack(rrs_all) #stack into np.array 
 
@@ -622,7 +623,7 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, , panel_dir, dls_cor
             with rasterio.open(os.path.join(rrs_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_rrs)
     return(True)
-def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', dls_corr=False, overwrite=False, clean_intermediates=True):
+def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', overwrite=False, clean_intermediates=True):
     """
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
     
@@ -633,8 +634,8 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     glint_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1.
     lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method()
     ed_method: Method used to calculate downwelling irradiance. Default is dls_ed(). 
-    dls_corr: This option corrects the DLS method of measuring Ed with the panel value and then applies that correction across all images. 
-    
+    overwrite: Option to overwrite files that have been written previously. Default is False but this only applied to the Lt images not others.
+    clean_intermediates: Option to delete images in lt_dir, sky_lt_dir, glint_corrected_lt_dir, and lw_dir after processing.
     Output: 
     """
     
@@ -716,7 +717,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
 
     elif ed_method == 'dls_and_panel_ed':
         print('Normalizing by DLS corrected by panel irradiance (Lw/Ed -> Rrs).')
-        dls_ed(raw_water_img_dir, lw_dir, rrs_dir, panel_dir, output_csv_path, dls_corr = True)
+        dls_ed(raw_water_img_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=panel_dir, dls_corr = True)
 
     else:
         print('No other irradiance normalization methods implemented yet, panel_ed is recommended.')
