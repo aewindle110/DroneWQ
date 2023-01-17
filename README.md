@@ -40,9 +40,18 @@ With the Docker app running on your desktop, you need to launch the Docker conta
 
 Copy the generated URL in the terminal (e.g. `http://127.0.0.1:8888/?token=<auto generated token>`) into a web browser.
 
-## Alternative Installation
+## Alternative Installation (conda) 
 
-You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found [here](https://github.com/micasense/imageprocessing). Note that our `micasense` scripts are slightly modified in that radiance data type is expressed as Float32 instead of Uint16 and we change the output of image.radiance() to output mW instead of Watts and finally we then modify capture.save_capture_as_stack() accordingly to not scale and filter the data. Micasense is planning on a future package with user specified radiance data types, at which point we will revert to their package version.
+You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found [here](https://github.com/micasense/imageprocessing). Note that our `micasense` scripts are slightly modified in that radiance data type is expressed as Float32 instead of Uint16 and we change the output of image.radiance() to output mW instead of Watts. This impacts the panel_ed calculation which relies on image.radiance(). And finally we then modify capture.save_capture_as_stack() accordingly to not scale and filter the data. Micasense is planning on a future package with user specified radiance data types, at which point we will revert to their package version.
+
+After you have cloned the DroneWQ repo to your local machine and installed exiftool, `cd` to the direcotry you cloned this repository to.
+
+Create a virtual conda env by running `conda env create -f environment.yml`. This will configure an anaconda environment with all of the required tools and libraries. 
+When it's done, run `conda activate dronewq` to activate the environment configured.
+Each time you run start a new anaconda prompt, you'll need to run `conda activate dronewq`.
+
+To access jupyter notebook or lab, run `jupyter lab` or `jupyter notebook`
+
 
 ## ***MicaSense Folder Structure*** 
 Once all MicaSense images have been downloaded into a local directory (e.g. `\data`), separate images into 4 sub-directories as below:

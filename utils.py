@@ -34,11 +34,11 @@ def write_metadata_csv(img_set, csv_output_path):
     """
     This function grabs the EXIF metadata from img_set and writes it to outputPath/metadata.csv. Other metadata could be added based on what is needed in your workflow.
     
-    Inputs: img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py 
-    img_output_path: A string containing the filepath to store the 
-    csv_output_path: A string containing the filepath to store the metadata.csv containing EXIF metadata 
+    Inputs: 
+    img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py 
+    csv_output_path: A string containing the filepath to store metadata.csv containing image EXIF metadata 
     
-    Output: 
+    Output: A .csv of metadata for each image capture. 
     
     """
     header = "SourceFile,GPSDateStamp,GPSTimeStamp,GPSLatitude,GPSLatitudeRef,GPSLongitude,GPSLongitudeRef,GPSAltitude,FocalLength,ImageWidth,ImageHeight,GPSImgDirection,GPSPitch,GPSRoll\n"
@@ -93,8 +93,10 @@ def load_images(img_list):
     """
     This function loads all images in a directory as a multidimensional numpy array. 
     
-    Inputs: img_list: A list of .tif files, usually called by using glob.glob(filepath) or grabbed from the metadata file
-    Outputs: A multidimensional numpy array of all image captures in a directory 
+    Inputs: 
+    img_list: A list of .tif files, usually called by using glob.glob(filepath) 
+    
+    Output: A multidimensional numpy array of all image captures in a directory 
     
     """
     all_imgs = []
@@ -105,7 +107,15 @@ def load_images(img_list):
 
 def load_img_fn_and_meta(csv_path, count=10000, start=0):
     """
-    This function returns a pandas dataframe of captures and associated metadata with the options of how many to list and what nunmber of image to start on.  
+    This function returns a pandas dataframe of captures and associated metadata with the options of how many to list and what number of image to start on.  
+    
+    Inputs: 
+    csv_path: A string containing the filepath 
+    count: The amount of images to load. Default is 10000
+    start: The image to start loading from. Default is 0 (first image the .csv). 
+    
+    Output: Pandas dataframe of image metadata
+    
     """    
     df = pd.read_csv(csv_path)
     df = df.set_index('filename')
@@ -123,7 +133,8 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     img_dir: A string containing the directory filepath of images to be retrieved
     count: The amount of images you want to list. Default is 10000
     start: The number of image to start on. Default is 0 (first image in img_dir). 
-    Output: Pandas dataframe of metadata. 
+    
+    Outputs: A multidimensional numpy array of all image captures in a directory and a Pandas dataframe of image metadata. 
     
     """
     if sky:
@@ -146,11 +157,10 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
 def get_warp_matrix(img_capture, max_alignment_iterations = 50):
     """
     This function uses the MicaSense imageutils.align_capture() function to determine an alignment (warp) matrix of a single capture that can be applied to all images. From MicaSense: "For best alignment results it's recommended to select a capture which has features which visible in all bands. Man-made objects such as cars, roads, and buildings tend to work very well, while captures of only repeating crop rows tend to work poorly. Remember, once a good transformation has been found for flight, it can be generally be applied across all of the images." Ref: https://github.com/micasense/imageprocessing/blob/master/Alignment.ipynb
-    
-    *********AW_question: is an image of homogenous water okay to use as a warp matrix then? 
-    
+        
     Inputs: 
     img_capture: A capture is a set of images taken by one MicaSense camera which share the same unique capture identifier (capture_id). These images share the same filename prefix, such as IMG_0000_*.tif. It is defined by running ImageSet.from_directory().captures. 
+    max_alignment_iterations: The maximum number of solver iterations. 
     
     ****AW_question: Why are we only changing some of the default inputs? Want to discuss this function.  
     
@@ -174,10 +184,9 @@ def get_warp_matrix(img_capture, max_alignment_iterations = 50):
 
 def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, generateThumbnails=True, overwrite=False):
     """
-    This function processes each capture in an imageset to compute radiace, apply a warp matrix, and save new .tifs with units of radiance (W/sr/nm) and optional RGB .jpgs.
+    This function processes each capture in an imageset to apply a warp matrix and save new .tifs with units of radiance (W/sr/nm) and optional RGB .jpgs.
     
     Inputs: 
-    
     img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py 
     img_output_path: A string containing the filepath to store a new folder of radiance .tifs
     thumbnailPath: A string containing the filepath to store a new folder of RGB thumnail .jpgs
@@ -185,7 +194,7 @@ def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, gener
     generateThumbnails: Option to create RGB .jpgs of all the images. Default is True
     overwrite: Option to overwrite files that have been written previously. Default is False
     
-    Output: New .tif files for each capture with units of radiance (W/sr/nm) and optional new .jpg files for each capture containing an RGB thumbail
+    Output: New .tif files for each capture in img_set with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
     """
 
     warp_matrices = get_warp_matrix(warp_img_capture)
@@ -223,11 +232,12 @@ def process_micasense_images(project_dir, warp_img_dir=None, overwrite=False, sk
     This function is wrapper function for the save_images() function to read in an image directory and produce new .tifs with units of radiance (W/sr/nm).  
     
     Inputs: 
-    
     project_dir: a string containing the filepath of the raw .tifs
     warp_img_dir: a string containing the filepath of the capture to use to create the warp matrix
     overwrite: Option to overwrite files that have been written previously. Default is False
-    sky: Option to select to run raw water captures or raw sky captures. If True, the save_images() is run on raw .tif files and saves new .tifs in sky_lt directories. If False, save_images() is run on raw .tif files and saves new .tifs in lt directories. 
+    sky: Option to run raw sky captures to collected Lsky. If True, the save_images() is run on raw .tif files and saves new .tifs in sky_lt directories. If False, save_images() is run on raw .tif files and saves new .tifs in lt directories. 
+    
+    Output: New .tif files for each capture in image directory with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
         
     """
     
@@ -264,97 +274,9 @@ def process_micasense_images(project_dir, warp_img_dir=None, overwrite=False, sk
 
 ######## workflow functions ########
 
-# glint removal
-def rrs_threshold_pixel_masking(rrs_dir, masked_rrs_dir, nir_threshold = 0.01, green_threshold = 0.005):
-    """
-    This function masks pixels based on a user supplied Rrs thresholds in an effort to remove instances of specular sun glint, shadowing, or adjacent land when present in the images. 
-    
-    Inputs: 
-    lt_dir: A string containing the directory filepath of images to be processed
-    nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features.
-    green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing. 
-    
-    Output: New masked .tifs
-    
-    """    
-    
-    # go through each rrs image in the dir and mask pixels > nir_threshold and < green_threshold
-    for im in glob.glob(rrs_dir + "/*.tif"):
-        with rasterio.open(im, 'r') as rrs_src:
-            profile = rrs_src.profile
-            profile['count']=5
-            rrs_mask_all = []
-            nir = rrs_src.read(5)
-            green = rrs_src.read(2)
-            nir[nir > nir_threshold] = np.nan
-            green[green < green_threshold] = np.nan
-
-            nir_nan_index = np.isnan(nir)
-            green_nan_index = np.isnan(green)
-
-            #filter nan pixel indicies across all bands
-            for i in range(1,6):
-
-                rrs_mask = rrs_src.read(i)
-                rrs_mask[nir_nan_index] = np.nan 
-                rrs_mask[green_nan_index] = np.nan 
-
-                rrs_mask_all.append(rrs_mask)
-
-            stacked_rrs_mask = np.stack(rrs_mask_all) #stack into np.array
-
-            #write new stacked rrs tifs
-            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
-            with rasterio.open(os.path.join(masked_rrs_dir, im_name), 'w', **profile) as dst:
-                dst.write(stacked_rrs_mask)
-                
-    return(True)
-
-def rrs_std_pixel_masking(rrs_dir, masked_rrs_dir, num_images=10, mask_std_factor=1):
-    """
-    This function masks pixels based on a user supplied value in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std*mask_std_factor is masked across all bands. The lower the mask_std_factor, the more pixels will be masked. 
-    
-    Inputs: 
-    rrs_dir: A string containing the directory filepath of images to be processed
-    masked_rrs_dir: A string containing the directory filepath to write the new masked .tifs
-    num_images: Number of images in the dataset to calculate the mean and std of NIR
-    mask_std_factor: A factor to multiply to the standard deviation of NIR values
-    
-    Output: New masked .tifs
-    
-    """
-    # grab the first num_images images, finds the mean and std of NIR, then anything times the glint factor is classified as glint
-    rrs_imgs, rrs_img_metadata = retrieve_imgs_and_metadata(rrs_dir, count=num_images, start=0, altitude_cutoff=0)
-    rrs_nir_mean = np.nanmean(rrs_imgs,axis=(0,2,3))[4] # mean of NIR band
-    rrs_nir_std = np.nanstd(rrs_imgs,axis=(0,2,3))[4] # std of NIR band
-    print('The mean and std of Rrs from first N images is: ', rrs_nir_mean, rrs_nir_std)
-    print('Pixels will be masked where Rrs(NIR) > ', rrs_nir_mean+rrs_nir_std*mask_std_factor)
-    del rrs_imgs # free up the memory
-
-    # go through each Rrs image in the dir and mask any pixels > mean+std*glint factor
-    for im in glob.glob(rrs_dir + "/*.tif"):
-        with rasterio.open(im, 'r') as rrs_src:
-            profile = rrs_src.profile
-            profile['count']=5
-            rrs_deglint_all = []
-            rrs_nir_deglint = rrs_src.read(5) #nir band
-            rrs_nir_deglint[rrs_nir_deglint > (rrs_nir_mean+rrs_nir_std*mask_std_factor)] = np.nan
-            nan_index = np.isnan(rrs_nir_deglint)
-            #filter nan pixel indicies across all bands
-            for i in range(1,6):
-                rrs_deglint = rrs_src.read(i)
-                rrs_deglint[nan_index] = np.nan 
-                rrs_deglint_all.append(rrs_deglint) #append all for each band
-            stacked_rrs_deglint = np.stack(rrs_deglint_all) #stack into np.array
-            #write new stacked tifs
-            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
-            with rasterio.open(os.path.join(masked_rrs_dir, im_name), 'w', **profile) as dst:
-                dst.write(stacked_rrs_deglint)
-    return(True)
-
 def mobley_rho_method(sky_lt_dir, lt_dir, lw_dir, rho = 0.028): 
     """
-    This function calculates water leaving radiance (Lw) by multiplying a single (or small set of) sky radiance (Lsky) images by a single rho value. The default is rho = 0.028, which is based off recommendations described in Mobley, 1999. This approach should only be used if sky conditions are not changing substantially during the flight. 
+    This function calculates water leaving radiance (Lw) by multiplying a single (or small set of) sky radiance (Lsky) images by a single rho value. The default is rho = 0.028, which is based off recommendations described in Mobley, 1999. This approach should only be used if sky conditions are not changing substantially during the flight and winds are less than 5 m/s. 
     
     Inputs: 
     sky_lt_dir: A string containing the directory filepath of sky_lt images
@@ -362,7 +284,7 @@ def mobley_rho_method(sky_lt_dir, lt_dir, lw_dir, rho = 0.028):
     lw_dir: A string containing the directory filepath of new lw images
     rho = The effective sea-surface reflectance of a wave facet. The default 0.028
     
-    Outputs: New .tifs with units of Lw
+    Outputs: New Lw .tifs with units of W/sr/nm
     """
 
     # grab the first ten of these images, average them, then delete this from memory
@@ -400,7 +322,7 @@ def blackpixel_method(sky_lt_dir, lt_dir, lw_dir):
     lt_dir: A string containing the directory filepath of lt images 
     lw_dir: A string containing the directory filepath of new lw images
     
-    Outputs: New .tifs with units of Lw
+    Outputs: New Lw .tifs with units of W/sr/nm
         
     """
     # grab the first ten of these images, average them, then delete this from memory
@@ -433,13 +355,14 @@ def blackpixel_method(sky_lt_dir, lt_dir, lw_dir):
 
 def hedley_method(lt_dir, lw_dir, random_n=10):
     """
-   This function calculates water leaving radiance (Lw) by modelling a constant 'ambient' NIR brightness level which is removed from all pixels across all bands. An ambient NIR level is calculated by averaging the minimum 10% of Lt(NIR) across all images. This value represents the NIR brightness of a pixel with no sun glint. A linear relationship between Lt(NIR) amd the visible bands (Lt) is established, and for each pixel, the slope of this line is multiplied by the difference between the pixel NIR value and the ambient NIR level. 
+   This function calculates water leaving radiance (Lw) by modelling a constant 'ambient' NIR brightness level which is removed from all pixels across all bands. An ambient NIR level is calculated by averaging the minimum 10% of Lt(NIR) across a random subset images. This value represents the NIR brightness of a pixel with no sun glint. A linear relationship between Lt(NIR) amd the visible bands (Lt) is established, and for each pixel, the slope of this line is multiplied by the difference between the pixel NIR value and the ambient NIR level. 
    
    Inputs: 
    lt_dir: A string containing the directory filepath of lt images 
    lw_dir: A string containing the directory filepath of new lw images
+   random_n: The amount of random images to calculate ambient NIR level. Default is 10. 
    
-   Outputs: New .tifs with units of Lw
+   Outputs: New Lw .tifs with units of W/sr/nm
    
    """
     lt_all = []
@@ -488,7 +411,7 @@ def hedley_method(lt_dir, lw_dir, random_n=10):
 
 def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
     """
-    This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is calculated from the calibrated reflectance panel. This method should only be used during clear, sunny days with no variable cloud conditions. 
+    This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is calculated from the calibrated reflectance panel. This method does not perform well when light is variable such as partly cloudy days. It is recommended to use in the case of a clear, sunny day. 
     
     Inputs:
     panel_dir: A string containing the directory filepath of the panel image captures
@@ -497,8 +420,8 @@ def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
     output_csv_path: A string containing the filepath to save Ed measurements (mW/m2/nm) calculated from the panel
     
     Outputs:
-    New .tifs with units of Rrs
-    New .csv file with average Ed measurements (mW/m2/nm) calcualted from image cpatures of the calibrated reflectance panel
+    New Rrs .tifs with units of sr^-1 
+    New .csv file with average Ed measurements (mW/m2/nm) calculated from image cpatures of the calibrated reflectance panel
     
     """
     panel_imgset = imageset.ImageSet.from_directory(panel_dir).captures
@@ -511,7 +434,7 @@ def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
         #calculate panel Ed from every panel capture
         ed = np.array(panels[i].panel_irradiance()) # this function automatically finds the panel albedo and uses that to calcuate Ed, otherwise raises an error
         ed[3], ed[4] = ed[4], ed[3] #flip last two bands
-        ed_row = ['capture_'+str(i+1)]+[np.mean(ed[0]*1000)]+[np.mean(ed[1]*1000)]+[np.mean(ed[2]*1000)]+[np.mean(ed[3]*1000)]+[np.mean(ed[4]*1000)] #multiply by 1000 to scale to mW (but want ed to still be in W to divide by Lw which is in W)
+        ed_row = ['capture_'+str(i+1)]+[np.mean(ed[0])]+[np.mean(ed[1])]+[np.mean(ed[2])]+[np.mean(ed[3])]+[np.mean(ed[4])]
         ed_data.append(ed_row)
         
     ed_data = pd.DataFrame.from_records(ed_data, index='image', columns = ed_columns)
@@ -540,17 +463,21 @@ def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
 
 
 def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=None, dls_corr=False):
+
     """
-    This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is derived from the downwelling light sensor (DLS). This method does not perform well when light is constant due to movement of the drone which creates biased data. This method should be used during variable cloud conditions. 
+    This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is derived from the downwelling light sensor (DLS), which is collected at every image capture. This method does not perform well when light is variable such as partly cloudy days. It is recommended to use in overcast, completely cloudy conditions. A DLS correction can be optionally applied to tie together DLS and panel Ed measurements. In this case, a compensation factor derived from the calibration reflectance panel is applied to DLS Ed measurements.The defualt is False. 
     
+
     Inputs:
     raw_water_dir: A string containing the directory filepath of the raw water images
     lw_dir: A string containing the directory filepath of lw images
     rrs_dir: A string containing the directory filepath of new rrs images
     output_csv_path: A string containing the filepath to save Ed measurements (mW/m2/nm) derived from the DLS
+    panel_dir: A string containing the filepath of panel images. Only need if dls_corr=True. 
+    dls_corr: Option to apply compensation factor from calibration reflectance panel to DLS Ed measurements. Default is False. 
     
     Outputs:
-    New .tifs with units of Rrs
+    New Rrs .tifs with units of sr^-1 
     New .csv file with average Ed measurements (mW/m2/nm) calcualted from DLS measurements
     """
     capture_imgset = imageset.ImageSet.from_directory(raw_water_dir).captures
@@ -577,7 +504,7 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=None, dls_
             #calculate panel Ed from every panel capture
             panel_ed = np.array(panels[i].panel_irradiance()) # this function automatically finds the panel albedo and uses that to calcuate Ed, otherwise raises an error
             panel_ed[3], panel_ed[4] = panel_ed[4], panel_ed[3] #flip last two bands
-            panel_ed_row = ['capture_'+str(i+1)]+[np.mean(panel_ed[0]*1000)]+[np.mean(panel_ed[1]*1000)]+[np.mean(panel_ed[2]*1000)]+[np.mean(panel_ed[3]*1000)]+[np.mean(panel_ed[4]*1000)] #multiply by 1000 to scale to mW (but want ed to still be in W to divide by Lw which is in W)
+            panel_ed_row = ['capture_'+str(i+1)]+[np.mean(panel_ed[0])]+[np.mean(panel_ed[1])]+[np.mean(panel_ed[2])]+[np.mean(panel_ed[3])]+[np.mean(panel_ed[4])] #multiply by 1000 to scale to mW (but want ed to still be in W to divide by Lw which is in W)
             panel_ed_data.append(panel_ed_row)
 
             #calculate DLS Ed from every panel capture
@@ -586,7 +513,9 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=None, dls_
             dls_ed_row = ['capture_'+str(i+1)]+[np.mean(dls_ed[0]*1000)]+[np.mean(dls_ed[1]*1000)]+[np.mean(dls_ed[2]*1000)]+[np.mean(dls_ed[3]*1000)]+[np.mean(dls_ed[4]*1000)] #multiply by 1000 to scale to mW 
             dls_ed_data.append(dls_ed_row)         
 
-        dls_ed_corr = np.array(panel_ed)/np.array(dls_ed[0:5])
+        dls_ed_corr = np.array(panel_ed)/(np.array(dls_ed[0:5])*1000)        
+        print(dls_ed_corr)
+
 
         # this is the DLS ed corrected by the panel correction factor
         dls_ed_corr_data = []
@@ -600,7 +529,6 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=None, dls_
         dls_ed_corr_data_df = pd.DataFrame.from_records(dls_ed_corr_data, index='image', columns = ed_columns)
         dls_ed_corr_data_df.to_csv(output_csv_path+'/dls_corr_ed.csv')
 
-    
     # now divide the lw_imagery by ed to get rrs
     # go through each Lt image in the dir and divide it by the lsky
     for idx, im in enumerate(glob.glob(lw_dir + "/*.tif")):
@@ -623,20 +551,116 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=None, dls_
             with rasterio.open(os.path.join(rrs_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_rrs)
     return(True)
-def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', overwrite=False, clean_intermediates=True):
+
+# glint removal
+def rrs_threshold_pixel_masking(rrs_dir, masked_rrs_dir, nir_threshold = 0.01, green_threshold = 0.005):
+    """
+    This function masks pixels based on user supplied Rrs thresholds in an effort to remove instances of specular sun glint, shadowing, or adjacent land when present in the images. 
+    
+    Inputs: 
+    rrs_dir: A string containing the directory filepath to write the new masked .tifs
+    masked_rrs_dir: A string containing the name of the directory to store masked Rrs images. 
+    nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features.
+    green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing. 
+    
+    Output: New masked Rrs.tifs with units of sr^-1
+
+    """    
+    
+    # go through each rrs image in the dir and mask pixels > nir_threshold and < green_threshold
+    for im in glob.glob(rrs_dir + "/*.tif"):
+        with rasterio.open(im, 'r') as rrs_src:
+            profile = rrs_src.profile
+            profile['count']=5
+            rrs_mask_all = []
+            nir = rrs_src.read(5)
+            green = rrs_src.read(2)
+            nir[nir > nir_threshold] = np.nan
+            green[green < green_threshold] = np.nan
+
+            nir_nan_index = np.isnan(nir)
+            green_nan_index = np.isnan(green)
+
+            #filter nan pixel indicies across all bands
+            for i in range(1,6):
+
+                rrs_mask = rrs_src.read(i)
+                rrs_mask[nir_nan_index] = np.nan 
+                rrs_mask[green_nan_index] = np.nan 
+
+                rrs_mask_all.append(rrs_mask)
+
+            stacked_rrs_mask = np.stack(rrs_mask_all) #stack into np.array
+
+            #write new stacked rrs tifs
+            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+            with rasterio.open(os.path.join(masked_rrs_dir, im_name), 'w', **profile) as dst:
+                dst.write(stacked_rrs_mask)
+                
+    return(True)
+
+def rrs_std_pixel_masking(rrs_dir, masked_rrs_dir, num_images=10, mask_std_factor=1):
+    """
+    This function masks pixels based on a user supplied value in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std*mask_std_factor is masked across all bands. The lower the mask_std_factor, the more pixels will be masked. 
+    
+    Inputs: 
+    rrs_dir: A string containing the directory filepath of images to be processed
+    masked_rrs_dir: A string containing the directory filepath to write the new masked .tifs
+    num_images: Number of images in the dataset to calculate the mean and std of NIR. Default is 10. 
+    mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1. 
+    
+    Output: New masked .tifs
+    
+    """
+    # grab the first num_images images, finds the mean and std of NIR, then anything times the glint factor is classified as glint
+    rrs_imgs, rrs_img_metadata = retrieve_imgs_and_metadata(rrs_dir, count=num_images, start=0, altitude_cutoff=0)
+    rrs_nir_mean = np.nanmean(rrs_imgs,axis=(0,2,3))[4] # mean of NIR band
+    rrs_nir_std = np.nanstd(rrs_imgs,axis=(0,2,3))[4] # std of NIR band
+    print('The mean and std of Rrs from first N images is: ', rrs_nir_mean, rrs_nir_std)
+    print('Pixels will be masked where Rrs(NIR) > ', rrs_nir_mean+rrs_nir_std*mask_std_factor)
+    del rrs_imgs # free up the memory
+
+    # go through each Rrs image in the dir and mask any pixels > mean+std*glint factor
+    for im in glob.glob(rrs_dir + "/*.tif"):
+        with rasterio.open(im, 'r') as rrs_src:
+            profile = rrs_src.profile
+            profile['count']=5
+            rrs_deglint_all = []
+            rrs_nir_deglint = rrs_src.read(5) #nir band
+            rrs_nir_deglint[rrs_nir_deglint > (rrs_nir_mean+rrs_nir_std*mask_std_factor)] = np.nan
+            nan_index = np.isnan(rrs_nir_deglint)
+            #filter nan pixel indicies across all bands
+            for i in range(1,6):
+                rrs_deglint = rrs_src.read(i)
+                rrs_deglint[nan_index] = np.nan 
+                rrs_deglint_all.append(rrs_deglint) #append all for each band
+            stacked_rrs_deglint = np.stack(rrs_deglint_all) #stack into np.array
+            #write new stacked tifs
+            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+            with rasterio.open(os.path.join(masked_rrs_dir, im_name), 'w', **profile) as dst:
+                dst.write(stacked_rrs_deglint)
+    return(True)
+
+def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='value_threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', overwrite=False, clean_intermediates=True):
     """
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
     
     Inputs: 
     main_dir: A string containing the main image directory
+    rrs_dir_name: A string containing the directory filepath of new rrs images
     output_csv_path: A string containing the filepath to write the metadata.csv 
-    glint_correct: Option to apply the std_glint_removal_method() function to mask pixels with instances of specular sun glint. Default is True
-    glint_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1.
-    lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method()
-    ed_method: Method used to calculate downwelling irradiance. Default is dls_ed(). 
+    lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method().
+    random_n: The amount of random images to calculate ambient NIR level. Default is 10. Only need if lw_method = 'hedley_method'
+    mask_pixels: Option to mask pixels containing specular sun glint, shadowing, adjacent vegetation, etc. Default is False. 
+    pixel_masking_method: Method to mask pixels. Options are 'value_threshold' or 'std_threshold'. Default is value_threshold.
+    mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1. Only need if pixel_masking_method = 'std_threshold'
+    nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features. Only need if pixel_masking_method = 'value_threshold'.
+    green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing.  Only need if pixel_masking_method = 'value_threshold'.
+    ed_method: Method used to calculate downwelling irradiance (Ed). Default is dls_ed(). 
     overwrite: Option to overwrite files that have been written previously. Default is False but this only applied to the Lt images not others.
-    clean_intermediates: Option to delete images in lt_dir, sky_lt_dir, glint_corrected_lt_dir, and lw_dir after processing.
-    Output: 
+    clean_intermediates: Option to erase intermediates of processing (Lt, Lw, unmasked Rrs) 
+    
+    Output: New Rrs tifs (masked or unmasked) with units of sr^-1. 
     """
     
     ############################
@@ -681,7 +705,6 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
         print("Converting raw sky images to radiance (raw sky -> Lsky).")
         # we're also making an assumption that we don't need to align/warp these images properly because they'll be medianed
         process_micasense_images(main_dir, warp_img_dir=None, overwrite=overwrite, sky=True)
-    
     
     ##################################
     ### correct for surface reflected light ###
@@ -775,6 +798,7 @@ def chl_ocx(Rrsblue, Rrsgreen):
     """
     This is the OCx algorithm which uses a fourth-order polynomial relationship (O'Reilly et al. 1998). This should be used for chlorophyll retrievals above 0.2 mg m^-3. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. The coefficients for OC2 (OLI/Landsat 8) are used as default. doi: 10.1029/98JC02160.
     
+    Inputs:
     Rrs_x: numpy array of Rrs in each band. 
     
     Output: numpy array of derived chlorophyll
@@ -952,17 +976,20 @@ def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, scali
     This function applies georeferencing based on MicaSense image metadata (altitude, pitch, roll, yaw, lat, lon). 
     
     Inputs:
-    main_dir: A string containing main directory 
-    img_dir: A string containing directory to georeference
+    main_dir: A string containing main directory
+    img_dir: A string containing directory of images to georeference
     output_dir_name: A string containing directory of georeferenced images 
     start: The number of image to start on. Default is 0 (first image in img_dir). 
-    count: The amount of images you want to list. Default is 10000.
-    scaling:
+    count: The amount of images you want to process. Default is 10000.
+    scaling: pixel size on the ground in meters
     extent: The offset of image in four directions from center lat,lon of drone. The default of 80 is approximate and based on altitude, FOV, and viewing geometry. For example, with a higher altitude or pitch angle, the value should be larger because the footprint on the ground will be larger. 
     flip: Option to flip camera orientation if camera is integrated 180 deg away from DLS. Default is False.
     plot: Option to plot georeferenced images. Default is False.
+    yaw: movement along the left-right axis. Default is 'GPSImgDirection'
+    pitch: movement along up-down axis. Default is 'GPSPitch'
+    roll: movement around front-back axis. Default is 'GPSRoll'
     
-    Output: New georeferenced .tifs 
+    Output: New georeferenced .tifs with same units of images in img_dir
     """
     
     # make georeference directory 
@@ -1054,13 +1081,16 @@ def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, scali
 def mosaic(main_dir, img_dir, output_name, start=0, count=10000, save=True, plot=True, band_to_plot=0):
     """
     This function mosaics georeferenced .tifs to create one large .tif
+    
     Inputs: 
     main_dir: String containing main directory
     img_dir: String containing image directory of .tifs to mosaic. 
-    output_name: Text of mosaicked .tif
-    save=True: Option to save mosaicked .tif in main_dir. Default is True.
-    plot=True: Option to plot mosaicked tif. Default is True. 
-    band_to_plot: What band to plot. Default is 0 (blue)  
+    output_name: String containing name of mosaicked .tif
+    start: The number of image to start on. Default is 0 (first image in img_dir).
+    count: The amount of images you want to list. Default is 10000
+    save: Option to save mosaicked .tif in main_dir. Default is True.
+    plot: Option to plot mosaicked tif. Default is True. 
+    band_to_plot: What band to plot. Default is 0 (blue). 
     
     Output: numpy array of mosaicked georeferenced images 
     """
@@ -1090,9 +1120,3 @@ def mosaic(main_dir, img_dir, output_name, start=0, count=10000, save=True, plot
             m.write(mosaic)
     
     return(mosaic)
-
-                  
-                  
-   
-                  
-        
