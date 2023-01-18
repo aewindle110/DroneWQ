@@ -971,13 +971,17 @@ def spacetotopdown(top_im, cam, image_size, scaling):
     return(np.array([[x1,y1], [x2,y2], [x3,y3], [x4,y4]]))
 
 
-def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, scaling=0.2, extent=80, flip=False, plot=False, yaw='GPSImgDirection',pitch='GPSPitch',roll='GPSRoll'):
+def georeference(main_dir, img_dir, output_dir_name, imgs, img_metadata, 
+                 scaling=0.2, extent=80, flip=False, plot=False, yaw_name='GPSImgDirection', 
+                 pitch_name='GPSPitch', roll_name='GPSRoll', pitch_offset=0):
     """
     This function applies georeferencing based on MicaSense image metadata (altitude, pitch, roll, yaw, lat, lon). 
     
     Inputs:
     main_dir: A string containing main directory
     img_dir: A string containing directory of images to georeference
+    imgs: images to georeference - typically from retrieve_imgs_and_metadata() function
+    img_metadata: all image metadata - typically from retrieve_imgs_and_metadata() function
     output_dir_name: A string containing directory of georeferenced images 
     start: The number of image to start on. Default is 0 (first image in img_dir). 
     count: The amount of images you want to process. Default is 10000.
@@ -993,19 +997,17 @@ def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, scali
     """
     
     # make georeference directory 
-    georeference_dir = main_dir + '/' + output_dir_name
+    georeference_dir = output_dir_name
     if not os.path.exists(georeference_dir):
         os.makedirs(georeference_dir)
-        
-    imgs, img_metadata = retrieve_imgs_and_metadata(img_dir = img_dir, start=start, count=count)
-
+    
     for i in range(len(img_metadata)):
         f = img_metadata.iloc[i]['FocalLength']
         image_size = [img_metadata.iloc[i]['ImageWidth'], img_metadata.iloc[i]['ImageHeight']]
         sensor_size = (4.8,3.6) #got from MicaSense specs
-        pitch = img_metadata.iloc[i][pitch]
-        roll = img_metadata.iloc[i][roll]
-        yaw = img_metadata.iloc[i][yaw]
+        pitch = img_metadata.iloc[i][pitch_name]+pitch_offset
+        roll = img_metadata.iloc[i][roll_name]
+        yaw = img_metadata.iloc[i][yaw_name]
         alt = img_metadata.iloc[i]['GPSAltitude']
         lat = img_metadata.iloc[i]['GPSLatitude']
         lon = img_metadata.iloc[i]['GPSLongitude']
@@ -1063,7 +1065,7 @@ def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, scali
 
         with rasterio.Env():
             # open the original image to get some of the basic metadata
-            with rasterio.open(os.path.join(img_dir, 'capture_' + str(i+1) + '.tif'), 'r') as src:
+            with rasterio.open(os.path.join(img_dir, img_metadata.index[i]), 'r') as src:
                 profile = src.profile
                 src_crs = "EPSG:4326"  # This is the crs of the GCPs
                 dst_crs = "EPSG:4326"
@@ -1074,7 +1076,7 @@ def georeference(main_dir, img_dir, output_dir_name, start=0, count=10000, scali
                     crs=dst_crs,
                     width=top_im.shape[1], # TODO unsure if this is correct order but they're the same value so okay for now
                     height=top_im.shape[0])
-                with rasterio.open(os.path.join(georeference_dir, 'capture_' + str(i+1) + '.tif'), 'w', **profile) as dst:
+                with rasterio.open(os.path.join(georeference_dir, img_metadata.index[i]), 'w', **profile) as dst:
                     dst.write(top_im_5.astype(rasterio.float32))
     return(True)
 
