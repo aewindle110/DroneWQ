@@ -22,9 +22,9 @@ dependencies:
   - requests
   - packaging
   - tqdm
-  - pyzbar=0.1.9
   - pip:
       - cameratransform
+      - pyzbar==0.1.9
       - pysolar
       - mapboxgl
       - pyexiftool<=0.4.13
