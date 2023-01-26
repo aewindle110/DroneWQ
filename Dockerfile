@@ -19,8 +19,10 @@ RUN conda env create -f /tmp/environment.yml
 RUN echo "source activate dronewq" > ~/.bashrc
 ENV PATH /opt/conda/envs/dronewq/bin:$PATH
 
-### after running go into the Docker container and run these commands
-# curl https://cpan.metacpan.org/authors/id/E/EX/EXIFTOOL/Image-ExifTool-12.15.tar.gz
+### after running go into the Docker container and run these commands to install exiftool
+### the version we have on Dockerhub clifgray/dronewq:v1 already has this installed
+# cd /srv/
+# curl -LJO https://cpan.metacpan.org/authors/id/E/EX/EXIFTOOL/Image-ExifTool-12.15.tar.gz
 # tar -xvzf Image-ExifTool-12.15.tar.gz 
 # cd Image-ExifTool-12.15/
 # perl Makefile.PL 
