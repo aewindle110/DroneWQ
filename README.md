@@ -30,7 +30,7 @@ Once Docker and git are installed, setup a local directory. We recommend that th
     
 With the Docker app running on your desktop, you need to launch the Docker container. Note that the first execution of this line of code will install the Docker image  and setup and configure all required software (python, jupyter notebooks) and packages. 
     
-`docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v3`
+`docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v1`
 
 It should already be activated but if you need to activate the dronewq conda environment: 
 
