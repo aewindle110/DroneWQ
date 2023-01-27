@@ -26,12 +26,11 @@ affiliations:
    index: 2
 date: 28 January 2023
 bibliography: paper.bib
-
 ---
 
 # Summary
 
-Small aerial drones conveniently achieve scales of observation between satellite resolutions and in situ sampling, effectively diminishing the “blind spot” between these established measurement techniques [@Gray:2022]. Drones equipped with off-the-shelf multispectral sensors originally designed for terrestrial applications are being increasingly used to derive water quality properties. Multispectral drone imagery requires post processing to radiometrically calibrate raw pixel values to useful radiometric units, remove surface reflected light and sun glint, and map spatial patterns of water quality parameters. 
+Small aerial drones conveniently achieve scales of observation between satellite resolutions and in situ sampling, effectively diminishing the “blind spot” between these established measurement techniques [@gray_larsen_johnston_2022:2022]. Drones equipped with off-the-shelf multispectral sensors originally designed for terrestrial applications are being increasingly used to derive water quality properties. Multispectral drone imagery requires post processing to radiometrically calibrate raw pixel values to useful radiometric units, remove surface reflected light and sun glint, and map spatial patterns of water quality parameters. 
 
 # Statement of need
 
