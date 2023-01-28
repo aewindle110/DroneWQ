@@ -34,7 +34,7 @@ Small aerial drones conveniently achieve scales of observation between satellite
 
 # Statement of need
 
-`DroneWQ` is a Python package for multispectral drone imagery processing to obtain remote sensing reflectance (R<sub>rs</sub>), the fundamental input into ocean color algorithms which can be used to estimate and map water quality parameters. The processing steps, calibrations, and corrections necessary to obtain research quality R<sub>rs</sub> data from drones can be prohibitivly difficult for those who don't specialize in optics and remote sensing yet the data once obtained can reveal entirely new insight into aquatic ecosystems. `DroneWQ` was designed to be a simple pipeline for by managers, researchers, and students who wish to utilize drone multispectral remote sensing to analyze ocean color and water quality. The combination of processing, georeferencing, and mapping drone imagery will enable effective water quality monitoring at fine spatial resolutions. The simple functionality of `DroneWQ` will enable exciting scientific exploration of drone remote sensing by students and experts alike. 
+`DroneWQ` is a Python package for multispectral drone imagery processing to obtain remote sensing reflectance (R<sub>rs</sub>), the fundamental input into ocean color algorithms which can be used to estimate and map water quality parameters. The processing steps, calibrations, and corrections necessary to obtain research quality R<sub>rs</sub> data from drones can be prohibitivly difficult for those who do not specialize in optics and remote sensing, yet the data once obtained can reveal entirely new insight into aquatic ecosystems. `DroneWQ` was designed to be a simple pipeline for managers, researchers, and students who wish to utilize drone multispectral remote sensing to analyze ocean color and water quality. The combination of processing, georeferencing, and mapping drone imagery will enable effective water quality monitoring at fine spatial resolutions. The simple functionality of `DroneWQ` will enable exciting scientific exploration of drone remote sensing by students and experts alike. 
 
 # Background/Theory
 
@@ -85,7 +85,7 @@ The inclusion of L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> 
 
 ![Caption for example figure.\label{fig:removal_Lsr_fig}](removal_Lsr_fig.jpg)
 <br/>
-Figure 1. Example of an individual drone image (green band) with different radiometric values: (A) RL<sub>UAS</sub>, (B) RL<sub>UAS</sub> with initial sun glint masking and (C–F) remote sensing reflectance (RL<sub>rs</sub>) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR > 0, (F) Deglingting methods following [@hedley_harborne_mumby_2005]. Figure taken from [@windle_silsbe_2021].
+Figure 1. Example of an individual drone image (green band) with different radiometric values: (A) R<sub>UAS</sub>, (B) R<sub>UAS</sub> with initial sun glint masking and (C–F) remote sensing reflectance (R<sub>rs</sub>) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR > 0, (F) Deglingting methods following [@hedley_harborne_mumby_2005]. Figure taken from [@windle_silsbe_2021].
 
 `blackpixel_method()`
 <br/>
