@@ -69,6 +69,8 @@ Once all MicaSense images have been downloaded into a local directory (e.g. `\da
 * The raw_water_imgs directory should contain all image captures of water taken during flight 
 * The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The warp_matrix derived from this image capture is used to align all image captures in raw_water_imgs. 
 
+You can also find sample datasets with this file structure in the Releases. The zipped sample_datasets (2.03 GB when unzipped) includes 4 datasets that can be run through DroneWQ.
+
 ## 
 
 ## Please see paper.md for detailed information on image processing.
