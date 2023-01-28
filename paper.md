@@ -146,7 +146,7 @@ This is the OCx algorithm which uses a fourth-order polynomial relationship [@or
 
 `chl_hu_ocx()`
 <br/>
-This is the blended NASA chlorophyll algorithm which merges the Hu color index (CI) algorithm (chl_hu) and the O'Reilly band ratio OCx algortihm (chl_ocx). This specific code is grabbed from https://github.com/nasa/HyperInSPACE. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/.
+This is the blended NASA chlorophyll algorithm which merges the Hu et al. (2012) color index (CI) algorithm (chl_hu) and the O'Reilly et al. (1998) band ratio OCx algortihm (chl_ocx). This specific code is grabbed from https://github.com/nasa/HyperInSPACE. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/.
 <br/>
 
 `chl_gitelson()`
@@ -163,11 +163,17 @@ This algorithm estimates total suspended matter (TSM) concentrations and is tune
 # Georeferencing and mapping
 `georeference()`
 <br/>
-This function uses MicaSense metadata to georeference all images to a known coordinate space. 
+This function uses MicaSense metadata (altitude, pitch, roll, yaw, lat, lon) to georeference all images to a known coordinate space. 
 
 `mosaic()`
 <br/>
-This function mosaics georeferenced .tifs into one .tif. 
+This function mosaics georeferenced .tifs into one .tif that can be pulled into a GIS software. 
+
+# Demo notebooks 
+DroneWQ includes 3 jupyter notebooks to demonstrate the processing functions. 
+* `primary_demo.ipynb` includes a standard workflow to process raw UAS imagery to Rrs. It also demostrates how to derive water quality concentrations (chloropyll a and total suspended matter) from Rrs. Lastly, it demonstrates how to georeference using sensor metadata and mosaic derived images to visualize spatial patterns on a map. 
+* `georeferencing_improved.ipynb` demonstrates how to incorporate external metatdata (either from the drone or gimbal) to improve georeferencing since it is known that the sensor metadata can be slightly imprecise. 
+* `surface_reflection_removal_comparison.ipynb` demonstrates 
 
 # Acknowledgements
 
