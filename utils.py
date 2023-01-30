@@ -514,8 +514,6 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=None, dls_
             dls_ed_data.append(dls_ed_row)         
 
         dls_ed_corr = np.array(panel_ed)/(np.array(dls_ed[0:5])*1000)        
-        print(dls_ed_corr)
-
 
         # this is the DLS ed corrected by the panel correction factor
         dls_ed_corr_data = []
