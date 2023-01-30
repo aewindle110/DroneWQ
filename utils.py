@@ -894,53 +894,60 @@ def nechad_tsm(Rrsred):
     return(tsm)
 
 
-# def save_wq_imgs(main_dir, img_dir, wq_dir_name, wq_alg="chl_gitelson", start=0, count=10000)
-#     """
-#     This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
-#     Inputs:
-#     main_dir:
-#     project_dir:
-#     wq_dir_name:
-    
-#     Outputs:
-#     """
-#     # make wq_dir directory 
-#     wq_dir = main_dir + '/' + wq_dir_name
-#     if not os.path.exists(wq_dir):
-#         os.makedirs(wq_dir)
+def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, imgs, img_metadata, wq_alg="chl_gitelson", start=0, count=10000):
+    """
+    This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
+    Inputs:
+    main_dir: A string containing main directory
+    rrs_img_dir: A string containing directory of Rrs images
+    wq_dir_name: A string containing the directory that the wq images will be saved
+    wq_alg: what wq algorithm to apply
+    imgs: images to apply - typically from retrieve_imgs_and_metadata() function
+    img_metadata: all image metadata - typically from retrieve_imgs_and_metadata() function
+    start: The image to start loading from. Default is 0.
+    count: The amount of images to load. Default is 10000
 
-#     for im in glob.glob(img_dir + "/*.tif")[start:count]:
-#         with rasterio.open(im, 'r') as Rrs_src:
-#             profile = Rrs_src.profile
-#             profile['count']=5
-#             Rrsblue=Rrs_src.read(1)
-#             Rrsgreen=Rrs_src.read(2)
-#             Rrsred=Rrs_src.read(3)
-#             Rrsrededge=Rrs_src.read(4)
-#             Rrsnir=Rrs_src.read(5)
+    Outputs: New georeferenced .tifs with same units of images in img_dir
+    """
+    # make wq_dir directory 
+    wq_dir = wq_dir_name
+    if not os.path.exists(wq_dir):
+        os.makedirs(wq_dir)
 
-#         if wq_alt == 'chl_hu':
-#             wq = chl_hu(Rrsblue, Rrsgreen, Rrsred)
+    for im in glob.glob(rrs_img_dir + "/*.tif")[start:count]:
+        with rasterio.open(im, 'r') as Rrs_src:
+            profile = Rrs_src.profile
+            profile['count']=5
+            Rrsblue=Rrs_src.read(1)
+            Rrsgreen=Rrs_src.read(2)
+            Rrsred=Rrs_src.read(3)
+            Rrsrededge=Rrs_src.read(4)
+            Rrsnir=Rrs_src.read(5)
 
-#         elif wq_alg == 'chl_ocx':
-#             wq = chl_ocx(Rrsblue, Rrsgreen)
+        if wq_alg == 'chl_hu':
+            wq = chl_hu(Rrsblue, Rrsgreen, Rrsred)
 
-#         elif wq_alg == 'chl_hu_ocx':
-#             wq = chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred)
+        elif wq_alg == 'chl_ocx':
+            wq = chl_ocx(Rrsblue, Rrsgreen)
 
-#         elif wq_alg == 'chl_gitelson':
-#             wq = chl_gitelson(Rrsred, Rrsrededge)
+        elif wq_alg == 'chl_hu_ocx':
+            wq = chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred)
 
-#         elif wq_alg == 'nechad_tsm':
-#             wq = nechad_tsm(Rrsred)
+        elif wq_alg == 'chl_gitelson':
+            wq = chl_gitelson(Rrsred, Rrsrededge)
 
+        elif wq_alg == 'nechad_tsm':
+            wq = nechad_tsm(Rrsred)
 
-#         profile.update(count=1)
+    for i in range(len(img_metadata)):
+        with rasterio.open(os.path.join(rrs_img_dir, img_metadata.index[i]), 'r') as src:
+            src_crs = "EPSG:4326"  # This is the crs of the GCPs
+            dst_crs = "EPSG:4326"
+            profile.update(dtype=rasterio.float32,crs=dst_crs,count=1)
 
-#         #write new stacked tifs w
-#         im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
-#         with rasterio.open(os.path.join(wq_dir, im_name), 'w', **profile) as dst:
-#             dst.write(wq, 1)
+            #write new stacked tifs w
+            with rasterio.open(os.path.join(wq_dir, img_metadata.index[i]), 'w', **profile) as dst:
+                dst.write(wq, 1)
     
 #################### Georeferencing #########################
 
@@ -985,7 +992,7 @@ def georeference(main_dir, img_dir, output_dir_name, imgs, img_metadata,
     output_dir_name: A string containing directory of georeferenced images 
     start: The number of image to start on. Default is 0 (first image in img_dir). 
     count: The amount of images you want to process. Default is 10000.
-    scaling: pixel size on the ground in meters
+    scaling: pixel size on the ground in meters. Default is 0.2
     extent: The offset of image in four directions from center lat,lon of drone. The default of 80 is approximate and based on altitude, FOV, and viewing geometry. For example, with a higher altitude or pitch angle, the value should be larger because the footprint on the ground will be larger. 
     flip: Option to flip camera orientation if camera is integrated 180 deg away from DLS. Default is False.
     plot: Option to plot georeferenced images. Default is False.
@@ -1080,7 +1087,7 @@ def georeference(main_dir, img_dir, output_dir_name, imgs, img_metadata,
                     dst.write(top_im_5.astype(rasterio.float32))
     return(True)
 
-def mosaic(main_dir, img_dir, output_name, start=0, count=10000, save=True, plot=True, band_to_plot=0):
+def mosaic(main_dir, img_dir, output_name, save=True, plot=True, start=0, count=10000, band_to_plot=0):
     """
     This function mosaics georeferenced .tifs to create one large .tif
     
@@ -1107,7 +1114,7 @@ def mosaic(main_dir, img_dir, output_name, start=0, count=10000, save=True, plot
     if plot==True:
         fig,ax = plt.subplots(figsize=(10,10))
         foo = mosaic[band_to_plot,:,:]
-        foo[foo == 0] = 'nan'
+        #foo[foo == 0] = 'nan'
         plt.imshow(foo)
     
     if save==True:
