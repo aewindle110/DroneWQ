@@ -1,4 +1,3 @@
-- Check function to combine DLS and panel Ed
 - Scale of Lw, Ed - mW or W?
 - Discuss get_warp_matrix()
 - Do we want rrs_std_pixel_masking() to calculate mean and std of Rrs(NIR) from first 10 images (current) or random 10 images?
