@@ -657,7 +657,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features. Only need if pixel_masking_method = 'value_threshold'.
     green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing.  Only need if pixel_masking_method = 'value_threshold'.
     ed_method: Method used to calculate downwelling irradiance (Ed). Default is dls_ed(). 
-    overwrite: Option to overwrite files that have been written previously. Default is False but this only applied to the Lt images not others.
+    overwrite: Option to overwrite files that have been written previously. Default is False but this is only applied to the Lt images.
     clean_intermediates: Option to erase intermediates of processing (Lt, Lw, unmasked Rrs) 
     
     Output: New Rrs tifs (masked or unmasked) with units of sr^-1. 
@@ -1035,13 +1035,13 @@ def georeference(main_dir, img_dir, output_dir_name, imgs, img_metadata,
 
         #Option to flip if camera is integrated 180 from each other
         if flip == True:
-            input_img = np.fliplr(np.flipud(imgs[i,0,:,:]))
+            input_img = np.fliplr(np.flipud(imgs[i,:,:,:]))
         else:
-            input_img = imgs[i,0,:,:]
+            input_img = imgs[i,:,:,:]
 
         top_im_append = []
         for j in range(0,5):
-            top_im = cam.getTopViewOfImage(input_img, extent=[-extent,extent,-extent,extent], scaling=scaling)
+            top_im = cam.getTopViewOfImage(input_img[j,:,:], extent=[-extent,extent,-extent,extent], scaling=scaling)
             top_im_append.append(top_im)
         top_im_5 = np.array(top_im_append)
 
