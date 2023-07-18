@@ -32,7 +32,7 @@ With the Docker app running on your desktop, you need to launch the Docker conta
     
 `docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v1`
 
-where <local directory> is ??? *where you want data to be saved*
+where `<local directory>` is ??? *where you want data to be saved*
 
 It should already be activated but if you need to activate the dronewq conda environment: 
 
