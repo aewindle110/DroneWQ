@@ -30,7 +30,7 @@ Once Docker and git are installed, setup a local directory. Navigate to the dire
     
 With the Docker app running on your desktop, you need to launch the Docker container. Note that the first execution of this line of code will install the Docker image  and setup and configure all required software (python, jupyter notebooks) and packages. This could take several minutes, depending on computer speed.
     
-`docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v1`
+`docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v2`
 
 where `<local directory>` is ??? *where you want data to be saved*
 
@@ -48,7 +48,7 @@ Copy the generated URL in the terminal (e.g. `http://127.0.0.1:8888/?token=<auto
 
 You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html which includes instructions on how to download exiftool. We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found [here](https://github.com/micasense/imageprocessing). Note that our `micasense` scripts are slightly modified in that radiance data type is expressed as Float32 instead of Uint16 and we change the output of image.radiance() to output milliwatts (mW) instead of watts (W). This impacts the panel_ed calculation which relies on image.radiance(). We also modified capture.save_capture_as_stack() accordingly to not scale and filter the data. MicaSense is planning on a future package with user specified radiance data types, at which point we will revert to their package version.
 
-After you have cloned the DroneWQ repo to your local machine and installed exiftool, `cd` to the direcotry you cloned this repository to.
+After you have cloned the DroneWQ repo to your local machine and installed exiftool, `cd` to the directory you cloned this repository to.
 
 Create a virtual conda env by running `conda env create -f environment.yml`. This will configure an anaconda environment with all of the required tools and libraries. 
 When it's done, run `conda activate dronewq` to activate the environment configured.
