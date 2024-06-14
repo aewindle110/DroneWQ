@@ -5,7 +5,7 @@ DroneWQ is a Python package that can be used to analyze multispectral data colle
 
 The main processing script has the ability to **1)** convert raw multispectral imagery to total radiance (L<sub>t</sub>) with units of W/m<sup>2</sup>/nm/sr, **2)** remove surface reflected light (L<sub>sr</sub>) to calculate water leaving radiance (L<sub>w</sub>), **3)** measure downwelling irradiance (E<sub>d</sub>) from either the calibrated reflectance panel, downwelling light sensor (DLS), or a combination of the two, **4)** calculate remote sensing reflectance (R<sub>rs</sub>) by dividing E<sub>d</sub> by L<sub>w</sub>, and **5)** mask pixels containing specular sun glint or instances of vegetation, shadowing, etc., **6)** use R<sub>rs</sub> as input into various bio-optical algorithms to derive chlorophyll a and total suspended sediment concentrations, and **7)** georeference using image metadata to orient and map to a known coordinate system. 
 
-![Caption for example figure.\label{fig:DroneWQ_workflow}](DroneWQ_workflow.png)
+![Caption for example figure.\label{fig:DroneWQ_workflow}](DroneWQ.png)
 
 More information on the methods applied in this package can be found in:
 
