@@ -8,22 +8,40 @@ tags:
   - water quality
 authors:
   - name: Anna E. Windle
-    orcid: 0000-0000-0000-0000
-    affiliation: 1 
+    orcid: 0000-0002-4852-5848
+    affiliation: "1, 2"
     equal-contrib: true
     corresponding: true
   - name: Patrick Gray 
-    orcid: 0000-0000-0000-0000
-    affiliation: 2
+    orcid: 0000-0002-8997-5255
+    affiliation: "3, 4"
     equal_contrib: true
+  - name: Alejandro Roman
+    orcid: 0000-0002-8868-9302
+    affiliation: 5
+  - name: Sergio Heredia
+    orcid:
+    affiliation: 5
+  - name: Gabriel Navarro
+    orcid: 0000-0002-8919-0060
+    affiliation: 5
   - name: Greg M. Silsbe
-    orcid: 0000-0000-0000-0000
-    affiliation: 1
+    orcid: 0000-0003-2673-1162
+    affiliation: 6
 affiliations:
- - name: Horn Point Laboratory, University of Maryland Center for Environmental Science, Cambridge, MD, United States
+ - name: NASA Goddard Space Flight Center, Greenbelt, MD, United States
    index: 1
- - name:  Division of Marine Science and Conservation, Nicholas School of the Environment, Duke University Marine Laboratory, Beaufort, NC, United States
+ - name: Science Systems and Applications, Inc., Lanham, MD, United States
    index: 2
+ - name: School of Marine Sciences, University of Maine, Orono, ME, United States
+   index: 3
+ - name: Department of Marine Geosciences, Charney School of Marine Sciences, University of Haifa, Haifa, Israel
+   index: 4
+ - name: Department of Ecology and Coastal Management, Institute of Marine Sciences of Andalusia (ICMAN-CSIC), Spanish National Research Council (CSIC), 11510 Puerto Real, Spain
+   index: 5
+ - name: Horn Point Laboratory, University of Maryland Center for Environmental Science, Cambridge, MD, United States
+   index: 6
+ 
 date: 28 January 2023
 bibliography: paper.bib
 ---
@@ -167,13 +185,15 @@ This function uses MicaSense metadata (altitude, pitch, roll, yaw, lat, lon) to 
 
 `mosaic()`
 <br/>
-This function mosaics georeferenced .tifs into one .tif that can be pulled into a GIS software. 
+This function mosaics the georeferenced images into one georeferenced mosaicked .tif.
 
-# Demo notebooks 
-DroneWQ includes 3 jupyter notebooks to demonstrate the processing functions. 
+`downsample()`
+<br/>
+This function reduces the spatial resolution of the mosaic .tif to reduce file size. 
+
+# Demo notebook
+DroneWQ includes a jupyter notebooks to demonstrate the processing functions. 
 * `primary_demo.ipynb` includes a standard workflow to process raw UAS imagery to Rrs. It also demostrates how to derive water quality concentrations (chloropyll a and total suspended matter) from Rrs. Lastly, it demonstrates how to georeference using sensor metadata and mosaic derived images to visualize spatial patterns on a map. 
-* `georeferencing_improved.ipynb` demonstrates how to incorporate external metatdata (either from the drone or gimbal) to improve georeferencing since it is known that the sensor metadata can be slightly imprecise. 
-* `surface_reflection_removal_comparison.ipynb` demonstrates 
 
 # Acknowledgements
 
