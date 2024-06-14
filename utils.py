@@ -29,6 +29,11 @@ import random
 import cameratransform as ct
 from rasterio.merge import merge
 
+from tqdm import tqdm
+from pyproj import CRS
+from rasterio.transform import Affine
+from rasterio.enums import Resampling
+
 
 def write_metadata_csv(img_set, csv_output_path):
     """
@@ -41,53 +46,70 @@ def write_metadata_csv(img_set, csv_output_path):
     Output: A .csv of metadata for each image capture. 
     
     """
-    header = "SourceFile,GPSDateStamp,GPSTimeStamp,GPSLatitude,GPSLatitudeRef,GPSLongitude,GPSLongitudeRef,GPSAltitude,FocalLength,ImageWidth,ImageHeight,GPSImgDirection,GPSPitch,GPSRoll\n"
+    def decdeg2dms(dd):
+            minutes, seconds = divmod(abs(dd) * 3600, 60)
+            degrees, minutes = divmod(minutes, 60)
+            degrees : float = degrees if dd >= 0 else -degrees
+
+            return (degrees, minutes, seconds)
     
-    lines = [header]
+    lines = []
     for i,capture in enumerate(img_set.captures):
-        #get lat,lon,alt,time
-        outputFilename = 'capture_' + str(i+1)+'.tif'
-        fullOutputPath = os.path.join(csv_output_path, outputFilename)
-        lat,lon,alt = capture.location()
         
-        imagesize  = capture.images[0].meta.image_size()
-        
-        yaw, pitch, roll = capture.dls_pose()
-        yaw, pitch, roll = np.array([yaw, pitch, roll]) * 180/math.pi
+        fullOutputPath = os.path.join(csv_output_path, f'capture_{i+1}.tif')
 
-        linestr = '"{}",'.format(fullOutputPath)
-        linestr += capture.utc_time().strftime("%Y:%m:%d,")
-        linestr += capture.utc_time().strftime("%H:%M:%S,")
-        linestr += '{},'.format(capture.location()[0])
-        if capture.location()[0] > 0:
-            linestr += 'N,'
-        else:
-            linestr += 'S,'
-        linestr += '{},'.format(capture.location()[1])
-        if capture.location()[1] > 0:
-            linestr += 'E,'
-        else:
-            linestr += 'W,'
-        linestr += '{},'.format(capture.location()[2])
-        linestr += '{},'.format(capture.images[0].focal_length)
-        linestr += '{},{},'.format(imagesize[0],imagesize[1])
-        linestr += '{},{},{}'.format(yaw, pitch, roll)
-        linestr += '\n' # when writing in text mode, the write command will convert to os.linesep
-        lines.append(linestr)
-        
+        width, height = capture.images[0].meta.image_size()
+        img : Image_micasense = capture.images[0]
+        lat, lon, alt = capture.location()
 
-    fullCsvPath = os.path.join(csv_output_path,'metadata.csv')
-    with open(fullCsvPath, 'w') as csvfile: #create CSV
-        csvfile.writelines(lines)
+        latdeg, londeg = decdeg2dms(lat)[0], decdeg2dms(lon)[0]
+        latdeg, latdir = (-latdeg, 'S') if latdeg < 0 else (latdeg, 'N')
+        londeg, londir = (-londeg, 'W') if londeg < 0 else (londeg, 'E')
+
+        datestamp, timestamp = capture.utc_time().strftime("%Y-%m-%d,%H:%M:%S").split(',')
+        resolution = capture.images[0].focal_plane_resolution_px_per_mm
+        focal_length = capture.images[0].focal_length
+        sensor_size  = width / img.focal_plane_resolution_px_per_mm[0], height / img.focal_plane_resolution_px_per_mm[1]
+
+        data = {
+                'filename' : f'capture_{i+1}.tif',
+                'dirname' : fullOutputPath,
+                'DateStamp' : datestamp,
+                'TimeStamp' : timestamp,
+                'Latitude' : lat,
+                'LatitudeRef' : latdir,
+                'Longitude' : lon,
+                'LongitudeRef' : londir,
+                'Altitude' : alt,
+                'SensorX' : sensor_size[0],
+                'SensorY' : sensor_size[1],
+                'FocalLength' : focal_length,
+                'Yaw' : (capture.images[0].dls_yaw * 180 / math.pi) % 360,
+                'Pitch' : (capture.images[0].dls_pitch * 180 / math.pi) % 360,
+                'Roll' : (capture.images[0].dls_roll * 180 / math.pi) % 360,
+                'SolarElevation' : capture.images[0].solar_elevation,
+                'ImageWidth' : width,
+                'ImageHeight' : height,
+                'XResolution' : resolution[1],
+                'YResolution' : resolution[0],
+                'ResolutionUnits' : 'mm',
+            }
     
-    # let's convert the timestamp to a proper Datetime object and make the filenames the index
-    df = pd.read_csv(fullCsvPath)
-    df['filename'] = df['SourceFile'].str.split('/').str[-1]
+        lines.append(list(data.values()))
+        header = list(data.keys())
+
+        
+    fullCsvPath = os.path.join(csv_output_path,'metadata.csv')
+  
+    df = pd.DataFrame(columns = header, data = lines)
+            
     df = df.set_index('filename')
-    df['UTC-Time'] = pd.to_datetime(df['GPSDateStamp'] +' '+ df['GPSTimeStamp'],format="%Y:%m:%d %H:%M:%S")    
+    #df['UTC-Time'] = pd.to_datetime(df['DateStamp'] +' '+ df['TimeStamp'],format="%Y:%m:%d %H:%M:%S")    
+    
     df.to_csv(fullCsvPath)
     
     return(fullCsvPath)
+
 
 def load_images(img_list):
     """
@@ -119,7 +141,7 @@ def load_img_fn_and_meta(csv_path, count=10000, start=0):
     """    
     df = pd.read_csv(csv_path)
     df = df.set_index('filename')
-    df['UTC-Time'] = pd.to_datetime(df['UTC-Time'])    
+    #df['UTC-Time'] = pd.to_datetime(df['UTC-Time'])    
     # cut off if necessary
     df = df.iloc[start:start+count]
 
@@ -138,14 +160,14 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     
     """
     if sky:
-        csv_path = img_dir + '/metadata.csv'
+        csv_path = os.path.join(img_dir, 'metadata.csv')
     else:
-        csv_path = os.path.dirname(img_dir) + '/metadata.csv'
+        csv_path = os.path.join(os.path.dirname(img_dir), 'metadata.csv')
         
     df = load_img_fn_and_meta(csv_path, count=count, start=start)
     
     # apply altitiude threshold and set IDs as the indez
-    df = df[df['GPSAltitude'] > altitude_cutoff]
+    df = df[df['Altitude'] > altitude_cutoff]
     
     # this grabs the filenames from the subset of the dataframe we've selected, then preprends the image_dir that we want.
     # the filename is the index
@@ -306,7 +328,7 @@ def mobley_rho_method(sky_lt_dir, lt_dir, lw_dir, rho = 0.028):
             stacked_lw = np.stack(lw_all) #stack into np.array
 
             #write new stacked lw tifs
-            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+            im_name = os.path.basename(im) # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(lw_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_lw)
                 
@@ -346,7 +368,7 @@ def blackpixel_method(sky_lt_dir, lt_dir, lw_dir):
             stacked_lw = np.stack(lw_all) #stack into np.array
 
             #write new stacked lw tifs
-            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+            im_name = os.path.basename(im) # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(lw_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_lw)
                 
@@ -366,6 +388,7 @@ def hedley_method(lt_dir, lw_dir, random_n=10):
    
    """
     lt_all = []
+    
     rand = random.sample(glob.glob(lt_dir + "/*.tif"), random_n) #open random n files. n is selected by user in process_raw_
     for im in rand:
         with rasterio.open(im, 'r') as lt_src:
@@ -385,7 +408,7 @@ def hedley_method(lt_dir, lw_dir, random_n=10):
     all_slopes = []
     for i in range(len(glob.glob(lt_dir + "/*.tif"))):
         im = glob.glob(lt_dir + "/*.tif")[i]
-        im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+        im_name = os.path.basename(im) # we're grabbing just the .tif file name instead of the whole path
         with rasterio.open(im, 'r') as lt_src:
             profile = lt_src.profile
             lt = lt_src.read()
@@ -456,7 +479,7 @@ def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
             stacked_rrs = np.stack(rrs_all) #stack into np.array
             
             #write new stacked Rrs tifs w/ Rrs units
-            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+            im_name = os.path.basename(im) # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(rrs_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_rrs)
     return(True)
@@ -545,7 +568,7 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=None, dls_
             stacked_rrs = np.stack(rrs_all) #stack into np.array 
 
             #write new stacked Rrs tifs w/ Rrs units
-            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+            im_name = os.path.basename(im) # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(rrs_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_rrs)
     return(True)
@@ -591,7 +614,7 @@ def rrs_threshold_pixel_masking(rrs_dir, masked_rrs_dir, nir_threshold = 0.01, g
             stacked_rrs_mask = np.stack(rrs_mask_all) #stack into np.array
 
             #write new stacked rrs tifs
-            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+            im_name = os.path.basename(im) # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(masked_rrs_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_rrs_mask)
                 
@@ -634,7 +657,7 @@ def rrs_std_pixel_masking(rrs_dir, masked_rrs_dir, num_images=10, mask_std_facto
                 rrs_deglint_all.append(rrs_deglint) #append all for each band
             stacked_rrs_deglint = np.stack(rrs_deglint_all) #stack into np.array
             #write new stacked tifs
-            im_name = im.split('/')[-1] # we're grabbing just the .tif file name instead of the whole path
+            im_name = os.path.basename(im) # we're grabbing just the .tif file name instead of the whole path 
             with rasterio.open(os.path.join(masked_rrs_dir, im_name), 'w', **profile) as dst:
                 dst.write(stacked_rrs_deglint)
     return(True)
@@ -764,7 +787,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     ################################################
     
     if clean_intermediates:
-        dirs_to_delete = [lt_dir, sky_lt_dir, glint_corrected_lt_dir, lw_dir]
+        dirs_to_delete = [lt_dir, sky_lt_dir, lw_dir]
         for d in dirs_to_delete:
             shutil.rmtree(d,ignore_errors=True)
                 
@@ -947,183 +970,644 @@ def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, imgs, img_metadata, wq_alg=
             with rasterio.open(os.path.join(wq_dir, img_metadata.index[i]), 'w', **profile) as dst:
                 dst.write(wq, 1)
     
-#################### Georeferencing #########################
 
-def spacetotopdown(top_im, cam, image_size, scaling):
+
+###### Georeferencing #######
+
+def georeference(metadata, input_dir, output_dir, lines = None, altitude = None, yaw = None, pitch = 0, roll = 0, axis_to_flip = None):
     """
-    This function defines the coordinates of the four corners in image coordinates space
-    
+    This function georeferences all the captures indicated in the line parameter following the specification of the other parameters such as altitude, yaw, pitch, roll, axis_to_flip
+
     Inputs:
-    top_im: projected image derived from the getTopViewOfImage() function in CameraTransform
-    cam: camera object from ct.Camera() transform
-    image_size: image width and height from metadata
-    scaling: pixel size on the ground in meters
+    metadata: A Pandas dataframe of the metadata
+    input_dir: A string containing the directory filepath of the images to be retrieved for georeferencing.
+    output_dir: A string containing the directory filepath to be saved. 
+    lines: Selection of images to be processed. Defaults to None. Example: [slice(0,10)]
+    altitude: sets the altitude where all captures were taken. Defaults to None which uses the altitude data saved in the metadata for each respective capture.
+    yaw: sets the sensor's direction angle during all captures. Defaults to None which uses the yaw angle saved in the metadata for each respective capture.
+    pitch: sets the sensor's pitch angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+    roll: sets the sensor's roll angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+    axis_to_flip: The axis to apply a flip. Defaults to None.
     
-    Output: numpy array of projected top down image coordinates
-    """
-    x1 = top_im.shape[0]/2 + cam.spaceFromImage([0,0])[0] / scaling
-    y1 = top_im.shape[1]/2 - cam.spaceFromImage([0,0])[1] / scaling
-    
-    x2 = top_im.shape[0]/2 + cam.spaceFromImage([image_size[0]-1,0])[0] / scaling
-    y2 = top_im.shape[1]/2 - cam.spaceFromImage([image_size[0]-1,0])[1] / scaling
-    
-    x3 = top_im.shape[0]/2 + cam.spaceFromImage([image_size[0]-1,image_size[1]-1])[0] / scaling
-    y3 = top_im.shape[1]/2 - cam.spaceFromImage([image_size[0]-1,image_size[1]-1])[1] / scaling
-    
-    x4 = top_im.shape[0]/2 + cam.spaceFromImage([0,image_size[1]-1])[0] / scaling
-    y4 = top_im.shape[1]/2 - cam.spaceFromImage([0,image_size[1]-1])[1] / scaling
-    
-    return(np.array([[x1,y1], [x2,y2], [x3,y3], [x4,y4]]))
+    Output: Georeferenced .tifs in output_dir 
+"""
 
+    def __get_transform(f, sensor_size, image_size, lat, lon, alt, yaw, pitch, roll):
+        """
+        Calculates a transformation matrix for a given capture in order to get every lat, lon for each pixel in the image.
 
-def georeference(main_dir, img_dir, output_dir_name, imgs, img_metadata, 
-                 scaling=0.2, extent=80, flip=False, plot=False, yaw_name='GPSImgDirection', 
-                 pitch_name='GPSPitch', roll_name='GPSRoll', pitch_offset=0):
-    """
-    This function applies georeferencing based on MicaSense image metadata (altitude, pitch, roll, yaw, lat, lon). 
-    
-    Inputs:
-    main_dir: A string containing main directory
-    img_dir: A string containing directory of images to georeference
-    imgs: images to georeference - typically from retrieve_imgs_and_metadata() function
-    img_metadata: all image metadata - typically from retrieve_imgs_and_metadata() function
-    output_dir_name: A string containing directory of georeferenced images 
-    start: The number of image to start on. Default is 0 (first image in img_dir). 
-    count: The amount of images you want to process. Default is 10000.
-    scaling: pixel size on the ground in meters. Default is 0.2
-    extent: The offset of image in four directions from center lat,lon of drone. The default of 80 is approximate and based on altitude, FOV, and viewing geometry. For example, with a higher altitude or pitch angle, the value should be larger because the footprint on the ground will be larger. 
-    flip: Option to flip camera orientation if camera is integrated 180 deg away from DLS. Default is False.
-    plot: Option to plot georeferenced images. Default is False.
-    yaw: movement along the left-right axis. Default is 'GPSImgDirection'
-    pitch: movement along up-down axis. Default is 'GPSPitch'
-    roll: movement around front-back axis. Default is 'GPSRoll'
-    
-    Output: New georeferenced .tifs with same units of images in img_dir
-    """
-    
-    # make georeference directory 
-    georeference_dir = output_dir_name
-    if not os.path.exists(georeference_dir):
-        os.makedirs(georeference_dir)
-    
-    for i in range(len(img_metadata)):
-        f = img_metadata.iloc[i]['FocalLength']
-        image_size = [img_metadata.iloc[i]['ImageWidth'], img_metadata.iloc[i]['ImageHeight']]
-        sensor_size = (4.8,3.6) #got from MicaSense specs
-        pitch = img_metadata.iloc[i][pitch_name]+pitch_offset
-        roll = img_metadata.iloc[i][roll_name]
-        yaw = img_metadata.iloc[i][yaw_name]
-        alt = img_metadata.iloc[i]['GPSAltitude']
-        lat = img_metadata.iloc[i]['GPSLatitude']
-        lon = img_metadata.iloc[i]['GPSLongitude']
+        Args:
+            f (float): focal_length
+            sensor_size (Tuple[float, float]): correspondence pixel -> milimeter
+            image_size (Tuple[int, int]): number of pixels for width and height
+            lat (float): latitude of camera
+            lon (float): longitude of camera
+            alt (float): altitude of camera
+            yaw (float): yaw of camera
+            pitch (float): tilt of camera
+            roll (float): roll of camera
 
-        cam = ct.Camera(ct.RectilinearProjection(focallength_mm=f,
-                                             sensor=sensor_size,
-                                             image_width_px=imgs[i,0,:,:].shape[1], # columns aka width
-                                             image_height_px=imgs[i,0,:,:].shape[0], # rows aka height
-                                            view_x_deg = 47.2, #This is the horizontal and vertical FOV from MicaSense specs
-                                            view_y_deg=35.4),
-                   ct.SpatialOrientation(elevation_m=alt,
-                                         tilt_deg=pitch,
-                                         roll_deg=roll,
-                                        heading_deg=yaw,
-                                        pos_x_m=0, pos_y_m=0))
-        # gps pts are lat lon
+        Returns:
+            Affine: transformation matrix
+        """
+
+        cam = ct.Camera(ct.RectilinearProjection(focallength_mm = f, sensor = sensor_size, image = image_size),
+                        ct.SpatialOrientation(elevation_m = alt, tilt_deg = pitch, roll_deg = roll, heading_deg = yaw, 
+                                            pos_x_m = 0, pos_y_m = 0))
+
         cam.setGPSpos(lat, lon, alt)
 
-        #Option to flip if camera is integrated 180 from each other
-        if flip == True:
-            input_img = np.fliplr(np.flipud(imgs[i,:,:,:]))
-        else:
-            input_img = imgs[i,:,:,:]
+        coords : np.absndarray = np.array([cam.gpsFromImage([0, 0]), cam.gpsFromImage([image_size[0] - 1, 0]), 
+                                        cam.gpsFromImage([image_size[0] - 1, image_size[1] - 1]), cam.gpsFromImage([0, image_size[1] - 1])])
+                
+        gcp1 = rasterio.control.GroundControlPoint(row = 0, col = 0, x = coords[0, 1], y = coords[0, 0], z = coords[0, 2])
+        gcp2 = rasterio.control.GroundControlPoint(row = image_size[0] - 1, col = 0, x = coords[1, 1], y = coords[1, 0], z = coords[1, 2])
+        gcp3 = rasterio.control.GroundControlPoint(row = image_size[0] - 1, col = image_size[1] - 1, x = coords[2, 1], y = coords[2, 0], z = coords[2, 2])
+        gcp4 = rasterio.control.GroundControlPoint(row = 0, col = image_size[1] - 1, x = coords[3, 1], y = coords[3, 0], z = coords[3, 2])
 
-        top_im_append = []
-        for j in range(0,5):
-            top_im = cam.getTopViewOfImage(input_img[j,:,:], extent=[-extent,extent,-extent,extent], scaling=scaling)
-            top_im_append.append(top_im)
-        top_im_5 = np.array(top_im_append)
+        return rasterio.transform.from_gcps([gcp1, gcp2, gcp3, gcp4])
 
-        if plot==True:
-            plt.imshow(top_im_5[0,:,:], interpolation='nearest')
-            plt.show()
+    def __get_georefence_by_uuid(metadata, lines = None, altitude = None, yaw = None, pitch = None, roll = None):
+        """
+        Given a DataFrame and a list of flight lines, calculate a dictionary with the transformation matrix for each capture
+
+        Args:
+            metadata (DataFrame): Pandas DataFrame that contains information like capture latitude, longitude, ...
+            lines (List[slice], optional): List that indicates the flight lines. Defaults to None which means [ slice(0, None) ] = all captures.
+            altitude (float, optional): altitude of camera
+            yaw (float, optional): yaw of camera
+            pitch (float, optional): tilt of camera
+            roll (float, optional): roll of camera
+
+        Returns:
+            Mapping[str, Affine]: Dictionary that gathers captures IDs and transformation matrices
+        """
+
+        lines = lines if lines is not None else [ slice(0, None) ]
+
+        georeference_by_uuid = {}
+
+        for line in lines:
+            captures = metadata.iloc[line]
             
-        # Now get the image coordinates of the corners of the original image but in the top down image
-        # this scaling factor is the size of the pixels in the final image so we can tune it depending on needs.
-        # when set to 0.2, the image size to -80 to 80 meters (160m), so the image size is 160/.2 = 800 pixels
-        image_coords = spacetotopdown(top_im, cam, image_size, scaling=scaling)
+            for _, capture in captures.iterrows():
+                focal = capture['FocalLength']
+                image_size = (capture['ImageWidth'], capture['ImageHeight'])[::-1]
+                sensor_size = (capture['SensorX'], capture['SensorY'])[::-1]
+                
+                lon = float(capture['Longitude'])
+                lat = float(capture['Latitude'])
+                alt = float(capture['Altitude']) if altitude is None else altitude
+                capture_pitch = float(capture['Pitch']) if pitch is None else pitch
+                capture_roll = float(capture['Roll']) if roll is None else roll
+                capture_yaw = float(capture['Yaw']) if yaw is None else yaw
 
-        # these are the coordinates of the image corners   
-        coords = np.array([
-            cam.gpsFromImage([0               , 0]), \
-            cam.gpsFromImage([image_size[0]-1 , 0]), \
-            cam.gpsFromImage([image_size[0]-1 , image_size[1]-1]), \
-            cam.gpsFromImage([0               , image_size[1]-1])])
+                georeference_by_uuid[os.path.basename(capture['filename'])] = __get_transform(focal, sensor_size, image_size, lat, 
+                                                                                            lon, alt, capture_yaw, capture_pitch, 
+                                                                                            capture_roll)
 
-        gcp1 = rasterio.control.GroundControlPoint(row=image_coords[0,1], col=image_coords[0,0], x=coords[0,1], y=coords[0,0], 
-                                                   z=coords[0,2], id=None, info=None)
-        gcp2 = rasterio.control.GroundControlPoint(row=image_coords[1,1], col=image_coords[1,0], x=coords[1,1], y=coords[1,0], 
-                                                   z=coords[1,2], id=None, info=None)
-        gcp3 = rasterio.control.GroundControlPoint(row=image_coords[2,1], col=image_coords[2,0], x=coords[2,1], y=coords[2,0], 
-                                                   z=coords[2,2], id=None, info=None)
-        gcp4 = rasterio.control.GroundControlPoint(row=image_coords[3,1], col=image_coords[3,0], x=coords[3,1], y=coords[3,0], 
-                                                   z=coords[3,2], id=None, info=None)
-
-        with rasterio.Env():
-            # open the original image to get some of the basic metadata
-            with rasterio.open(os.path.join(img_dir, img_metadata.index[i]), 'r') as src:
-                profile = src.profile
-                src_crs = "EPSG:4326"  # This is the crs of the GCPs
-                dst_crs = "EPSG:4326"
-                tsfm = rasterio.transform.from_gcps([gcp1,gcp2,gcp3,gcp4])
-                profile.update(
-                    dtype=rasterio.float32,
-                    transform = tsfm,
-                    crs=dst_crs,
-                    width=top_im.shape[1], # TODO unsure if this is correct order but they're the same value so okay for now
-                    height=top_im.shape[0])
-                with rasterio.open(os.path.join(georeference_dir, img_metadata.index[i]), 'w', **profile) as dst:
-                    dst.write(top_im_5.astype(rasterio.float32))
-    return(True)
-
-def mosaic(main_dir, img_dir, output_name, save=True, plot=True, start=0, count=10000, band_to_plot=0):
-    """
-    This function mosaics georeferenced .tifs to create one large .tif
+        return georeference_by_uuid
     
-    Inputs: 
-    main_dir: String containing main directory
-    img_dir: String containing image directory of .tifs to mosaic. 
-    output_name: String containing name of mosaicked .tif
-    start: The number of image to start on. Default is 0 (first image in img_dir).
-    count: The amount of images you want to list. Default is 10000
-    save: Option to save mosaicked .tif in main_dir. Default is True.
-    plot: Option to plot mosaicked tif. Default is True. 
-    band_to_plot: What band to plot. Default is 0 (blue). 
-    
-    Output: numpy array of mosaicked georeferenced images 
+
+    out_folder_path = output_dir
+    os.makedirs(out_folder_path, exist_ok = True)
+
+    metadata = metadata.set_index(metadata['filename'])
+    georefence_by_uuid = __get_georefence_by_uuid(metadata, lines, altitude, yaw, pitch, roll)
+
+    for uuid, transform in tqdm(georefence_by_uuid.items(), total = len(georefence_by_uuid.items())):
+
+        with rasterio.open(os.path.join(input_dir, uuid), 'r') as src:
+            profile = src.profile
+            profile['transform'] = transform
+            profile['count'] = src.profile['count']
+            profile['crs'] = CRS.from_user_input(4326) # Latitude, longitude]
+
+            with rasterio.open(os.path.join(output_dir, uuid), 'w', **profile) as dst:
+                data = src.read().astype(profile['dtype'])
+                dst.write( data if axis_to_flip is None else np.flip(data, axis = axis_to_flip) )
+
+                
+##### Mosaicking #####
+#Geometry functions
+
+def is_on_right_side(x, y, xy0, xy1):
     """
+    Given a point and 2 points defining a rect, check if the point is on the right side or not.        
+
+    Args:
+        x (float): value in the x-axis of the point
+        y (float): value in the y-axis of the point
+        xy0 (Tuple[float, float]): point 0 of the rect
+        xy1 (Tuple[float, float]): point 1 of the rect
+
+    Returns:
+        bool: is on right side or not
+    """
+
+    x0, y0 = xy0
+    x1, y1 = xy1
+    a = float(y1 - y0)
+    b = float(x0 - x1)
+    c = - a * x0 - b * y0
+    return a * x + b * y + c > 0
+
+def is_point_within_vertices(x, y, vertices):
+    """This fuction checks if a point is within the given vertices
+
+    Args:
+        x (float): value in the width axis for the point
+        y (float): value in the height axis for the point
+        vertices (List[Tuple[float, float]]): bounding vertices
+
+    Returns:
+        bool: whether the point is within the vertices or not
+    """
+
+    num_vert = len(vertices)
+    is_right = [is_on_right_side(x, y, vertices[i], vertices[(i + 1) % num_vert]) for i in range(num_vert)]
+    all_left = not any(is_right)
+    all_right = all(is_right)
+    return all_left or all_right
+
+def are_points_within_vertices(vertices, points):
+    """
+    Given a list of vertices and a list of points, generate every rect determined by the vertices and check if the points are within the polygon or not.
+
+    Args:
+        vertices (List[Tuple[float, float]]): List of vertices defining a polygon
+        points (List[Tuple[float, float]]): List of points to study is they are within the polygon or not
+
+    Returns:
+        bool: the given points are within the given vertices or not
+    """
+
+    all_points_in_merge = True
+
+    for point in points:
+        all_points_in_merge &= is_point_within_vertices(x = point[0], y = point[1], vertices = vertices)
+    
+    return all_points_in_merge
+
+def euclidean_distance(p1, p2):
+    """
+    euclidean distance between two points
+
+    Args:
+        p1 (Tuple[float, float]): 2D point 1
+        p2 (Tuple[float, float]): 2D point 2
+
+    Returns:
+        float: euclidean distance between two points
+    """
+
+    return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+def get_center(points):
+    """This function receives a list of points and returns the point at the center of all points
+
+    Args:
+        points (np.ndarray): a list of points
+
+    Returns:
+        np.ndarray: center of all points
+    """
+
+    x = points[:, 0]
+    y = points[:, 1]
+
+    m_x = sum(x) / points.shape[0]
+    m_y = sum(y) / points.shape[0]
+
+    return np.array([m_x, m_y])
+
+class Paralelogram2D:
+    """This class represents a paralelogram
+    """
+
+    def __init__(self, points):
+        """This constructor receives a list of points and sets the pairs of lines
+
+        Args:
+            points (List[Tuple[float, float]]): list of corner points that determinate a paralelogram
+        """
+
+        self.points = points
+        self.lines = [[0, 1], [1, 2], [2, 3], [3, 0]]
+        self.pairs = [[0, 2], [1, 3]]
+
+    def get_line_center(self, index):
+        """This functions returns the center of a specific line of the paralelogram
+
+        Args:
+            index (int): line index
+
+        Returns:
+            np.ndarray: center
+        """
+
+        return sum(self.points[self.lines[index]]) / 2
+    
+    def get_offset_to_lines(self, index, point):
+        """This functions returns a Vector that represents what should be direction of point for being in the specified line
+
+        Args:
+            index (int): line index
+            point (np.ndarray): point
+
+        Returns:
+            np.ndarray: direction vector
+        """
+
+        return self.get_line_center(index) - point
+    
+    def get_center(self):
+        """This function returns the center of the paralelogram
+
+        Returns:
+            np.ndarray: center
+        """
+
+        return get_center(self.points)
+    
+    def move_line_from_offset(self, index, offset):
+        """This function moves a specific line given an offset vector
+
+        Args:
+            index (int): line index
+            offset (np.ndarray): offset vector
+        """
+
+        self.points[self.lines[index]] += offset
+    
+    def are_on_right_side_of_line(self, index, points):
+        """This function checks if a list of points is on the right side of a specific line
+
+        Args:
+            index (int): line index
+            points (np.ndarray): a list of points
+
+        Returns:
+            bool: whether the list is on the right side or not
+        """
+
+        return all([is_on_right_side(*point, *self.points[self.lines[index]]) for point in points])
+
+### END Geometry functions ###
+
+
+def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float32, band_names = None):
+    """This function moasics all the given rasters into a single raster file 
+
+        Inputs:
+        input_dir: a string containing the directory filepath of images to be mosaicked 
+        output_dir: a string containing the directory filepath to save the output
+        output_name: a string of the output name of mosaicked .tif
+        method: Method to be used when multiple captures coincide at same location. Options: 'mean', 'first', 'min', 'max'. Defaults to 'mean'.
+        dtype: dtype of the mosaicked raster. Defaults to np.float32.
+        band_names: List of band names. If it is not None, it writes one file for each band instead of one file with all the bands. Defaults to None.
+
+        Returns:
+        Mosaicked .tif file
+    """
+
+    def listdir_fullpath(d):
+        return [os.path.join(d, f) for f in os.listdir(d)]   
+    
+    raster_paths = listdir_fullpath(input_dir)
+    
+    out_folder_path = output_dir
+    os.makedirs(out_folder_path, exist_ok = True)
+    
+    output_name = os.path.join(out_folder_path, f'{output_name}.tif')     
+    
+    def __latlon_to_index(dst , src):
+        """
+        Given a source dataset and a destination dataset. Get the latitudes and longitudes that correspond to move the source data to the destination data.
+
+        Args:
+            dst (_type_): Destination dataset
+            src (DatasetReader): Source dataset
+
+        Returns:
+            ndarray: List of latitudes and longitudes
+        """
+
+        cols, rows = np.meshgrid(np.arange(src.width), np.arange(src.height))
         
-    mosaic_tifs = []
-    for i in glob.glob(img_dir + "/*.tif")[start:count]:
-        src = rasterio.open(i)
-        mosaic_tifs.append(src)
+        xs, ys = rasterio.transform.xy(src.transform, rows, cols)
+        lons, lats = np.array(xs), np.array(ys)
 
-    mosaic, out_trans = merge(mosaic_tifs)
+        coords_to_index = np.array([ dst.index(lons[i], lats[i]) for i in np.arange(src.height)])
+        lons, lats = coords_to_index[:, 0, :], coords_to_index[:, 1, :]
+        
+        return lons, lats
 
-    if plot==True:
-        fig,ax = plt.subplots(figsize=(10,10))
-        foo = mosaic[band_to_plot,:,:]
-        #foo[foo == 0] = 'nan'
-        plt.imshow(foo)
+    def __get_raster_corners(raster_path):
+        """
+        Given a raster path, return a list of its corners based on its transformation matrix.
+
+        Args:
+            raster_path (str): path of the raster to be processed
+
+        Returns:
+            List[Tuple[float, float]]: List with the 4 corners of the raster
+        """
+
+        raster = rasterio.open(raster_path)
+        w, h = raster.width, raster.height
+
+        return [raster.transform * p for p in [(0, 0), (0, h - 1), (w - 1, h - 1), (w - 1, 0)]]
     
-    if save==True:
-        output_meta = src.meta.copy()
-        output_meta.update(
-            {"driver": "GTiff",
-                "height": mosaic.shape[1],
-                "width": mosaic.shape[2],
-                "transform": out_trans})
+    def __get_raster_corners_by_params(transform, width, height):
+        """
+        Given a transformation matrix, a width and a height, return a list of corners based on the given transformation matrix.
 
-        with rasterio.open(os.path.join(main_dir, output_name + '.tif'), "w", **output_meta) as m:
-            m.write(mosaic)
+        Args:
+            transform (Affine): transformation matrix
+            width (int): transformation width
+            height (int): transformation height
+
+        Returns:
+            List[Tuple[float, float]]: List with the 4 corners of the raster
+        """
+
+        return [transform * p for p in [(0, 0), (0, height - 1), (width - 1, height - 1), (width - 1, 0)]]
+
+    def __get_merge_transform(raster_paths, max_iterations = 10000):
+        """This function returns a transform matrix that contains of the specified rasters
+
+        Args:
+            raster_paths (set): raster paths to merge
+            max_iterations (int, optional): additional merge parameters. Default is 2000
+
+        Returns:
+            Tuple[int, int, Affine]: width, height and transformation matrix of the merge
+        """
+
+        with rasterio.open(raster_paths[0]) as src:
+            original_transform  = src.transform
+            transform  = src.transform
+            width = src.width
+            height = src.height
+            res = src.res
+        
+        for raster_path in raster_paths:
+            with rasterio.open(raster_path) as src:
+                if res[0] < src.res[0]:
+                    original_transform = src.transform
+                    transform = src.transform
+                    res = src.res
+
+        
+        raster_corners = np.array([__get_raster_corners(raster_path = raster_path) for raster_path in raster_paths]).reshape(-1, 2)
+
+        mid_point = get_center(raster_corners)
+        mid_point_first_capture = get_center(raster_corners[0 : 4])
+        c, f = mid_point[0] + (raster_corners[0][0] - mid_point_first_capture[0]), mid_point[1] + (raster_corners[0][1] - mid_point_first_capture[1])
+
+        transform = Affine(a = original_transform.a,
+                        b = original_transform.b,
+                        c = c,
+                        d = original_transform.d,
+                        e = original_transform.e,
+                        f = f,
+                        )
+        
+        paralelo = Paralelogram2D( np.array( __get_raster_corners_by_params(transform, width, height) ))
     
-    return(mosaic)
+        for line_index in range(len(paralelo.lines)):
+            offset = paralelo.get_offset_to_lines(line_index, paralelo.get_center())
+
+            iteration = 0
+            while not paralelo.are_on_right_side_of_line(line_index, raster_corners) and iteration < max_iterations:
+                paralelo.move_line_from_offset(line_index, offset)
+                iteration += 1
+
+        width = int(round(euclidean_distance(paralelo.points[0], paralelo.points[-1]) / res[0]))
+        height = int(round(euclidean_distance(paralelo.points[0], paralelo.points[1]) / res[1]))
+        
+        transform = Affine(a = original_transform.a,
+                        b = original_transform.b,
+                        c = paralelo.points[0][0],
+                        d = original_transform.d,
+                        e = original_transform.e,
+                        f = paralelo.points[0][1])
+        
+        return width, height, transform
+
+    def __mean(dst, raster_paths, n_bands, width, height, dtype = np.float32, band_index = None):
+        """
+        Merge method that calculates the mean value in those positions where more than one raster write its values.
+
+        Args:
+            dst (_type_): destination raster
+            raster_paths (List[str]): raster paths to merge
+            n_bands (int): bands of each raster
+            width (int): width of the merge raster
+            height (int): height of the merge raster
+            dtype (dtype, optional): dtype of the merge raster. Defaults to np.float32.
+            band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
+
+        Returns:
+            ndarray: resulting merge
+        """
+
+        final_data = np.zeros(shape = (n_bands, height, width), dtype = dtype)
+        count = np.zeros(shape = (n_bands, height, width), dtype = np.uint8)
+
+        for raster_path in tqdm(raster_paths):
+            with rasterio.open(raster_path, 'r') as src:
+                data = src.read() if band_index is None else np.array([src.read(band_index)])
+                
+                lons, lats = __latlon_to_index(dst, src)
+
+                final_data[:, lons, lats] = np.nansum([data, final_data[:, lons, lats]], axis = 0)
+                count[:, lons, lats] = np.nansum([~np.isnan(data), count[:, lons, lats]], axis = 0)
+                
+        return np.divide(final_data, count)
+    
+    def __first(dst, raster_paths, n_bands, width, height, dtype = np.float32, band_index = None):
+        """
+        Merge method that keeps the first value in write those positions where more than one raster write its values.
+
+        Args:
+            dst (_type_): destination raster
+            raster_paths (List[str]): raster paths to merge
+            n_bands (int): bands of each raster
+            width (int): width of the merge raster
+            height (int): height of the merge raster
+            dtype (dtype, optional): dtype of the merge raster. Defaults to np.float32.
+            band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
+
+        Returns:
+            ndarray: resulting merge
+        """
+
+        final_data = np.empty(shape = (n_bands, height, width), dtype = dtype)
+        final_data[:] = np.NaN
+
+        for raster_path in tqdm(raster_paths):
+            with rasterio.open(raster_path, 'r') as src:
+                data = src.read() if band_index is None else np.array([src.read(band_index)])
+
+                lons, lats = __latlon_to_index(dst, src)
+                
+                dst_arr = final_data[:, lons, lats]
+                np.copyto(dst_arr, data, where = np.isnan(dst_arr) * ~np.isnan(data))
+                final_data[:, lons, lats] = dst_arr
+                
+        return final_data
+
+    def __max(dst, raster_paths, n_bands, width, height, dtype = np.float32, band_index = None):
+        """
+        Merge method that calculates the max value in those positions where more than one raster write its values.
+
+        Args:
+            dst (_type_): destination raster
+            raster_paths (List[str]): raster paths to merge
+            n_bands (int): bands of each raster
+            width (int): width of the merge raster
+            height (int): height of the merge raster
+            dtype (dtype, optional): dtype of the merge raster. Defaults to np.float32.
+            band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
+
+        Returns:
+            ndarray: resulting merge
+        """
+
+        final_data = np.empty(shape = (n_bands, height, width), dtype = dtype)
+        final_data[:] = np.NaN
+
+        for raster_path in tqdm(raster_paths):
+            with rasterio.open(raster_path, 'r') as src:
+                data = src.read() if band_index is None else np.array([src.read(band_index)])
+
+                lons, lats = __latlon_to_index(dst, src)
+                
+                final_data[:, lons, lats] = np.nanmax([data, final_data[:, lons, lats]], axis = 0)
+                
+        return final_data
+    
+    def __min(dst, raster_paths, n_bands, width, height, dtype = np.float32, band_index = None):
+        """
+        Merge method that calculates the min value in those positions where more than one raster write its values.
+
+        Args:
+            dst (_type_): destination raster
+            raster_paths (List[str]): raster paths to merge
+            n_bands (int): bands of each raster
+            width (int): width of the merge raster
+            height (int): height of the merge raster
+            dtype (dtype, optional): dtype of the merge raster. Defaults to np.float32.
+            band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
+
+        Returns:
+            ndarray: resulting merge
+        """
+
+        final_data = np.empty(shape = (n_bands, height, width), dtype = dtype)
+        final_data[:] = np.NaN
+
+        for raster_path in tqdm(raster_paths):
+            with rasterio.open(raster_path, 'r') as src:
+                data = src.read() if band_index is None else np.array([src.read(band_index)])
+
+                lons, lats = __latlon_to_index(dst, src)
+                
+                final_data[:, lons, lats] = np.nanmin([data, final_data[:, lons, lats]], axis = 0)
+                
+        return final_data
+
+
+    methods = {
+        'mean' : __mean,
+        'first' : __first,
+        'max' : __max,
+        'min' : __min,
+    }
+
+    method = methods.get(method, method)
+    
+    
+
+    with rasterio.open(raster_paths[0], 'r') as raster:
+        n_bands = raster.count
+        profile = raster.profile
+        if len(raster_paths) > 1:
+            width, height, transform = __get_merge_transform(raster_paths)
+            profile['width'] = width
+            profile['height'] = height
+            profile['transform'] = transform
+        else:
+            width, height = raster.width, raster.height
+
+    if band_names is not None and n_bands == len(band_names):
+        profile['count'] = 1
+        
+        with rasterio.open(output_name.replace('.', f'_band_{band_names[0]}.'), 'w', **profile) as dst:
+            data = method(dst, raster_paths, n_bands, width, height, dtype)
+
+        for band_index in range(n_bands):
+            with rasterio.open( output_name.replace('.', f'_band_{band_names[band_index]}.'), 'w', **profile) as dst:
+                dst.write( np.array([data[band_index]]) )
+    else:
+        with rasterio.open(output_name, 'w', **profile) as dst:
+            dst.write( method(dst, raster_paths, n_bands, width, height, dtype) )
+            
+    
+        
+    return output_name
+
+### END Mosaic ###
+
+### START Downsample ###
+
+def downsample(input_dir, output_dir, scale_x, scale_y, method = Resampling.average):
+    """
+    This function performs a downsampling to reduce the spatial resolution of the final mosaic. 
+    
+    Inputs:
+    input_dir: A string containing input directory filepath  
+    output_dir: A string containing output directory filepath 
+    scale_x: proportion by which the width of each file will be resized 
+    scale_y: proportion by which the height of each file will be resized
+    method: the resampling method to perform. Defaults to Resampling.average.
+    """
+
+    os.makedirs(output_dir, exist_ok = True)
+    raster_paths = glob.glob(os.path.join(input_dir, '*'))
+
+    for raster_path in tqdm(raster_paths):
+        raster_name = os.path.basename(raster_path)
+        out_name = os.path.join(output_dir, f'{raster_name.split(".")[0]}__x_{scale_x}__y_{scale_y}__method_{method.name}.tif')
+
+        with rasterio.open(raster_path, 'r') as dataset:
+            data = dataset.read(
+                out_shape = (
+                    dataset.count,
+                    dataset.height // scale_x,
+                    dataset.width // scale_y
+                ),
+                resampling = method
+            )
+            
+            dst_transform : Affine = dataset.transform * dataset.transform.scale(
+                (dataset.width / data.shape[-1]),
+                (dataset.height / data.shape[-2])
+            )
+            
+            dst_kwargs = dataset.meta.copy()
+            dst_kwargs.update(
+                {
+                    "crs": dataset.crs,
+                    "transform": dst_transform,
+                    "width": data.shape[-1],
+                    "height": data.shape[-2],
+                }
+            )
+            
+            with rasterio.open(out_name, "w", **dst_kwargs) as dst:
+                dst.write(data)
+
+### END Downsample ###
