@@ -52,7 +52,7 @@ After you have cloned the DroneWQ repo to your local machine and installed exift
 
 Create a virtual conda env by running `conda env create -f environment.yml`. This will configure an anaconda environment with all of the required tools and libraries. 
 When it's done, run `conda activate dronewq` to activate the environment configured.
-Each time you run start a new anaconda prompt, you'll need to run `conda activate dronewq`.
+Each time you start a new anaconda prompt, you'll need to run `conda activate dronewq`.
 
 To access jupyter notebook or lab, run `jupyter lab` or `jupyter notebook`
 
