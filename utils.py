@@ -501,7 +501,7 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=None, dls_
     
     Outputs:
     New Rrs .tifs with units of sr^-1 
-    New .csv file with average Ed measurements (mW/m2/nm) calcualted from DLS measurements
+    New .csv file with average Ed measurements (mW/m2/nm) calculated from DLS measurements
     """
     capture_imgset = imageset.ImageSet.from_directory(raw_water_dir).captures
     ed_data = []
@@ -767,7 +767,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
         print('No other irradiance normalization methods implemented yet, panel_ed is recommended.')
         return(False)
     
-    print('All data has been saved as Rrs using the ' + str(lw_method)  + ' to calcualte Lw and normalized by '+ str(ed_method)+ ' irradiance.')
+    print('All data has been saved as Rrs using the ' + str(lw_method)  + ' to calculate Lw and normalized by '+ str(ed_method)+ ' irradiance.')
     
     ########################################
     ### mask pixels in the imagery (from glint, vegetation, shadows) ###
@@ -898,7 +898,7 @@ def chl_gitelson(Rrsred, Rrsrededge):
 
 ######## TSM retrieval algs ######
 
-def nechad_tsm(Rrsred):
+def tsm_nechad(Rrsred):
     """
     This algorithm estimates total suspended matter (TSM) concentrations using the Nechad et al. (2010) algorithm. doi:10.1016/j.rse.2009.11.022
     
@@ -915,7 +915,7 @@ def nechad_tsm(Rrsred):
     return(tsm)
 
 
-def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, imgs, img_metadata, wq_alg="chl_gitelson", start=0, count=10000):
+def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, img_metadata, wq_alg="chl_gitelson", start=0, count=10000):
     """
     This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
     Inputs:
@@ -932,8 +932,8 @@ def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, imgs, img_metadata, wq_alg=
     """
     # make wq_dir directory 
     wq_dir = wq_dir_name
-    if not os.path.exists(wq_dir):
-        os.makedirs(wq_dir)
+    if not os.path.exists(os.path.join(main_dir, wq_dir)):
+        os.makedirs(os.path.join(main_dir, wq_dir))
 
     for im in glob.glob(rrs_img_dir + "/*.tif")[start:count]:
         with rasterio.open(im, 'r') as Rrs_src:
@@ -960,18 +960,16 @@ def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, imgs, img_metadata, wq_alg=
         elif wq_alg == 'nechad_tsm':
             wq = nechad_tsm(Rrsred)
 
-    for i in range(len(img_metadata)):
+    for i in range(len(rrs_img_dir)):
         with rasterio.open(os.path.join(rrs_img_dir, img_metadata.index[i]), 'r') as src:
-            src_crs = "EPSG:4326"  # This is the crs of the GCPs
+            src_crs = "EPSG:4326" 
             dst_crs = "EPSG:4326"
             profile.update(dtype=rasterio.float32,crs=dst_crs,count=1)
 
-            #write new stacked tifs w
-            with rasterio.open(os.path.join(wq_dir, img_metadata.index[i]), 'w', **profile) as dst:
+            #write new tifs 
+            with rasterio.open(os.path.join(main_dir, wq_dir, img_metadata.index[i]), 'w', **profile) as dst:
                 dst.write(wq, 1)
     
-
-
 ###### Georeferencing #######
 
 def georeference(metadata, input_dir, output_dir, lines = None, altitude = None, yaw = None, pitch = 0, roll = 0, axis_to_flip = None):
