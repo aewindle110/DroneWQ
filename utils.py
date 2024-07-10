@@ -9,11 +9,9 @@ import matplotlib.pyplot as plt
 import cv2
 import exiftool
 import rasterio
-# from GPSPhoto import gpsphoto
 import scipy.ndimage as ndimage
 from skimage.transform import resize
 from pathlib import Path
-
 
 from ipywidgets import FloatProgress, Layout
 from IPython.display import display
@@ -33,6 +31,17 @@ from tqdm import tqdm
 from pyproj import CRS
 from rasterio.transform import Affine
 from rasterio.enums import Resampling
+
+# this isn't really good practice but there are a few deprecated tools in the Micasense stack so we'll ignore some of these warnings
+import warnings
+warnings.filterwarnings('ignore')
+
+def function_that_warns():
+    warnings.warn("deprecated", DeprecationWarning)
+    
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    function_that_warns() 
 
 
 def write_metadata_csv(img_set, csv_output_path):
@@ -176,23 +185,20 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     return(all_imgs, df)
 
 
-def get_warp_matrix(img_capture, max_alignment_iterations = 50):
+def get_warp_matrix(img_capture, match_index=0, warp_mode = cv2.MOTION_HOMOGRAPHY, pyramid_levels = 1, max_alignment_iterations = 50):
     """
     This function uses the MicaSense imageutils.align_capture() function to determine an alignment (warp) matrix of a single capture that can be applied to all images. From MicaSense: "For best alignment results it's recommended to select a capture which has features which visible in all bands. Man-made objects such as cars, roads, and buildings tend to work very well, while captures of only repeating crop rows tend to work poorly. Remember, once a good transformation has been found for flight, it can be generally be applied across all of the images." Ref: https://github.com/micasense/imageprocessing/blob/master/Alignment.ipynb
         
     Inputs: 
     img_capture: A capture is a set of images taken by one MicaSense camera which share the same unique capture identifier (capture_id). These images share the same filename prefix, such as IMG_0000_*.tif. It is defined by running ImageSet.from_directory().captures. 
+    match_index: Index of the band. Default is 0. 
+    warp_mode: MOTION_HOMOGRAPHY or MOTION_AFFINE. For Altum images only use MOTION_HOMOGRAPHY
+    pyramid_levels: Default is 1. For images with RigRelatives, setting this to 0 or 1 may improve alignment
     max_alignment_iterations: The maximum number of solver iterations. 
-    
-    ****AW_question: Why are we only changing some of the default inputs? Want to discuss this function.  
-    
+        
     Output: A numpy.ndarray of the warp matrix from a single image capture. 
     """
     
-    ## Alignment settings
-    match_index = 0 # Index of the band 
-    warp_mode = cv2.MOTION_HOMOGRAPHY # MOTION_HOMOGRAPHY or MOTION_AFFINE. For Altum images only use MOTION_HOMOGRAPHY
-    pyramid_levels = 1 # for images with RigRelatives, setting this to 0 or 1 may improve alignment
     print("Aligning images. Depending on settings this can take from a few seconds to many minutes")
     # Can potentially increase max_iterations for better results, but longer runtimes
     warp_matrices, alignment_pairs = imageutils.align_capture(img_capture,
@@ -204,7 +210,7 @@ def get_warp_matrix(img_capture, max_alignment_iterations = 50):
     return(warp_matrices)
 
 
-def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, generateThumbnails=True, overwrite=False):
+def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, generateThumbnails=True, overwrite_lt_lw=False):
     """
     This function processes each capture in an imageset to apply a warp matrix and save new .tifs with units of radiance (W/sr/nm) and optional RGB .jpgs.
     
@@ -214,7 +220,7 @@ def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, gener
     thumbnailPath: A string containing the filepath to store a new folder of RGB thumnail .jpgs
     warp_img_capture: A Capture chosen to align all images. Can be created by using Micasense's ImageSet-from_directory().captures function
     generateThumbnails: Option to create RGB .jpgs of all the images. Default is True
-    overwrite: Option to overwrite files that have been written previously. Default is False
+    overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
     
     Output: New .tif files for each capture in img_set with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
     """
@@ -232,7 +238,7 @@ def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, gener
         thumbnailFilename = 'capture_' + str(i+1) + '.jpg'
         fullOutputPath = os.path.join(img_output_path, outputFilename)
         fullThumbnailPath= os.path.join(thumbnailPath, thumbnailFilename)
-        if (not os.path.exists(fullOutputPath)) or overwrite:
+        if (not os.path.exists(fullOutputPath)) or overwrite_lt_lw:
             if(len(capture.images) == len(img_set.captures[0].images)):
                
                 capture.dls_irradiance = None
@@ -249,14 +255,14 @@ def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, gener
     return(True)
 
 
-def process_micasense_images(project_dir, warp_img_dir=None, overwrite=False, sky=False):
+def process_micasense_images(project_dir, warp_img_dir=None, overwrite_lt_lw=False, sky=False):
     """
     This function is wrapper function for the save_images() function to read in an image directory and produce new .tifs with units of radiance (W/sr/nm).  
     
     Inputs: 
     project_dir: a string containing the filepath of the raw .tifs
     warp_img_dir: a string containing the filepath of the capture to use to create the warp matrix
-    overwrite: Option to overwrite files that have been written previously. Default is False
+    overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
     sky: Option to run raw sky captures to collected Lsky. If True, the save_images() is run on raw .tif files and saves new .tifs in sky_lt directories. If False, save_images() is run on raw .tif files and saves new .tifs in lt directories. 
     
     Output: New .tif files for each capture in image directory with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
@@ -286,7 +292,8 @@ def process_micasense_images(project_dir, warp_img_dir=None, overwrite=False, sk
         output_csv_path = project_dir
         thumbnailPath = os.path.join(project_dir, 'lt_thumbnails')
     
-    if save_images(imgset, outputPath, thumbnailPath, warp_img_capture, overwrite=overwrite) == True:
+    if save_images(imgset, outputPath, thumbnailPath, warp_img_capture, overwrite_lt_lw=overwrite_lt_lw
+                  ) == True:
         print("Finished saving images.")
         fullCsvPath = write_metadata_csv(imgset, output_csv_path)
         print("Finished saving image metadata.")
@@ -662,7 +669,7 @@ def rrs_std_pixel_masking(rrs_dir, masked_rrs_dir, num_images=10, mask_std_facto
                 dst.write(stacked_rrs_deglint)
     return(True)
 
-def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='value_threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', overwrite=False, clean_intermediates=True):
+def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='value_threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', overwrite_lt_lw=False, clean_intermediates=True):
     """
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
     
@@ -678,7 +685,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features. Only need if pixel_masking_method = 'value_threshold'.
     green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing.  Only need if pixel_masking_method = 'value_threshold'.
     ed_method: Method used to calculate downwelling irradiance (Ed). Default is dls_ed(). 
-    overwrite: Option to overwrite files that have been written previously. Default is False but this is only applied to the Lt images.
+    overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False but this is only applied to the Lt images.
     clean_intermediates: Option to erase intermediates of processing (Lt, Lw, unmasked Rrs) 
     
     Output: New Rrs tifs (masked or unmasked) with units of sr^-1. 
@@ -719,13 +726,13 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     
     ### convert raw imagery to radiance (Lt)
     print("Converting raw images to radiance (raw -> Lt).")
-    process_micasense_images(main_dir, warp_img_dir=os.path.join(main_dir,'align_img'), overwrite=overwrite, sky=False)
+    process_micasense_images(main_dir, warp_img_dir=os.path.join(main_dir,'align_img'), overwrite_lt_lw=overwrite_lt_lw, sky=False)
     
     # deciding if we need to process raw sky images to radiance 
     if lw_method in ['mobley_rho_method','blackpixel_method']:
         print("Converting raw sky images to radiance (raw sky -> Lsky).")
         # we're also making an assumption that we don't need to align/warp these images properly because they'll be medianed
-        process_micasense_images(main_dir, warp_img_dir=None, overwrite=overwrite, sky=True)
+        process_micasense_images(main_dir, warp_img_dir=None, overwrite_lt_lw=overwrite_lt_lw, sky=True)
     
     ##################################
     ### correct for surface reflected light ###
