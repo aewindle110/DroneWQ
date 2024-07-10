@@ -1,13 +1,19 @@
-- Scale of Lw, Ed - mW or W?
-- Discuss get_warp_matrix()
-- Do we want rrs_std_pixel_masking() to calculate mean and std of Rrs(NIR) from first 10 images (current) or random 10 images?
-- Do we need overwrite=False in process_raw_to_rrs()?
+- We only have two inputs for get_warp_matrix(), but there are a lot more settings that we are ignoring (they are set in the code). Should we include them in the call? 
+
+- Do we want rrs_std_pixel_masking() to calculate mean and std of Rrs(NIR) from first n images (what it is currently) or random n images? Probably random, right?
 
 
 6/14/24:
 - why are we still getting warnings when we ignore warnings at top of notebook? 
-- write a function so code knows its 5 or 6 bands (altum) so it does proper calculation on line 718 (print('Processing a total of ' + str(len(files)) + ' captures or ' + str(round(len(files)/5)) + ' image sets.')
+
+- write a line so code knows its 5 or 6 bands (altum) so it does proper calculation on line 718 (print('Processing a total of ' + str(len(files)) + ' captures or ' + str(round(len(files)/5)) + ' image sets.')
+
 - overwrite='True' in process_micasense_images just applies to lt and lw, and not Rrs, right? should we change this to 'overwrite_lt_lw' ?
-- first image in estuarine_dataset was taken minutes before and on land compared to the rest. thinking we should delete it so it doesnt mess up mosacking. 
+
+- first image in estuarine_dataset was taken minutes before and on land compared to the rest. thinking we should delete it so it doesnt mess up mosacking?
+
 - save_wq_imgs could probably be written more efficiently
+
 - add cmocean to docker container 
+
+

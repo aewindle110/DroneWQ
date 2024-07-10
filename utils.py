@@ -191,7 +191,7 @@ def get_warp_matrix(img_capture, max_alignment_iterations = 50):
     
     ## Alignment settings
     match_index = 0 # Index of the band 
-    warp_mode = cv2.MOTION_HOMOGRAPHY # MOTION_HOMOGRAPHY or MOTION_AFFINE. For Altum images only use HOMOGRAPHY
+    warp_mode = cv2.MOTION_HOMOGRAPHY # MOTION_HOMOGRAPHY or MOTION_AFFINE. For Altum images only use MOTION_HOMOGRAPHY
     pyramid_levels = 1 # for images with RigRelatives, setting this to 0 or 1 may improve alignment
     print("Aligning images. Depending on settings this can take from a few seconds to many minutes")
     # Can potentially increase max_iterations for better results, but longer runtimes
@@ -389,7 +389,7 @@ def hedley_method(lt_dir, lw_dir, random_n=10):
    """
     lt_all = []
     
-    rand = random.sample(glob.glob(lt_dir + "/*.tif"), random_n) #open random n files. n is selected by user in process_raw_
+    rand = random.sample(glob.glob(lt_dir + "/*.tif"), random_n) #open random n files. n is selected by user in process_raw_to_rrs
     for im in rand:
         with rasterio.open(im, 'r') as lt_src:
             profile = lt_src.profile
