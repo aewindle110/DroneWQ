@@ -195,6 +195,12 @@ This function reduces the spatial resolution of the mosaic .tif to reduce file s
 DroneWQ includes a jupyter notebooks to demonstrate the processing functions. 
 * `primary_demo.ipynb` includes a standard workflow to process raw UAS imagery to Rrs. It also demostrates how to derive water quality concentrations (chloropyll a and total suspended matter) from Rrs. Lastly, it demonstrates how to georeference using sensor metadata and mosaic derived images to visualize spatial patterns on a map. 
 
+# Publications utilizing DroneWQ
+
+Windle, A. E., & Silsbe, G. M. (2021). Evaluation of unoccupied aircraft system (UAS) remote sensing reflectance retrievals for water quality monitoring in coastal waters. Frontiers in Environmental Science, 9, 674247.
+
+Román, A., Heredia, S., Windle, A. E., Tovar-Sánchez, A., & Navarro, G. (2024). Enhancing Georeferencing and Mosaicking Techniques over Water Surfaces with High-Resolution Unmanned Aerial Vehicle (UAV) Imagery. Remote Sensing, 16(2), 290.
+
 # Acknowledgements
 
 We acknowledge and appreciate helpful support from the Micasense team. 
