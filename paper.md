@@ -181,15 +181,19 @@ This algorithm estimates total suspended matter (TSM) concentrations and is tune
 # Georeferencing and mapping
 `georeference()`
 <br/>
-This function uses MicaSense metadata (altitude, pitch, roll, yaw, lat, lon) to georeference all images to a known coordinate space. 
+This function uses MicaSense metadata (altitude, pitch, roll, yaw, lat, lon) to georeference all captures to a known coordinate space. 
 
 `mosaic()`
 <br/>
-This function mosaics the georeferenced images into one georeferenced mosaicked .tif.
+This function mosaics all the given georeferenced captures into one georeferenced mosaicked raster file. 
 
 `downsample()`
 <br/>
-This function reduces the spatial resolution of the mosaic .tif to reduce file size. 
+This function performs a downsampling procedure to reduce the spatial resolution of the final georeferenced mosaic.  
+
+`plot_basemap()`
+<br/>
+This function loads a basemap and plots the georeferenced mosaic in the axes provides using pseudo-Mercator projection (epsg:3857).
 
 # Demo notebook
 DroneWQ includes a jupyter notebooks to demonstrate the processing functions. 
@@ -197,13 +201,15 @@ DroneWQ includes a jupyter notebooks to demonstrate the processing functions.
 
 # Publications utilizing DroneWQ
 
-Windle, A. E., & Silsbe, G. M. (2021). Evaluation of unoccupied aircraft system (UAS) remote sensing reflectance retrievals for water quality monitoring in coastal waters. Frontiers in Environmental Science, 9, 674247.
-
 Román, A., Heredia, S., Windle, A. E., Tovar-Sánchez, A., & Navarro, G. (2024). Enhancing Georeferencing and Mosaicking Techniques over Water Surfaces with High-Resolution Unmanned Aerial Vehicle (UAV) Imagery. Remote Sensing, 16(2), 290.
+
+Gray, P. C., Windle, A. E., Dale, J., Savelyev, I. B., Johnson, Z. I., Silsbe, G. M., ... & Johnston, D. W. (2022). Robust ocean color from drones: Viewing geometry, sky reflection removal, uncertainty analysis, and a survey of the Gulf Stream front. Limnology and Oceanography: Methods, 20(10), 656-673.
+
+Windle, A. E., & Silsbe, G. M. (2021). Evaluation of unoccupied aircraft system (UAS) remote sensing reflectance retrievals for water quality monitoring in coastal waters. Frontiers in Environmental Science, 9, 674247.
 
 # Acknowledgements
 
-We acknowledge and appreciate helpful support from the Micasense team. 
+We acknowledge and appreciate helpful support from the Micasense team. We thank Julian Dale for assisting with drone flights. 
 
 # References
 
