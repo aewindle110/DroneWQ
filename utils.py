@@ -32,6 +32,16 @@ from pyproj import CRS
 from rasterio.transform import Affine
 from rasterio.enums import Resampling
 
+import contextily as cx
+import rioxarray
+import matplotlib.pyplot as plt
+
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+from pyproj import Transformer
+from typing import Tuple
+from matplotlib.image import AxesImage
+from xyzservices import Bunch
+
 # this isn't really good practice but there are a few deprecated tools in the Micasense stack so we'll ignore some of these warnings
 import warnings
 warnings.filterwarnings('ignore')
@@ -136,7 +146,7 @@ def load_images(img_list):
             all_imgs.append(src.read())
     return(np.array(all_imgs))
 
-def load_img_fn_and_meta(csv_path, count=10000, start=0):
+def load_img_fn_and_meta(csv_path, count=10000, start=0, random = False):
     """
     This function returns a pandas dataframe of captures and associated metadata with the options of how many to list and what number of image to start on.  
     
@@ -144,6 +154,7 @@ def load_img_fn_and_meta(csv_path, count=10000, start=0):
     csv_path: A string containing the filepath 
     count: The amount of images to load. Default is 10000
     start: The image to start loading from. Default is 0 (first image the .csv). 
+    random: A boolean to load random images. Default is False
     
     Output: Pandas dataframe of image metadata
     
@@ -152,11 +163,11 @@ def load_img_fn_and_meta(csv_path, count=10000, start=0):
     df = df.set_index('filename')
     #df['UTC-Time'] = pd.to_datetime(df['UTC-Time'])    
     # cut off if necessary
-    df = df.iloc[start:start+count]
+    df = df.iloc[start:start+count] if not random else df.loc[np.random.choice(df.index, count)]
 
     return(df)
 
-def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 0, sky=False):
+def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 0, sky=False, random=False):
     """
     This function is the main interface we expect the user to use when grabbing a subset of imagery from any stage in processing. This returns the images as a numpy array and metadata as a pandas dataframe. 
     
@@ -164,6 +175,7 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     img_dir: A string containing the directory filepath of images to be retrieved
     count: The amount of images you want to list. Default is 10000
     start: The number of image to start on. Default is 0 (first image in img_dir). 
+    random: A boolean to load random images. Default is False
     
     Outputs: A multidimensional numpy array of all image captures in a directory and a Pandas dataframe of image metadata. 
     
@@ -173,7 +185,7 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     else:
         csv_path = os.path.join(os.path.dirname(img_dir), 'metadata.csv')
         
-    df = load_img_fn_and_meta(csv_path, count=count, start=start)
+    df = load_img_fn_and_meta(csv_path, count=count, start=start, random=random)
     
     # apply altitiude threshold and set IDs as the indez
     df = df[df['Altitude'] > altitude_cutoff]
@@ -641,7 +653,7 @@ def rrs_std_pixel_masking(rrs_dir, masked_rrs_dir, num_images=10, mask_std_facto
     
     """
     # grab the first num_images images, finds the mean and std of NIR, then anything times the glint factor is classified as glint
-    rrs_imgs, rrs_img_metadata = retrieve_imgs_and_metadata(rrs_dir, count=num_images, start=0, altitude_cutoff=0)
+    rrs_imgs, _ = retrieve_imgs_and_metadata(rrs_dir, count=num_images, start=0, altitude_cutoff=0, random=True)
     rrs_nir_mean = np.nanmean(rrs_imgs,axis=(0,2,3))[4] # mean of NIR band
     rrs_nir_std = np.nanstd(rrs_imgs,axis=(0,2,3))[4] # std of NIR band
     print('The mean and std of Rrs from first N images is: ', rrs_nir_mean, rrs_nir_std)
@@ -708,7 +720,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     panel_dir = os.path.join(main_dir, 'panel')
     rrs_dir = os.path.join(main_dir, rrs_dir_name)
     masked_rrs_dir = os.path.join(main_dir, 'masked_'+rrs_dir_name)
-    
+    warp_img_dir = os.path.join(main_dir,'align_img')
     
     # make all these directories if they don't already exist
     all_dirs = [lt_dir, lw_dir, rrs_dir]
@@ -722,11 +734,13 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     panel_names = glob.glob(os.path.join(panel_dir, 'IMG_*.tif'))
    
     files = os.listdir(raw_water_img_dir) # your directory path
-    print('Processing a total of ' + str(len(files)) + ' captures or ' + str(round(len(files)/5)) + ' image sets.')
+    num_bands = imageset.ImageSet.from_directory(warp_img_dir).captures[0].num_bands
+    print(f'Processing a total of {len(files)} bands or {round(len(files)/num_bands)} captures.')
+    
     
     ### convert raw imagery to radiance (Lt)
     print("Converting raw images to radiance (raw -> Lt).")
-    process_micasense_images(main_dir, warp_img_dir=os.path.join(main_dir,'align_img'), overwrite_lt_lw=overwrite_lt_lw, sky=False)
+    process_micasense_images(main_dir, warp_img_dir=warp_img_dir, overwrite_lt_lw=overwrite_lt_lw, sky=False)
     
     # deciding if we need to process raw sky images to radiance 
     if lw_method in ['mobley_rho_method','blackpixel_method']:
@@ -784,7 +798,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
         rrs_threshold_pixel_masking(rrs_dir, masked_rrs_dir, nir_threshold=nir_threshold, green_threshold=green_threshold)
     elif mask_pixels == True and pixel_masking_method == 'std_threshold': 
         print('Masking pixels using std Rrs(NIR)')
-        rrs_std_pixel_masking(rrs_dir, masked_rrs_dir, mask_std_factor)
+        rrs_std_pixel_masking(rrs_dir, masked_rrs_dir, mask_std_factor = mask_std_factor)
                     
     else: # if we don't do the glint correction then just change the pointer to the lt_dir
         print('Not masking pixels.')
@@ -922,7 +936,7 @@ def tsm_nechad(Rrsred):
     return(tsm)
 
 
-def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, img_metadata, wq_alg="chl_gitelson", start=0, count=10000):
+def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", start=0, count=10000):
     """
     This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
     Inputs:
@@ -930,27 +944,23 @@ def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, img_metadata, wq_alg="chl_g
     rrs_img_dir: A string containing directory of Rrs images
     wq_dir_name: A string containing the directory that the wq images will be saved
     wq_alg: what wq algorithm to apply
-    imgs: images to apply - typically from retrieve_imgs_and_metadata() function
-    img_metadata: all image metadata - typically from retrieve_imgs_and_metadata() function
     start: The image to start loading from. Default is 0.
     count: The amount of images to load. Default is 10000
 
     Outputs: New georeferenced .tifs with same units of images in img_dir
     """
     # make wq_dir directory 
-    wq_dir = wq_dir_name
-    if not os.path.exists(os.path.join(main_dir, wq_dir)):
-        os.makedirs(os.path.join(main_dir, wq_dir))
+    if not os.path.exists(os.path.join(main_dir, wq_dir_name)):
+        os.makedirs(os.path.join(main_dir, wq_dir_name))
 
-    for im in glob.glob(rrs_img_dir + "/*.tif")[start:count]:
-        with rasterio.open(im, 'r') as Rrs_src:
+    filenames = list(glob.glob(os.path.join(main_dir, rrs_img_dir, "*.tif"))[start:count])
+    for filename in tqdm(filenames, total = len(filenames)):
+        with rasterio.open(filename, 'r') as Rrs_src:
             profile = Rrs_src.profile
-            profile['count']=5
             Rrsblue=Rrs_src.read(1)
             Rrsgreen=Rrs_src.read(2)
             Rrsred=Rrs_src.read(3)
             Rrsrededge=Rrs_src.read(4)
-            Rrsnir=Rrs_src.read(5)
 
         if wq_alg == 'chl_hu':
             wq = chl_hu(Rrsblue, Rrsgreen, Rrsred)
@@ -965,18 +975,63 @@ def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, img_metadata, wq_alg="chl_g
             wq = chl_gitelson(Rrsred, Rrsrededge)
 
         elif wq_alg == 'nechad_tsm':
-            wq = nechad_tsm(Rrsred)
-
-    for i in range(len(rrs_img_dir)):
-        with rasterio.open(os.path.join(rrs_img_dir, img_metadata.index[i]), 'r') as src:
-            src_crs = "EPSG:4326" 
-            dst_crs = "EPSG:4326"
-            profile.update(dtype=rasterio.float32,crs=dst_crs,count=1)
-
-            #write new tifs 
-            with rasterio.open(os.path.join(main_dir, wq_dir, img_metadata.index[i]), 'w', **profile) as dst:
-                dst.write(wq, 1)
+            wq = tsm_nechad(Rrsred)
+            
+        profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
     
+        with rasterio.open(os.path.join(main_dir, wq_dir_name, os.path.basename(filename)), 'w', **profile) as dst:
+            dst.write(wq, 1)
+
+def save_wq_imgs_batch(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", start=0, count=10000, step=1):
+    """
+    This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
+    It does the calculations faster than 'save_wq_imgs'
+    Inputs:
+    main_dir: A string containing main directory
+    rrs_img_dir: A string containing directory of Rrs images
+    wq_dir_name: A string containing the directory that the wq images will be saved
+    wq_alg: what wq algorithm to apply
+    start: The image to start loading from. Default is 0.
+    count: The amount of images to load. Default is 10000
+    step: The amount of images to process in parallel. Default is 1
+
+    Outputs: New georeferenced .tifs with same units of images in img_dir
+    """
+    # make wq_dir directory 
+    if not os.path.exists(os.path.join(main_dir, wq_dir_name)):
+        os.makedirs(os.path.join(main_dir, wq_dir_name))
+
+    filenames = list(glob.glob(os.path.join(main_dir, rrs_img_dir, "*.tif"))[start:count])
+
+    for new_start in range(start, len(filenames), step):
+        files_to_process = filenames[new_start : new_start + step]
+        rrs_imgs = load_images(files_to_process)
+
+        BLUE, GREEN, RED, RED_EDGE = 0, 1, 2, 3
+
+        if wq_alg == 'chl_hu':
+            wq = chl_hu(rrs_imgs[:,BLUE,:,:], rrs_imgs[:,GREEN,:,:], rrs_imgs[:,RED,:,:])
+        elif wq_alg == 'chl_ocx':
+            wq = chl_ocx(rrs_imgs[:,BLUE,:,:], rrs_imgs[:,GREEN,:,:])
+        elif wq_alg == 'chl_hu_ocx':
+            wq = chl_hu_ocx(rrs_imgs[:,BLUE,:,:], rrs_imgs[:,GREEN,:,:], rrs_imgs[:,RED,:,:])
+        elif wq_alg == 'chl_gitelson':
+            wq = chl_gitelson(rrs_imgs[:,RED,:,:], rrs_imgs[:,RED_EDGE,:,:])
+        elif wq_alg == 'nechad_tsm':
+            wq = tsm_nechad(rrs_imgs[:,RED,:,:])
+        
+        from_name = os.path.basename(files_to_process[0])
+        to_name = os.path.basename(files_to_process[-1])
+        print(f'Processing images from {from_name} to {to_name}')
+        
+        for idx, filename in enumerate(tqdm(files_to_process, total = len(files_to_process))):
+            with rasterio.open(filename, 'r') as src:
+                profile = src.profile
+                profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
+    
+            with rasterio.open(os.path.join(main_dir, wq_dir_name, os.path.basename(filename)), 'w', **profile) as dst:
+                dst.write(wq[idx], 1)
+             
 ###### Georeferencing #######
 
 def georeference(metadata, input_dir, output_dir, lines = None, altitude = None, yaw = None, pitch = 0, roll = 0, axis_to_flip = None):
@@ -1616,3 +1671,104 @@ def downsample(input_dir, output_dir, scale_x, scale_y, method = Resampling.aver
                 dst.write(data)
 
 ### END Downsample ###
+
+### START Georeferenced Plotting
+
+def plot_basemap(ax : plt.Axes, west : float, south : float, east : float, north : float, 
+                 source : str | Bunch = cx.providers.OpenStreetMap.Mapnik, clip : bool = False) -> plt.Axes:
+    """
+    This function loads a basemap and plot in the axes provides using pseudo-Mercator projection (epsg:3857).
+
+    If basemap param is a string (filename):
+        It is loaded and plotted
+    Otherwise
+        A basemap is searched with contextily based on west, east, south and north params.
+
+    NOTE: 
+        - west, east, south and north must longitudes and latitudes based on crs=epsg:4326.
+        - local basemaps like Sentinel-2 must be georeferenced with crs=epsg:4326.
+    
+    Args:
+        ax (plt.Axes): axes where to plot
+        west (float): minimum longitude
+        south (float): minimum latitude
+        east (float): maximum longitude
+        north (float): maximum latitude
+        source (str | Bunch, optional): Filename or Basemap provider from contextily to plot. Defaults to cx.providers.OpenStreetMap.Mapnik.
+        clip (bool, optional): If True and source is a filename, the local basemap will be clipped base on west, east, south and north params. Defaults to False.
+
+    Returns:
+        plt.Axes: axes with the basemap plotted
+    """
+    
+    if isinstance(source, str):
+        latlon_projection : str = 'epsg:4326'
+        pseudo_mercator_projection : str = 'epsg:3857'
+        transformer : Transformer = Transformer.from_crs(latlon_projection, pseudo_mercator_projection, always_xy = True)
+
+        with rioxarray.open_rasterio(source) as src:
+            if clip:
+                mask_lon = (src.x >= west) & (src.x <= east)
+                mask_lat = (src.y >= south) & (src.y <= north)
+                new_src = src.where(mask_lon & mask_lat, drop = True)
+            else:
+
+                new_src = src
+
+            data = np.transpose(new_src.values, (1, 2, 0))
+            new_west, new_north = transformer.transform(new_src.x.min(), new_src.y.max())
+            new_east, new_south = transformer.transform(new_src.x.max(), new_src.y.min())
+            extent = new_west, new_east, new_south, new_north
+            
+    else:
+        data, extent = cx.bounds2img(west, south, east, north, ll = True, source = source)
+    
+    ax.imshow(data, extent = extent)
+    gl = ax.gridlines(draw_labels = True, linewidth = 0.8, color = 'black', alpha = 0.3, linestyle = '-')
+    gl.top_labels = gl.right_labels = False
+    gl.xformatter, gl.yyformatter = LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+
+    return ax
+
+def plot_georeferenced_data(ax : plt.Axes, filename : str, vmin : float, vmax : float, 
+                            cmap : str, norm : None = None, basemap : Bunch | str = None) -> Tuple[plt.Axes, AxesImage]:
+    """
+    This function loads a raster in .tif format, and plot it (using pseudo-Mercator projection (epsg:3857)) over a given axes with its values georeferenced.
+
+    NOTE: The raster must have only one band. 
+
+    Args:
+        ax (plt.Axes): axes where to plot
+        filename (str): tif file to plot
+        vmin (float): minimum value for colormap
+        vmax (float): maximum value for colormap
+        cmap (str): colormap name from matplotlib defaults
+        norm (None, optional): norm for colormap like Linear, Log10. If None it's applied Linear Norm. Defaults to None.
+        basemap (str | Bunch, optional): Filename or Basemap provider from contextily to plot. If it's specified, plot_basemap function will be executed with tif bounds.  Defaults to None
+
+    Returns:
+        Tuple[plt.Axes, AxesImage]: axes with data plotted and a new axes for colobar settings.
+    """
+
+    latlon_projection : str = 'epsg:4326'
+    pseudo_mercator_projection : str = 'epsg:3857'
+    transformer : Transformer = Transformer.from_crs(latlon_projection, pseudo_mercator_projection, always_xy = True)
+
+    with rasterio.open(filename) as src:
+        cols, rows = np.meshgrid(np.arange(src.width), np.arange(src.height))
+        xs, ys = rasterio.transform.xy(src.transform, rows, cols)
+        lons, lats = np.array(xs), np.array(ys)
+
+        if basemap is not None:
+            ax = plot_basemap(ax, src.bounds.left, src.bounds.bottom, src.bounds.right, src.bounds.top, basemap, True)
+
+    with rioxarray.open_rasterio(filename) as src:
+        lon, lat = transformer.transform(lons, lats)
+        src.coords["lon"] = (("y", "x"), lon)
+        src.coords["lat"] = (("y", "x"), lat)
+        
+        mappable = src.plot(ax = ax, x = 'lon', y = 'lat', vmin = vmin, vmax = vmax, cmap = cmap, norm = norm, add_colorbar = False)
+
+    return ax, mappable
+
+### START Georeferenced Plotting
