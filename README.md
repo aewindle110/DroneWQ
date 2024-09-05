@@ -30,7 +30,7 @@ Once Docker and git are installed, setup a local directory. Navigate to the dire
     
 With the Docker app running on your desktop, you need to launch the Docker container. Note that the first execution of this line of code will install the Docker image  and setup and configure all required software (python, jupyter notebooks) and packages. This could take several minutes, depending on computer speed.
     
-`docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v2`
+`docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v3`
 
 where `<local directory>` is ??? *where you want data to be saved*
 

@@ -50,7 +50,7 @@ def local_normalize(im):
     if disksize % 2 == 0:
         disksize = disksize + 1
     selem = disk(disksize)
-    norm2 = rank.equalize(norm, selem=selem)
+    norm2 = rank.equalize(norm, footprint=selem)
     return norm2
 
 def gradient(im, ksize=5):
@@ -405,7 +405,7 @@ def min_max(pts):
 
 def map_points(pts, image_size, warpMatrix, distortion_coeffs, camera_matrix,warp_mode=cv2.MOTION_HOMOGRAPHY):
     # extra dimension makes opencv happy
-    pts = np.array([pts], dtype=np.float)
+    pts = np.array([pts], dtype=np.float32)
     new_cam_mat, _ = cv2.getOptimalNewCameraMatrix(camera_matrix, distortion_coeffs, image_size, 1)
     new_pts = cv2.undistortPoints(pts, camera_matrix, distortion_coeffs, P=new_cam_mat)
     if warp_mode == cv2.MOTION_AFFINE:
