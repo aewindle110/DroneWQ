@@ -935,57 +935,9 @@ def tsm_nechad(Rrsred):
     tsm = (A*Rrsred/(1-(Rrsred/C))) + B
     return(tsm)
 
-
-def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", start=0, count=10000):
+def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", start=0, count=10000, step=1):
     """
     This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
-    Inputs:
-    main_dir: A string containing main directory
-    rrs_img_dir: A string containing directory of Rrs images
-    wq_dir_name: A string containing the directory that the wq images will be saved
-    wq_alg: what wq algorithm to apply
-    start: The image to start loading from. Default is 0.
-    count: The amount of images to load. Default is 10000
-
-    Outputs: New georeferenced .tifs with same units of images in img_dir
-    """
-    # make wq_dir directory 
-    if not os.path.exists(os.path.join(main_dir, wq_dir_name)):
-        os.makedirs(os.path.join(main_dir, wq_dir_name))
-
-    filenames = list(glob.glob(os.path.join(main_dir, rrs_img_dir, "*.tif"))[start:count])
-    for filename in tqdm(filenames, total = len(filenames)):
-        with rasterio.open(filename, 'r') as Rrs_src:
-            profile = Rrs_src.profile
-            Rrsblue=Rrs_src.read(1)
-            Rrsgreen=Rrs_src.read(2)
-            Rrsred=Rrs_src.read(3)
-            Rrsrededge=Rrs_src.read(4)
-
-        if wq_alg == 'chl_hu':
-            wq = chl_hu(Rrsblue, Rrsgreen, Rrsred)
-
-        elif wq_alg == 'chl_ocx':
-            wq = chl_ocx(Rrsblue, Rrsgreen)
-
-        elif wq_alg == 'chl_hu_ocx':
-            wq = chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred)
-
-        elif wq_alg == 'chl_gitelson':
-            wq = chl_gitelson(Rrsred, Rrsrededge)
-
-        elif wq_alg == 'nechad_tsm':
-            wq = tsm_nechad(Rrsred)
-            
-        profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
-    
-        with rasterio.open(os.path.join(main_dir, wq_dir_name, os.path.basename(filename)), 'w', **profile) as dst:
-            dst.write(wq, 1)
-
-def save_wq_imgs_batch(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", start=0, count=10000, step=1):
-    """
-    This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
-    It does the calculations faster than 'save_wq_imgs'
     Inputs:
     main_dir: A string containing main directory
     rrs_img_dir: A string containing directory of Rrs images
