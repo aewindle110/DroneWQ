@@ -681,7 +681,7 @@ def rrs_std_pixel_masking(rrs_dir, masked_rrs_dir, num_images=10, mask_std_facto
                 dst.write(stacked_rrs_deglint)
     return(True)
 
-def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method', random_n=10, mask_pixels=False, pixel_masking_method='value_threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', overwrite_lt_lw=False, clean_intermediates=True):
+def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='mobley_rho_method',  mask_pixels=False, random_n=10, pixel_masking_method='value_threshold', mask_std_factor=1, nir_threshold=0.01, green_threshold=0.005, ed_method='dls_ed', overwrite_lt_lw=False, clean_intermediates=True):
     """
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
     
@@ -864,7 +864,7 @@ def chl_ocx(Rrsblue, Rrsgreen):
 
 def chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred):
     ''' 
-    This is the blended NASA chlorophyll algorithm which combines Hu color index (CI) algorithm (chl_hu) and the O'Reilly band ratio OCx algortihm (chl_ocx). This specific code is grabbed from https://github.com/nasa/HyperInSPACE. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/.
+    This is the blended NASA chlorophyll algorithm which combines Hu color index (CI) algorithm (chl_hu) and the O'Reilly band ratio OCx algortihm (chl_ocx). This specific code is grabbed from https://github.com/nasa/HyperInSPACE. Documentation can be found here https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0#introduction.
     
     Inputs:
     Rrs_x: numpy array of Rrs in each band. 
@@ -1031,7 +1031,7 @@ def save_wq_imgs_batch(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson"
     
             with rasterio.open(os.path.join(main_dir, wq_dir_name, os.path.basename(filename)), 'w', **profile) as dst:
                 dst.write(wq[idx], 1)
-             
+
 ###### Georeferencing #######
 
 def georeference(metadata, input_dir, output_dir, lines = None, altitude = None, yaw = None, pitch = 0, roll = 0, axis_to_flip = None):
@@ -1149,6 +1149,7 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
 
                 
 ##### Mosaicking #####
+
 #Geometry functions
 
 def is_on_right_side(x, y, xy0, xy1):
@@ -1312,8 +1313,6 @@ class Paralelogram2D:
         """
 
         return all([is_on_right_side(*point, *self.points[self.lines[index]]) for point in points])
-
-### END Geometry functions ###
 
 
 def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float32, band_names = None):
@@ -1590,7 +1589,6 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
     method = methods.get(method, method)
     
     
-
     with rasterio.open(raster_paths[0], 'r') as raster:
         n_bands = raster.count
         profile = raster.profile
@@ -1619,7 +1617,7 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
         
     return output_name
 
-### END Mosaic ###
+### END Mosaicking ###
 
 ### START Downsample ###
 
@@ -1730,8 +1728,7 @@ def plot_basemap(ax : plt.Axes, west : float, south : float, east : float, north
 
     return ax
 
-def plot_georeferenced_data(ax : plt.Axes, filename : str, vmin : float, vmax : float, 
-                            cmap : str, norm : None = None, basemap : Bunch | str = None) -> Tuple[plt.Axes, AxesImage]:
+def plot_georeferenced_data(ax : plt.Axes, filename : str, vmin : float, vmax : float, cmap : str, norm : None = None, basemap : Bunch | str = None) -> Tuple[plt.Axes, AxesImage]:
     """
     This function loads a raster in .tif format, and plot it (using pseudo-Mercator projection (epsg:3857)) over a given axes with its values georeferenced.
 
@@ -1771,4 +1768,4 @@ def plot_georeferenced_data(ax : plt.Axes, filename : str, vmin : float, vmax : 
 
     return ax, mappable
 
-### START Georeferenced Plotting
+### END Georeferenced Plotting
