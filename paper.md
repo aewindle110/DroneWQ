@@ -20,7 +20,7 @@ authors:
     orcid: 0000-0002-8868-9302
     affiliation: 5
   - name: Sergio Heredia
-    orcid:
+    orcid: 0009-0003-9495-9625
     affiliation: 5
   - name: Gabriel Navarro
     orcid: 0000-0002-8919-0060
