@@ -184,7 +184,7 @@ This algorithm estimates total suspended matter (TSM) concentrations and is tune
 # Georeferencing and mapping
 `georeference()`
 <br/>
-This function uses MicaSense metadata (altitude, pitch, roll, yaw, lat, lon) to georeference all captures to a known coordinate space. 
+This function uses MicaSense metadata (altitude, pitch, roll, yaw, lat, lon) to georeference all captures to a known coordinate space. See notes on georeferencing below. 
 
 `mosaic()`
 <br/>
@@ -198,6 +198,20 @@ This function performs a downsampling procedure to reduce the spatial resolution
 <br/>
 This function loads a basemap and plots the georeferenced mosaic in the axes provides using pseudo-Mercator projection (epsg:3857).
 
+Notes on georeferencing:
+
+* The pitch, roll, and yaw angles are associated with the MicaSense sensor. The following statements should help you understand the angles:
+    * pitch = 0°, roll = 0°, yaw = 0° means: the sensor is nadir (looking down to the ground), the sensor is assumed to be fixed (or on a gimbal), and not moving side to side, the top of the image points to the north.
+    * pitch = 90°, roll = 0°, yaw = 0° means: the sensor is looking forward from the aircraft, the sensor is assumed to be fixed (or on a gimbal), and not moving side to side, the top of the image points to the north.
+    * pitch = 0°, roll = 0°, yaw = 90° means: the sensor is nadir (looking down to the ground), the sensor is assumed to be fixed (or on a gimbal), and not moving side to side, the top of the image points to the east.
+<br/>
+
+* If possible, it is recommended to fly the drone using a consistent yaw angle (e.g. drone/sensor does not turn 180° every transect). This will make georeferencing easier and alleviate issues with changing sun glint on different transects. Some drone flight planning softwares allow you to do this (e.g. UGCS). If not, it is recommended that you note the drone/sensor's yaw angle and use this in the `georeference()` function.
+* If a yaw angle is not available, it is recommended to test a couple captures that contain land and use the MicaSense metadata. The MicaSense sensor contains an Inertial Measurement Unit (IMU) that collects data on the sensor pitch, roll, and yaw; however, this data can be impacted by IMU errors, especially during turns and windy flights. You can see how much the sensor yaw angle varies by plotting the IMU metadata yaw angle over captures. An example is included in the primary_demo.ipynb.
+    * If you have a small dataset, you can manually go through the captures to select which ones line up with what transect to inform the yaw argument in the georeference() function. It is recommended to skip images that are taken when the drone/sensor is turning since the IMU is prone to errors during drone turns.
+    * If you have a large dataset where this can be too time consuming, we have provided functions to automatically select captures with varying yaw angles that line up with different transects. The `compute_flight_lines()` function returns a list of image captures taken in different transects that contain consistent yaw angles. This can be incorporated into the  `georeference()` function to improve georeferencing and mosaicking. 
+
+  
 # Demo notebook
 DroneWQ includes a jupyter notebooks to demonstrate the processing functions. 
 * `primary_demo.ipynb` includes a standard workflow to process raw UAS imagery to Rrs. It also demostrates how to derive water quality concentrations (chloropyll a and total suspended matter) from Rrs. Lastly, it demonstrates how to georeference using sensor metadata and mosaic derived images to visualize spatial patterns on a map. 
