@@ -735,7 +735,7 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
    
     files = os.listdir(raw_water_img_dir) # your directory path
     num_bands = imageset.ImageSet.from_directory(warp_img_dir).captures[0].num_bands
-    print(f'Processing a total of {len(files)} bands or {round(len(files)/num_bands)} captures.')
+    print(f'Processing a total of {len(files)} images or {round(len(files)/num_bands)} captures.')
     
     
     ### convert raw imagery to radiance (Lt)
@@ -949,13 +949,17 @@ def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", star
 
     Outputs: New georeferenced .tifs with same units of images in img_dir
     """
+    def _capture_path_to_int(path : str) -> int:
+        return int(os.path.basename(path).split('_')[-1].split('.')[0])
+
+    filenames = sorted(glob.glob(os.path.join(main_dir, rrs_img_dir, '*')), key = _capture_path_to_int)[start : count]
+
+    
     # make wq_dir directory 
     if not os.path.exists(os.path.join(main_dir, wq_dir_name)):
         os.makedirs(os.path.join(main_dir, wq_dir_name))
 
-    filenames = list(glob.glob(os.path.join(main_dir, rrs_img_dir, "*.tif"))[start:count])
-
-    for new_start in range(start, len(filenames), step):
+    for new_start in range(0, len(filenames), step):
         files_to_process = filenames[new_start : new_start + step]
         rrs_imgs = load_images(files_to_process)
 
@@ -986,7 +990,84 @@ def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", star
 
 ###### Georeferencing #######
 
-def georeference(metadata, input_dir, output_dir, lines = None, altitude = None, yaw = None, pitch = 0, roll = 0, axis_to_flip = None):
+def compute_lines(lines, indexes, start = 0, end = 0):
+    """A function that given a list of indexes where there are gaps,
+    returns a list of pairs(start, end) for each interval
+    
+    Args:
+    lines (List[Tuple[int, int]]): list where to write the result
+    indexes (List[int]): list of indexes
+    start (int, optional): first index. Defaults to 0.
+    end (int, optional): last index. Defaults to 0.
+    
+    Returns:
+    List[int]: list of pairs(start, end) for each interval
+    """
+    
+    for index in indexes:
+        if abs(end - index) > 1:
+            if start != end:
+                lines.append((int(start), int(end)))
+            start = index
+        end = index
+    else:
+        if start != end:
+            lines.append((int(start), int(end)))
+    
+    return list(set(lines))
+
+def compute_flight_lines(captures_yaw, altitude, pitch, roll, threshold = 10):
+    
+    median_yaw = np.median(captures_yaw)
+    indexes = np.where(captures_yaw < median_yaw)[0]
+    indexes = np.where( (np.median(captures_yaw[indexes]) - threshold <= captures_yaw) & (captures_yaw <= np.median(captures_yaw[indexes]) + threshold))[0]
+    
+    lines = compute_lines([], indexes)
+    
+    median_yaw = np.median(captures_yaw)
+    indexes = np.where(captures_yaw > median_yaw)[0]
+    
+    indexes = np.where( (np.median(captures_yaw[indexes]) - threshold <= captures_yaw) & (captures_yaw <= np.median(captures_yaw[indexes]) + threshold))[0]
+    
+    
+    lines = compute_lines(lines, indexes)
+    lines.sort()
+    
+    flight_lines = [{'start' : line[0], 'end' : line[1] + 1,
+                     'yaw' : float(np.median(captures_yaw[line[0]:line[1]])),
+                     'pitch' : pitch, 'roll' : roll, 'alt' : altitude} for line in lines]
+    
+    return flight_lines
+
+
+def georeference(metadata, input_dir, output_dir, lines = None, altitude = None, yaw = None, pitch = 0, roll = 0, axis_to_flip = [1]):
+    """
+    This function georeferences all the captures indicated in the line parameter following the specification of the other parameters such as altitude, yaw, pitch, roll, axis_to_flip
+
+    Inputs:
+    metadata: A Pandas dataframe of the metadata
+    input_dir: A string containing the directory filepath of the images to be retrieved for georeferencing.
+    output_dir: A string containing the directory filepath to be saved. 
+    lines: Selection of images to be processed. Defaults to None. Example: [slice(0,10)]
+    altitude: sets the altitude where all captures were taken. Defaults to None which uses the altitude data saved in the metadata for each respective capture.
+    yaw: sets the sensor's direction angle during all captures. Defaults to None which uses the yaw angle saved in the metadata for each respective capture.
+    pitch: sets the sensor's pitch angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+    roll: sets the sensor's roll angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+    axis_to_flip: The axis to apply a flip. Defaults to None.
+    
+    Output: Georeferenced .tifs in output_dir 
+"""
+
+import os
+import rasterio
+import numpy as np
+from tqdm import tqdm
+from pyproj import CRS
+import cameratransform as ct
+
+
+def georeference(metadata, input_dir, output_dir, lines = None, altitude = None, 
+                     yaw = None, pitch = 0, roll = 0, axis_to_flip = None):
     """
     This function georeferences all the captures indicated in the line parameter following the specification of the other parameters such as altitude, yaw, pitch, roll, axis_to_flip
 
@@ -1022,7 +1103,6 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
         Returns:
             Affine: transformation matrix
         """
-
         cam = ct.Camera(ct.RectilinearProjection(focallength_mm = f, sensor = sensor_size, image = image_size),
                         ct.SpatialOrientation(elevation_m = alt, tilt_deg = pitch, roll_deg = roll, heading_deg = yaw, 
                                             pos_x_m = 0, pos_y_m = 0))
@@ -1055,13 +1135,13 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
             Mapping[str, Affine]: Dictionary that gathers captures IDs and transformation matrices
         """
 
-        lines = lines if lines is not None else [ slice(0, None) ]
+        lines = lines if lines is not None else [ {'start': 0, 'end': None, 'yaw': yaw, 
+                                                   'pitch': pitch, 'roll': roll, 'alt': altitude}, ]
 
         georeference_by_uuid = {}
 
         for line in lines:
-            captures = metadata.iloc[line]
-            
+            captures = metadata.iloc[line['start'] : line['end']]
             for _, capture in captures.iterrows():
                 focal = capture['FocalLength']
                 image_size = (capture['ImageWidth'], capture['ImageHeight'])[::-1]
@@ -1069,10 +1149,10 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
                 
                 lon = float(capture['Longitude'])
                 lat = float(capture['Latitude'])
-                alt = float(capture['Altitude']) if altitude is None else altitude
-                capture_pitch = float(capture['Pitch']) if pitch is None else pitch
-                capture_roll = float(capture['Roll']) if roll is None else roll
-                capture_yaw = float(capture['Yaw']) if yaw is None else yaw
+                alt = line['alt'] or float(capture['Altitude'])
+                capture_pitch = line['pitch'] if line['pitch'] is not None else float(capture['Pitch'])
+                capture_roll = line['roll'] if line['roll'] is not None else float(capture['Roll'])
+                capture_yaw = line['yaw'] if line['yaw'] is not None else float(capture['Yaw'])
 
                 georeference_by_uuid[os.path.basename(capture['filename'])] = __get_transform(focal, sensor_size, image_size, lat, 
                                                                                             lon, alt, capture_yaw, capture_pitch, 
@@ -1097,8 +1177,7 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
 
             with rasterio.open(os.path.join(output_dir, uuid), 'w', **profile) as dst:
                 data = src.read().astype(profile['dtype'])
-                dst.write( data if axis_to_flip is None else np.flip(data, axis = axis_to_flip) )
-
+                dst.write( data if axis_to_flip is None else np.flip(data, axis = axis_to_flip))
                 
 ##### Mosaicking #####
 
@@ -1565,8 +1644,6 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
         with rasterio.open(output_name, 'w', **profile) as dst:
             dst.write( method(dst, raster_paths, n_bands, width, height, dtype) )
             
-    
-        
     return output_name
 
 ### END Mosaicking ###
@@ -1590,7 +1667,7 @@ def downsample(input_dir, output_dir, scale_x, scale_y, method = Resampling.aver
 
     for raster_path in tqdm(raster_paths):
         raster_name = os.path.basename(raster_path)
-        out_name = os.path.join(output_dir, f'{raster_name.split(".")[0]}__x_{scale_x}__y_{scale_y}__method_{method.name}.tif')
+        out_name = os.path.join(output_dir, f'{raster_name.split(".")[0]}_x_{scale_x}_y_{scale_y}_method_{method.name}.tif')
 
         with rasterio.open(raster_path, 'r') as dataset:
             data = dataset.read(
