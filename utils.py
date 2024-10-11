@@ -935,7 +935,7 @@ def tsm_nechad(Rrsred):
     tsm = (A*Rrsred/(1-(Rrsred/C))) + B
     return(tsm)
 
-def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", start=0, count=10000, step=1):
+def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", start=0, count=10000):
     """
     This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
     Inputs:
@@ -945,7 +945,6 @@ def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", star
     wq_alg: what wq algorithm to apply
     start: The image to start loading from. Default is 0.
     count: The amount of images to load. Default is 10000
-    step: The amount of images to process in parallel. Default is 1
 
     Outputs: New georeferenced .tifs with same units of images in img_dir
     """
@@ -954,39 +953,32 @@ def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", star
 
     filenames = sorted(glob.glob(os.path.join(main_dir, rrs_img_dir, '*')), key = _capture_path_to_int)[start : count]
 
-    
     # make wq_dir directory 
     if not os.path.exists(os.path.join(main_dir, wq_dir_name)):
         os.makedirs(os.path.join(main_dir, wq_dir_name))
 
-    for new_start in range(0, len(filenames), step):
-        files_to_process = filenames[new_start : new_start + step]
-        rrs_imgs = load_images(files_to_process)
-
-        BLUE, GREEN, RED, RED_EDGE = 0, 1, 2, 3
-
-        if wq_alg == 'chl_hu':
-            wq = chl_hu(rrs_imgs[:,BLUE,:,:], rrs_imgs[:,GREEN,:,:], rrs_imgs[:,RED,:,:])
-        elif wq_alg == 'chl_ocx':
-            wq = chl_ocx(rrs_imgs[:,BLUE,:,:], rrs_imgs[:,GREEN,:,:])
-        elif wq_alg == 'chl_hu_ocx':
-            wq = chl_hu_ocx(rrs_imgs[:,BLUE,:,:], rrs_imgs[:,GREEN,:,:], rrs_imgs[:,RED,:,:])
-        elif wq_alg == 'chl_gitelson':
-            wq = chl_gitelson(rrs_imgs[:,RED,:,:], rrs_imgs[:,RED_EDGE,:,:])
-        elif wq_alg == 'nechad_tsm':
-            wq = tsm_nechad(rrs_imgs[:,RED,:,:])
-        
-        from_name = os.path.basename(files_to_process[0])
-        to_name = os.path.basename(files_to_process[-1])
-        print(f'Processing images from {from_name} to {to_name}')
-        
-        for idx, filename in enumerate(tqdm(files_to_process, total = len(files_to_process))):
-            with rasterio.open(filename, 'r') as src:
-                profile = src.profile
-                profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
+    BLUE, GREEN, RED, RED_EDGE = 0, 1, 2, 3
     
-            with rasterio.open(os.path.join(main_dir, wq_dir_name, os.path.basename(filename)), 'w', **profile) as dst:
-                dst.write(wq[idx], 1)
+    for filename in tqdm(filenames, total = len(filenames)):
+        rrs = np.squeeze(load_images([filename]))
+        
+        if wq_alg == 'chl_hu':
+            wq = chl_hu(rrs[BLUE,:,:], rrs[GREEN,:,:], rrs[RED,:,:])
+        elif wq_alg == 'chl_ocx':
+            wq = chl_ocx(rrs[BLUE,:,:], rrs[GREEN,:,:])
+        elif wq_alg == 'chl_hu_ocx':
+            wq = chl_hu_ocx(rrs[BLUE,:,:], rrs[GREEN,:,:], rrs[RED,:,:])
+        elif wq_alg == 'chl_gitelson':
+            wq = chl_gitelson(rrs[RED,:,:], rrs[RED_EDGE,:,:])
+        elif wq_alg == 'nechad_tsm':
+            wq = tsm_nechad(rrs[RED,:,:])
+
+        with rasterio.open(filename, 'r') as src:
+            profile = src.profile
+            profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
+
+        with rasterio.open(os.path.join(main_dir, wq_dir_name, os.path.basename(filename)), 'w', **profile) as dst:
+            dst.write(wq, 1)
 
 ###### Georeferencing #######
 
@@ -1017,6 +1009,19 @@ def compute_lines(lines, indexes, start = 0, end = 0):
     return list(set(lines))
 
 def compute_flight_lines(captures_yaw, altitude, pitch, roll, threshold = 10):
+    """
+    A function that returns a list of yaw, altitude, pitch, roll values from different flight transects to be used in the georeference() function. The function calculates the median of all yaw angles. For yaw angles < median, it calculates the median of filtered captures. If yaw angle is between filtered median - threshold and filtered median + threshold, it is considered a valid capture. Simiarly, for yaw angles > median, if yaw angle is between filtered median - threshold and filtered median + threshold, it is considered a valid capture. 
+    
+    Args:
+    captures_yaw: Can either be a fixed number or pulled from the metadata
+    altitude: Can either be a fixed number or pulled from the metadata
+    pitch: Can either be a fixed number or pulled from the metadata
+    roll:
+    threshold: A value to be uesd to determine what captures have yaw angles that are considered valid. Default is 10. 
+    
+    Returns:
+    List[int]: list of pairs(start, end) for each trasenct
+    """
     
     median_yaw = np.median(captures_yaw)
     indexes = np.where(captures_yaw < median_yaw)[0]
@@ -1040,7 +1045,7 @@ def compute_flight_lines(captures_yaw, altitude, pitch, roll, threshold = 10):
     return flight_lines
 
 
-def georeference(metadata, input_dir, output_dir, lines = None, altitude = None, yaw = None, pitch = 0, roll = 0, axis_to_flip = [1]):
+def georeference(metadata, input_dir, output_dir, lines = None, altitude = None, yaw = None, pitch = 0, roll = 0, axis_to_flip = 1):
     """
     This function georeferences all the captures indicated in the line parameter following the specification of the other parameters such as altitude, yaw, pitch, roll, axis_to_flip
 
@@ -1053,37 +1058,10 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
     yaw: sets the sensor's direction angle during all captures. Defaults to None which uses the yaw angle saved in the metadata for each respective capture.
     pitch: sets the sensor's pitch angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
     roll: sets the sensor's roll angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
-    axis_to_flip: The axis to apply a flip. Defaults to None.
+    axis_to_flip: The axis to apply a flip. Defaults to 1.
     
     Output: Georeferenced .tifs in output_dir 
-"""
-
-import os
-import rasterio
-import numpy as np
-from tqdm import tqdm
-from pyproj import CRS
-import cameratransform as ct
-
-
-def georeference(metadata, input_dir, output_dir, lines = None, altitude = None, 
-                     yaw = None, pitch = 0, roll = 0, axis_to_flip = None):
     """
-    This function georeferences all the captures indicated in the line parameter following the specification of the other parameters such as altitude, yaw, pitch, roll, axis_to_flip
-
-    Inputs:
-    metadata: A Pandas dataframe of the metadata
-    input_dir: A string containing the directory filepath of the images to be retrieved for georeferencing.
-    output_dir: A string containing the directory filepath to be saved. 
-    lines: Selection of images to be processed. Defaults to None. Example: [slice(0,10)]
-    altitude: sets the altitude where all captures were taken. Defaults to None which uses the altitude data saved in the metadata for each respective capture.
-    yaw: sets the sensor's direction angle during all captures. Defaults to None which uses the yaw angle saved in the metadata for each respective capture.
-    pitch: sets the sensor's pitch angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
-    roll: sets the sensor's roll angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
-    axis_to_flip: The axis to apply a flip. Defaults to None.
-    
-    Output: Georeferenced .tifs in output_dir 
-"""
 
     def __get_transform(f, sensor_size, image_size, lat, lon, alt, yaw, pitch, roll):
         """
@@ -1659,7 +1637,8 @@ def downsample(input_dir, output_dir, scale_x, scale_y, method = Resampling.aver
     output_dir: A string containing output directory filepath 
     scale_x: proportion by which the width of each file will be resized 
     scale_y: proportion by which the height of each file will be resized
-    method: the resampling method to perform. Defaults to Resampling.average.
+    method: the resampling method to perform. Defaults to Resampling.nearest. Please see 
+    https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling for other resampling methods. 
     """
 
     os.makedirs(output_dir, exist_ok = True)
