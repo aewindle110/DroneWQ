@@ -5,7 +5,7 @@ DroneWQ is a Python package that can be used to analyze multispectral data colle
 
 The main processing script has the ability to **1)** convert raw multispectral imagery to total radiance (L<sub>t</sub>) with units of W/m<sup>2</sup>/nm/sr, **2)** remove surface reflected light (L<sub>sr</sub>) to calculate water leaving radiance (L<sub>w</sub>), **3)** measure downwelling irradiance (E<sub>d</sub>) from either the calibrated reflectance panel, downwelling light sensor (DLS), or a combination of the two, **4)** calculate remote sensing reflectance (R<sub>rs</sub>) by dividing E<sub>d</sub> by L<sub>w</sub>, and **5)** mask pixels containing specular sun glint or instances of vegetation, shadowing, etc., **6)** use R<sub>rs</sub> as input into various bio-optical algorithms to derive chlorophyll a and total suspended sediment concentrations, and **7)** georeference using image metadata to orient and map to a known coordinate system. 
 
-![Caption for example figure.\label{fig:DroneWQ_workflow}](DroneWQ.png)
+![Caption for example figure.\label{fig:DroneWQ_workflow}](figs/DroneWQ.png)
 
 More information on the methods applied in this package can be found in:
 
@@ -28,11 +28,11 @@ Once Docker and git are installed, setup a local directory. Navigate to the dire
 
 ## Launching code
     
-With the Docker app running on your desktop, you need to launch the Docker container. Note that the first execution of this line of code will install the Docker image  and setup and configure all required software (python, jupyter notebooks) and packages. This could take several minutes, depending on computer speed.
+With the Docker app running on your desktop, you need to launch the Docker container. Note that the first execution of this line of code will install the Docker image and setup and configure all required software (python, jupyter notebooks) and packages. This could take several minutes, depending on computer speed.
     
 `docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v3`
 
-where `<local directory>` is ??? *where you want data to be saved*
+where `<local directory>` is where you want data to be saved. 
 
 It should already be activated but if you need to activate the dronewq conda environment: 
 
@@ -71,7 +71,7 @@ Once all MicaSense images have been downloaded into a local directory (e.g. `\da
 * The raw_water_imgs directory should contain all image captures of water taken during flight 
 * The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The warp_matrix derived from this image capture is used to align all image captures in raw_water_imgs. 
 
-You can also find sample datasets with this file structure in the Releases. The zipped sample_datasets (2.03 GB when unzipped) includes 4 datasets that can be run through DroneWQ.
+You can find the Lake Erie sample dataset at _____. 
 
 ## 
 

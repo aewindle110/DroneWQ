@@ -101,7 +101,7 @@ R<sub>rs</sub>(θ, Φ, λ) = R<sub>UAS</sub>(θ, Φ, λ) − (L<sub>sky</sub>(θ
 
 The inclusion of L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> and remotely sensed water quality retrievals, as shown in Figure 1. `DroneWQ` provides three common approaches to remove L<sub>SR</sub> as described below. See an intercomparison of these methods for drone imagery in [@windle_silsbe_2021].
 
-![Caption for example figure.\label{fig:removal_Lsr_fig}](removal_Lsr_fig.jpg)
+![Caption for example figure.\label{fig:removal_Lsr_fig}](figs/removal_Lsr_fig.jpg)
 <br/>
 Figure 1. Example of an individual drone image (green band) with different radiometric values: (A) R<sub>UAS</sub>, (B) R<sub>UAS</sub> with initial sun glint masking and (C–F) remote sensing reflectance (R<sub>rs</sub>) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR > 0, (F) Deglingting methods following [@hedley_harborne_mumby_2005]. Figure taken from [@windle_silsbe_2021].
 
@@ -207,14 +207,14 @@ Notes on georeferencing:
 <br/>
 
 * If possible, it is recommended to fly the drone using a consistent yaw angle (e.g. drone/sensor does not turn 180° every transect). This will make georeferencing easier and alleviate issues with changing sun glint on different transects. Some drone flight planning softwares allow you to do this (e.g. UGCS). If not, it is recommended that you note the drone/sensor's yaw angle and use this in the `georeference()` function.
-* If a yaw angle is not available, it is recommended to test a couple captures that contain land and use the MicaSense metadata. The MicaSense sensor contains an Inertial Measurement Unit (IMU) that collects data on the sensor pitch, roll, and yaw; however, this data can be impacted by IMU errors, especially during turns and windy flights. You can see how much the sensor yaw angle varies by plotting the IMU metadata yaw angle over captures. An example is included in the primary_demo.ipynb.
-    * If you have a small dataset, you can manually go through the captures to select which ones line up with what transect to inform the yaw argument in the georeference() function. It is recommended to skip images that are taken when the drone/sensor is turning since the IMU is prone to errors during drone turns.
+* If a yaw angle is not available, it is recommended to test a couple captures that contain land or the shoreline. The MicaSense sensor contains an Inertial Measurement Unit (IMU) that collects data on the sensor pitch, roll, and yaw; however, this data can be impacted by IMU errors, especially during turns and windy flights. You can see how much the sensor yaw angle varies by plotting the IMU metadata yaw angle over captures. An example is included in the primary_demo.ipynb.
+    * If you have a small dataset, you can manually go through the captures to select which ones line up with what transect to inform the yaw angle in the georeference() function. It is recommended to skip images that are taken when the drone/sensor is turning since the IMU is prone to errors during drone turns.
     * If you have a large dataset where this can be too time consuming, we have provided functions to automatically select captures with varying yaw angles that line up with different transects. The `compute_flight_lines()` function returns a list of image captures taken in different transects that contain consistent yaw angles. This can be incorporated into the  `georeference()` function to improve georeferencing and mosaicking. 
 
   
 # Demo notebook
 DroneWQ includes a jupyter notebooks to demonstrate the processing functions. 
-* `primary_demo.ipynb` includes a standard workflow to process raw UAS imagery to Rrs. It also demostrates how to derive water quality concentrations (chloropyll a and total suspended matter) from Rrs. Lastly, it demonstrates how to georeference using sensor metadata and mosaic derived images to visualize spatial patterns on a map. 
+* `primary_demo.ipynb` includes a standard workflow to process raw UAS imagery to Rrs. It also demostrates how to derive water quality concentrations (chlorophyll a and total suspended matter) from Rrs. Lastly, it demonstrates how to georeference using sensor metadata and mosaic derived images to visualize spatial patterns on a map. 
 
 # Publications utilizing DroneWQ
 
