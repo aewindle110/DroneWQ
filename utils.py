@@ -1137,8 +1137,10 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
                                                                                             capture_roll)
 
         return georeference_by_uuid
-    
 
+    def __convert_to_tif(name):
+        return '.'.join([name.split('.')[0], 'tif'])
+    
     out_folder_path = output_dir
     os.makedirs(out_folder_path, exist_ok = True)
 
@@ -1148,13 +1150,19 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
     for uuid, transform in tqdm(georefence_by_uuid.items(), total = len(georefence_by_uuid.items())):
 
         with rasterio.open(os.path.join(input_dir, uuid), 'r') as src:
-            profile = src.profile
-            profile['transform'] = transform
-            profile['count'] = src.profile['count']
-            profile['crs'] = CRS.from_user_input(4326) # Latitude, longitude]
+            data = src.read()
 
-            with rasterio.open(os.path.join(output_dir, uuid), 'w', **profile) as dst:
-                data = src.read().astype(profile['dtype'])
+            profile = {'dtype': src.profile['dtype'],
+                'count': src.profile['count'],
+                'height': src.profile['height'],
+                'width': src.profile['width'],
+                'driver' : 'GTiff',
+                'nodata' : 0 if src.profile['dtype'] == rasterio.uint8 else np.nan,
+                'crs' : CRS.from_user_input(4326),
+                'transform' : transform
+            }
+ 
+            with rasterio.open(os.path.join(output_dir, __convert_to_tif(uuid)), 'w', **profile) as dst:
                 dst.write( data if axis_to_flip is None else np.flip(data, axis = axis_to_flip))
                 
 ##### Mosaicking #####
