@@ -48,7 +48,8 @@ bibliography: paper.bib
 
 # Summary
 
-Small aerial drones, or unoccupied aerial systems (UAS), conveniently achieve scales of observation between satellite resolutions and in situ sampling, effectively diminishing the “blind spot” between these established measurement techniques [@gray_larsen_johnston_2022]. Drones equipped with off-the-shelf multispectral sensors originally designed for terrestrial applications are being increasingly used to derive water quality properties. Multispectral drone imagery requires post processing to radiometrically calibrate raw pixel values to useful radiometric units and in aquatic applications there are additional steps to remove surface reflected light and sun glint, and different approaches to map spatial patterns of water quality parameters. 
+Small aerial drones, or unoccupied aerial systems (UAS), conveniently achieve scales of observation between satellite resolutions and in situ sampling, effectively diminishing the “blind spot” between these established measurement techniques [@gray_larsen_johnston_2022]. Drones equipped with off-the-shelf multispectral sensors originally designed for terrestrial applications are being increasingly used to derive water quality properties. Multispectral drone imagery requires post processing to radiometrically calibrate raw pixel values to useful radiometric units such as reflectance. In aquatic applications, there are additional steps to remove surface reflected light and sun glint, and different approaches to estimate water quality parameters. Georeferencing and mapping drone imagery over water also comes with challenges since typical structure from motion photogrammtey techniques fail due to lack of feature matching. 
+
 
 # Statement of need
 
@@ -78,13 +79,13 @@ Eq. 3&nbsp;&nbsp;&nbsp;&nbsp; L<sub>T</sub>(θ, Φ, λ) = L<sub>W</sub>(θ, Φ, 
 </div>
 <br/>
 
-If the water surface was perfectly flat, incident light would reflect specularly and could be measured with known viewing geometries. This specular reflection of a level surface is known as the Fresnel reflection; however, most water bodies are not flat as winds and currents create tilting surface wave facets. Due to the differing orientation of wave facets reflecting radiance from different parts of the sky, L<sub>SR</sub> can vary widely within a single UAS image. A common approach to model L<sub>SR</sub> is to express it as the product of sky radiance (L<sub>sky</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) and ⍴, the effective sea-surface reflectance of the wave facet [@mobley_1999; @lee_ahn_mobley_arnone_2010]:
+If the water surface was perfectly flat, incident light would reflect specularly and could be measured with known viewing geometries. This specular reflection of a level surface is known as the Fresnel reflection; however, most water bodies are not flat as winds and currents create tilting surface wave facets. Due to the differing orientation of wave facets reflecting radiance from different parts of the sky, L<sub>SR</sub> can vary widely within a single UAS image. A common approach to model L<sub>SR</sub> is to express it as the product of sky radiance (L<sub>sky</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) and ρ, the effective sea-surface reflectance of the wave facet [@mobley_1999; @lee_ahn_mobley_arnone_2010]:
 
 <div align="center">
 Eq. 4&nbsp;&nbsp;&nbsp;&nbsp; L<sub>SR</sub>(θ, Φ, λ)= ρ(θ, Φ, λ) ∗ L<sub>sky</sub>(θ', Φ, λ)
 <br/>
 </div>
-Where θ' is the mirror of θ (θ' = 180-θ). Rearranging Eqs. 3 Eqs. 4, ⍴ can be derived by:
+Where θ' is the mirror of θ (θ' = 180-θ). Rearranging Eqs. 3 Eqs. 4, ρ can be derived by:
 <br/>
 <div align="center">
 Eq. 5&nbsp;&nbsp;&nbsp;&nbsp; ρ(θ, Φ, λ) = (L<sub>T</sub>(θ, Φ, λ) − L<sub>W</sub>(θ, Φ, λ)) / L<sub>sky</sub>(θ', Φ, λ)
@@ -105,13 +106,15 @@ The inclusion of L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> 
 <br/>
 Figure 1. Example of an individual drone image (green band) with different radiometric values: (A) R<sub>UAS</sub>, (B) R<sub>UAS</sub> with initial sun glint masking and (C–F) remote sensing reflectance (R<sub>rs</sub>) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR > 0, (F) Deglingting methods following [@hedley_harborne_mumby_2005]. Figure taken from [@windle_silsbe_2021].
 
+In `DroneWQ`, we provide the following methods to calculate R<sub>rs</sub>:
+
 `blackpixel_method()`
 <br/>
 One method to remove L<sub>SR</sub> relies on the so-called black pixel assumption that assumes L<sub>W</sub> in the near infrared (NIR) is negligible due to strong absorption of water. Where this assumption holds, at-sensor radiance measured in the NIR is solely L<sub>SR</sub> and allows ⍴ to be calculated if L<sub>sky</sub> is known. Studies have used this assumption to estimate and remove L<sub>SR</sub>; however, the assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and L<sub>W</sub> in the NIR [@siegel_wang_maritorena_robinson_2000]. *Therefore, this method should only be used in waters whose optical propeties are dominated and co-vary with phytoplankton (e.g. Case 1, open ocean waters).* 
 
 `mobley_rho_method()`
 <br/>
-Tabulated ρ values have been derived from numerical simulations with modelled sea surfaces, Cox and Munk wave states (wind), and viewing geometries [@mobley_1999]. Mobley (1999) provides the recommendation of collecting radiance measurements at viewing directions of θ = 40° from nadir and ɸ = 135° from the sun to minimize the effects of sun glint and nonuniform sky radiance with a ⍴ value of 0.028 for wind speeds less than 5 m/s. These suggested viewing geometries and ⍴ value have been used to estimate and remove L<sub>SR</sub> in many remote sensing studies. *This method should only be used if using a drone sensor that is angled 30-40° from nadir and if wind speed is less than 5 m/s.*
+Tabulated ρ values have been derived from numerical simulations with modelled sea surfaces, Cox and Munk wave states (wind), and viewing geometries [@mobley_1999]. Mobley (1999) provides the recommendation of collecting radiance measurements at viewing directions of θ = 40° from nadir and ɸ = 135° from the sun to minimize the effects of sun glint and nonuniform sky radiance with a ⍴ value of 0.028 for wind speeds less than 5 m/s. These suggested viewing geometries and ⍴ value have been used to estimate and remove L<sub>SR</sub> in many remote sensing studies. *This method should only be used if using a drone sensor that is angled 30-40° from nadir throughout the flight and if wind speed is less than 5 m/s.*
 
 `hedley_method()`
 <br/>
@@ -126,8 +129,9 @@ Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>))
 *This method can be utilized without the collection of L<sub>sky</sub> images.*  
 
 # Normalizing by downwelling irradiance (L<sub>W</sub> / E<sub>d</sub> =  R<sub>rs</sub>) 
- After L<sub>SR</sub> is removed from L<sub>T</sub>, the product of that removal L<sub>W</sub> needs to be normalized by E<sub>d</sub> to calculate R<sub>rs</sub> (Eq. 6). The downwelling light sensor (DLS) or calibration reflectance panel can be used to calculate E<sub>d</sub>.
+ After L<sub>SR</sub> is removed from L<sub>T</sub>, the product of that removal (L<sub>W</sub>) needs to be normalized by E<sub>d</sub> to calculate R<sub>rs</sub> (Eq. 6). The downwelling light sensor (DLS) or calibration reflectance panel can be used to calculate E<sub>d</sub>.
 
+The following are methods to retrieve E<sub>d</sub>: <br>
 `panel_ed()`
 <br/> 
 An image capture of the MicaSense calibrated reflectance panel with known reflectance values can be used to calculate E<sub>d</sub>. It is recommended to use this method when flying on a clear sunny day. 
@@ -157,7 +161,7 @@ R<sub>rs</sub> is often used as input into various bio-optical algorithms to obt
 
 `chl_hu()`
 <br/>
-This is the Ocean Color Index (CI) three-band reflectance difference algorithm [@hu_lee_franz_2012]. This should only be used for chlorophyll-a retrievals below 0.15 mg m^-3.
+This is the Ocean Color Index (CI) three-band reflectance difference algorithm [@hu_lee_franz_2012]. This should only be used for waters where chlorophyll-a retrievals are expected to be below 0.15 mg m^-3.
 <br/>
 
 `chl_ocx()`
@@ -167,7 +171,7 @@ This is the OCx algorithm which uses a fourth-order polynomial relationship [@or
 
 `chl_hu_ocx()`
 <br/>
-This is the blended NASA chlorophyll algorithm which merges the Hu et al. (2012) color index (CI) algorithm (chl_hu) and the O'Reilly et al. (1998) band ratio OCx algortihm (chl_ocx). This specific code is grabbed from https://github.com/nasa/HyperInSPACE. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/.
+This is the blended NASA chlorophyll algorithm which merges the Hu et al. (2012) color index (CI) algorithm (chl_hu) and the O'Reilly et al. (1998) band ratio OCx algortihm (chl_ocx). This specific code is grabbed from https://github.com/nasa/HyperInSPACE. Documentation can be found here https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0.
 <br/>
 
 `chl_gitelson()`
@@ -182,9 +186,13 @@ This algorithm estimates total suspended matter (TSM) concentrations and is tune
 
 
 # Georeferencing and mapping
+Many UAS remote sensing studies use Structure-from-Motion (SfM) photogrammetric techniques to stitch individual UAS images into ortho- and georectified mosaics. This approach applies matching key points from overlapping UAS imagery in camera pose estimation algorithms to resolve 3D camera location and scene geometry. Commonly used software (e.g. Pix4D) provide workflows that radiometrically calibrate, georeference, and stitch individual UAS images using a weighted average approach to create at-sensor reflectance 2D orthomosaics. Current photogrammetry techniques are not capable of stitching UAS images captured over large bodies of water due to a lack of key points in images of homogenous water surfaces. <br>
+
+In `DroneWQ`, we provide methods to georeference and mosaic drone imagery collected over water:
+
 `georeference()`
 <br/>
-This function uses MicaSense metadata (altitude, pitch, roll, yaw, lat, lon) to georeference all captures to a known coordinate space. See notes on georeferencing below. 
+This function uses MicaSense metadata (altitude, pitch, roll, yaw, lat, lon) or user supplied data to georeference all captures to a known coordinate space. See notes on georeferencing below. 
 
 `mosaic()`
 <br/>
@@ -213,8 +221,7 @@ Notes on georeferencing:
 
   
 # Demo notebook
-DroneWQ includes a jupyter notebooks to demonstrate the processing functions. 
-* `primary_demo.ipynb` includes a standard workflow to process raw UAS imagery to Rrs. It also demostrates how to derive water quality concentrations (chlorophyll a and total suspended matter) from Rrs. Lastly, it demonstrates how to georeference using sensor metadata and mosaic derived images to visualize spatial patterns on a map. 
+DroneWQ includes a jupyter notebook to demonstrate the processing functions. `primary_demo.ipynb` includes a standard workflow to 1) process raw UAS imagery to Rrs, 2) derive water quality concentrations (chlorophyll a and total suspended matter), and 3) georeference and mosaic to visualize spatial patterns on a map. 
 
 # Publications utilizing DroneWQ
 

@@ -2,7 +2,6 @@ import multiprocessing, glob, shutil, os, datetime, subprocess, math
 
 import geopandas as gpd
 import pandas as pd
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -34,7 +33,6 @@ from rasterio.enums import Resampling
 
 import contextily as cx
 import rioxarray
-import matplotlib.pyplot as plt
 
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from pyproj import Transformer
