@@ -12,7 +12,7 @@ authors:
     affiliation: "1, 2"
     equal-contrib: true
     corresponding: true
-  - name: Patrick Gray 
+  - name: Patrick C. Gray 
     orcid: 0000-0002-8997-5255
     affiliation: "3, 4"
     equal_contrib: true
@@ -48,52 +48,52 @@ bibliography: paper.bib
 
 # Summary
 
-Small aerial drones conveniently achieve scales of observation between satellite resolutions and in situ sampling, effectively diminishing the “blind spot” between these established measurement techniques [@gray_larsen_johnston_2022]. Drones equipped with off-the-shelf multispectral sensors originally designed for terrestrial applications are being increasingly used to derive water quality properties. Multispectral drone imagery requires post processing to radiometrically calibrate raw pixel values to useful radiometric units, remove surface reflected light and sun glint, and map spatial patterns of water quality parameters. 
+Small aerial drones, or unoccupied aerial systems (UAS), conveniently achieve scales of observation between satellite resolutions and in situ sampling, effectively diminishing the “blind spot” between these established measurement techniques [@gray_larsen_johnston_2022]. Drones equipped with off-the-shelf multispectral sensors originally designed for terrestrial applications are being increasingly used to derive water quality properties. Multispectral drone imagery requires post processing to radiometrically calibrate raw pixel values to useful radiometric units and in aquatic applications there are additional steps to remove surface reflected light and sun glint, and different approaches to map spatial patterns of water quality parameters. 
 
 # Statement of need
 
-`DroneWQ` is a Python package for multispectral drone imagery processing to obtain remote sensing reflectance (R<sub>rs</sub>), the fundamental input into ocean color algorithms which can be used to estimate and map water quality parameters. The processing steps, calibrations, and corrections necessary to obtain research quality R<sub>rs</sub> data from drones can be prohibitively difficult for those who do not specialize in optics and remote sensing, yet the data once obtained can reveal entirely new insight into aquatic ecosystems. `DroneWQ` was designed to be a simple pipeline for managers, researchers, and students who wish to utilize drone multispectral remote sensing to analyze ocean color and water quality. The combination of processing, georeferencing, and mapping drone imagery will enable effective water quality monitoring at fine spatial resolutions. The simple functionality of `DroneWQ` will enable exciting scientific exploration of drone remote sensing by students and experts alike. 
+`DroneWQ` is a Python package for multispectral drone imagery processing to obtain remote sensing reflectance (R<sub>rs</sub>), the fundamental input into ocean color algorithms which can be used to estimate and map water quality parameters. The processing steps, calibrations, and corrections necessary to obtain research quality R<sub>rs</sub> data from drones can be prohibitively difficult for those who do not specialize in optics and remote sensing, yet this data can reveal entirely new insight into aquatic ecosystems. `DroneWQ` was designed to be a simple pipeline for managers, researchers, and students who wish to utilize drone multispectral remote sensing to analyze ocean color and water quality. The combination of processing, georeferencing, and mapping drone imagery will enable effective water quality monitoring at fine spatial resolutions. The simple functionality of `DroneWQ` will enable exciting scientific exploration of drone remote sensing by students and experts alike. 
 
 # Background/Theory
 
 Following the notation style and large body of research from the optical oceanography community, drones can measure remote sensing reflectance (R<sub>rs</sub>) defined as:
 
 <div align="center">
-R<sub>rs</sub> (θ, φ, λ) = L<sub>W</sub>(θ, φ, λ) / E<sub>d</sub>(θ, φ, λ)  Eq. 1 
+Eq. 1&nbsp;&nbsp;&nbsp;&nbsp; R<sub>rs</sub> (θ, φ, λ) = L<sub>W</sub>(θ, φ, λ) / E<sub>d</sub>(θ, φ, λ) 
 </div>
 <br/>
 
-where L<sub>W</sub> (W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) is water-leaving radiance, E<sub>d</sub> (W m<sup>-2</sup> nm<sup>-1</sup>) is downwelling irradiance, θ represents the sensor viewing angle between the sun and the vertical (zenith), φ represents the angular direction realtive to the sun (azimuth) and λ represents wavelength. 
+where L<sub>W</sub> (W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) is water-leaving radiance, E<sub>d</sub> (W m<sup>-2</sup> nm<sup>-1</sup>) is downwelling irradiance, θ represents the sensor viewing angle between the sun and the vertical (zenith), φ represents the angular direction relative to the sun (azimuth) and λ represents wavelength. 
 
-Like all above-water optical measurements, drones do not measure R<sub>rs</sub> directly as the at-sensor total radiance (L<sub>T</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) constitutes the sum of L<sub>W</sub> and incident radiance reflected off the sea surface into the detector's field of view, referred to as surface reflected radiance (L<sub>SR</sub>). L<sub>W</sub> is radiance that emanates from the water and contains a spectral shape and magnitude governed by optically active water constituents interacting with downwelling irradiance, while L<sub>SR</sub> is independent of water constituents and is instead governed by a given sea-state surface reflecting the downwelling light; a familiar example is sun glint. Here we define UAS total reflectance (R<sub>UAS</sub>) as:
+Like all above-water optical measurements, drones do not measure R<sub>rs</sub> directly as the at-sensor total radiance (L<sub>T</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) constitutes the sum of L<sub>W</sub> and incident radiance reflected off the sea surface into the detector's field of view, referred to as surface reflected radiance (L<sub>SR</sub>). While there is in reality also some scattering of light off air molecules and aerosols we consider that minimal at typical drone altitudes. L<sub>W</sub> is thus the radiance that emanates from the water and contains a spectral shape and magnitude governed by optically active water constituents interacting with downwelling irradiance, while L<sub>SR</sub> is independent of water constituents and is instead governed by a given sea-state surface reflecting the downwelling light; a familiar example is sun glint. Here we define UAS total reflectance (R<sub>UAS</sub>) as:
 
 <div align="center">
-R<sub>UAS</sub>(θ, Φ, λ) = L<sub>T</sub>(θ, Φ, λ) / E<sub>d</sub>(λ) Eq. 2
+Eq. 2&nbsp;&nbsp;&nbsp;&nbsp; R<sub>UAS</sub>(θ, Φ, λ) = L<sub>T</sub>(θ, Φ, λ) / E<sub>d</sub>(λ)
 <br/>
 </div>
 where
 <br/>
 <div align="center">
-L<sub>T</sub>(θ, Φ, λ)= L<sub>W</sub>(θ, Φ, λ) + L<sub>SR</sub>(θ, Φ, λ) Eq. 3 
+Eq. 3&nbsp;&nbsp;&nbsp;&nbsp; L<sub>T</sub>(θ, Φ, λ) = L<sub>W</sub>(θ, Φ, λ) + L<sub>SR</sub>(θ, Φ, λ)
 </div>
 <br/>
 
-If a water surface was perfectly flat, incident light would reflect specularly and could be measured with known viewing geometries. This specular reflection of a level surface is known as the Fresnel reflection; however, most water bodies are not flat as winds and currents create tilting surface wave facets. Due to differing orientation of wave facets reflecting radiance from different parts of the sky, L<sub>SR</sub> can vary widely within a single image. A common approach to model L<sub>SR</sub> is to express it as the product of sky radiance (L<sub>sky</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) and ⍴, the effective sea-surface reflectance of the wave facet [@mobley_1999; @lee_ahn_mobley_arnone_2010]:
+If the water surface was perfectly flat, incident light would reflect specularly and could be measured with known viewing geometries. This specular reflection of a level surface is known as the Fresnel reflection; however, most water bodies are not flat as winds and currents create tilting surface wave facets. Due to the differing orientation of wave facets reflecting radiance from different parts of the sky, L<sub>SR</sub> can vary widely within a single UAS image. A common approach to model L<sub>SR</sub> is to express it as the product of sky radiance (L<sub>sky</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) and ⍴, the effective sea-surface reflectance of the wave facet [@mobley_1999; @lee_ahn_mobley_arnone_2010]:
 
 <div align="center">
-L<sub>SR</sub>(θ, Φ, λ)= ρ(θ, Φ, λ) ∗ L<sub>sky</sub>(θ', Φ, λ) Eq. 4
+Eq. 4&nbsp;&nbsp;&nbsp;&nbsp; L<sub>SR</sub>(θ, Φ, λ)= ρ(θ, Φ, λ) ∗ L<sub>sky</sub>(θ', Φ, λ)
 <br/>
 </div>
 Where θ' is the mirror of θ (θ' = 180-θ). Rearranging Eqs. 3 Eqs. 4, ⍴ can be derived by:
 <br/>
 <div align="center">
-ρ(θ, Φ, λ) = L<sub>T</sub>(θ, Φ, λ) − L<sub>W</sub>(θ, Φ, λ) / L<sub>sky</sub>(θ', Φ, λ) Eq. 5
+Eq. 5&nbsp;&nbsp;&nbsp;&nbsp; ρ(θ, Φ, λ) = (L<sub>T</sub>(θ, Φ, λ) − L<sub>W</sub>(θ, Φ, λ)) / L<sub>sky</sub>(θ', Φ, λ)
 </div>
 <br/>
 Given measurements of L<sub>sky</sub>, an accurate determination of ⍴ is critical to derive R<sub>rs</sub> by:
 <div align="center">
 <br/>
-R<sub>rs</sub>(θ, Φ, λ) = R<sub>UAS</sub>(θ, Φ, λ) − (L<sub>sky</sub>(θ', Φ, λ) ∗ ρ(θ, Φ, λ) / E<sub>d</sub>(λ))  Eq. 6
+Eq. 6&nbsp;&nbsp;&nbsp;&nbsp; R<sub>rs</sub>(θ, Φ, λ) = R<sub>UAS</sub>(θ, Φ, λ) − (L<sub>sky</sub>(θ', Φ, λ) ∗ ρ(θ, Φ, λ) / E<sub>d</sub>(λ))
 </div>
 <br/>
 
@@ -126,7 +126,7 @@ Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>))
 *This method can be utilized without the collection of L<sub>sky</sub> images.*  
 
 # Normalizing by downwelling irradiance (L<sub>W</sub> / E<sub>d</sub> =  R<sub>rs</sub>) 
- After L<sub>SR</sub> is removed from L<sub>t</sub>, the product of that removal L<sub>w</sub> needs to be normalized by E<sub>d</sub> to calculate R<sub>rs</sub> (Eq. 6). The downwelling light sensor (DLS) or calibration reflectance panel can be used to calculate E<sub>d</sub>.
+ After L<sub>SR</sub> is removed from L<sub>T</sub>, the product of that removal L<sub>W</sub> needs to be normalized by E<sub>d</sub> to calculate R<sub>rs</sub> (Eq. 6). The downwelling light sensor (DLS) or calibration reflectance panel can be used to calculate E<sub>d</sub>.
 
 `panel_ed()`
 <br/> 
