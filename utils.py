@@ -822,7 +822,7 @@ def chl_hu(Rrsblue, Rrsgreen, Rrsred):
     Inputs:
     Rrs_x: numpy array of Rrs in each band. 
     
-    Output: numpy array of derived chlorophyll
+    Output: numpy array of derived chlorophyll (mg m^-3).
     
     """
     
@@ -841,7 +841,7 @@ def chl_ocx(Rrsblue, Rrsgreen):
     Inputs:
     Rrs_x: numpy array of Rrs in each band. 
     
-    Output: numpy array of derived chlorophyll
+    Output: numpy array of derived chlorophyll (mg m^-3).
     
     """
     
@@ -867,7 +867,7 @@ def chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred):
     Inputs:
     Rrs_x: numpy array of Rrs in each band. 
     
-    Output: numpy array of derived chlorophyll
+    Output: numpy array of derived chlorophyll (mg m^-3).
     '''
 
     thresh = [0.15, 0.20]
@@ -909,7 +909,7 @@ def chl_gitelson(Rrsred, Rrsrededge):
     Inputs:
     Rrs_x: numpy array of Rrs in each band. 
     
-    Output: numpy array of derived chlorophyll
+    Output: numpy array of derived chlorophyll (mg m^-3). 
     """
     
     chl = 59.826 * (Rrsrededge/Rrsred) - 17.546
