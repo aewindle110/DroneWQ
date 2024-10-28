@@ -1085,7 +1085,7 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
 
         cam.setGPSpos(lat, lon, alt)
 
-        coords : np.absndarray = np.array([cam.gpsFromImage([0, 0]), cam.gpsFromImage([image_size[0] - 1, 0]), 
+        coords : np.ndarray = np.array([cam.gpsFromImage([0, 0]), cam.gpsFromImage([image_size[0] - 1, 0]), 
                                         cam.gpsFromImage([image_size[0] - 1, image_size[1] - 1]), cam.gpsFromImage([0, image_size[1] - 1])])
                 
         gcp1 = rasterio.control.GroundControlPoint(row = 0, col = 0, x = coords[0, 1], y = coords[0, 0], z = coords[0, 2])
