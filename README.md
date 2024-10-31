@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14018788.svg)](https://doi.org/10.5281/zenodo.14018788)
+
 # DroneWQ: A Python library for measuring water quality with a multispectral drone sensor
 
 
@@ -73,7 +75,7 @@ Once all MicaSense images have been downloaded into a local directory (e.g. `\da
 * The raw_water_imgs directory should contain all image captures of water taken during flight 
 * The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The warp_matrix derived from this image capture is used to align all image captures in raw_water_imgs. 
 
-You can find the Lake Erie sample dataset at (Zenodo doi). 
+You can find the Lake Erie sample dataset at [Zenodo DOI](https://doi.org/10.5281/zenodo.14018788). 
 
 ## 
 
