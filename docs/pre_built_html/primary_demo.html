@@ -1,0 +1,1755 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demonstration of DroneWQ functions and processing code &mdash; dronewq 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="&lt;no title&gt;" href="modules.html" />
+    <link rel="prev" title="Installation" href="install.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            dronewq
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Processing and theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Demonstration of <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> functions and processing code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Contents">Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#1.-Setup">1. Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#2.-View-metadata">2. View metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#3.-Process-raw-imagery-to-remote-sensing-reflectance-(Rrs)-and-visualize-data">3. Process raw imagery to remote sensing reflectance (Rrs) and visualize data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#4.-Convert-to-point-samples">4. Convert to point samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#5.-Apply-bio-optical-algorithms">5. Apply bio-optical algorithms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#6.-Georeference-and-mosaic-chlorophyll-a-images">6. Georeference and mosaic chlorophyll a images</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html"><code class="docutils literal notranslate"><span class="pre">Paralelogram2D</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.are_points_within_vertices"><code class="docutils literal notranslate"><span class="pre">are_points_within_vertices()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.blackpixel_method"><code class="docutils literal notranslate"><span class="pre">blackpixel_method()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.chl_gitelson"><code class="docutils literal notranslate"><span class="pre">chl_gitelson()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.chl_hu"><code class="docutils literal notranslate"><span class="pre">chl_hu()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.chl_hu_ocx"><code class="docutils literal notranslate"><span class="pre">chl_hu_ocx()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.chl_ocx"><code class="docutils literal notranslate"><span class="pre">chl_ocx()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.compute_flight_lines"><code class="docutils literal notranslate"><span class="pre">compute_flight_lines()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.compute_lines"><code class="docutils literal notranslate"><span class="pre">compute_lines()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.dls_ed"><code class="docutils literal notranslate"><span class="pre">dls_ed()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.downsample"><code class="docutils literal notranslate"><span class="pre">downsample()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.euclidean_distance"><code class="docutils literal notranslate"><span class="pre">euclidean_distance()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.georeference"><code class="docutils literal notranslate"><span class="pre">georeference()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.get_center"><code class="docutils literal notranslate"><span class="pre">get_center()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.get_warp_matrix"><code class="docutils literal notranslate"><span class="pre">get_warp_matrix()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.hedley_method"><code class="docutils literal notranslate"><span class="pre">hedley_method()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.is_on_right_side"><code class="docutils literal notranslate"><span class="pre">is_on_right_side()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.is_point_within_vertices"><code class="docutils literal notranslate"><span class="pre">is_point_within_vertices()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.load_images"><code class="docutils literal notranslate"><span class="pre">load_images()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.load_img_fn_and_meta"><code class="docutils literal notranslate"><span class="pre">load_img_fn_and_meta()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.mobley_rho_method"><code class="docutils literal notranslate"><span class="pre">mobley_rho_method()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.mosaic"><code class="docutils literal notranslate"><span class="pre">mosaic()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.panel_ed"><code class="docutils literal notranslate"><span class="pre">panel_ed()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.plot_basemap"><code class="docutils literal notranslate"><span class="pre">plot_basemap()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.plot_georeferenced_data"><code class="docutils literal notranslate"><span class="pre">plot_georeferenced_data()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.process_micasense_images"><code class="docutils literal notranslate"><span class="pre">process_micasense_images()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.process_raw_to_rrs"><code class="docutils literal notranslate"><span class="pre">process_raw_to_rrs()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.retrieve_imgs_and_metadata"><code class="docutils literal notranslate"><span class="pre">retrieve_imgs_and_metadata()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.rrs_std_pixel_masking"><code class="docutils literal notranslate"><span class="pre">rrs_std_pixel_masking()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.rrs_threshold_pixel_masking"><code class="docutils literal notranslate"><span class="pre">rrs_threshold_pixel_masking()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.save_images"><code class="docutils literal notranslate"><span class="pre">save_images()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.save_wq_imgs"><code class="docutils literal notranslate"><span class="pre">save_wq_imgs()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.tsm_nechad"><code class="docutils literal notranslate"><span class="pre">tsm_nechad()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.write_metadata_csv"><code class="docutils literal notranslate"><span class="pre">write_metadata_csv()</span></code></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">dronewq</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Demonstration of <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> functions and processing code</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/primary_demo.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Demonstration-of-DroneWQ-functions-and-processing-code">
+<h1>Demonstration of <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> functions and processing code<a class="headerlink" href="#Demonstration-of-DroneWQ-functions-and-processing-code" title="Link to this heading"></a></h1>
+<section id="Summary">
+<h2>Summary<a class="headerlink" href="#Summary" title="Link to this heading"></a></h2>
+<p>This notebook provides an example workflow of DroneWQ using multispectral images collected by the MicaSense RedEdge-MX sensor over western Lake Erie on August 17, 2022. The workflow processes raw imagery to remote sensing reflectance and applies bio-optical algorithms to retrieve chlorophyll a concentrations. It georeferences the images producing a final chlorophyll a mosaic of the full dataset.</p>
+<p>The Lake Erie drone dataset can be found in the <a class="reference external" href="https://doi.org/10.5281/zenodo.14018788">Zenodo DOI</a>, please note it is 5.84 GB unzipped. Depending on computer speed, you may need to subset the data before running the code workflow shown here.</p>
+</section>
+<section id="Contents">
+<h2>Contents<a class="headerlink" href="#Contents" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#1.-Setup"><span class="std std-ref">Setup</span></a></p></li>
+<li><p><a class="reference internal" href="#2.-View-metadata"><span class="std std-ref">View metadata</span></a></p></li>
+<li><p><a class="reference internal" href="#3.-Process-raw-imagery-to-remote-sensing-reflectance-(Rrs)-and-visualize-data"><span class="std std-ref">Process raw to Rrs</span></a></p></li>
+<li><p><a class="reference internal" href="#4.-Convert-to-point-samples"><span class="std std-ref">Convert to point samples</span></a></p></li>
+<li><p><a class="reference internal" href="#5.-Apply-bio-optical-algorithms"><span class="std std-ref">Apply bio-optical algorithms</span></a></p></li>
+<li><p><a class="reference internal" href="#6.-Georeference-and-mosaic-chlorophyll-a-images"><span class="std std-ref">Georeference and mosaic</span></a></p></li>
+</ol>
+</section>
+<section id="1.-Setup">
+<h2>1. Setup<a class="headerlink" href="#1.-Setup" title="Link to this heading"></a></h2>
+<p>Pull in all the libraries needed for this notebook.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">cartopy.crs</span> <span class="kn">import</span> <span class="n">Mercator</span>
+<span class="kn">import</span> <span class="nn">matplotlib.image</span> <span class="k">as</span> <span class="nn">mpimg</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;mathtext.default&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;regular&#39;</span>
+
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+</div>
+<p>Make sure your imagery has been manually organized into this exact structure (name the main_dir whatever you want but keep the rest exactly as named here):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;main_dir&gt;/
+    raw_water_imgs/
+    align_img/
+    raw_sky_imgs/
+    panel/
+</pre></div>
+</div>
+<p>With that structure now just specify the path to your main_dir below. Here, we have the main_dir called ‘Lake_Erie’.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;Lake_Erie&#39;</span><span class="p">)</span>
+<span class="n">project_path</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#39;Lake_Erie&#39;
+</pre></div></div>
+</div>
+</section>
+<section id="2.-View-metadata">
+<h2>2. View metadata<a class="headerlink" href="#2.-View-metadata" title="Link to this heading"></a></h2>
+<p>MicaSense raw images contain metatdata including imager information, GPS coordianates, and more. We can use the <code class="docutils literal notranslate"><span class="pre">write_metadata_csv()</span></code> function to extract image metadata and save it as .csv.</p>
+<p>Let’s open the first five lines of the .csv to take a look.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">write_metadata_csv</span><span class="p">(</span><span class="n">img_set</span> <span class="o">=</span> <span class="n">imageset</span><span class="o">.</span><span class="n">ImageSet</span><span class="o">.</span><span class="n">from_directory</span><span class="p">(</span><span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/raw_water_imgs&#39;</span><span class="p">),</span>
+                                                            <span class="n">csv_output_path</span><span class="o">=</span><span class="n">project_path</span><span class="p">)</span>
+
+<span class="n">img_metadata</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;metadata.csv&#39;</span><span class="p">))</span>
+<span class="n">img_metadata</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Loading ImageSet from: Lake_Erie/raw_water_imgs
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>filename</th>
+      <th>dirname</th>
+      <th>DateStamp</th>
+      <th>TimeStamp</th>
+      <th>Latitude</th>
+      <th>LatitudeRef</th>
+      <th>Longitude</th>
+      <th>LongitudeRef</th>
+      <th>Altitude</th>
+      <th>SensorX</th>
+      <th>...</th>
+      <th>FocalLength</th>
+      <th>Yaw</th>
+      <th>Pitch</th>
+      <th>Roll</th>
+      <th>SolarElevation</th>
+      <th>ImageWidth</th>
+      <th>ImageHeight</th>
+      <th>XResolution</th>
+      <th>YResolution</th>
+      <th>ResolutionUnits</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>capture_1.tif</td>
+      <td>Lake_Erie/capture_1.tif</td>
+      <td>2022-08-17</td>
+      <td>15:37:04</td>
+      <td>41.828528</td>
+      <td>N</td>
+      <td>-83.398762</td>
+      <td>W</td>
+      <td>265.061</td>
+      <td>4.8</td>
+      <td>...</td>
+      <td>5.43432</td>
+      <td>218.376096</td>
+      <td>25.899967</td>
+      <td>335.837017</td>
+      <td>0.895362</td>
+      <td>1280</td>
+      <td>960</td>
+      <td>266.666667</td>
+      <td>266.666667</td>
+      <td>mm</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>capture_2.tif</td>
+      <td>Lake_Erie/capture_2.tif</td>
+      <td>2022-08-17</td>
+      <td>15:37:08</td>
+      <td>41.828670</td>
+      <td>N</td>
+      <td>-83.398764</td>
+      <td>W</td>
+      <td>265.554</td>
+      <td>4.8</td>
+      <td>...</td>
+      <td>5.43432</td>
+      <td>221.427592</td>
+      <td>16.821391</td>
+      <td>341.184053</td>
+      <td>0.895530</td>
+      <td>1280</td>
+      <td>960</td>
+      <td>266.666667</td>
+      <td>266.666667</td>
+      <td>mm</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>capture_3.tif</td>
+      <td>Lake_Erie/capture_3.tif</td>
+      <td>2022-08-17</td>
+      <td>15:37:10</td>
+      <td>41.828809</td>
+      <td>N</td>
+      <td>-83.398760</td>
+      <td>W</td>
+      <td>265.968</td>
+      <td>4.8</td>
+      <td>...</td>
+      <td>5.43432</td>
+      <td>218.898605</td>
+      <td>16.695405</td>
+      <td>343.643092</td>
+      <td>0.895655</td>
+      <td>1280</td>
+      <td>960</td>
+      <td>266.666667</td>
+      <td>266.666667</td>
+      <td>mm</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>capture_4.tif</td>
+      <td>Lake_Erie/capture_4.tif</td>
+      <td>2022-08-17</td>
+      <td>15:37:13</td>
+      <td>41.828956</td>
+      <td>N</td>
+      <td>-83.398761</td>
+      <td>W</td>
+      <td>266.420</td>
+      <td>4.8</td>
+      <td>...</td>
+      <td>5.43432</td>
+      <td>216.716936</td>
+      <td>18.188710</td>
+      <td>345.889851</td>
+      <td>0.895738</td>
+      <td>1280</td>
+      <td>960</td>
+      <td>266.666667</td>
+      <td>266.666667</td>
+      <td>mm</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>capture_5.tif</td>
+      <td>Lake_Erie/capture_5.tif</td>
+      <td>2022-08-17</td>
+      <td>15:37:16</td>
+      <td>41.829081</td>
+      <td>N</td>
+      <td>-83.398763</td>
+      <td>W</td>
+      <td>267.018</td>
+      <td>4.8</td>
+      <td>...</td>
+      <td>5.43432</td>
+      <td>214.429136</td>
+      <td>18.385695</td>
+      <td>347.772515</td>
+      <td>0.895863</td>
+      <td>1280</td>
+      <td>960</td>
+      <td>266.666667</td>
+      <td>266.666667</td>
+      <td>mm</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 21 columns</p>
+</div></div>
+</div>
+<p>We can plot the altitude and lat,lon, and yaw angle metadata of the image captures to get a sense of the flight plan.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">img_metadata</span><span class="p">))),</span><span class="n">img_metadata</span><span class="p">[</span><span class="s1">&#39;Altitude&#39;</span><span class="p">])</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Altitude (m)&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">img_metadata</span><span class="p">[</span><span class="s1">&#39;Longitude&#39;</span><span class="p">],</span> <span class="n">img_metadata</span><span class="p">[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">])</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Latitude&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Longitude&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">img_metadata</span><span class="p">))),</span><span class="n">img_metadata</span><span class="p">[</span><span class="s1">&#39;Yaw&#39;</span><span class="p">])</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Yaw&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0, 0.5, &#39;Yaw&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_12_1.png" src="_images/primary_demo_12_1.png" />
+</div>
+</div>
+</section>
+<section id="3.-Process-raw-imagery-to-remote-sensing-reflectance-(Rrs)-and-visualize-data">
+<h2>3. Process raw imagery to remote sensing reflectance (Rrs) and visualize data<a class="headerlink" href="#3.-Process-raw-imagery-to-remote-sensing-reflectance-(Rrs)-and-visualize-data" title="Link to this heading"></a></h2>
+<p>Now let’s get to processing. The <code class="docutils literal notranslate"><span class="pre">process_raw_to_rrs()</span></code> function has a number of options that you can see here:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">?</span>process_raw_to_rrs
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">Signature:</span>
+process_raw_to_rrs<span class="ansi-blue-fg">(</span>
+    main_dir<span class="ansi-blue-fg">,</span>
+    rrs_dir_name<span class="ansi-blue-fg">,</span>
+    output_csv_path<span class="ansi-blue-fg">,</span>
+    lw_method<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&#39;mobley_rho_method&#39;</span><span class="ansi-blue-fg">,</span>
+    mask_pixels<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
+    random_n<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">10</span><span class="ansi-blue-fg">,</span>
+    pixel_masking_method<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&#39;value_threshold&#39;</span><span class="ansi-blue-fg">,</span>
+    mask_std_factor<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">,</span>
+    nir_threshold<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0.01</span><span class="ansi-blue-fg">,</span>
+    green_threshold<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0.005</span><span class="ansi-blue-fg">,</span>
+    ed_method<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&#39;dls_ed&#39;</span><span class="ansi-blue-fg">,</span>
+    overwrite_lt_lw<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
+    clean_intermediates<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">True</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-blue-fg">)</span>
+<span class="ansi-red-fg">Docstring:</span>
+This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
+
+Inputs:
+main_dir: A string containing the main image directory
+rrs_dir_name: A string containing the directory filepath of new rrs images
+output_csv_path: A string containing the filepath to write the metadata.csv
+lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method().
+random_n: The amount of random images to calculate ambient NIR level. Default is 10. Only need if lw_method = &#39;hedley_method&#39;
+mask_pixels: Option to mask pixels containing specular sun glint, shadowing, adjacent vegetation, etc. Default is False.
+pixel_masking_method: Method to mask pixels. Options are &#39;value_threshold&#39; or &#39;std_threshold&#39;. Default is value_threshold.
+mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1. Only need if pixel_masking_method = &#39;std_threshold&#39;
+nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features. Only need if pixel_masking_method = &#39;value_threshold&#39;.
+green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing.  Only need if pixel_masking_method = &#39;value_threshold&#39;.
+ed_method: Method used to calculate downwelling irradiance (Ed). Default is dls_ed().
+overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False but this is only applied to the Lt images.
+clean_intermediates: Option to erase intermediates of processing (Lt, Lw, unmasked Rrs)
+
+Output: New Rrs tifs (masked or unmasked) with units of sr^-1.
+<span class="ansi-red-fg">File:</span>      /glusteruser/awindled/DroneWQ/utils.py
+<span class="ansi-red-fg">Type:</span>      function
+</pre></div></div>
+</div>
+<p>For this example, we’re calculating water leaving radiance (Lw) using the Hedley approach, calculating downwelling irradiance (Ed) using the downwelling light sensor (DLS). We are applying the default masking procedure with a NIR threshold of 0.02. We’ll save processed images out two directories called <code class="docutils literal notranslate"><span class="pre">rrs_hedley</span></code> and <code class="docutils literal notranslate"><span class="pre">masked_rrs_hedley</span></code>. Please see paper.md for more information on the different processing methods used here.</p>
+<p>In summary, this code will process: Raw -&gt; Lt -&gt; Lw (Hedley method) -&gt; Rrs (using Ed from DLS) with pixel masking.</p>
+<p>Note that we are changing the default nir_threshold for pixel masking from 0.01 to 0.02 since 0.01 was not high enough to mask glint pixels in this dataset. It is important to consider these values since they may change according to your dataset.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">process_raw_to_rrs</span><span class="p">(</span><span class="n">main_dir</span><span class="o">=</span><span class="n">project_path</span><span class="p">,</span> <span class="n">rrs_dir_name</span><span class="o">=</span><span class="s1">&#39;rrs_hedley&#39;</span><span class="p">,</span> <span class="n">output_csv_path</span><span class="o">=</span><span class="n">project_path</span><span class="p">,</span> <span class="n">lw_method</span><span class="o">=</span><span class="s1">&#39;hedley_method&#39;</span><span class="p">,</span>
+                   <span class="n">random_n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">mask_pixels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pixel_masking_method</span><span class="o">=</span><span class="s1">&#39;value_threshold&#39;</span><span class="p">,</span> <span class="n">nir_threshold</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">ed_method</span><span class="o">=</span><span class="s1">&#39;dls_ed&#39;</span><span class="p">,</span>
+                   <span class="n">overwrite_lt_lw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">clean_intermediates</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Loading ImageSet from: Lake_Erie/align_img
+Processing a total of 2351 images or 470 captures.
+Converting raw images to radiance (raw -&gt; Lt).
+Loading ImageSet from: Lake_Erie/raw_water_imgs
+Loading ImageSet from: Lake_Erie/align_img
+used warp dir Lake_Erie/align_img
+Aligning images. Depending on settings this can take from a few seconds to many minutes
+Finished aligning band 0
+Finished aligning band 1
+Finished aligning band 2
+Finished aligning band 3
+Finished aligning band 4
+Saving time: 0:00:00.525930
+Alignment+Saving rate: 893.66 images per second
+Finished saving images.
+Finished saving image metadata.
+Applying the Hochberg/Hedley (Lt -&gt; Lw)
+Normalizing by DLS irradiance (Lw/Ed -&gt; Rrs).
+Loading ImageSet from: Lake_Erie/raw_water_imgs
+All data has been saved as Rrs using the hedley_method to calculate Lw and normalized by dls_ed irradiance.
+Masking pixels using NIR and green Rrs thresholds
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+True
+</pre></div></div>
+</div>
+<p>To grab these processed images and their metadata you can use the helper function <code class="docutils literal notranslate"><span class="pre">retrieve_imgs_and_metadata()</span></code>. The images can also easily be loaded in with the lower level <code class="docutils literal notranslate"><span class="pre">load_images()</span></code> function or even just with rasterio’s <code class="docutils literal notranslate"><span class="pre">open()</span></code> function but the higher level <code class="docutils literal notranslate"><span class="pre">retrieve_imgs_and_metadata()</span></code> allows you to apply an altitude cutoff and limit the number of files being opened. In the case of large processing jobs it will likely be more appropriate to loop through the files individually
+or in batches which can be done by looping the <code class="docutils literal notranslate"><span class="pre">start</span></code> and <code class="docutils literal notranslate"><span class="pre">count</span></code> arguments in <code class="docutils literal notranslate"><span class="pre">retrieve_imgs_and_metadata()</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">?</span>retrieve_imgs_and_metadata
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">Signature:</span>
+retrieve_imgs_and_metadata<span class="ansi-blue-fg">(</span>
+    img_dir<span class="ansi-blue-fg">,</span>
+    count<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">10000</span><span class="ansi-blue-fg">,</span>
+    start<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0</span><span class="ansi-blue-fg">,</span>
+    altitude_cutoff<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0</span><span class="ansi-blue-fg">,</span>
+    sky<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
+    random<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-blue-fg">)</span>
+<span class="ansi-red-fg">Docstring:</span>
+This function is the main interface we expect the user to use when grabbing a subset of imagery from any stage in processing. This returns the images as a numpy array and metadata as a pandas dataframe.
+
+Inputs:
+img_dir: A string containing the directory filepath of images to be retrieved
+count: The amount of images you want to list. Default is 10000
+start: The number of image to start on. Default is 0 (first image in img_dir).
+random: A boolean to load random images. Default is False
+
+Outputs: A multidimensional numpy array of all image captures in a directory and a Pandas dataframe of image metadata.
+<span class="ansi-red-fg">File:</span>      /glusteruser/awindled/DroneWQ/utils.py
+<span class="ansi-red-fg">Type:</span>      function
+</pre></div></div>
+</div>
+<p>Let’s retrieve the Rrs data (5 bands) and visualize the first 5 images:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rrs_imgs_hedley</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;rrs_hedley&#39;</span><span class="p">),</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">img_metadata</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+<span class="n">band_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;red edge&#39;</span><span class="p">,</span> <span class="s1">&#39;nir&#39;</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rrs_imgs_hedley</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">])):</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mf">3.5</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">rrs_imgs_hedley</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">band_names</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.046</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.04</span><span class="p">)</span>
+    <span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;$R_</span><span class="si">{rs}</span><span class="s1">\ (sr^{-1}$)&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">270</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Index([&#39;capture_1.tif&#39;, &#39;capture_2.tif&#39;, &#39;capture_3.tif&#39;, &#39;capture_4.tif&#39;,
+       &#39;capture_5.tif&#39;],
+      dtype=&#39;object&#39;, name=&#39;filename&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_21_1.png" src="_images/primary_demo_21_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_21_2.png" src="_images/primary_demo_21_2.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_21_3.png" src="_images/primary_demo_21_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_21_4.png" src="_images/primary_demo_21_4.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_21_5.png" src="_images/primary_demo_21_5.png" />
+</div>
+</div>
+<p>We can also visualize the masked Rrs:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">masked_rrs_imgs_hedley</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;masked_rrs_hedley&#39;</span><span class="p">),</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">img_metadata</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">])):</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mf">3.5</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">],</span><span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">band_names</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.046</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.04</span><span class="p">)</span>
+    <span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;$R_</span><span class="si">{rs}</span><span class="s1">\ (sr^{-1}$)&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">270</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Index([&#39;capture_1.tif&#39;, &#39;capture_2.tif&#39;, &#39;capture_3.tif&#39;, &#39;capture_4.tif&#39;,
+       &#39;capture_5.tif&#39;],
+      dtype=&#39;object&#39;, name=&#39;filename&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_23_1.png" src="_images/primary_demo_23_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_23_2.png" src="_images/primary_demo_23_2.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_23_3.png" src="_images/primary_demo_23_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_23_4.png" src="_images/primary_demo_23_4.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_23_5.png" src="_images/primary_demo_23_5.png" />
+</div>
+</div>
+<p>Let’s plot the masked Rrs spectra of the first 25 images:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">masked_rrs_imgs_hedley</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;masked_rrs_hedley&#39;</span><span class="p">),</span> <span class="n">count</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+
+<span class="n">wv</span> <span class="o">=</span> <span class="p">[</span><span class="mi">475</span><span class="p">,</span> <span class="mi">560</span><span class="p">,</span> <span class="mi">668</span><span class="p">,</span> <span class="mi">717</span><span class="p">,</span> <span class="mi">842</span><span class="p">]</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">)))</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">)):</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wv</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">,:,:],</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (nm)&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;$R_</span><span class="si">{rs}</span><span class="s1">\ (sr^{-1}$)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wv</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">,:,:],</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span>  <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Mean&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.legend.Legend at 0x7f9ed1712530&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_25_1.png" src="_images/primary_demo_25_1.png" />
+</div>
+</div>
+<p>Let’s compare this Rrs spectra to Rrs spectra retrived by a satellite at the same location and time. Below is a plot of Rrs from the Ocean Land Color Imager (OLCI) on board the European satellite, Sentinel-3A. OLCI collects in a few more bands which is why there are more points on the plot. However, the shape looks similar to the MicaSense retrieved Rrs. The troughs at 475 nm and 668 nm is associated with chlorophyll absorption and the peak at 717 nm is likely due to phytoplankton particle
+scattering.</p>
+<p><a href="#id1"><span class="problematic" id="id2">|837700bd6d784d24a673e6c7390c4d13|</span></a></p>
+<p>Let’s plot the Lt, Lw, Ed spectra as well. First, we need to retrieve all the data.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lt_imgs</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/lt_imgs&#39;</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">lw_imgs</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/lw_imgs&#39;</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">dls_ed</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/dls_ed.csv&#39;</span><span class="p">)</span>
+<span class="n">rrs_imgs_hedley</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/rrs_hedley&#39;</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">masked_rrs_imgs_hedley</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/masked_rrs_hedley&#39;</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+
+<span class="n">axs</span> <span class="o">=</span> <span class="n">axs</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+<span class="n">wv</span> <span class="o">=</span> <span class="p">[</span><span class="mi">475</span><span class="p">,</span> <span class="mi">560</span><span class="p">,</span> <span class="mi">668</span><span class="p">,</span> <span class="mi">717</span><span class="p">,</span> <span class="mi">842</span><span class="p">]</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">lt_imgs</span><span class="p">)))</span>
+
+<span class="c1">#lt</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lt_imgs</span><span class="p">)):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wv</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">lt_imgs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">,:,:],</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span>  <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (nm)&#39;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$L_t\ (mW\ m^2\ sr^{-1}\ nm^{-1}$)&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wv</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">lt_imgs</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">,:,:],</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span>  <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Mean&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1">#dls ed</span>
+<span class="n">ed</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/dls_ed.csv&#39;</span><span class="p">)</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">ed</span><span class="p">)))</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ed</span><span class="p">)):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wv</span><span class="p">,</span> <span class="n">ed</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">],</span>  <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (nm)&#39;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$E_d\ (mW\ m^2\ nm^{-1}$)&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wv</span><span class="p">,</span> <span class="n">ed</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>  <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Mean&#39;</span><span class="p">)</span>
+
+<span class="c1">#rrs_imgs_hedley</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">rrs_imgs_hedley</span><span class="p">)))</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rrs_imgs_hedley</span><span class="p">)):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wv</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">rrs_imgs_hedley</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">,:,:],</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span>  <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (nm)&#39;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$R_</span><span class="si">{rs}</span><span class="s1">\ (sr^{-1}$)&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wv</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">rrs_imgs_hedley</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">,:,:],</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span>  <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Mean&#39;</span><span class="p">)</span>
+
+
+<span class="c1">#rrs_imgs_hedley_masked</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">)))</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">)):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wv</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">,:,:],</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span>  <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (nm)&#39;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$R_</span><span class="si">{rs}</span><span class="s1">\ (sr^{-1}$)&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wv</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">,:,:],</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span>  <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Mean&#39;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_29_0.png" src="_images/primary_demo_29_0.png" />
+</div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">process_raw_to_rrs()</span></code> function also saves images processed to total radiance (Lt) as stacked red-green-blue (RGB) .jpg’s in a folder called ‘lt_thumbnails’. This is an easy way to quickly view the images to see what the water surface looked like. Let’s open a few to take a look:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">capture_path_to_int</span><span class="p">(</span><span class="n">path</span> <span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="n">lt_thumbnails</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">project_path</span> <span class="o">+</span> <span class="s1">&#39;/lt_thumbnails/*.jpg&#39;</span><span class="p">),</span> <span class="n">key</span> <span class="o">=</span> <span class="n">capture_path_to_int</span><span class="p">)[</span><span class="mi">10</span><span class="p">:]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">axs</span> <span class="o">=</span> <span class="n">axs</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">mpimg</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">lt_thumbnails</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">lt_thumbnails</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_31_0.png" src="_images/primary_demo_31_0.png" />
+</div>
+</div>
+</section>
+<section id="4.-Convert-to-point-samples">
+<h2>4. Convert to point samples<a class="headerlink" href="#4.-Convert-to-point-samples" title="Link to this heading"></a></h2>
+<p>You might be interested in averaging values for every image, to work with point samples. This code calculates the median Rrs across bands and saves them to a Pandas dataframe with the dirname, lat, and lon.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">masked_rrs_imgs_hedley</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/masked_rrs_hedley&#39;</span><span class="p">)</span>
+
+<span class="n">rrs_blue</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">rrs_green</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">rrs_red</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">rrs_rededge</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">rrs_nir</span><span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">)):</span>
+    <span class="n">rrs_blue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">,:,:]))</span>
+    <span class="n">rrs_green</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">,:,:]))</span>
+    <span class="n">rrs_red</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">2</span><span class="p">,:,:]))</span>
+    <span class="n">rrs_rededge</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">3</span><span class="p">,:,:]))</span>
+    <span class="n">rrs_nir</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">4</span><span class="p">,:,:]))</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">img_metadata</span><span class="p">[[</span><span class="s1">&#39;dirname&#39;</span><span class="p">,</span> <span class="s1">&#39;Latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;Longitude&#39;</span><span class="p">]]</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;rrs_blue&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rrs_blue</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;rrs_green&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rrs_green</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;rrs_red&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rrs_red</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;rrs_rededge&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rrs_rededge</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;rrs_nir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rrs_nir</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>dirname</th>
+      <th>Latitude</th>
+      <th>Longitude</th>
+      <th>rrs_blue</th>
+      <th>rrs_green</th>
+      <th>rrs_red</th>
+      <th>rrs_rededge</th>
+      <th>rrs_nir</th>
+    </tr>
+    <tr>
+      <th>filename</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>capture_1.tif</th>
+      <td>Lake_Erie/capture_1.tif</td>
+      <td>41.828528</td>
+      <td>-83.398762</td>
+      <td>0.007600</td>
+      <td>0.018665</td>
+      <td>0.009293</td>
+      <td>0.013961</td>
+      <td>0.004451</td>
+    </tr>
+    <tr>
+      <th>capture_2.tif</th>
+      <td>Lake_Erie/capture_2.tif</td>
+      <td>41.828670</td>
+      <td>-83.398764</td>
+      <td>0.007605</td>
+      <td>0.018555</td>
+      <td>0.009364</td>
+      <td>0.013934</td>
+      <td>0.004396</td>
+    </tr>
+    <tr>
+      <th>capture_3.tif</th>
+      <td>Lake_Erie/capture_3.tif</td>
+      <td>41.828809</td>
+      <td>-83.398760</td>
+      <td>0.008022</td>
+      <td>0.019594</td>
+      <td>0.009729</td>
+      <td>0.014719</td>
+      <td>0.004636</td>
+    </tr>
+    <tr>
+      <th>capture_4.tif</th>
+      <td>Lake_Erie/capture_4.tif</td>
+      <td>41.828956</td>
+      <td>-83.398761</td>
+      <td>0.007390</td>
+      <td>0.018215</td>
+      <td>0.009205</td>
+      <td>0.013672</td>
+      <td>0.004342</td>
+    </tr>
+    <tr>
+      <th>capture_5.tif</th>
+      <td>Lake_Erie/capture_5.tif</td>
+      <td>41.829081</td>
+      <td>-83.398763</td>
+      <td>0.007621</td>
+      <td>0.018760</td>
+      <td>0.009456</td>
+      <td>0.014053</td>
+      <td>0.004457</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>Easy to save as a .csv:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">project_path</span> <span class="o">+</span> <span class="s1">&#39;/median_rrs.csv&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="5.-Apply-bio-optical-algorithms">
+<h2>5. Apply bio-optical algorithms<a class="headerlink" href="#5.-Apply-bio-optical-algorithms" title="Link to this heading"></a></h2>
+<p>We can also apply bio-optical algorithms to derive chlorophyll a and total suspended matter (TSM) concentrations. See the paper.md for more information on each algorithm. Here, we are applying the blended NASA chlorophyll a algorithm (Hu et al., 2019).</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">masked_rrs_imgs_hedley</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/masked_rrs_hedley&#39;</span><span class="p">)</span>
+
+<span class="n">chl_hu_ocx_imgs</span> <span class="o">=</span> <span class="n">chl_hu_ocx</span><span class="p">(</span><span class="n">Rrsblue</span><span class="o">=</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,:,:],</span>
+                             <span class="n">Rrsgreen</span><span class="o">=</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[:,</span><span class="mi">1</span><span class="p">,:,:],</span>
+                             <span class="n">Rrsred</span><span class="o">=</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[:,</span><span class="mi">2</span><span class="p">,:,:])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">chl_hu_ocx_imgs</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(470, 928, 1227)
+</pre></div></div>
+</div>
+<p>Let’s take a quick look at a histogram of all chl values:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">chl_hu_ocx_imgs</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">chl_hu_ocx_imgs</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+10.943304
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_41_1.png" src="_images/primary_demo_41_1.png" />
+</div>
+</div>
+<p>The median value looks to be around 11 mg <span class="math notranslate nohighlight">\(m^{-3}\)</span>, which is reasonable for inland waters.</p>
+<p>Now, we can save new .tifs processed with this algorithm.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">save_wq_imgs</span><span class="p">(</span><span class="n">main_dir</span><span class="o">=</span><span class="n">project_path</span><span class="p">,</span> <span class="n">rrs_img_dir</span><span class="o">=</span><span class="s1">&#39;masked_rrs_hedley&#39;</span><span class="p">,</span>
+             <span class="n">wq_dir_name</span><span class="o">=</span><span class="s1">&#39;masked_chl_hu_ocx_imgs&#39;</span><span class="p">,</span> <span class="n">wq_alg</span> <span class="o">=</span><span class="s1">&#39;chl_hu_ocx&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 470/470 [04:12&lt;00:00,  1.86it/s]
+</pre></div></div>
+</div>
+<p>Let’s visualize a few chl a images.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">chl_imgs</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;masked_chl_hu_ocx_imgs&#39;</span><span class="p">),</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">img_metadata</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+
+<span class="n">axs</span> <span class="o">=</span> <span class="n">axs</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">chl_imgs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">,:,:],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greens&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="n">cbar_ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mf">0.99</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">])</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">cax</span><span class="o">=</span><span class="n">cbar_ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Chl a (mg $m^{-3}$)&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Index([&#39;capture_1.tif&#39;, &#39;capture_2.tif&#39;, &#39;capture_3.tif&#39;, &#39;capture_4.tif&#39;,
+       &#39;capture_5.tif&#39;, &#39;capture_6.tif&#39;],
+      dtype=&#39;object&#39;, name=&#39;filename&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_45_1.png" src="_images/primary_demo_45_1.png" />
+</div>
+</div>
+<p>We can also save average chl-a/TSM concentrations for each image in dataframe to use as point data:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">masked_rrs_imgs_hedley</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/masked_rrs_hedley&#39;</span><span class="p">)</span>
+
+<span class="n">chl_hu_ocx_imgs</span> <span class="o">=</span> <span class="n">chl_hu_ocx</span><span class="p">(</span><span class="n">Rrsblue</span><span class="o">=</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,:,:],</span>
+                             <span class="n">Rrsgreen</span><span class="o">=</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[:,</span><span class="mi">1</span><span class="p">,:,:],</span>
+                             <span class="n">Rrsred</span><span class="o">=</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[:,</span><span class="mi">2</span><span class="p">,:,:])</span>
+
+<span class="n">tsm_nechad_imgs</span> <span class="o">=</span> <span class="n">tsm_nechad</span><span class="p">(</span><span class="n">Rrsred</span><span class="o">=</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">[:,</span><span class="mi">2</span><span class="p">,:,:])</span>
+
+<span class="n">chl_hu_ocx_values</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">tsm_nechad_values</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">masked_rrs_imgs_hedley</span><span class="p">)):</span>
+    <span class="n">chl_hu_ocx_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">chl_hu_ocx_imgs</span><span class="p">[</span><span class="n">i</span><span class="p">,:,:]))</span>
+    <span class="n">tsm_nechad_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">tsm_nechad_imgs</span><span class="p">[</span><span class="n">i</span><span class="p">,:,:]))</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;chl_hu_ocx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">chl_hu_ocx_values</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;tsm_nechad&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tsm_nechad_values</span>
+
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>dirname</th>
+      <th>Latitude</th>
+      <th>Longitude</th>
+      <th>rrs_blue</th>
+      <th>rrs_green</th>
+      <th>rrs_red</th>
+      <th>rrs_rededge</th>
+      <th>rrs_nir</th>
+      <th>chl_hu_ocx</th>
+      <th>tsm_nechad</th>
+    </tr>
+    <tr>
+      <th>filename</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>capture_1.tif</th>
+      <td>Lake_Erie/capture_1.tif</td>
+      <td>41.828528</td>
+      <td>-83.398762</td>
+      <td>0.007600</td>
+      <td>0.018665</td>
+      <td>0.009293</td>
+      <td>0.013961</td>
+      <td>0.004451</td>
+      <td>10.849049</td>
+      <td>5.088389</td>
+    </tr>
+    <tr>
+      <th>capture_2.tif</th>
+      <td>Lake_Erie/capture_2.tif</td>
+      <td>41.828670</td>
+      <td>-83.398764</td>
+      <td>0.007605</td>
+      <td>0.018555</td>
+      <td>0.009364</td>
+      <td>0.013934</td>
+      <td>0.004396</td>
+      <td>10.691706</td>
+      <td>5.115107</td>
+    </tr>
+    <tr>
+      <th>capture_3.tif</th>
+      <td>Lake_Erie/capture_3.tif</td>
+      <td>41.828809</td>
+      <td>-83.398760</td>
+      <td>0.008022</td>
+      <td>0.019594</td>
+      <td>0.009729</td>
+      <td>0.014719</td>
+      <td>0.004636</td>
+      <td>10.681633</td>
+      <td>5.251874</td>
+    </tr>
+    <tr>
+      <th>capture_4.tif</th>
+      <td>Lake_Erie/capture_4.tif</td>
+      <td>41.828956</td>
+      <td>-83.398761</td>
+      <td>0.007390</td>
+      <td>0.018215</td>
+      <td>0.009205</td>
+      <td>0.013672</td>
+      <td>0.004342</td>
+      <td>10.880504</td>
+      <td>5.055672</td>
+    </tr>
+    <tr>
+      <th>capture_5.tif</th>
+      <td>Lake_Erie/capture_5.tif</td>
+      <td>41.829081</td>
+      <td>-83.398763</td>
+      <td>0.007621</td>
+      <td>0.018760</td>
+      <td>0.009456</td>
+      <td>0.014053</td>
+      <td>0.004457</td>
+      <td>10.863681</td>
+      <td>5.149392</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>Easy to save as .csv:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#save as csv</span>
+<span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">project_path</span> <span class="o">+</span> <span class="s1">&#39;/median_rrs_and_wq.csv&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We can use this dataframe to map point samples of mean chl-a and TSM concentrations:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)):</span>
+    <span class="n">g1</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Longitude&#39;</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;chl_hu_ocx&#39;</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greens&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+    <span class="n">g2</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Longitude&#39;</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;tsm_nechad&#39;</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;YlOrRd&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+<span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;Chlorophyll a (mg $m^{-3}$)&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">270</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">g2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;TSM (mg/L)&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">270</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_51_0.png" src="_images/primary_demo_51_0.png" />
+</div>
+</div>
+</section>
+<section id="6.-Georeference-and-mosaic-chlorophyll-a-images">
+<h2>6. Georeference and mosaic chlorophyll a images<a class="headerlink" href="#6.-Georeference-and-mosaic-chlorophyll-a-images" title="Link to this heading"></a></h2>
+<p>We can georeference the images based on the sensor yaw, pitch, roll, lat, lon, and altitude. Note that georeferencing can be inaccurate if the yaw, pitch, and roll information is imprecise. Let’s look at the options in the <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> function.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">?</span>georeference
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">Signature:</span>
+georeference<span class="ansi-blue-fg">(</span>
+    metadata<span class="ansi-blue-fg">,</span>
+    input_dir<span class="ansi-blue-fg">,</span>
+    output_dir<span class="ansi-blue-fg">,</span>
+    lines<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">None</span><span class="ansi-blue-fg">,</span>
+    altitude<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">None</span><span class="ansi-blue-fg">,</span>
+    yaw<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">None</span><span class="ansi-blue-fg">,</span>
+    pitch<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0</span><span class="ansi-blue-fg">,</span>
+    roll<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0</span><span class="ansi-blue-fg">,</span>
+    axis_to_flip<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-blue-fg">)</span>
+<span class="ansi-red-fg">Docstring:</span>
+This function georeferences all the captures indicated in the line parameter following the specification of the other parameters such as altitude, yaw, pitch, roll, axis_to_flip
+
+Inputs:
+metadata: A Pandas dataframe of the metadata
+input_dir: A string containing the directory filepath of the images to be retrieved for georeferencing.
+output_dir: A string containing the directory filepath to be saved.
+lines: Selection of images to be processed. Defaults to None. Example: [slice(0,10)]
+altitude: sets the altitude where all captures were taken. Defaults to None which uses the altitude data saved in the metadata for each respective capture.
+yaw: sets the sensor&#39;s direction angle during all captures. Defaults to None which uses the yaw angle saved in the metadata for each respective capture.
+pitch: sets the sensor&#39;s pitch angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+roll: sets the sensor&#39;s roll angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+axis_to_flip: The axis to apply a flip. Defaults to 1.
+
+Output: Georeferenced .tifs in output_dir
+<span class="ansi-red-fg">File:</span>      /glusteruser/awindled/DroneWQ/utils.py
+<span class="ansi-red-fg">Type:</span>      function
+</pre></div></div>
+</div>
+<p>We have two options here. We can set fixed georeferencing parameters, or allow the function to use parameters saved in the metadata.</p>
+<p>In this example, the image metadata lists the altitude around 260-265 m; however, the altitude was set at 87 m in the flight planning software. Therefore, we will set the altitude to a fixed altitude of 87 m.</p>
+<p>If you can maintain a consistent sensor yaw angle throughout the whole flight, you should use a single fixed angle. If your sensor changes yaw angle during every transect (such as in this example), a different yaw angle should be provided in the function for each transect. The <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> function can read in a <code class="docutils literal notranslate"><span class="pre">lines</span></code> parameter that can be created either manually or you can use the function <code class="docutils literal notranslate"><span class="pre">compute_flight_lines()</span></code> to automatically produce a list of capture indices per transect with
+the median yaw angle, ignoring capturing collected during turns. More information can be found in the paper.md.</p>
+<p>It is recommended to run the <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> function on a few captures that contain a shoreline or land if possible and plot them with a satellite basemap or pull them into a GIS software to assess the georeferencing. We have provided examples here by manually creating a new folder of rrs_hedley_subset and lt_thumbnails_subset with captures 443 to 450 containing the shoreline.</p>
+<ol class="arabic simple">
+<li><p>Running <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> with the automatic <code class="docutils literal notranslate"><span class="pre">compute_flight_lines()</span></code> function produces a flight_lines list with yaw angle changing from 207 to 24 degrees:</p></li>
+</ol>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rrs_hedley_subset</span><span class="p">,</span> <span class="n">img_metadata</span> <span class="o">=</span> <span class="n">retrieve_imgs_and_metadata</span><span class="p">(</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">project_path</span><span class="o">+</span><span class="s1">&#39;/rrs_hedley_subset&#39;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">432</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+<span class="n">img_metadata</span> <span class="o">=</span> <span class="n">img_metadata</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+<span class="n">flight_lines</span> <span class="o">=</span> <span class="n">compute_flight_lines</span><span class="p">(</span><span class="n">img_metadata</span><span class="o">.</span><span class="n">Yaw</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">flight_lines</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[{&#39;start&#39;: 0,
+  &#39;end&#39;: 9,
+  &#39;yaw&#39;: 207.89967631978038,
+  &#39;pitch&#39;: 0,
+  &#39;roll&#39;: 0,
+  &#39;alt&#39;: 87},
+ {&#39;start&#39;: 10,
+  &#39;end&#39;: 18,
+  &#39;yaw&#39;: 25.85588214075483,
+  &#39;pitch&#39;: 0,
+  &#39;roll&#39;: 0,
+  &#39;alt&#39;: 87}]
+</pre></div></div>
+</div>
+<p>We can edit the metadata to change file extension from’.tif’ to ‘.jpg’ and run <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> on the lt_thumbnails_subset:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">img_metadata</span><span class="p">[</span><span class="s1">&#39;filename&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">img_metadata</span><span class="p">[</span><span class="s1">&#39;filename&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;.jpg&#39;</span><span class="p">))</span>
+
+<span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;lt_thumbnails_subset&#39;</span><span class="p">)</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;automatic_georeferenced_lt_thumbnails_subset&#39;</span><span class="p">)</span>
+<span class="n">lines</span> <span class="o">=</span> <span class="n">flight_lines</span>
+
+<span class="n">georeference</span><span class="p">(</span><span class="n">img_metadata</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 17/17 [00:02&lt;00:00,  7.87it/s]
+</pre></div></div>
+</div>
+<p>When we plot these images in QGIS, it looks like: <a href="#id3"><span class="problematic" id="id4">|f101af093a784019b8522f99cc62c394|</span></a></p>
+<p>You can see that using the metadata yaw angle in georeferencing doesn’t always lead to accurate georeferencing.</p>
+<ol class="arabic simple" start="2">
+<li><p>Running <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> using fixed yaw angles of 90 and 270 degrees:</p></li>
+</ol>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">flight_lines</span> <span class="o">=</span> <span class="n">compute_flight_lines</span><span class="p">(</span><span class="n">img_metadata</span><span class="o">.</span><span class="n">Yaw</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="n">even_yaw</span> <span class="o">=</span> <span class="mi">90</span>
+<span class="n">odd_yaw</span> <span class="o">=</span> <span class="mi">270</span>
+<span class="n">threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">img_metadata</span><span class="o">.</span><span class="n">Yaw</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">flight_lines</span><span class="p">:</span>
+    <span class="n">line</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">yaw</span> <span class="o">=</span> <span class="n">even_yaw</span> <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="s1">&#39;yaw&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">threshold</span> <span class="k">else</span> <span class="n">odd_yaw</span><span class="p">)</span>
+
+<span class="n">flight_lines</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[{&#39;start&#39;: 0, &#39;end&#39;: 9, &#39;yaw&#39;: 270, &#39;pitch&#39;: 0, &#39;roll&#39;: 0, &#39;alt&#39;: 87},
+ {&#39;start&#39;: 10, &#39;end&#39;: 18, &#39;yaw&#39;: 90, &#39;pitch&#39;: 0, &#39;roll&#39;: 0, &#39;alt&#39;: 87}]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;lt_thumbnails_subset&#39;</span><span class="p">)</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;manual_georeferenced_lt_thumbnails_subset&#39;</span><span class="p">)</span>
+<span class="n">lines</span> <span class="o">=</span> <span class="n">flight_lines</span>
+
+<span class="n">georeference</span><span class="p">(</span><span class="n">img_metadata</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 17/17 [00:01&lt;00:00, 10.16it/s]
+</pre></div></div>
+</div>
+<p>When we plot these images in QGIS: <a href="#id5"><span class="problematic" id="id6">|c7646ed44e3c439d8c134d5b7990370d|</span></a></p>
+<p>You can see that using these fixed yaw angles leads to better georeferencing where the shoreline better matches to the satellite basemap.</p>
+<p>Therefore, we will use fixed yaw angles of 90 and 270 degrees to georeference the masked_chl_hu_ocx_imgs:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">metadata</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;metadata.csv&#39;</span><span class="p">))</span>
+
+<span class="n">flight_lines</span> <span class="o">=</span> <span class="n">compute_flight_lines</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">Yaw</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">even_yaw</span> <span class="o">=</span> <span class="mi">90</span>
+<span class="n">odd_yaw</span> <span class="o">=</span> <span class="mi">270</span>
+<span class="n">threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">Yaw</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">flight_lines</span><span class="p">:</span>
+    <span class="n">line</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">yaw</span> <span class="o">=</span> <span class="n">even_yaw</span> <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="s1">&#39;yaw&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">threshold</span> <span class="k">else</span> <span class="n">odd_yaw</span><span class="p">)</span>
+<span class="n">flight_lines</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[{&#39;start&#39;: 11, &#39;end&#39;: 17, &#39;yaw&#39;: 90, &#39;pitch&#39;: 0, &#39;roll&#39;: 0, &#39;alt&#39;: 87},
+ {&#39;start&#39;: 22, &#39;end&#39;: 32, &#39;yaw&#39;: 270, &#39;pitch&#39;: 0, &#39;roll&#39;: 0, &#39;alt&#39;: 87},
+ {&#39;start&#39;: 34, &#39;end&#39;: 42, &#39;yaw&#39;: 90, &#39;pitch&#39;: 0, &#39;roll&#39;: 0, &#39;alt&#39;: 87},
+ {&#39;start&#39;: 46, &#39;end&#39;: 56, &#39;yaw&#39;: 270, &#39;pitch&#39;: 0, &#39;roll&#39;: 0, &#39;alt&#39;: 87},
+ {&#39;start&#39;: 58, &#39;end&#39;: 66, &#39;yaw&#39;: 90, &#39;pitch&#39;: 0, &#39;roll&#39;: 0, &#39;alt&#39;: 87}]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">metadata</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;metadata.csv&#39;</span><span class="p">))</span>
+<span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;masked_chl_hu_ocx_imgs&#39;</span><span class="p">)</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;georeferenced_masked_chl_hu_ocx&#39;</span><span class="p">)</span>
+<span class="n">lines</span> <span class="o">=</span> <span class="n">flight_lines</span>
+
+<span class="n">georeference</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 328/328 [01:18&lt;00:00,  4.16it/s]
+</pre></div></div>
+</div>
+<p>Let’s plot a few of these georeferenced images by the shoreline:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">subplot_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">projection</span> <span class="o">=</span> <span class="n">Mercator</span><span class="p">()))</span>
+<span class="n">ax_0</span><span class="p">,</span> <span class="n">mappable_0</span> <span class="o">=</span> <span class="n">plot_georeferenced_data</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;Lake_Erie/georeferenced_masked_chl_hu_ocx/capture_444.tif&quot;</span><span class="p">,</span>
+                                           <span class="n">vmin</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greens&#39;</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">basemap</span> <span class="o">=</span> <span class="n">cx</span><span class="o">.</span><span class="n">providers</span><span class="o">.</span><span class="n">OpenStreetMap</span><span class="o">.</span><span class="n">Mapnik</span><span class="p">)</span>
+
+<span class="n">ax_0</span><span class="p">,</span> <span class="n">mappable_0</span> <span class="o">=</span> <span class="n">plot_georeferenced_data</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;Lake_Erie/georeferenced_masked_chl_hu_ocx/capture_445.tif&quot;</span><span class="p">,</span>
+                                           <span class="n">vmin</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greens&#39;</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">basemap</span> <span class="o">=</span> <span class="n">cx</span><span class="o">.</span><span class="n">providers</span><span class="o">.</span><span class="n">OpenStreetMap</span><span class="o">.</span><span class="n">Mapnik</span><span class="p">)</span>
+
+<span class="n">ax_0</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Hu OCX Chl Alg&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mappable_0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Chlorophyll a (mg $m^{-3}$)&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.colorbar.Colorbar at 0x7f9e93a15720&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_68_1.png" src="_images/primary_demo_68_1.png" />
+</div>
+</div>
+<p>We can mosaic all of the individual georeferenced images. Let’s look at the options.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">?</span>mosaic
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">Signature:</span>
+mosaic<span class="ansi-blue-fg">(</span>
+    input_dir<span class="ansi-blue-fg">,</span>
+    output_dir<span class="ansi-blue-fg">,</span>
+    output_name<span class="ansi-blue-fg">,</span>
+    method<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&#39;mean&#39;</span><span class="ansi-blue-fg">,</span>
+    dtype<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&lt;</span><span class="ansi-green-fg">class</span> <span class="ansi-blue-fg">&#39;numpy.float32&#39;</span><span class="ansi-blue-fg">&gt;</span><span class="ansi-blue-fg">,</span>
+    band_names<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">None</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-blue-fg">)</span>
+<span class="ansi-red-fg">Docstring:</span>
+This function moasics all the given rasters into a single raster file
+
+Inputs:
+input_dir: a string containing the directory filepath of images to be mosaicked
+output_dir: a string containing the directory filepath to save the output
+output_name: a string of the output name of mosaicked .tif
+method: Method to be used when multiple captures coincide at same location. Options: &#39;mean&#39;, &#39;first&#39;, &#39;min&#39;, &#39;max&#39;. Defaults to &#39;mean&#39;.
+dtype: dtype of the mosaicked raster. Defaults to np.float32.
+band_names: List of band names. If it is not None, it writes one file for each band instead of one file with all the bands. Defaults to None.
+
+Returns:
+Mosaicked .tif file
+<span class="ansi-red-fg">File:</span>      /glusteruser/awindled/DroneWQ/utils.py
+<span class="ansi-red-fg">Type:</span>      function
+</pre></div></div>
+</div>
+<p>We will make a mosaic from all the georeferenced chl images, calculating the mean of overlapping pixels.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;georeferenced_masked_chl_hu_ocx&#39;</span><span class="p">)</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;mosaic_chl_hu_ocx&#39;</span><span class="p">)</span>
+
+<span class="n">mosaic</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">output_name</span> <span class="o">=</span> <span class="s1">&#39;mean_mosaic_chl_hu_ocx&#39;</span><span class="p">,</span>
+           <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">band_names</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 328/328 [09:12&lt;00:00,  1.69s/it]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#39;Lake_Erie/mosaic_chl_hu_ocx/mean_mosaic_chl_hu_ocx.tif&#39;
+</pre></div></div>
+</div>
+<p>Now let’s plot the mosaicked image.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">subplot_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">projection</span> <span class="o">=</span> <span class="n">Mercator</span><span class="p">()))</span>
+<span class="n">ax_0</span><span class="p">,</span> <span class="n">mappable_0</span> <span class="o">=</span> <span class="n">plot_georeferenced_data</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;Lake_Erie/mosaic_chl_hu_ocx/mean_mosaic_chl_hu_ocx.tif&quot;</span><span class="p">,</span>
+                                           <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greens&#39;</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">basemap</span> <span class="o">=</span> <span class="n">cx</span><span class="o">.</span><span class="n">providers</span><span class="o">.</span><span class="n">Esri</span><span class="o">.</span><span class="n">WorldImagery</span><span class="p">)</span>
+<span class="n">ax_0</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Hu OCX Chl&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mappable_0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Chlorophyll a (mg $m^{-3}$)&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.colorbar.Colorbar at 0x7f9e93dd0c10&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_74_1.png" src="_images/primary_demo_74_1.png" />
+</div>
+</div>
+<p>We can also downsample or reduce the spatial resolution of the mosaic. This is helpful to reduce the file size of a large mosaic.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">?</span>downsample
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">Signature:</span>
+downsample<span class="ansi-blue-fg">(</span>
+    input_dir<span class="ansi-blue-fg">,</span>
+    output_dir<span class="ansi-blue-fg">,</span>
+    scale_x<span class="ansi-blue-fg">,</span>
+    scale_y<span class="ansi-blue-fg">,</span>
+    method<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&lt;</span>Resampling<span class="ansi-blue-fg">.</span>average<span class="ansi-blue-fg">:</span> <span class="ansi-cyan-fg">5</span><span class="ansi-blue-fg">&gt;</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-blue-fg">)</span>
+<span class="ansi-red-fg">Docstring:</span>
+This function performs a downsampling to reduce the spatial resolution of the final mosaic.
+
+Inputs:
+input_dir: A string containing input directory filepath
+output_dir: A string containing output directory filepath
+scale_x: proportion by which the width of each file will be resized
+scale_y: proportion by which the height of each file will be resized
+method: the resampling method to perform. Defaults to Resampling.nearest. Please see
+https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling for other resampling methods.
+<span class="ansi-red-fg">File:</span>      /glusteruser/awindled/DroneWQ/utils.py
+<span class="ansi-red-fg">Type:</span>      function
+</pre></div></div>
+</div>
+<p>We will downsample the width and height of the mosaic by 15%, using a nearest neighbor resampling algorithm.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;mosaic_chl_hu_ocx&#39;</span><span class="p">)</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="s1">&#39;mosaic_chl_hu_ocx&#39;</span><span class="p">)</span>
+
+<span class="n">downsample</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">scale_x</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span> <span class="n">scale_y</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="n">Resampling</span><span class="o">.</span><span class="n">nearest</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 1/1 [00:00&lt;00:00,  7.90it/s]
+</pre></div></div>
+</div>
+<p>And we can plot it</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">subplot_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">projection</span> <span class="o">=</span> <span class="n">Mercator</span><span class="p">()))</span>
+<span class="n">ax_0</span><span class="p">,</span> <span class="n">mappable_0</span> <span class="o">=</span> <span class="n">plot_georeferenced_data</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;Lake_Erie/mosaic_chl_hu_ocx/mean_mosaic_chl_hu_ocx_x_15_y_15_method_nearest.tif&quot;</span><span class="p">,</span>
+                                           <span class="n">vmin</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greens&#39;</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">basemap</span> <span class="o">=</span> <span class="n">cx</span><span class="o">.</span><span class="n">providers</span><span class="o">.</span><span class="n">Esri</span><span class="o">.</span><span class="n">WorldImagery</span><span class="p">)</span>
+<span class="n">ax_0</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Hu OCX Chl Downsampled&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mappable_0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Chlorophyll a (mg $m^{-3}$)&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.colorbar.Colorbar at 0x7f9d08db37f0&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_80_1.png" src="_images/primary_demo_80_1.png" />
+</div>
+</div>
+<p>Some striping in the mosaic is visible due to the drone/sensor changing yaw angles every transect. Processing and mosaicking a larger dataset has the potential to reveal water quality patterns or algal blooms.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="install.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="modules.html" class="btn btn-neutral float-right" title="&lt;no title&gt;" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Anna Windle, Patrick Gray.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

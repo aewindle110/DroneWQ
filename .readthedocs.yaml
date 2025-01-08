@@ -7,8 +7,8 @@ build:
   commands: 
       - mkdir --parents _readthedocs/html/
       - ls docs/
-      - ls docs/build/
-      - cp --recursive docs/build/html/* _readthedocs/html/
+      - ls docs/pre_built_html
+      - cp --recursive docs/pre_built_html/* _readthedocs/html/
 
 #python:
 #  install:

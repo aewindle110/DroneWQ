@@ -1,0 +1,184 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; dronewq 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Demonstration of DroneWQ functions and processing code" href="primary_demo.html" />
+    <link rel="prev" title="Processing and theory" href="theory.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            dronewq
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Processing and theory</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#initial-setup">Initial Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#launching-code">Launching code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#alternative-installation-conda">Alternative Installation (conda)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="primary_demo.html">Demonstration of <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> functions and processing code</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html"><code class="docutils literal notranslate"><span class="pre">Paralelogram2D</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.are_points_within_vertices"><code class="docutils literal notranslate"><span class="pre">are_points_within_vertices()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.blackpixel_method"><code class="docutils literal notranslate"><span class="pre">blackpixel_method()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.chl_gitelson"><code class="docutils literal notranslate"><span class="pre">chl_gitelson()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.chl_hu"><code class="docutils literal notranslate"><span class="pre">chl_hu()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.chl_hu_ocx"><code class="docutils literal notranslate"><span class="pre">chl_hu_ocx()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.chl_ocx"><code class="docutils literal notranslate"><span class="pre">chl_ocx()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.compute_flight_lines"><code class="docutils literal notranslate"><span class="pre">compute_flight_lines()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.compute_lines"><code class="docutils literal notranslate"><span class="pre">compute_lines()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.dls_ed"><code class="docutils literal notranslate"><span class="pre">dls_ed()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.downsample"><code class="docutils literal notranslate"><span class="pre">downsample()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.euclidean_distance"><code class="docutils literal notranslate"><span class="pre">euclidean_distance()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.georeference"><code class="docutils literal notranslate"><span class="pre">georeference()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.get_center"><code class="docutils literal notranslate"><span class="pre">get_center()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.get_warp_matrix"><code class="docutils literal notranslate"><span class="pre">get_warp_matrix()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.hedley_method"><code class="docutils literal notranslate"><span class="pre">hedley_method()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.is_on_right_side"><code class="docutils literal notranslate"><span class="pre">is_on_right_side()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.is_point_within_vertices"><code class="docutils literal notranslate"><span class="pre">is_point_within_vertices()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.load_images"><code class="docutils literal notranslate"><span class="pre">load_images()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.load_img_fn_and_meta"><code class="docutils literal notranslate"><span class="pre">load_img_fn_and_meta()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.mobley_rho_method"><code class="docutils literal notranslate"><span class="pre">mobley_rho_method()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.mosaic"><code class="docutils literal notranslate"><span class="pre">mosaic()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.panel_ed"><code class="docutils literal notranslate"><span class="pre">panel_ed()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.plot_basemap"><code class="docutils literal notranslate"><span class="pre">plot_basemap()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.plot_georeferenced_data"><code class="docutils literal notranslate"><span class="pre">plot_georeferenced_data()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.process_micasense_images"><code class="docutils literal notranslate"><span class="pre">process_micasense_images()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.process_raw_to_rrs"><code class="docutils literal notranslate"><span class="pre">process_raw_to_rrs()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.retrieve_imgs_and_metadata"><code class="docutils literal notranslate"><span class="pre">retrieve_imgs_and_metadata()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.rrs_std_pixel_masking"><code class="docutils literal notranslate"><span class="pre">rrs_std_pixel_masking()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.rrs_threshold_pixel_masking"><code class="docutils literal notranslate"><span class="pre">rrs_threshold_pixel_masking()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.save_images"><code class="docutils literal notranslate"><span class="pre">save_images()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.save_wq_imgs"><code class="docutils literal notranslate"><span class="pre">save_wq_imgs()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.tsm_nechad"><code class="docutils literal notranslate"><span class="pre">tsm_nechad()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#utils.write_metadata_csv"><code class="docutils literal notranslate"><span class="pre">write_metadata_csv()</span></code></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">dronewq</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/install.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>We recommend running this package in a Docker container, which is the environment that it was developed and tested in. See https://docs.docker.com/ for installation files. You will also need to install git (https://github.com/git-guides/install-git). Total file size is ~ 1.6 GB.</p>
+</section>
+<section id="initial-setup">
+<h2>Initial Setup<a class="headerlink" href="#initial-setup" title="Link to this heading"></a></h2>
+<p>Once Docker and git are installed, setup a local directory. Navigate to the directory through terminal (OSX or Linux) or Powershell (Windows). Clone the repo to your local machine:</p>
+<p><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/aewindle110/DroneWQ.git</span></code>.</p>
+</section>
+<section id="launching-code">
+<h2>Launching code<a class="headerlink" href="#launching-code" title="Link to this heading"></a></h2>
+<p>With the Docker app running on your desktop, you need to launch the Docker container. Note that the first execution of this line of code will install the Docker image and setup and configure all required software (python, jupyter notebooks) and packages. This could take several minutes, depending on computer speed.</p>
+<p><code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span> <span class="pre">-it</span> <span class="pre">-v</span> <span class="pre">&lt;local</span> <span class="pre">directory&gt;:/home/jovyan</span> <span class="pre">--rm</span> <span class="pre">-p</span> <span class="pre">8888:8888</span> <span class="pre">clifgray/dronewq:v3</span></code></p>
+<p>where <code class="docutils literal notranslate"><span class="pre">&lt;local</span> <span class="pre">directory&gt;</span></code> is where you want data to be saved.</p>
+<p>It should already be activated but if you need to activate the dronewq conda environment:</p>
+<p><code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dronewq</span></code></p>
+<p>And then launch a jupyter lab or notebook from the home directory on the docker container:</p>
+<p><code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">lab</span> <span class="pre">--allow-root</span> <span class="pre">--ip</span> <span class="pre">0.0.0.0</span> <span class="pre">/home/jovyan</span></code></p>
+<p>Copy the generated URL in the terminal (e.g. <code class="docutils literal notranslate"><span class="pre">http://127.0.0.1:8888/?token=&lt;auto</span> <span class="pre">generated</span> <span class="pre">token&gt;</span></code>) into a web browser.</p>
+</section>
+<section id="alternative-installation-conda">
+<h2>Alternative Installation (conda)<a class="headerlink" href="#alternative-installation-conda" title="Link to this heading"></a></h2>
+<p>You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html which includes instructions on how to download exiftool. We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found <a class="reference external" href="https://github.com/micasense/imageprocessing">here</a>. Note that our <code class="docutils literal notranslate"><span class="pre">micasense</span></code> scripts are slightly modified in that radiance data type is expressed as Float32 instead of Uint16 and we change the output of image.radiance() to output milliwatts (mW) instead of watts (W). This impacts the panel_ed calculation which relies on image.radiance(). We also modified capture.save_capture_as_stack() accordingly to not scale and filter the data. MicaSense is planning on a future package with user specified radiance data types, at which point we will revert to their package version.</p>
+<p>After you have cloned the DroneWQ repo to your local machine and installed exiftool, <code class="docutils literal notranslate"><span class="pre">cd</span></code> to the directory you cloned this repository to.</p>
+<p>Create a virtual conda env by running <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">env</span> <span class="pre">create</span> <span class="pre">-f</span> <span class="pre">environment.yml</span></code>. This will configure an anaconda environment with all of the required tools and libraries.
+When it’s done, run <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dronewq</span></code> to activate the environment configured.
+Each time you start a new anaconda prompt, you’ll need to run <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dronewq</span></code>.</p>
+<p>To access jupyter notebook or lab, run <code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">lab</span></code> or <code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">notebook</span></code></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory.html" class="btn btn-neutral float-left" title="Processing and theory" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="primary_demo.html" class="btn btn-neutral float-right" title="Demonstration of DroneWQ functions and processing code" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Anna Windle, Patrick Gray.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,652 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; dronewq 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Demonstration of DroneWQ functions and processing code" href="primary_demo.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            dronewq
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Processing and theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="primary_demo.html">Demonstration of <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> functions and processing code</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">Paralelogram2D</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#utils.Paralelogram2D.are_on_right_side_of_line"><code class="docutils literal notranslate"><span class="pre">Paralelogram2D.are_on_right_side_of_line()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#utils.Paralelogram2D.get_center"><code class="docutils literal notranslate"><span class="pre">Paralelogram2D.get_center()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#utils.Paralelogram2D.get_line_center"><code class="docutils literal notranslate"><span class="pre">Paralelogram2D.get_line_center()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#utils.Paralelogram2D.get_offset_to_lines"><code class="docutils literal notranslate"><span class="pre">Paralelogram2D.get_offset_to_lines()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#utils.Paralelogram2D.move_line_from_offset"><code class="docutils literal notranslate"><span class="pre">Paralelogram2D.move_line_from_offset()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.are_points_within_vertices"><code class="docutils literal notranslate"><span class="pre">are_points_within_vertices()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.blackpixel_method"><code class="docutils literal notranslate"><span class="pre">blackpixel_method()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.chl_gitelson"><code class="docutils literal notranslate"><span class="pre">chl_gitelson()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.chl_hu"><code class="docutils literal notranslate"><span class="pre">chl_hu()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.chl_hu_ocx"><code class="docutils literal notranslate"><span class="pre">chl_hu_ocx()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.chl_ocx"><code class="docutils literal notranslate"><span class="pre">chl_ocx()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.compute_flight_lines"><code class="docutils literal notranslate"><span class="pre">compute_flight_lines()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.compute_lines"><code class="docutils literal notranslate"><span class="pre">compute_lines()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.dls_ed"><code class="docutils literal notranslate"><span class="pre">dls_ed()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.downsample"><code class="docutils literal notranslate"><span class="pre">downsample()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.euclidean_distance"><code class="docutils literal notranslate"><span class="pre">euclidean_distance()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.georeference"><code class="docutils literal notranslate"><span class="pre">georeference()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.get_center"><code class="docutils literal notranslate"><span class="pre">get_center()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.get_warp_matrix"><code class="docutils literal notranslate"><span class="pre">get_warp_matrix()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.hedley_method"><code class="docutils literal notranslate"><span class="pre">hedley_method()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.is_on_right_side"><code class="docutils literal notranslate"><span class="pre">is_on_right_side()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.is_point_within_vertices"><code class="docutils literal notranslate"><span class="pre">is_point_within_vertices()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.load_images"><code class="docutils literal notranslate"><span class="pre">load_images()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.load_img_fn_and_meta"><code class="docutils literal notranslate"><span class="pre">load_img_fn_and_meta()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.mobley_rho_method"><code class="docutils literal notranslate"><span class="pre">mobley_rho_method()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.mosaic"><code class="docutils literal notranslate"><span class="pre">mosaic()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.panel_ed"><code class="docutils literal notranslate"><span class="pre">panel_ed()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.plot_basemap"><code class="docutils literal notranslate"><span class="pre">plot_basemap()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.plot_georeferenced_data"><code class="docutils literal notranslate"><span class="pre">plot_georeferenced_data()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.process_micasense_images"><code class="docutils literal notranslate"><span class="pre">process_micasense_images()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.process_raw_to_rrs"><code class="docutils literal notranslate"><span class="pre">process_raw_to_rrs()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.retrieve_imgs_and_metadata"><code class="docutils literal notranslate"><span class="pre">retrieve_imgs_and_metadata()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.rrs_std_pixel_masking"><code class="docutils literal notranslate"><span class="pre">rrs_std_pixel_masking()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.rrs_threshold_pixel_masking"><code class="docutils literal notranslate"><span class="pre">rrs_threshold_pixel_masking()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.save_images"><code class="docutils literal notranslate"><span class="pre">save_images()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.save_wq_imgs"><code class="docutils literal notranslate"><span class="pre">save_wq_imgs()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.tsm_nechad"><code class="docutils literal notranslate"><span class="pre">tsm_nechad()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#utils.write_metadata_csv"><code class="docutils literal notranslate"><span class="pre">write_metadata_csv()</span></code></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">dronewq</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <dl class="py class" id="module-utils">
+<span id="intro"></span><dt class="sig sig-object py" id="utils.Paralelogram2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">Paralelogram2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.Paralelogram2D" title="Link to this definition"></a></dt>
+<dd><p>This class represents a paralelogram</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.Paralelogram2D.are_on_right_side_of_line">
+<span class="sig-name descname"><span class="pre">are_on_right_side_of_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.Paralelogram2D.are_on_right_side_of_line" title="Link to this definition"></a></dt>
+<dd><p>This function checks if a list of points is on the right side of a specific line</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>index (int): line index
+points (np.ndarray): a list of points</p>
+</dd>
+<dt>Returns:</dt><dd><p>bool: whether the list is on the right side or not</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.Paralelogram2D.get_center">
+<span class="sig-name descname"><span class="pre">get_center</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#utils.Paralelogram2D.get_center" title="Link to this definition"></a></dt>
+<dd><p>This function returns the center of the paralelogram</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>np.ndarray: center</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.Paralelogram2D.get_line_center">
+<span class="sig-name descname"><span class="pre">get_line_center</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.Paralelogram2D.get_line_center" title="Link to this definition"></a></dt>
+<dd><p>This functions returns the center of a specific line of the paralelogram</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>index (int): line index</p>
+</dd>
+<dt>Returns:</dt><dd><p>np.ndarray: center</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.Paralelogram2D.get_offset_to_lines">
+<span class="sig-name descname"><span class="pre">get_offset_to_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.Paralelogram2D.get_offset_to_lines" title="Link to this definition"></a></dt>
+<dd><p>This functions returns a Vector that represents what should be direction of point for being in the specified line</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>index (int): line index
+point (np.ndarray): point</p>
+</dd>
+<dt>Returns:</dt><dd><p>np.ndarray: direction vector</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.Paralelogram2D.move_line_from_offset">
+<span class="sig-name descname"><span class="pre">move_line_from_offset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.Paralelogram2D.move_line_from_offset" title="Link to this definition"></a></dt>
+<dd><p>This function moves a specific line given an offset vector</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>index (int): line index
+offset (np.ndarray): offset vector</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.are_points_within_vertices">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">are_points_within_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.are_points_within_vertices" title="Link to this definition"></a></dt>
+<dd><p>Given a list of vertices and a list of points, generate every rect determined by the vertices and check if the points are within the polygon or not.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>vertices (List[Tuple[float, float]]): List of vertices defining a polygon
+points (List[Tuple[float, float]]): List of points to study is they are within the polygon or not</p>
+</dd>
+<dt>Returns:</dt><dd><p>bool: the given points are within the given vertices or not</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.blackpixel_method">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">blackpixel_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sky_lt_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lt_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lw_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.blackpixel_method" title="Link to this definition"></a></dt>
+<dd><p>This function calculates water leaving radiance (Lw) by applying the black pixel assumption which assumes Lw in the NIR is negligable due to strong absorption of water. Therefore, total radiance (Lt) in the NIR is considered to be solely surface reflected light (Lsr) , which allows rho to be calculated if sky radiance (Lsky) is known. This method should only be used for waters where there is little to none NIR signal (i.e. Case 1 waters). The assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and Lw in the NIR (i.e. Case 2 waters).</p>
+<p>Inputs:
+sky_lt_dir: A string containing the directory filepath of sky_lt images
+lt_dir: A string containing the directory filepath of lt images
+lw_dir: A string containing the directory filepath of new lw images</p>
+<p>Outputs: New Lw .tifs with units of W/sr/nm</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.chl_gitelson">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">chl_gitelson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Rrsred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rrsrededge</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.chl_gitelson" title="Link to this definition"></a></dt>
+<dd><p>This algorithm estimates chlorophyll a concentrations using a 2-band algorithm with coefficients from Gitelson et al. 2007. This algorithm is recommended for coastal (Case 2) waters. doi:10.1016/j.rse.2007.01.016</p>
+<p>Inputs:
+Rrs_x: numpy array of Rrs in each band.</p>
+<p>Output: numpy array of derived chlorophyll (mg m^-3).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.chl_hu">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">chl_hu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Rrsblue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rrsgreen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rrsred</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.chl_hu" title="Link to this definition"></a></dt>
+<dd><p>This is the Ocean Color Index (CI) three-band reflectance difference algorithm (Hu et al. 2012). This should only be used for chlorophyll retrievals below 0.15 mg m^-3. Documentation can be found here <a class="reference external" href="https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/">https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/</a>. doi: 10.1029/2011jc007395</p>
+<p>Inputs:
+Rrs_x: numpy array of Rrs in each band.</p>
+<p>Output: numpy array of derived chlorophyll (mg m^-3).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.chl_hu_ocx">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">chl_hu_ocx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Rrsblue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rrsgreen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rrsred</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.chl_hu_ocx" title="Link to this definition"></a></dt>
+<dd><p>This is the blended NASA chlorophyll algorithm which combines Hu color index (CI) algorithm (chl_hu) and the O’Reilly band ratio OCx algortihm (chl_ocx). This specific code is grabbed from <a class="reference external" href="https://github.com/nasa/HyperInSPACE">https://github.com/nasa/HyperInSPACE</a>. Documentation can be found here <a class="reference external" href="https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0#introduction">https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0#introduction</a>.</p>
+<p>Inputs:
+Rrs_x: numpy array of Rrs in each band.</p>
+<p>Output: numpy array of derived chlorophyll (mg m^-3).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.chl_ocx">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">chl_ocx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Rrsblue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rrsgreen</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.chl_ocx" title="Link to this definition"></a></dt>
+<dd><p>This is the OCx algorithm which uses a fourth-order polynomial relationship (O’Reilly et al. 1998). This should be used for chlorophyll retrievals above 0.2 mg m^-3. Documentation can be found here <a class="reference external" href="https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/">https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/</a>. The coefficients for OC2 (OLI/Landsat 8) are used as default. doi: 10.1029/98JC02160.</p>
+<p>Inputs:
+Rrs_x: numpy array of Rrs in each band.</p>
+<p>Output: numpy array of derived chlorophyll (mg m^-3).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.compute_flight_lines">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">compute_flight_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">captures_yaw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">altitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pitch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.compute_flight_lines" title="Link to this definition"></a></dt>
+<dd><p>A function that returns a list of yaw, altitude, pitch, roll values from different flight transects to be used in the georeference() function. The function calculates the median of all yaw angles. For yaw angles &lt; median, it calculates the median of filtered captures. If yaw angle is between filtered median - threshold and filtered median + threshold, it is considered a valid capture. Simiarly, for yaw angles &gt; median, if yaw angle is between filtered median - threshold and filtered median + threshold, it is considered a valid capture.</p>
+<p>Args:
+captures_yaw: Can either be a fixed number or pulled from the metadata
+altitude: Can either be a fixed number or pulled from the metadata
+pitch: Can either be a fixed number or pulled from the metadata
+roll:
+threshold: A value to be uesd to determine what captures have yaw angles that are considered valid. Default is 10.</p>
+<p>Returns:
+List[int]: list of pairs(start, end) for each trasenct</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.compute_lines">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">compute_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.compute_lines" title="Link to this definition"></a></dt>
+<dd><p>A function that given a list of indexes where there are gaps,
+returns a list of pairs(start, end) for each interval</p>
+<p>Args:
+lines (List[Tuple[int, int]]): list where to write the result
+indexes (List[int]): list of indexes
+start (int, optional): first index. Defaults to 0.
+end (int, optional): last index. Defaults to 0.</p>
+<p>Returns:
+List[int]: list of pairs(start, end) for each interval</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.dls_ed">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">dls_ed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_water_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lw_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rrs_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_csv_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">panel_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dls_corr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.dls_ed" title="Link to this definition"></a></dt>
+<dd><p>This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is derived from the downwelling light sensor (DLS), which is collected at every image capture. This method does not perform well when light is variable such as partly cloudy days. It is recommended to use in overcast, completely cloudy conditions. A DLS correction can be optionally applied to tie together DLS and panel Ed measurements. In this case, a compensation factor derived from the calibration reflectance panel is applied to DLS Ed measurements.The defualt is False.</p>
+<p>Inputs:
+raw_water_dir: A string containing the directory filepath of the raw water images
+lw_dir: A string containing the directory filepath of lw images
+rrs_dir: A string containing the directory filepath of new rrs images
+output_csv_path: A string containing the filepath to save Ed measurements (mW/m2/nm) derived from the DLS
+panel_dir: A string containing the filepath of panel images. Only need if dls_corr=True.
+dls_corr: Option to apply compensation factor from calibration reflectance panel to DLS Ed measurements. Default is False.</p>
+<p>Outputs:
+New Rrs .tifs with units of sr^-1
+New .csv file with average Ed measurements (mW/m2/nm) calculated from DLS measurements</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.downsample">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">downsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Resampling.average</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.downsample" title="Link to this definition"></a></dt>
+<dd><p>This function performs a downsampling to reduce the spatial resolution of the final mosaic.</p>
+<p>Inputs:
+input_dir: A string containing input directory filepath
+output_dir: A string containing output directory filepath
+scale_x: proportion by which the width of each file will be resized
+scale_y: proportion by which the height of each file will be resized
+method: the resampling method to perform. Defaults to Resampling.nearest. Please see
+<a class="reference external" href="https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling">https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling</a> for other resampling methods.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.euclidean_distance">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">euclidean_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.euclidean_distance" title="Link to this definition"></a></dt>
+<dd><p>euclidean distance between two points</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>p1 (Tuple[float, float]): 2D point 1
+p2 (Tuple[float, float]): 2D point 2</p>
+</dd>
+<dt>Returns:</dt><dd><p>float: euclidean distance between two points</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.georeference">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">georeference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">altitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yaw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pitch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_to_flip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.georeference" title="Link to this definition"></a></dt>
+<dd><p>This function georeferences all the captures indicated in the line parameter following the specification of the other parameters such as altitude, yaw, pitch, roll, axis_to_flip</p>
+<p>Inputs:
+metadata: A Pandas dataframe of the metadata
+input_dir: A string containing the directory filepath of the images to be retrieved for georeferencing.
+output_dir: A string containing the directory filepath to be saved.
+lines: Selection of images to be processed. Defaults to None. Example: [slice(0,10)]
+altitude: sets the altitude where all captures were taken. Defaults to None which uses the altitude data saved in the metadata for each respective capture.
+yaw: sets the sensor’s direction angle during all captures. Defaults to None which uses the yaw angle saved in the metadata for each respective capture.
+pitch: sets the sensor’s pitch angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+roll: sets the sensor’s roll angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+axis_to_flip: The axis to apply a flip. Defaults to 1.</p>
+<p>Output: Georeferenced .tifs in output_dir</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.get_center">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_center</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_center" title="Link to this definition"></a></dt>
+<dd><p>This function receives a list of points and returns the point at the center of all points</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>points (np.ndarray): a list of points</p>
+</dd>
+<dt>Returns:</dt><dd><p>np.ndarray: center of all points</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.get_warp_matrix">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_warp_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_capture</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyramid_levels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_alignment_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_warp_matrix" title="Link to this definition"></a></dt>
+<dd><p>This function uses the MicaSense imageutils.align_capture() function to determine an alignment (warp) matrix of a single capture that can be applied to all images. From MicaSense: “For best alignment results it’s recommended to select a capture which has features which visible in all bands. Man-made objects such as cars, roads, and buildings tend to work very well, while captures of only repeating crop rows tend to work poorly. Remember, once a good transformation has been found for flight, it can be generally be applied across all of the images.” Ref: <a class="reference external" href="https://github.com/micasense/imageprocessing/blob/master/Alignment.ipynb">https://github.com/micasense/imageprocessing/blob/master/Alignment.ipynb</a></p>
+<p>Inputs:
+img_capture: A capture is a set of images taken by one MicaSense camera which share the same unique capture identifier (capture_id). These images share the same filename prefix, such as IMG_0000_*.tif. It is defined by running ImageSet.from_directory().captures.
+match_index: Index of the band. Default is 0.
+warp_mode: MOTION_HOMOGRAPHY or MOTION_AFFINE. For Altum images only use MOTION_HOMOGRAPHY
+pyramid_levels: Default is 1. For images with RigRelatives, setting this to 0 or 1 may improve alignment
+max_alignment_iterations: The maximum number of solver iterations.</p>
+<p>Output: A numpy.ndarray of the warp matrix from a single image capture.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.hedley_method">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">hedley_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lt_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lw_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.hedley_method" title="Link to this definition"></a></dt>
+<dd><p>This function calculates water leaving radiance (Lw) by modelling a constant ‘ambient’ NIR brightness level which is removed from all pixels across all bands. An ambient NIR level is calculated by averaging the minimum 10% of Lt(NIR) across a random subset images. This value represents the NIR brightness of a pixel with no sun glint. A linear relationship between Lt(NIR) amd the visible bands (Lt) is established, and for each pixel, the slope of this line is multiplied by the difference between the pixel NIR value and the ambient NIR level.</p>
+<p>Inputs:
+lt_dir: A string containing the directory filepath of lt images
+lw_dir: A string containing the directory filepath of new lw images
+random_n: The amount of random images to calculate ambient NIR level. Default is 10.</p>
+<p>Outputs: New Lw .tifs with units of W/sr/nm</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.is_on_right_side">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">is_on_right_side</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xy0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xy1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.is_on_right_side" title="Link to this definition"></a></dt>
+<dd><p>Given a point and 2 points defining a rect, check if the point is on the right side or not.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>x (float): value in the x-axis of the point
+y (float): value in the y-axis of the point
+xy0 (Tuple[float, float]): point 0 of the rect
+xy1 (Tuple[float, float]): point 1 of the rect</p>
+</dd>
+<dt>Returns:</dt><dd><p>bool: is on right side or not</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.is_point_within_vertices">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">is_point_within_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.is_point_within_vertices" title="Link to this definition"></a></dt>
+<dd><p>This fuction checks if a point is within the given vertices</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>x (float): value in the width axis for the point
+y (float): value in the height axis for the point
+vertices (List[Tuple[float, float]]): bounding vertices</p>
+</dd>
+<dt>Returns:</dt><dd><p>bool: whether the point is within the vertices or not</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.load_images">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">load_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.load_images" title="Link to this definition"></a></dt>
+<dd><p>This function loads all images in a directory as a multidimensional numpy array.</p>
+<p>Inputs:
+img_list: A list of .tif files, usually called by using glob.glob(filepath)</p>
+<p>Output: A multidimensional numpy array of all image captures in a directory</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.load_img_fn_and_meta">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">load_img_fn_and_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.load_img_fn_and_meta" title="Link to this definition"></a></dt>
+<dd><p>This function returns a pandas dataframe of captures and associated metadata with the options of how many to list and what number of image to start on.</p>
+<p>Inputs:
+csv_path: A string containing the filepath
+count: The amount of images to load. Default is 10000
+start: The image to start loading from. Default is 0 (first image the .csv).
+random: A boolean to load random images. Default is False</p>
+<p>Output: Pandas dataframe of image metadata</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.mobley_rho_method">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">mobley_rho_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sky_lt_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lt_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lw_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.028</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.mobley_rho_method" title="Link to this definition"></a></dt>
+<dd><p>This function calculates water leaving radiance (Lw) by multiplying a single (or small set of) sky radiance (Lsky) images by a single rho value. The default is rho = 0.028, which is based off recommendations described in Mobley, 1999. This approach should only be used if sky conditions are not changing substantially during the flight and winds are less than 5 m/s.</p>
+<p>Inputs:
+sky_lt_dir: A string containing the directory filepath of sky_lt images
+lt_dir: A string containing the directory filepath of lt images
+lw_dir: A string containing the directory filepath of new lw images
+rho = The effective sea-surface reflectance of a wave facet. The default 0.028</p>
+<p>Outputs: New Lw .tifs with units of W/sr/nm</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.mosaic">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">mosaic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;class</span> <span class="pre">'numpy.float32'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band_names=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.mosaic" title="Link to this definition"></a></dt>
+<dd><p>This function moasics all the given rasters into a single raster file</p>
+<p>Inputs:
+input_dir: a string containing the directory filepath of images to be mosaicked
+output_dir: a string containing the directory filepath to save the output
+output_name: a string of the output name of mosaicked .tif
+method: Method to be used when multiple captures coincide at same location. Options: ‘mean’, ‘first’, ‘min’, ‘max’. Defaults to ‘mean’.
+dtype: dtype of the mosaicked raster. Defaults to np.float32.
+band_names: List of band names. If it is not None, it writes one file for each band instead of one file with all the bands. Defaults to None.</p>
+<p>Returns:
+Mosaicked .tif file</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.panel_ed">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">panel_ed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">panel_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lw_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rrs_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_csv_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.panel_ed" title="Link to this definition"></a></dt>
+<dd><p>This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is calculated from the calibrated reflectance panel. This method does not perform well when light is variable such as partly cloudy days. It is recommended to use in the case of a clear, sunny day.</p>
+<p>Inputs:
+panel_dir: A string containing the directory filepath of the panel image captures
+lw_dir: A string containing the directory filepath of lw images
+rrs_dir: A string containing the directory filepath of new rrs images
+output_csv_path: A string containing the filepath to save Ed measurements (mW/m2/nm) calculated from the panel</p>
+<p>Outputs:
+New Rrs .tifs with units of sr^-1
+New .csv file with average Ed measurements (mW/m2/nm) calculated from image cpatures of the calibrated reflectance panel</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.plot_basemap">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">plot_basemap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">west</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">south</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">east</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">north</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Bunch</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'attribution':</span> <span class="pre">'(C)</span> <span class="pre">OpenStreetMap</span> <span class="pre">contributors',</span> <span class="pre">'html_attribution':</span> <span class="pre">'&amp;copy;</span> <span class="pre">&lt;a</span> <span class="pre">href=&quot;https://www.openstreetmap.org/copyright&quot;&gt;OpenStreetMap&lt;/a&gt;</span> <span class="pre">contributors',</span> <span class="pre">'max_zoom':</span> <span class="pre">19,</span> <span class="pre">'name':</span> <span class="pre">'OpenStreetMap.Mapnik',</span> <span class="pre">'url':</span> <span class="pre">'https://tile.openstreetmap.org/{z}/{x}/{y}.png'}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="headerlink" href="#utils.plot_basemap" title="Link to this definition"></a></dt>
+<dd><p>This function loads a basemap and plot in the axes provides using pseudo-Mercator projection (epsg:3857).</p>
+<dl class="simple">
+<dt>If basemap param is a string (filename):</dt><dd><p>It is loaded and plotted</p>
+</dd>
+<dt>Otherwise</dt><dd><p>A basemap is searched with contextily based on west, east, south and north params.</p>
+</dd>
+<dt>NOTE:</dt><dd><ul class="simple">
+<li><p>west, east, south and north must longitudes and latitudes based on crs=epsg:4326.</p></li>
+<li><p>local basemaps like Sentinel-2 must be georeferenced with crs=epsg:4326.</p></li>
+</ul>
+</dd>
+<dt>Args:</dt><dd><p>ax (plt.Axes): axes where to plot
+west (float): minimum longitude
+south (float): minimum latitude
+east (float): maximum longitude
+north (float): maximum latitude
+source (str | Bunch, optional): Filename or Basemap provider from contextily to plot. Defaults to cx.providers.OpenStreetMap.Mapnik.
+clip (bool, optional): If True and source is a filename, the local basemap will be clipped base on west, east, south and north params. Defaults to False.</p>
+</dd>
+<dt>Returns:</dt><dd><p>plt.Axes: axes with the basemap plotted</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.plot_georeferenced_data">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">plot_georeferenced_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basemap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Bunch</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Axes</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">AxesImage</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#utils.plot_georeferenced_data" title="Link to this definition"></a></dt>
+<dd><p>This function loads a raster in .tif format, and plot it (using pseudo-Mercator projection (epsg:3857)) over a given axes with its values georeferenced.</p>
+<p>NOTE: The raster must have only one band.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>ax (plt.Axes): axes where to plot
+filename (str): tif file to plot
+vmin (float): minimum value for colormap
+vmax (float): maximum value for colormap
+cmap (str): colormap name from matplotlib defaults
+norm (None, optional): norm for colormap like Linear, Log10. If None it’s applied Linear Norm. Defaults to None.
+basemap (str | Bunch, optional): Filename or Basemap provider from contextily to plot. If it’s specified, plot_basemap function will be executed with tif bounds.  Defaults to None</p>
+</dd>
+<dt>Returns:</dt><dd><p>Tuple[plt.Axes, AxesImage]: axes with data plotted and a new axes for colobar settings.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.process_micasense_images">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">process_micasense_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warp_img_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_lt_lw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sky</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.process_micasense_images" title="Link to this definition"></a></dt>
+<dd><p>This function is wrapper function for the save_images() function to read in an image directory and produce new .tifs with units of radiance (W/sr/nm).</p>
+<p>Inputs:
+project_dir: a string containing the filepath of the raw .tifs
+warp_img_dir: a string containing the filepath of the capture to use to create the warp matrix
+overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
+sky: Option to run raw sky captures to collected Lsky. If True, the save_images() is run on raw .tif files and saves new .tifs in sky_lt directories. If False, save_images() is run on raw .tif files and saves new .tifs in lt directories.</p>
+<p>Output: New .tif files for each capture in image directory with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.process_raw_to_rrs">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">process_raw_to_rrs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">main_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rrs_dir_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_csv_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lw_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mobley_rho_method'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_pixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_masking_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'value_threshold'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_std_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nir_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">green_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ed_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dls_ed'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_lt_lw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_intermediates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.process_raw_to_rrs" title="Link to this definition"></a></dt>
+<dd><p>This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.</p>
+<p>Inputs:
+main_dir: A string containing the main image directory
+rrs_dir_name: A string containing the directory filepath of new rrs images
+output_csv_path: A string containing the filepath to write the metadata.csv
+lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method().
+random_n: The amount of random images to calculate ambient NIR level. Default is 10. Only need if lw_method = ‘hedley_method’
+mask_pixels: Option to mask pixels containing specular sun glint, shadowing, adjacent vegetation, etc. Default is False.
+pixel_masking_method: Method to mask pixels. Options are ‘value_threshold’ or ‘std_threshold’. Default is value_threshold.
+mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1. Only need if pixel_masking_method = ‘std_threshold’
+nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features. Only need if pixel_masking_method = ‘value_threshold’.
+green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing.  Only need if pixel_masking_method = ‘value_threshold’.
+ed_method: Method used to calculate downwelling irradiance (Ed). Default is dls_ed().
+overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False but this is only applied to the Lt images.
+clean_intermediates: Option to erase intermediates of processing (Lt, Lw, unmasked Rrs)</p>
+<p>Output: New Rrs tifs (masked or unmasked) with units of sr^-1.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.retrieve_imgs_and_metadata">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">retrieve_imgs_and_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">altitude_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sky</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.retrieve_imgs_and_metadata" title="Link to this definition"></a></dt>
+<dd><p>This function is the main interface we expect the user to use when grabbing a subset of imagery from any stage in processing. This returns the images as a numpy array and metadata as a pandas dataframe.</p>
+<p>Inputs:
+img_dir: A string containing the directory filepath of images to be retrieved
+count: The amount of images you want to list. Default is 10000
+start: The number of image to start on. Default is 0 (first image in img_dir).
+random: A boolean to load random images. Default is False</p>
+<p>Outputs: A multidimensional numpy array of all image captures in a directory and a Pandas dataframe of image metadata.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.rrs_std_pixel_masking">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">rrs_std_pixel_masking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rrs_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masked_rrs_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_images</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_std_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.rrs_std_pixel_masking" title="Link to this definition"></a></dt>
+<dd><p>This function masks pixels based on a user supplied value in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value &gt; mean + std*mask_std_factor is masked across all bands. The lower the mask_std_factor, the more pixels will be masked.</p>
+<p>Inputs:
+rrs_dir: A string containing the directory filepath of images to be processed
+masked_rrs_dir: A string containing the directory filepath to write the new masked .tifs
+num_images: Number of images in the dataset to calculate the mean and std of NIR. Default is 10.
+mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1.</p>
+<p>Output: New masked .tifs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.rrs_threshold_pixel_masking">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">rrs_threshold_pixel_masking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rrs_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masked_rrs_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nir_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">green_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.rrs_threshold_pixel_masking" title="Link to this definition"></a></dt>
+<dd><p>This function masks pixels based on user supplied Rrs thresholds in an effort to remove instances of specular sun glint, shadowing, or adjacent land when present in the images.</p>
+<p>Inputs:
+rrs_dir: A string containing the directory filepath to write the new masked .tifs
+masked_rrs_dir: A string containing the name of the directory to store masked Rrs images.
+nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features.
+green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing.</p>
+<p>Output: New masked Rrs.tifs with units of sr^-1</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.save_images">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">save_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thumbnailPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warp_img_capture</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generateThumbnails</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_lt_lw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.save_images" title="Link to this definition"></a></dt>
+<dd><p>This function processes each capture in an imageset to apply a warp matrix and save new .tifs with units of radiance (W/sr/nm) and optional RGB .jpgs.</p>
+<p>Inputs:
+img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense’s imageset.py
+img_output_path: A string containing the filepath to store a new folder of radiance .tifs
+thumbnailPath: A string containing the filepath to store a new folder of RGB thumnail .jpgs
+warp_img_capture: A Capture chosen to align all images. Can be created by using Micasense’s ImageSet-from_directory().captures function
+generateThumbnails: Option to create RGB .jpgs of all the images. Default is True
+overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False</p>
+<p>Output: New .tif files for each capture in img_set with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.save_wq_imgs">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">save_wq_imgs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">main_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rrs_img_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wq_dir_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wq_alg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chl_gitelson'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.save_wq_imgs" title="Link to this definition"></a></dt>
+<dd><p>This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
+Inputs:
+main_dir: A string containing main directory
+rrs_img_dir: A string containing directory of Rrs images
+wq_dir_name: A string containing the directory that the wq images will be saved
+wq_alg: what wq algorithm to apply
+start: The image to start loading from. Default is 0.
+count: The amount of images to load. Default is 10000</p>
+<p>Outputs: New georeferenced .tifs with same units of images in img_dir</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.tsm_nechad">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">tsm_nechad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Rrsred</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.tsm_nechad" title="Link to this definition"></a></dt>
+<dd><p>This algorithm estimates total suspended matter (TSM) concentrations using the Nechad et al. (2010) algorithm. doi:10.1016/j.rse.2009.11.022</p>
+<p>Inputs:
+Rrs_x: numpy array of Rrs(red)</p>
+<p>Output: numpy array of derived chlorophyll</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.write_metadata_csv">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">write_metadata_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_output_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.write_metadata_csv" title="Link to this definition"></a></dt>
+<dd><p>This function grabs the EXIF metadata from img_set and writes it to outputPath/metadata.csv. Other metadata could be added based on what is needed in your workflow.</p>
+<p>Inputs:
+img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense’s imageset.py
+csv_output_path: A string containing the filepath to store metadata.csv containing image EXIF metadata</p>
+<p>Output: A .csv of metadata for each image capture.</p>
+</dd></dl>
+
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="primary_demo.html" class="btn btn-neutral float-left" title="Demonstration of DroneWQ functions and processing code" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Anna Windle, Patrick Gray.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
