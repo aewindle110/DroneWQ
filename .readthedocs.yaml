@@ -4,10 +4,13 @@ build:
   os: "ubuntu-22.04"
   tools:
     python: "3.10"
+  commands: 
+      - mkdir --parents _readthedocs/html/
+      - cp --recursive docs/build/html/* _readthedocs/html/
 
-python:
-  install:
-    - requirements: docs/requirements.txt
+#python:
+#  install:
+#    - requirements: docs/requirements.txt
 
-sphinx:
-  configuration: docs/source/conf.py
+#sphinx:
+#  configuration: docs/source/conf.py
