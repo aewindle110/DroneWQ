@@ -20,14 +20,26 @@ import sys
 sys.path.insert(0, str(Path('..', '..').resolve()))
 
 extensions = [
-    'sphinx.ext.autodoc',  # Core library for html generation from docstrings
-    'sphinx.ext.autosummary',  # Create neat summary tables
+    'sphinx.ext.autodoc',	    # To generate autodocs
+    'sphinx.ext.mathjax',       # autodoc with maths
+    'sphinx.ext.napoleon',      # For auto-doc configuration
+    'sphinx.ext.autosummary',  	# Create neat summary tables
+    'myst_parser',				# to read markdown
+    'nbsphinx',					# to read jupyter notebooks
 ]
+
+napoleon_google_docstring = False   # Turn off googledoc strings
+napoleon_numpy_docstring = True     # Turn on numpydoc strings
+napoleon_use_ivar = True 	     # For maths symbology
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
 templates_path = ['_templates']
 exclude_patterns = []
+
+# extensions = []
+
+source_suffix = ['.rst', '.md']
 
 
 # -- Options for HTML output -------------------------------------------------

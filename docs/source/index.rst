@@ -1,19 +1,18 @@
-.. dronewq documentation master file, created by
-   sphinx-quickstart on Tue Jan  7 19:32:35 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. module:: dronewq
 
-dronewq documentation
-=====================
-
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
+.. include:: intro.rst
 
 .. toctree::
+   :maxdepth: 1
+   :caption: User Guide
+
+   theory
+   install
+   primary_demo
+   
+.. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: API
 
    modules
 
