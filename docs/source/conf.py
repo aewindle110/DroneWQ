@@ -14,9 +14,10 @@ release = '1.0.0'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-import os
+from pathlib import Path
 import sys
-sys.path.insert(0, os.path.abspath('../../')) # Source code dir relative to this file
+# sys.path.insert(0, os.path.abspath('../../')) # Source code dir relative to this file
+sys.path.insert(0, str(Path('..', '..').resolve()))
 
 extensions = [
     'sphinx.ext.autodoc',  # Core library for html generation from docstrings
@@ -27,7 +28,6 @@ autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
 templates_path = ['_templates']
 exclude_patterns = []
-
 
 
 # -- Options for HTML output -------------------------------------------------
