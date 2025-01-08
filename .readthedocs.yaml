@@ -6,9 +6,8 @@ build:
     python: "3.10"
   commands: 
       - mkdir --parents _readthedocs/html/
-      - ls
-      - ls ..
-      - ls ../..
+      - ls docs/
+      - ls docs/build/
       - cp --recursive docs/build/html/* _readthedocs/html/
 
 #python:
