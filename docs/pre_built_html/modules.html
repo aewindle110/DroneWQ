@@ -186,9 +186,9 @@ offset (np.ndarray): offset vector</p>
 <dt class="sig sig-object py" id="utils.are_points_within_vertices">
 <span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">are_points_within_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.are_points_within_vertices" title="Link to this definition"></a></dt>
 <dd><p>Given a list of vertices and a list of points, generate every rect determined by the vertices and check if the points are within the polygon or not.</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>vertices (List[Tuple[float, float]]): List of vertices defining a polygon
-points (List[Tuple[float, float]]): List of points to study is they are within the polygon or not</p>
+<dl>
+<dt>Args:</dt><dd><p>vertices (List[Tuple[float, float]]): List of vertices defining a polygon</p>
+<p>points (List[Tuple[float, float]]): List of points to study is they are within the polygon or not</p>
 </dd>
 <dt>Returns:</dt><dd><p>bool: the given points are within the given vertices or not</p>
 </dd>
@@ -431,13 +431,15 @@ rho = The effective sea-surface reflectance of a wave facet. The default 0.028</
 <dt class="sig sig-object py" id="utils.mosaic">
 <span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">mosaic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;class</span> <span class="pre">'numpy.float32'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band_names=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.mosaic" title="Link to this definition"></a></dt>
 <dd><p>This function moasics all the given rasters into a single raster file</p>
-<p>Inputs:
-input_dir: a string containing the directory filepath of images to be mosaicked
+<dl class="simple">
+<dt>Inputs:</dt><dd><p>input_dir: a string containing the directory filepath of images to be mosaicked
 output_dir: a string containing the directory filepath to save the output
 output_name: a string of the output name of mosaicked .tif
 method: Method to be used when multiple captures coincide at same location. Options: ‘mean’, ‘first’, ‘min’, ‘max’. Defaults to ‘mean’.
 dtype: dtype of the mosaicked raster. Defaults to np.float32.
 band_names: List of band names. If it is not None, it writes one file for each band instead of one file with all the bands. Defaults to None.</p>
+</dd>
+</dl>
 <p>Returns:
 Mosaicked .tif file</p>
 </dd></dl>
