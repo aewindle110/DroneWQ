@@ -1212,6 +1212,7 @@ def are_points_within_vertices(vertices, points):
 
     Args:
         vertices (List[Tuple[float, float]]): List of vertices defining a polygon
+        
         points (List[Tuple[float, float]]): List of points to study is they are within the polygon or not
 
     Returns:
@@ -1334,12 +1335,12 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
     """This function moasics all the given rasters into a single raster file 
 
         Inputs:
-        input_dir: a string containing the directory filepath of images to be mosaicked 
-        output_dir: a string containing the directory filepath to save the output
-        output_name: a string of the output name of mosaicked .tif
-        method: Method to be used when multiple captures coincide at same location. Options: 'mean', 'first', 'min', 'max'. Defaults to 'mean'.
-        dtype: dtype of the mosaicked raster. Defaults to np.float32.
-        band_names: List of band names. If it is not None, it writes one file for each band instead of one file with all the bands. Defaults to None.
+            input_dir: a string containing the directory filepath of images to be mosaicked 
+            output_dir: a string containing the directory filepath to save the output
+            output_name: a string of the output name of mosaicked .tif
+            method: Method to be used when multiple captures coincide at same location. Options: 'mean', 'first', 'min', 'max'. Defaults to 'mean'.
+            dtype: dtype of the mosaicked raster. Defaults to np.float32.
+            band_names: List of band names. If it is not None, it writes one file for each band instead of one file with all the bands. Defaults to None.
 
         Returns:
         Mosaicked .tif file
