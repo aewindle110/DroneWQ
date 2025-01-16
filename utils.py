@@ -56,11 +56,12 @@ def write_metadata_csv(img_set, csv_output_path):
     """
     This function grabs the EXIF metadata from img_set and writes it to outputPath/metadata.csv. Other metadata could be added based on what is needed in your workflow.
     
-    Inputs: 
-    img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py 
-    csv_output_path: A string containing the filepath to store metadata.csv containing image EXIF metadata 
+    Parameters: 
+        img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py 
+        csv_output_path: A string containing the filepath to store metadata.csv containing image EXIF metadata 
     
-    Output: A .csv of metadata for each image capture. 
+    Returns: 
+        A .csv of metadata for each image capture. 
     
     """
     def decdeg2dms(dd):
@@ -132,10 +133,11 @@ def load_images(img_list):
     """
     This function loads all images in a directory as a multidimensional numpy array. 
     
-    Inputs: 
-    img_list: A list of .tif files, usually called by using glob.glob(filepath) 
+    Parameters: 
+        img_list: A list of .tif files, usually called by using glob.glob(filepath) 
     
-    Output: A multidimensional numpy array of all image captures in a directory 
+    Returns: 
+        A multidimensional numpy array of all image captures in a directory 
     
     """
     all_imgs = []
@@ -148,13 +150,17 @@ def load_img_fn_and_meta(csv_path, count=10000, start=0, random = False):
     """
     This function returns a pandas dataframe of captures and associated metadata with the options of how many to list and what number of image to start on.  
     
-    Inputs: 
-    csv_path: A string containing the filepath 
-    count: The amount of images to load. Default is 10000
-    start: The image to start loading from. Default is 0 (first image the .csv). 
-    random: A boolean to load random images. Default is False
+    Parameters: 
+        csv_path: A string containing the filepath 
     
-    Output: Pandas dataframe of image metadata
+        count: The amount of images to load. Default is 10000
+        
+        start: The image to start loading from. Default is 0 (first image the .csv). 
+        
+        random: A boolean to load random images. Default is False
+    
+    Returns: 
+        Pandas dataframe of image metadata
     
     """    
     df = pd.read_csv(csv_path)
@@ -169,13 +175,17 @@ def retrieve_imgs_and_metadata(img_dir, count=10000, start=0, altitude_cutoff = 
     """
     This function is the main interface we expect the user to use when grabbing a subset of imagery from any stage in processing. This returns the images as a numpy array and metadata as a pandas dataframe. 
     
-    Inputs:
-    img_dir: A string containing the directory filepath of images to be retrieved
-    count: The amount of images you want to list. Default is 10000
-    start: The number of image to start on. Default is 0 (first image in img_dir). 
-    random: A boolean to load random images. Default is False
+    Parameters:
+        img_dir: A string containing the directory filepath of images to be retrieved
     
-    Outputs: A multidimensional numpy array of all image captures in a directory and a Pandas dataframe of image metadata. 
+        count: The amount of images you want to list. Default is 10000
+    
+        start: The number of image to start on. Default is 0 (first image in img_dir). 
+    
+        random: A boolean to load random images. Default is False
+    
+    Returns: 
+        A multidimensional numpy array of all image captures in a directory and a Pandas dataframe of image metadata. 
     
     """
     if sky:
@@ -199,14 +209,19 @@ def get_warp_matrix(img_capture, match_index=0, warp_mode = cv2.MOTION_HOMOGRAPH
     """
     This function uses the MicaSense imageutils.align_capture() function to determine an alignment (warp) matrix of a single capture that can be applied to all images. From MicaSense: "For best alignment results it's recommended to select a capture which has features which visible in all bands. Man-made objects such as cars, roads, and buildings tend to work very well, while captures of only repeating crop rows tend to work poorly. Remember, once a good transformation has been found for flight, it can be generally be applied across all of the images." Ref: https://github.com/micasense/imageprocessing/blob/master/Alignment.ipynb
         
-    Inputs: 
-    img_capture: A capture is a set of images taken by one MicaSense camera which share the same unique capture identifier (capture_id). These images share the same filename prefix, such as IMG_0000_*.tif. It is defined by running ImageSet.from_directory().captures. 
-    match_index: Index of the band. Default is 0. 
-    warp_mode: MOTION_HOMOGRAPHY or MOTION_AFFINE. For Altum images only use MOTION_HOMOGRAPHY
-    pyramid_levels: Default is 1. For images with RigRelatives, setting this to 0 or 1 may improve alignment
-    max_alignment_iterations: The maximum number of solver iterations. 
+    Parameters: 
+        img_capture: A capture is a set of images taken by one MicaSense camera which share the same unique capture identifier (capture_id). These images share the same filename prefix, such as IMG_0000_*.tif. It is defined by running ImageSet.from_directory().captures. 
+    
+        match_index: Index of the band. Default is 0. 
         
-    Output: A numpy.ndarray of the warp matrix from a single image capture. 
+        warp_mode: MOTION_HOMOGRAPHY or MOTION_AFFINE. For Altum images only use MOTION_HOMOGRAPHY
+        
+        pyramid_levels: Default is 1. For images with RigRelatives, setting this to 0 or 1 may improve alignment
+        
+        max_alignment_iterations: The maximum number of solver iterations. 
+        
+    Returns: 
+        A numpy.ndarray of the warp matrix from a single image capture. 
     """
     
     print("Aligning images. Depending on settings this can take from a few seconds to many minutes")
@@ -224,15 +239,21 @@ def save_images(img_set, img_output_path, thumbnailPath, warp_img_capture, gener
     """
     This function processes each capture in an imageset to apply a warp matrix and save new .tifs with units of radiance (W/sr/nm) and optional RGB .jpgs.
     
-    Inputs: 
-    img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py 
-    img_output_path: A string containing the filepath to store a new folder of radiance .tifs
-    thumbnailPath: A string containing the filepath to store a new folder of RGB thumnail .jpgs
-    warp_img_capture: A Capture chosen to align all images. Can be created by using Micasense's ImageSet-from_directory().captures function
-    generateThumbnails: Option to create RGB .jpgs of all the images. Default is True
-    overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
+    Parameters: 
+        img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py 
+      
+        img_output_path: A string containing the filepath to store a new folder of radiance .tifs
+      
+        thumbnailPath: A string containing the filepath to store a new folder of RGB thumnail .jpgs
+      
+        warp_img_capture: A Capture chosen to align all images. Can be created by using Micasense's ImageSet-from_directory().captures function
+      
+        generateThumbnails: Option to create RGB .jpgs of all the images. Default is True
+      
+        overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
     
-    Output: New .tif files for each capture in img_set with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
+    Returns: 
+        New .tif files for each capture in img_set with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
     """
 
     warp_matrices = get_warp_matrix(warp_img_capture)
@@ -269,13 +290,17 @@ def process_micasense_images(project_dir, warp_img_dir=None, overwrite_lt_lw=Fal
     """
     This function is wrapper function for the save_images() function to read in an image directory and produce new .tifs with units of radiance (W/sr/nm).  
     
-    Inputs: 
-    project_dir: a string containing the filepath of the raw .tifs
-    warp_img_dir: a string containing the filepath of the capture to use to create the warp matrix
-    overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
-    sky: Option to run raw sky captures to collected Lsky. If True, the save_images() is run on raw .tif files and saves new .tifs in sky_lt directories. If False, save_images() is run on raw .tif files and saves new .tifs in lt directories. 
+    Parameters: 
+        project_dir: a string containing the filepath of the raw .tifs
+        
+        warp_img_dir: a string containing the filepath of the capture to use to create the warp matrix
+        
+        overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
+        
+        sky: Option to run raw sky captures to collected Lsky. If True, the save_images() is run on raw .tif files and saves new .tifs in sky_lt directories. If False, save_images() is run on raw .tif files and saves new .tifs in lt directories. 
     
-    Output: New .tif files for each capture in image directory with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
+    Returns: 
+        New .tif files for each capture in image directory with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
         
     """
     
@@ -317,13 +342,17 @@ def mobley_rho_method(sky_lt_dir, lt_dir, lw_dir, rho = 0.028):
     """
     This function calculates water leaving radiance (Lw) by multiplying a single (or small set of) sky radiance (Lsky) images by a single rho value. The default is rho = 0.028, which is based off recommendations described in Mobley, 1999. This approach should only be used if sky conditions are not changing substantially during the flight and winds are less than 5 m/s. 
     
-    Inputs: 
-    sky_lt_dir: A string containing the directory filepath of sky_lt images
-    lt_dir: A string containing the directory filepath of lt images 
-    lw_dir: A string containing the directory filepath of new lw images
-    rho = The effective sea-surface reflectance of a wave facet. The default 0.028
+    Parameters: 
+        sky_lt_dir: A string containing the directory filepath of sky_lt images
+        
+        lt_dir: A string containing the directory filepath of lt images 
+        
+        lw_dir: A string containing the directory filepath of new lw images
+        
+        rho = The effective sea-surface reflectance of a wave facet. The default 0.028
     
-    Outputs: New Lw .tifs with units of W/sr/nm
+    Returns: 
+        New Lw .tifs with units of W/sr/nm
     """
 
     # grab the first ten of these images, average them, then delete this from memory
@@ -356,12 +385,15 @@ def blackpixel_method(sky_lt_dir, lt_dir, lw_dir):
     """
     This function calculates water leaving radiance (Lw) by applying the black pixel assumption which assumes Lw in the NIR is negligable due to strong absorption of water. Therefore, total radiance (Lt) in the NIR is considered to be solely surface reflected light (Lsr) , which allows rho to be calculated if sky radiance (Lsky) is known. This method should only be used for waters where there is little to none NIR signal (i.e. Case 1 waters). The assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and Lw in the NIR (i.e. Case 2 waters). 
         
-    Inputs: 
-    sky_lt_dir: A string containing the directory filepath of sky_lt images
-    lt_dir: A string containing the directory filepath of lt images 
-    lw_dir: A string containing the directory filepath of new lw images
-    
-    Outputs: New Lw .tifs with units of W/sr/nm
+    Parameters: 
+        sky_lt_dir: A string containing the directory filepath of sky_lt images
+        
+        lt_dir: A string containing the directory filepath of lt images 
+        
+        lw_dir: A string containing the directory filepath of new lw images
+        
+    Returns: 
+        New Lw .tifs with units of W/sr/nm
         
     """
     # grab the first ten of these images, average them, then delete this from memory
@@ -396,12 +428,15 @@ def hedley_method(lt_dir, lw_dir, random_n=10):
     """
    This function calculates water leaving radiance (Lw) by modelling a constant 'ambient' NIR brightness level which is removed from all pixels across all bands. An ambient NIR level is calculated by averaging the minimum 10% of Lt(NIR) across a random subset images. This value represents the NIR brightness of a pixel with no sun glint. A linear relationship between Lt(NIR) amd the visible bands (Lt) is established, and for each pixel, the slope of this line is multiplied by the difference between the pixel NIR value and the ambient NIR level. 
    
-   Inputs: 
-   lt_dir: A string containing the directory filepath of lt images 
-   lw_dir: A string containing the directory filepath of new lw images
-   random_n: The amount of random images to calculate ambient NIR level. Default is 10. 
+   Parameters: 
+       lt_dir: A string containing the directory filepath of lt images 
+     
+       lw_dir: A string containing the directory filepath of new lw images
+     
+       random_n: The amount of random images to calculate ambient NIR level. Default is 10. 
    
-   Outputs: New Lw .tifs with units of W/sr/nm
+   Returns: 
+        New Lw .tifs with units of W/sr/nm
    
    """
     lt_all = []
@@ -453,16 +488,20 @@ def panel_ed(panel_dir, lw_dir, rrs_dir, output_csv_path):
     """
     This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is calculated from the calibrated reflectance panel. This method does not perform well when light is variable such as partly cloudy days. It is recommended to use in the case of a clear, sunny day. 
     
-    Inputs:
-    panel_dir: A string containing the directory filepath of the panel image captures
-    lw_dir: A string containing the directory filepath of lw images
-    rrs_dir: A string containing the directory filepath of new rrs images
-    output_csv_path: A string containing the filepath to save Ed measurements (mW/m2/nm) calculated from the panel
-    
-    Outputs:
-    New Rrs .tifs with units of sr^-1 
-    New .csv file with average Ed measurements (mW/m2/nm) calculated from image cpatures of the calibrated reflectance panel
-    
+    Parameters:
+        panel_dir: A string containing the directory filepath of the panel image captures
+        
+        lw_dir: A string containing the directory filepath of lw images
+        
+        rrs_dir: A string containing the directory filepath of new rrs images
+        
+        output_csv_path: A string containing the filepath to save Ed measurements (mW/m2/nm) calculated from the panel
+        
+    Returns:
+        New Rrs .tifs with units of sr^-1 
+        
+        New .csv file with average Ed measurements (mW/m2/nm) calculated from image cpatures of the calibrated reflectance panel
+        
     """
     panel_imgset = imageset.ImageSet.from_directory(panel_dir).captures
     panels = np.array(panel_imgset)  
@@ -508,17 +547,23 @@ def dls_ed(raw_water_dir, lw_dir, rrs_dir, output_csv_path, panel_dir=None, dls_
     This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is derived from the downwelling light sensor (DLS), which is collected at every image capture. This method does not perform well when light is variable such as partly cloudy days. It is recommended to use in overcast, completely cloudy conditions. A DLS correction can be optionally applied to tie together DLS and panel Ed measurements. In this case, a compensation factor derived from the calibration reflectance panel is applied to DLS Ed measurements.The defualt is False. 
     
 
-    Inputs:
-    raw_water_dir: A string containing the directory filepath of the raw water images
-    lw_dir: A string containing the directory filepath of lw images
-    rrs_dir: A string containing the directory filepath of new rrs images
-    output_csv_path: A string containing the filepath to save Ed measurements (mW/m2/nm) derived from the DLS
-    panel_dir: A string containing the filepath of panel images. Only need if dls_corr=True. 
-    dls_corr: Option to apply compensation factor from calibration reflectance panel to DLS Ed measurements. Default is False. 
+    Parameters:
+        raw_water_dir: A string containing the directory filepath of the raw water images
+       
+        lw_dir: A string containing the directory filepath of lw images
+       
+        rrs_dir: A string containing the directory filepath of new rrs images
+       
+        output_csv_path: A string containing the filepath to save Ed measurements (mW/m2/nm) derived from the DLS
+       
+        panel_dir: A string containing the filepath of panel images. Only need if dls_corr=True. 
+       
+        dls_corr: Option to apply compensation factor from calibration reflectance panel to DLS Ed measurements. Default is False. 
     
-    Outputs:
-    New Rrs .tifs with units of sr^-1 
-    New .csv file with average Ed measurements (mW/m2/nm) calculated from DLS measurements
+    Returns:
+        New Rrs .tifs with units of sr^-1 
+       
+        New .csv file with average Ed measurements (mW/m2/nm) calculated from DLS measurements
     """
     capture_imgset = imageset.ImageSet.from_directory(raw_water_dir).captures
     ed_data = []
@@ -595,13 +640,17 @@ def rrs_threshold_pixel_masking(rrs_dir, masked_rrs_dir, nir_threshold = 0.01, g
     """
     This function masks pixels based on user supplied Rrs thresholds in an effort to remove instances of specular sun glint, shadowing, or adjacent land when present in the images. 
     
-    Inputs: 
-    rrs_dir: A string containing the directory filepath to write the new masked .tifs
-    masked_rrs_dir: A string containing the name of the directory to store masked Rrs images. 
-    nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features.
-    green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing. 
+    Parameters: 
+        rrs_dir: A string containing the directory filepath to write the new masked .tifs
+        
+        masked_rrs_dir: A string containing the name of the directory to store masked Rrs images. 
+        
+        nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features.
+        
+        green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing. 
     
-    Output: New masked Rrs.tifs with units of sr^-1
+    Returns: 
+        New masked Rrs.tifs with units of sr^-1
 
     """    
     
@@ -641,13 +690,17 @@ def rrs_std_pixel_masking(rrs_dir, masked_rrs_dir, num_images=10, mask_std_facto
     """
     This function masks pixels based on a user supplied value in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std*mask_std_factor is masked across all bands. The lower the mask_std_factor, the more pixels will be masked. 
     
-    Inputs: 
-    rrs_dir: A string containing the directory filepath of images to be processed
-    masked_rrs_dir: A string containing the directory filepath to write the new masked .tifs
-    num_images: Number of images in the dataset to calculate the mean and std of NIR. Default is 10. 
-    mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1. 
+    Parameters: 
+        rrs_dir: A string containing the directory filepath of images to be processed
+        
+        masked_rrs_dir: A string containing the directory filepath to write the new masked .tifs
+        
+        num_images: Number of images in the dataset to calculate the mean and std of NIR. Default is 10. 
+        
+        mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1. 
     
-    Output: New masked .tifs
+    Returns: 
+        New masked .tifs
     
     """
     # grab the first num_images images, finds the mean and std of NIR, then anything times the glint factor is classified as glint
@@ -683,22 +736,35 @@ def process_raw_to_rrs(main_dir, rrs_dir_name, output_csv_path, lw_method='moble
     """
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
     
-    Inputs: 
-    main_dir: A string containing the main image directory
-    rrs_dir_name: A string containing the directory filepath of new rrs images
-    output_csv_path: A string containing the filepath to write the metadata.csv 
-    lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method().
-    random_n: The amount of random images to calculate ambient NIR level. Default is 10. Only need if lw_method = 'hedley_method'
-    mask_pixels: Option to mask pixels containing specular sun glint, shadowing, adjacent vegetation, etc. Default is False. 
-    pixel_masking_method: Method to mask pixels. Options are 'value_threshold' or 'std_threshold'. Default is value_threshold.
-    mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1. Only need if pixel_masking_method = 'std_threshold'
-    nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features. Only need if pixel_masking_method = 'value_threshold'.
-    green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing.  Only need if pixel_masking_method = 'value_threshold'.
-    ed_method: Method used to calculate downwelling irradiance (Ed). Default is dls_ed(). 
-    overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False but this is only applied to the Lt images.
-    clean_intermediates: Option to erase intermediates of processing (Lt, Lw, unmasked Rrs) 
+    Parameters: 
+        main_dir: A string containing the main image directory
+        
+        rrs_dir_name: A string containing the directory filepath of new rrs images
+        
+        output_csv_path: A string containing the filepath to write the metadata.csv 
+        
+        lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method().
+        
+        random_n: The amount of random images to calculate ambient NIR level. Default is 10. Only need if lw_method = 'hedley_method'
+        
+        mask_pixels: Option to mask pixels containing specular sun glint, shadowing, adjacent vegetation, etc. Default is False. 
+        
+        pixel_masking_method: Method to mask pixels. Options are 'value_threshold' or 'std_threshold'. Default is value_threshold.
+        
+        mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1. Only need if pixel_masking_method = 'std_threshold'
+        
+        nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features. Only need if pixel_masking_method = 'value_threshold'.
+        
+        green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing.  Only need if pixel_masking_method = 'value_threshold'.
+        
+        ed_method: Method used to calculate downwelling irradiance (Ed). Default is dls_ed(). 
+        
+        overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False but this is only applied to the Lt images.
+        
+        clean_intermediates: Option to erase intermediates of processing (Lt, Lw, unmasked Rrs) 
     
-    Output: New Rrs tifs (masked or unmasked) with units of sr^-1. 
+    Returns: 
+        New Rrs tifs (masked or unmasked) with units of sr^-1. 
     """
     
     ############################
@@ -819,10 +885,15 @@ def chl_hu(Rrsblue, Rrsgreen, Rrsred):
     """
     This is the Ocean Color Index (CI) three-band reflectance difference algorithm (Hu et al. 2012). This should only be used for chlorophyll retrievals below 0.15 mg m^-3. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. doi: 10.1029/2011jc007395
     
-    Inputs:
-    Rrs_x: numpy array of Rrs in each band. 
+    Parameters:
+        Rrsblue: numpy array of Rrs in the blue band. 
+
+        Rrsgreen: numpy array of Rrs in the green band. 
+
+        Rrsred: numpy array of Rrs in the red band.
     
-    Output: numpy array of derived chlorophyll (mg m^-3).
+    Returns: 
+        Numpy array of derived chlorophyll (mg m^-3).
     
     """
     
@@ -838,10 +909,13 @@ def chl_ocx(Rrsblue, Rrsgreen):
     """
     This is the OCx algorithm which uses a fourth-order polynomial relationship (O'Reilly et al. 1998). This should be used for chlorophyll retrievals above 0.2 mg m^-3. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. The coefficients for OC2 (OLI/Landsat 8) are used as default. doi: 10.1029/98JC02160.
     
-    Inputs:
-    Rrs_x: numpy array of Rrs in each band. 
+    Parameters:
+        Rrsblue: numpy array of Rrs in the blue band. 
+
+        Rrsgreen: numpy array of Rrs in the green band. 
     
-    Output: numpy array of derived chlorophyll (mg m^-3).
+    Returns: 
+        Numpy array of derived chlorophyll (mg m^-3).
     
     """
     
@@ -864,10 +938,15 @@ def chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred):
     ''' 
     This is the blended NASA chlorophyll algorithm which combines Hu color index (CI) algorithm (chl_hu) and the O'Reilly band ratio OCx algortihm (chl_ocx). This specific code is grabbed from https://github.com/nasa/HyperInSPACE. Documentation can be found here https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0#introduction.
     
-    Inputs:
-    Rrs_x: numpy array of Rrs in each band. 
+    Parameters:
+        Rrsblue: numpy array of Rrs in the blue band. 
+
+        Rrsgreen: numpy array of Rrs in the green band. 
+
+        Rrsred: numpy array of Rrs in the red band. 
     
-    Output: numpy array of derived chlorophyll (mg m^-3).
+    Returns: 
+        Numpy array of derived chlorophyll (mg m^-3).
     '''
 
     thresh = [0.15, 0.20]
@@ -906,10 +985,13 @@ def chl_gitelson(Rrsred, Rrsrededge):
     """
     This algorithm estimates chlorophyll a concentrations using a 2-band algorithm with coefficients from Gitelson et al. 2007. This algorithm is recommended for coastal (Case 2) waters. doi:10.1016/j.rse.2007.01.016
     
-    Inputs:
-    Rrs_x: numpy array of Rrs in each band. 
+    Parameters:
+        Rrsred: numpy array of Rrs in the red band. 
+
+        Rrsrededge: numpy array of Rrs in the red edge band. 
     
-    Output: numpy array of derived chlorophyll (mg m^-3). 
+    Returns: 
+        Numpy array of derived chlorophyll (mg m^-3). 
     """
     
     chl = 59.826 * (Rrsrededge/Rrsred) - 17.546
@@ -921,10 +1003,11 @@ def tsm_nechad(Rrsred):
     """
     This algorithm estimates total suspended matter (TSM) concentrations using the Nechad et al. (2010) algorithm. doi:10.1016/j.rse.2009.11.022
     
-    Inputs:
-    Rrs_x: numpy array of Rrs(red)
+    Parameters:
+        Rrsred: numpy array of Rrs in the red band. 
     
-    Output: numpy array of derived chlorophyll
+    Returns: 
+        Numpy array of derived chlorophyll (mg m^-3). 
     """
     A = 374.11
     B = 1.61
@@ -936,15 +1019,22 @@ def tsm_nechad(Rrsred):
 def save_wq_imgs(main_dir, rrs_img_dir, wq_dir_name, wq_alg="chl_gitelson", start=0, count=10000):
     """
     This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
-    Inputs:
-    main_dir: A string containing main directory
-    rrs_img_dir: A string containing directory of Rrs images
-    wq_dir_name: A string containing the directory that the wq images will be saved
-    wq_alg: what wq algorithm to apply
-    start: The image to start loading from. Default is 0.
-    count: The amount of images to load. Default is 10000
 
-    Outputs: New georeferenced .tifs with same units of images in img_dir
+    Parameters:
+        main_dir: A string containing main directory
+        
+        rrs_img_dir: A string containing directory of Rrs images
+        
+        wq_dir_name: A string containing the directory that the wq images will be saved
+        
+        wq_alg: what wq algorithm to apply
+        
+        start: The image to start loading from. Default is 0.
+        
+        count: The amount of images to load. Default is 10000
+
+    Returns: 
+        New georeferenced .tifs with same units of images in img_dir
     """
     def _capture_path_to_int(path : str) -> int:
         return int(os.path.basename(path).split('_')[-1].split('.')[0])
@@ -984,14 +1074,17 @@ def compute_lines(lines, indexes, start = 0, end = 0):
     """A function that given a list of indexes where there are gaps,
     returns a list of pairs(start, end) for each interval
     
-    Args:
-    lines (List[Tuple[int, int]]): list where to write the result
-    indexes (List[int]): list of indexes
-    start (int, optional): first index. Defaults to 0.
-    end (int, optional): last index. Defaults to 0.
+    Parameters:
+        lines (List[Tuple[int, int]]): list where to write the result
+        
+        indexes (List[int]): list of indexes
+        
+        start (int, optional): first index. Defaults to 0.
+        
+        end (int, optional): last index. Defaults to 0.
     
     Returns:
-    List[int]: list of pairs(start, end) for each interval
+        List[int]: list of pairs(start, end) for each interval
     """
     
     for index in indexes:
@@ -1010,15 +1103,19 @@ def compute_flight_lines(captures_yaw, altitude, pitch, roll, threshold = 10):
     """
     A function that returns a list of yaw, altitude, pitch, roll values from different flight transects to be used in the georeference() function. The function calculates the median of all yaw angles. For yaw angles < median, it calculates the median of filtered captures. If yaw angle is between filtered median - threshold and filtered median + threshold, it is considered a valid capture. Simiarly, for yaw angles > median, if yaw angle is between filtered median - threshold and filtered median + threshold, it is considered a valid capture. 
     
-    Args:
-    captures_yaw: Can either be a fixed number or pulled from the metadata
-    altitude: Can either be a fixed number or pulled from the metadata
-    pitch: Can either be a fixed number or pulled from the metadata
-    roll:
-    threshold: A value to be uesd to determine what captures have yaw angles that are considered valid. Default is 10. 
+    Parameters:
+        captures_yaw: Can either be a fixed number or pulled from the metadata
+        
+        altitude: Can either be a fixed number or pulled from the metadata
+        
+        pitch: Can either be a fixed number or pulled from the metadata
+        
+        roll: Can either be a fixed number or pulled from the metadata
+        
+        threshold: A value to be used to determine what captures have yaw angles that are considered valid. Default is 10. 
     
     Returns:
-    List[int]: list of pairs(start, end) for each trasenct
+        List[int]: list of pairs(start, end) for each trasenct
     """
     
     median_yaw = np.median(captures_yaw)
@@ -1047,33 +1144,50 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
     """
     This function georeferences all the captures indicated in the line parameter following the specification of the other parameters such as altitude, yaw, pitch, roll, axis_to_flip
 
-    Inputs:
-    metadata: A Pandas dataframe of the metadata
-    input_dir: A string containing the directory filepath of the images to be retrieved for georeferencing.
-    output_dir: A string containing the directory filepath to be saved. 
-    lines: Selection of images to be processed. Defaults to None. Example: [slice(0,10)]
-    altitude: sets the altitude where all captures were taken. Defaults to None which uses the altitude data saved in the metadata for each respective capture.
-    yaw: sets the sensor's direction angle during all captures. Defaults to None which uses the yaw angle saved in the metadata for each respective capture.
-    pitch: sets the sensor's pitch angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
-    roll: sets the sensor's roll angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
-    axis_to_flip: The axis to apply a flip. Defaults to 1.
+    Parameters:
+        metadata: A Pandas dataframe of the metadata
+        
+        input_dir: A string containing the directory filepath of the images to be retrieved for georeferencing.
+        
+        output_dir: A string containing the directory filepath to be saved. 
+        
+        lines: Selection of images to be processed. Defaults to None. Example: [slice(0,10)]
+        
+        altitude: sets the altitude where all captures were taken. Defaults to None which uses the altitude data saved in the metadata for each respective capture.
+        
+        yaw: sets the sensor's direction angle during all captures. Defaults to None which uses the yaw angle saved in the metadata for each respective capture.
+        
+        pitch: sets the sensor's pitch angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+        
+        roll: sets the sensor's roll angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+        
+        axis_to_flip: The axis to apply a flip. Defaults to 1.
     
-    Output: Georeferenced .tifs in output_dir 
+    Returns: 
+        Georeferenced .tifs in output_dir 
     """
 
     def __get_transform(f, sensor_size, image_size, lat, lon, alt, yaw, pitch, roll):
         """
         Calculates a transformation matrix for a given capture in order to get every lat, lon for each pixel in the image.
 
-        Args:
+        Parameters:
             f (float): focal_length
+            
             sensor_size (Tuple[float, float]): correspondence pixel -> milimeter
+            
             image_size (Tuple[int, int]): number of pixels for width and height
+            
             lat (float): latitude of camera
+            
             lon (float): longitude of camera
+            
             alt (float): altitude of camera
+            
             yaw (float): yaw of camera
+            
             pitch (float): tilt of camera
+            
             roll (float): roll of camera
 
         Returns:
@@ -1099,12 +1213,17 @@ def georeference(metadata, input_dir, output_dir, lines = None, altitude = None,
         """
         Given a DataFrame and a list of flight lines, calculate a dictionary with the transformation matrix for each capture
 
-        Args:
+        Parameters:
             metadata (DataFrame): Pandas DataFrame that contains information like capture latitude, longitude, ...
+            
             lines (List[slice], optional): List that indicates the flight lines. Defaults to None which means [ slice(0, None) ] = all captures.
+            
             altitude (float, optional): altitude of camera
+            
             yaw (float, optional): yaw of camera
+            
             pitch (float, optional): tilt of camera
+            
             roll (float, optional): roll of camera
 
         Returns:
@@ -1171,10 +1290,13 @@ def is_on_right_side(x, y, xy0, xy1):
     """
     Given a point and 2 points defining a rect, check if the point is on the right side or not.        
 
-    Args:
+    Parameters:
         x (float): value in the x-axis of the point
+        
         y (float): value in the y-axis of the point
+        
         xy0 (Tuple[float, float]): point 0 of the rect
+        
         xy1 (Tuple[float, float]): point 1 of the rect
 
     Returns:
@@ -1191,9 +1313,11 @@ def is_on_right_side(x, y, xy0, xy1):
 def is_point_within_vertices(x, y, vertices):
     """This fuction checks if a point is within the given vertices
 
-    Args:
+    Parameters:
         x (float): value in the width axis for the point
+        
         y (float): value in the height axis for the point
+        
         vertices (List[Tuple[float, float]]): bounding vertices
 
     Returns:
@@ -1210,7 +1334,7 @@ def are_points_within_vertices(vertices, points):
     """
     Given a list of vertices and a list of points, generate every rect determined by the vertices and check if the points are within the polygon or not.
 
-    Args:
+    Parameters:
         vertices (List[Tuple[float, float]]): List of vertices defining a polygon
         
         points (List[Tuple[float, float]]): List of points to study is they are within the polygon or not
@@ -1230,8 +1354,9 @@ def euclidean_distance(p1, p2):
     """
     euclidean distance between two points
 
-    Args:
+    Parameters:
         p1 (Tuple[float, float]): 2D point 1
+        
         p2 (Tuple[float, float]): 2D point 2
 
     Returns:
@@ -1243,7 +1368,7 @@ def euclidean_distance(p1, p2):
 def get_center(points):
     """This function receives a list of points and returns the point at the center of all points
 
-    Args:
+    Parameters:
         points (np.ndarray): a list of points
 
     Returns:
@@ -1265,7 +1390,7 @@ class Paralelogram2D:
     def __init__(self, points):
         """This constructor receives a list of points and sets the pairs of lines
 
-        Args:
+        Parameters:
             points (List[Tuple[float, float]]): list of corner points that determinate a paralelogram
         """
 
@@ -1276,7 +1401,7 @@ class Paralelogram2D:
     def get_line_center(self, index):
         """This functions returns the center of a specific line of the paralelogram
 
-        Args:
+        Parameters:
             index (int): line index
 
         Returns:
@@ -1288,8 +1413,9 @@ class Paralelogram2D:
     def get_offset_to_lines(self, index, point):
         """This functions returns a Vector that represents what should be direction of point for being in the specified line
 
-        Args:
+        Parameters:
             index (int): line index
+            
             point (np.ndarray): point
 
         Returns:
@@ -1310,8 +1436,9 @@ class Paralelogram2D:
     def move_line_from_offset(self, index, offset):
         """This function moves a specific line given an offset vector
 
-        Args:
+        Parameters:
             index (int): line index
+            
             offset (np.ndarray): offset vector
         """
 
@@ -1320,8 +1447,9 @@ class Paralelogram2D:
     def are_on_right_side_of_line(self, index, points):
         """This function checks if a list of points is on the right side of a specific line
 
-        Args:
+        Parameters:
             index (int): line index
+            
             points (np.ndarray): a list of points
 
         Returns:
@@ -1334,16 +1462,21 @@ class Paralelogram2D:
 def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float32, band_names = None):
     """This function moasics all the given rasters into a single raster file 
 
-        Inputs:
+        Parameters:
             input_dir: a string containing the directory filepath of images to be mosaicked 
+            
             output_dir: a string containing the directory filepath to save the output
+            
             output_name: a string of the output name of mosaicked .tif
+            
             method: Method to be used when multiple captures coincide at same location. Options: 'mean', 'first', 'min', 'max'. Defaults to 'mean'.
+            
             dtype: dtype of the mosaicked raster. Defaults to np.float32.
+            
             band_names: List of band names. If it is not None, it writes one file for each band instead of one file with all the bands. Defaults to None.
 
         Returns:
-        Mosaicked .tif file
+            Mosaicked .tif file
     """
 
     def listdir_fullpath(d):
@@ -1360,8 +1493,9 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
         """
         Given a source dataset and a destination dataset. Get the latitudes and longitudes that correspond to move the source data to the destination data.
 
-        Args:
+        Parameters:
             dst (_type_): Destination dataset
+            
             src (DatasetReader): Source dataset
 
         Returns:
@@ -1382,7 +1516,7 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
         """
         Given a raster path, return a list of its corners based on its transformation matrix.
 
-        Args:
+        Parameters:
             raster_path (str): path of the raster to be processed
 
         Returns:
@@ -1398,9 +1532,11 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
         """
         Given a transformation matrix, a width and a height, return a list of corners based on the given transformation matrix.
 
-        Args:
+        Parameters:
             transform (Affine): transformation matrix
+            
             width (int): transformation width
+            
             height (int): transformation height
 
         Returns:
@@ -1412,8 +1548,9 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
     def __get_merge_transform(raster_paths, max_iterations = 10000):
         """This function returns a transform matrix that contains of the specified rasters
 
-        Args:
+        Parameters:
             raster_paths (set): raster paths to merge
+            
             max_iterations (int, optional): additional merge parameters. Default is 2000
 
         Returns:
@@ -1475,13 +1612,19 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
         """
         Merge method that calculates the mean value in those positions where more than one raster write its values.
 
-        Args:
+        Parameters:
             dst (_type_): destination raster
+            
             raster_paths (List[str]): raster paths to merge
+            
             n_bands (int): bands of each raster
+            
             width (int): width of the merge raster
+            
             height (int): height of the merge raster
+            
             dtype (dtype, optional): dtype of the merge raster. Defaults to np.float32.
+            
             band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
 
         Returns:
@@ -1506,13 +1649,19 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
         """
         Merge method that keeps the first value in write those positions where more than one raster write its values.
 
-        Args:
+        Parameters:
             dst (_type_): destination raster
+            
             raster_paths (List[str]): raster paths to merge
+            
             n_bands (int): bands of each raster
+            
             width (int): width of the merge raster
+            
             height (int): height of the merge raster
+            
             dtype (dtype, optional): dtype of the merge raster. Defaults to np.float32.
+            
             band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
 
         Returns:
@@ -1538,13 +1687,19 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
         """
         Merge method that calculates the max value in those positions where more than one raster write its values.
 
-        Args:
+        Parameters:
             dst (_type_): destination raster
+            
             raster_paths (List[str]): raster paths to merge
+            
             n_bands (int): bands of each raster
+            
             width (int): width of the merge raster
+            
             height (int): height of the merge raster
+            
             dtype (dtype, optional): dtype of the merge raster. Defaults to np.float32.
+            
             band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
 
         Returns:
@@ -1568,13 +1723,19 @@ def mosaic(input_dir, output_dir, output_name, method = 'mean', dtype = np.float
         """
         Merge method that calculates the min value in those positions where more than one raster write its values.
 
-        Args:
+        Parameters:
             dst (_type_): destination raster
+            
             raster_paths (List[str]): raster paths to merge
+            
             n_bands (int): bands of each raster
+            
             width (int): width of the merge raster
+            
             height (int): height of the merge raster
+            
             dtype (dtype, optional): dtype of the merge raster. Defaults to np.float32.
+            
             band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
 
         Returns:
@@ -1639,13 +1800,19 @@ def downsample(input_dir, output_dir, scale_x, scale_y, method = Resampling.aver
     """
     This function performs a downsampling to reduce the spatial resolution of the final mosaic. 
     
-    Inputs:
-    input_dir: A string containing input directory filepath  
-    output_dir: A string containing output directory filepath 
-    scale_x: proportion by which the width of each file will be resized 
-    scale_y: proportion by which the height of each file will be resized
-    method: the resampling method to perform. Defaults to Resampling.nearest. Please see 
-    https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling for other resampling methods. 
+    Parameters:
+        input_dir: A string containing input directory filepath  
+        
+        output_dir: A string containing output directory filepath 
+        
+        scale_x: proportion by which the width of each file will be resized 
+        
+        scale_y: proportion by which the height of each file will be resized
+        
+        method: the resampling method to perform. Defaults to Resampling.nearest. Please see https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling for other resampling methods. 
+
+    Returns:
+        None, downsampled raster is written to output_dir.
     """
 
     os.makedirs(output_dir, exist_ok = True)
@@ -1692,22 +1859,24 @@ def plot_basemap(ax : plt.Axes, west : float, south : float, east : float, north
     """
     This function loads a basemap and plot in the axes provides using pseudo-Mercator projection (epsg:3857).
 
-    If basemap param is a string (filename):
-        It is loaded and plotted
-    Otherwise
-        A basemap is searched with contextily based on west, east, south and north params.
-
     NOTE: 
         - west, east, south and north must longitudes and latitudes based on crs=epsg:4326.
         - local basemaps like Sentinel-2 must be georeferenced with crs=epsg:4326.
+        - If basemap param is a string (filename) it is loaded and plotted; Otherwise a basemap is searched with contextily based on west, east, south and north params.
     
-    Args:
+    Parameters:
         ax (plt.Axes): axes where to plot
+        
         west (float): minimum longitude
+        
         south (float): minimum latitude
+        
         east (float): maximum longitude
+        
         north (float): maximum latitude
+        
         source (str | Bunch, optional): Filename or Basemap provider from contextily to plot. Defaults to cx.providers.OpenStreetMap.Mapnik.
+        
         clip (bool, optional): If True and source is a filename, the local basemap will be clipped base on west, east, south and north params. Defaults to False.
 
     Returns:
@@ -1751,11 +1920,17 @@ def plot_georeferenced_data(ax : plt.Axes, filename : str, vmin : float, vmax : 
 
     Args:
         ax (plt.Axes): axes where to plot
+        
         filename (str): tif file to plot
+        
         vmin (float): minimum value for colormap
+        
         vmax (float): maximum value for colormap
+        
         cmap (str): colormap name from matplotlib defaults
+        
         norm (None, optional): norm for colormap like Linear, Log10. If None it's applied Linear Norm. Defaults to None.
+        
         basemap (str | Bunch, optional): Filename or Basemap provider from contextily to plot. If it's specified, plot_basemap function will be executed with tif bounds.  Defaults to None
 
     Returns:
