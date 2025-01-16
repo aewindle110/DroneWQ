@@ -20,7 +20,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Demonstration of DroneWQ functions and processing code" href="primary_demo.html" /> 
+    <link rel="prev" title="Demonstration of DroneWQ functions and processing code (primary_demo.ipynb)" href="primary_demo.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,7 +46,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="theory.html">Processing and theory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="primary_demo.html">Demonstration of <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> functions and processing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="primary_demo.html">Demonstration of <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> functions and processing code (primary_demo.ipynb)</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
@@ -226,8 +226,10 @@
 <dt class="sig sig-object py" id="utils.chl_hu">
 <span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">chl_hu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Rrsblue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rrsgreen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rrsred</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.chl_hu" title="Link to this definition"></a></dt>
 <dd><p>This is the Ocean Color Index (CI) three-band reflectance difference algorithm (Hu et al. 2012). This should only be used for chlorophyll retrievals below 0.15 mg m^-3. Documentation can be found here <a class="reference external" href="https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/">https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/</a>. doi: 10.1029/2011jc007395</p>
-<dl class="simple">
-<dt>Parameters:</dt><dd><p>Rrs_x: numpy array of Rrs in each band.</p>
+<dl>
+<dt>Parameters:</dt><dd><p>Rrsblue: numpy array of Rrs in the blue band.</p>
+<p>Rrsgreen: numpy array of Rrs in the green band.</p>
+<p>Rrsred: numpy array of Rrs in the red band.</p>
 </dd>
 <dt>Returns:</dt><dd><p>Numpy array of derived chlorophyll (mg m^-3).</p>
 </dd>
@@ -511,13 +513,10 @@ returns a list of pairs(start, end) for each interval</p>
 <span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">plot_basemap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">west</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">south</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">east</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">north</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Bunch</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'attribution':</span> <span class="pre">'(C)</span> <span class="pre">OpenStreetMap</span> <span class="pre">contributors',</span> <span class="pre">'html_attribution':</span> <span class="pre">'&amp;copy;</span> <span class="pre">&lt;a</span> <span class="pre">href=&quot;https://www.openstreetmap.org/copyright&quot;&gt;OpenStreetMap&lt;/a&gt;</span> <span class="pre">contributors',</span> <span class="pre">'max_zoom':</span> <span class="pre">19,</span> <span class="pre">'name':</span> <span class="pre">'OpenStreetMap.Mapnik',</span> <span class="pre">'url':</span> <span class="pre">'https://tile.openstreetmap.org/{z}/{x}/{y}.png'}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="headerlink" href="#utils.plot_basemap" title="Link to this definition"></a></dt>
 <dd><p>This function loads a basemap and plot in the axes provides using pseudo-Mercator projection (epsg:3857).</p>
 <dl>
-<dt>If basemap param is a string (filename):</dt><dd><p>It is loaded and plotted</p>
-</dd>
-<dt>Otherwise</dt><dd><p>A basemap is searched with contextily based on west, east, south and north params.</p>
-</dd>
 <dt>NOTE:</dt><dd><ul class="simple">
 <li><p>west, east, south and north must longitudes and latitudes based on crs=epsg:4326.</p></li>
 <li><p>local basemaps like Sentinel-2 must be georeferenced with crs=epsg:4326.</p></li>
+<li><p>If basemap param is a string (filename) it is loaded and plotted; Otherwise a basemap is searched with contextily based on west, east, south and north params.</p></li>
 </ul>
 </dd>
 <dt>Parameters:</dt><dd><p>ax (plt.Axes): axes where to plot</p>
@@ -700,7 +699,7 @@ csv_output_path: A string containing the filepath to store metadata.csv containi
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="primary_demo.html" class="btn btn-neutral float-left" title="Demonstration of DroneWQ functions and processing code" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="primary_demo.html" class="btn btn-neutral float-left" title="Demonstration of DroneWQ functions and processing code (primary_demo.ipynb)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

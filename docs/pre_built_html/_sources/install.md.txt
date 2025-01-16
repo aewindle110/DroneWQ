@@ -39,3 +39,17 @@ When it's done, run `conda activate dronewq` to activate the environment configu
 Each time you start a new anaconda prompt, you'll need to run `conda activate dronewq`.
 
 To access jupyter notebook or lab, run `jupyter lab` or `jupyter notebook`
+
+### MicaSense Folder Structure
+Once all MicaSense images have been downloaded into a local directory (e.g. `\data`), you will need to manually separate images into 4 sub-directories as below:
+```
+\data
+    \panel
+    \raw_sky_imgs
+    \raw_water_imgs
+    \align_img
+```
+* The panel directory should contain all image captures of the Micasense calibrated reflectance panel taken either before or after the flight 
+* The raw_sky_imgs directory should contain all image captures taken of the sky at a 40 deg angle from zenith and an apprximate 135 deg azimuthal viewing direction
+* The raw_water_imgs directory should contain all image captures of water taken during flight 
+* The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The warp_matrix derived from this image capture is used to align all image captures in raw_water_imgs. 

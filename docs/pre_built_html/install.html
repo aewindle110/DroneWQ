@@ -51,6 +51,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#initial-setup">Initial Setup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#launching-code">Launching code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#alternative-installation-conda">Alternative Installation (conda)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#micasense-folder-structure">MicaSense Folder Structure</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="primary_demo.html">Demonstration of <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> functions and processing code</a></li>
@@ -147,6 +148,23 @@
 When it’s done, run <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dronewq</span></code> to activate the environment configured.
 Each time you start a new anaconda prompt, you’ll need to run <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dronewq</span></code>.</p>
 <p>To access jupyter notebook or lab, run <code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">lab</span></code> or <code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">notebook</span></code></p>
+</section>
+<section id="micasense-folder-structure">
+<h2>MicaSense Folder Structure<a class="headerlink" href="#micasense-folder-structure" title="Link to this heading"></a></h2>
+<p>Once all MicaSense images have been downloaded into a local directory (e.g. <code class="docutils literal notranslate"><span class="pre">\data</span></code>), you will need to manually separate images into 4 sub-directories as below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>\<span class="n">data</span>
+    \<span class="n">panel</span>
+    \<span class="n">raw_sky_imgs</span>
+    \<span class="n">raw_water_imgs</span>
+    \<span class="n">align_img</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>The panel directory should contain all image captures of the Micasense calibrated reflectance panel taken either before or after the flight</p></li>
+<li><p>The raw_sky_imgs directory should contain all image captures taken of the sky at a 40 deg angle from zenith and an apprximate 135 deg azimuthal viewing direction</p></li>
+<li><p>The raw_water_imgs directory should contain all image captures of water taken during flight</p></li>
+<li><p>The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The warp_matrix derived from this image capture is used to align all image captures in raw_water_imgs.</p></li>
+</ul>
 </section>
 </section>
 

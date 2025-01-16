@@ -51,6 +51,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#rrs-pixel-masking">R<sub>rs</sub> pixel masking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#water-quality-retrievals">Water quality retrievals</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#georeferencing-and-mapping">Georeferencing and mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References:</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
@@ -120,13 +121,50 @@
              
   <section id="processing-and-theory">
 <h1>Processing and theory<a class="headerlink" href="#processing-and-theory" title="Link to this heading"></a></h1>
+<p>Following the notation style and large body of research from the optical oceanography community, UAS can measure remote sensing reflectance (R<sub>rs</sub>) defined as:</p>
+<div align="center">
+Eq. 1&nbsp;&nbsp;&nbsp;&nbsp; R<sub>rs</sub> (θ, φ, λ) = L<sub>W</sub>(θ, φ, λ) / E<sub>d</sub>(θ, φ, λ) 
+</div>
+<br/>
+<p>where L<sub>W</sub> (W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) is water-leaving radiance, E<sub>d</sub> (W m<sup>-2</sup> nm<sup>-1</sup>) is downwelling irradiance, θ represents the sensor viewing angle between the sun and the vertical (zenith), φ represents the angular direction relative to the sun (azimuth) and λ represents wavelength.</p>
+<p>Like all above-water optical measurements, UAS do not measure R<sub>rs</sub> directly as the at-sensor total radiance (L<sub>T</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) constitutes the sum of L<sub>W</sub> and incident radiance reflected off the sea surface into the detector’s field of view, referred to as surface reflected radiance (L<sub>SR</sub>). While there is in reality also some scattering of light off air molecules and aerosols we consider that minimal at typical UAS altitudes. L<sub>W</sub> is thus the radiance that emanates from the water and contains a spectral shape and magnitude governed by optically active water constituents interacting with downwelling irradiance, while L<sub>SR</sub> is independent of water constituents and is instead governed by a given sea-state surface reflecting the downwelling light; a familiar example is sun glint. Here we define UAS total reflectance (R<sub>UAS</sub>) as:</p>
+<div align="center">
+Eq. 2&nbsp;&nbsp;&nbsp;&nbsp; R<sub>UAS</sub>(θ, Φ, λ) = L<sub>T</sub>(θ, Φ, λ) / E<sub>d</sub>(λ)
+<br/><br/>
+</div>
+where
+<br/><br/>
+<div align="center">
+Eq. 3&nbsp;&nbsp;&nbsp;&nbsp; L<sub>T</sub>(θ, Φ, λ) = L<sub>W</sub>(θ, Φ, λ) + L<sub>SR</sub>(θ, Φ, λ)
+</div>
+<br/>
+<p>If the water surface was perfectly flat, incident light would reflect specularly and could be measured with known viewing geometries. This specular reflection of a level surface is known as the Fresnel reflection; however, most water bodies are not flat as winds and currents create tilting surface wave facets. Due to the differing orientation of wave facets reflecting radiance from different parts of the sky, L<sub>SR</sub> can vary widely within a single UAS image. A common approach to model L<sub>SR</sub> is to express it as the product of sky radiance (L<sub>sky</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) and ρ, the effective sea-surface reflectance of the wave facet [&#64;mobley_1999; &#64;lee_ahn_mobley_arnone_2010]:</p>
+<div align="center">
+Eq. 4&nbsp;&nbsp;&nbsp;&nbsp; L<sub>SR</sub>(θ, Φ, λ)= ρ(θ, Φ, λ) ∗ L<sub>sky</sub>(θ', Φ, λ)
+<br/><br/>
+</div>
+Where θ' is the mirror of θ (θ' = 180-θ). Rearranging Eqs. 3 Eqs. 4, ρ can be derived by:
+<br/><br/>
+<div align="center">
+Eq. 5&nbsp;&nbsp;&nbsp;&nbsp; ρ(θ, Φ, λ) = (L<sub>T</sub>(θ, Φ, λ) − L<sub>W</sub>(θ, Φ, λ)) / L<sub>sky</sub>(θ', Φ, λ)
+</div>
+<br/>
+Given measurements of L<sub>sky</sub>, an accurate determination of ⍴ is critical to derive R<sub>rs</sub> by:
+<div align="center">
+<br/>
+Eq. 6&nbsp;&nbsp;&nbsp;&nbsp; R<sub>rs</sub>(θ, Φ, λ) = R<sub>UAS</sub>(θ, Φ, λ) − (L<sub>sky</sub>(θ', Φ, λ) ∗ ρ(θ, Φ, λ) / E<sub>d</sub>(λ))
+</div>
+<br/>
+<p>‘DroneWQ` provides multiple options from the literature for removing L<sub>SR</sub>.</p>
+<p>A secondary challenge with aquatic UAS remote sensing is georferencing and mosaicking imagery. Many UAS remote sensing studies use Structure-from-Motion (SfM) photogrammetric techniques to stitch individual UAS images into ortho- and georectified mosaics. Current photogrammetry techniques are not capable of stitching UAS images captured over large bodies of water due to a lack of key points in images of homogenous water surfaces. <br></p>
+<p>The main processing script has the ability to <strong>1)</strong> convert raw multispectral imagery to total radiance (L<sub>t</sub>) with units of W/m<sup>2</sup>/nm/sr, <strong>2)</strong> remove surface reflected light (L<sub>sr</sub>) to calculate water leaving radiance (L<sub>w</sub>), <strong>3)</strong> measure downwelling irradiance (E<sub>d</sub>) from either the calibrated reflectance panel, downwelling light sensor (DLS), or a combination of the two, <strong>4)</strong> calculate remote sensing reflectance (R<sub>rs</sub>) by dividing E<sub>d</sub> by L<sub>w</sub>, and <strong>5)</strong> mask pixels containing specular sun glint or instances of vegetation, shadowing, etc., <strong>6)</strong> use R<sub>rs</sub> as input into various bio-optical algorithms to derive chlorophyll a and total suspended sediment concentrations, and <strong>7)</strong> georeference using image metadata and sensor specifications to orient and map to a known coordinate system.</p>
 <section id="removal-of-surface-reflected-light-lt-lsr-lw">
 <h2>Removal of surface reflected light (L<sub>T</sub> - L<sub>SR</sub> = L<sub>W</sub>)<a class="headerlink" href="#removal-of-surface-reflected-light-lt-lsr-lw" title="Link to this heading"></a></h2>
-<p>The inclusion of L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> and remotely sensed water quality retrievals, as shown in Figure 1. <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> provides three common approaches to remove L<sub>SR</sub> as described below. See an intercomparison of these methods for UAS imagery in [&#64;windle_silsbe_2021].</p>
-<p><img alt="Caption for example figure.abel{fig:removal_Lsr_fig}" src="figs/removal_Lsr_fig.jpg" />
+<p>The inclusion of L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> and remotely sensed water quality retrievals, as shown in Figure 1. <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> provides three common approaches to remove L<sub>SR</sub> as described below. An intercomparison of L<sub>SR</sub> removal methods can be found in <a class="reference external" href="https://doi.org/10.3389/fenvs.2021.674247">Windle &amp; Silsbe 2021</a>.</p>
+<p><img alt="Caption for example figure.abel{fig:removal_Lsr_fig}" src="_images/removal_Lsr_fig.jpg" />
 <br/>
-Figure 1. Example of an individual UAS image (green band) with different radiometric values: (A) R<sub>UAS</sub>, (B) R<sub>UAS</sub> with initial sun glint masking and (C–F) remote sensing reflectance (R<sub>rs</sub>) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR &gt; 0, (F) Deglingting methods following [&#64;hedley_harborne_mumby_2005]. Figure taken from [&#64;windle_silsbe_2021].</p>
-<p>In <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code>, we provide the following methods to calculate R<sub>rs</sub>:</p>
+Figure 1. Example of an individual UAS image (green band) with different radiometric values: (A) R<sub>UAS</sub>, (B) R<sub>UAS</sub> with initial sun glint masking and (C–F) remote sensing reflectance (R<sub>rs</sub>) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR &gt; 0, (F) Deglingting methods following [&#64;hedley_harborne_mumby_2005]. Figure taken from <a class="reference external" href="https://doi.org/10.3389/fenvs.2021.674247">Windle &amp; Silsbe 2021</a>.</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code>, we provide the following methods to calculate L<sub>w</sub>:</p>
 <p><code class="docutils literal notranslate"><span class="pre">blackpixel_method()</span></code>
 <br/>
 One method to remove L<sub>SR</sub> relies on the so-called black pixel assumption that assumes L<sub>W</sub> in the near infrared (NIR) is negligible due to strong absorption of water. Where this assumption holds, at-sensor radiance measured in the NIR is solely L<sub>SR</sub> and allows ⍴ to be calculated if L<sub>sky</sub> is known. Studies have used this assumption to estimate and remove L<sub>SR</sub>; however, the assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and L<sub>W</sub> in the NIR [&#64;siegel_wang_maritorena_robinson_2000]. <em>Therefore, this method should only be used in waters whose optical propeties are dominated and co-vary with phytoplankton (e.g. Case 1, open ocean waters).</em></p>
@@ -226,9 +264,13 @@ This function loads a basemap and plots the georeferenced mosaic in the axes pro
 </ul>
 </li>
 </ul>
-<p><img alt="Caption for example figure.abel{fig:chl_mosaic}" src="figs/chl_mosaic.png" />
+<p><img alt="Caption for example figure.abel{fig:chl_mosaic}" src="_images/chl_mosaic.png" />
 <br/>
 Figure 2. Final orthmosaic of UAS images collected over Western Lake Erie processed to chlorophyll a concentration.</p>
+</section>
+<section id="references">
+<h2>References:<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<p>Windle AE and Silsbe GM (2021) Evaluation of Unoccupied Aircraft System (UAS) Remote Sensing Reflectance Retrievals for Water Quality Monitoring in Coastal Waters. Front. Environ. Sci. 9:674247. doi: 10.3389/fenvs.2021.674247</p>
 </section>
 </section>
 
