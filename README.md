@@ -6,10 +6,11 @@
 DroneWQ is a Python package that can be used to analyze multispectral data collected from a drone to derive ocean color radiometry and water quality properties. These scripts are specific for the MicaSense RedEdge and Altum cameras. 
 
 
-
 ![Caption for example figure.\label{fig:DroneWQ_workflow}](figs/DroneWQ.png)
 
-More information on the methods applied in this package can be found in:
+For details on the processing and theory of DroneWQ, please visit our readthedocs: https://dronewq.readthedocs.io/
+
+Additional information on the methods can be found in:
 
 Román, A., Heredia, S., Windle, A. E., Tovar-Sánchez, A., & Navarro, G., 2024. Enhancing Georeferencing and Mosaicking Techniques over Water Surfaces with High-Resolution Unmanned Aerial Vehicle (UAV) Imagery. Remote Sensing, 16(2), 290. https://doi.org/10.3390/rs16020290
 
