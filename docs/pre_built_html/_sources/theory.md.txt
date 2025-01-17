@@ -22,7 +22,7 @@ Eq. 3&nbsp;&nbsp;&nbsp;&nbsp; L<sub>T</sub>(θ, Φ, λ) = L<sub>W</sub>(θ, Φ, 
 </div>
 <br/>
 
-If the water surface was perfectly flat, incident light would reflect specularly and could be measured with known viewing geometries. This specular reflection of a level surface is known as the Fresnel reflection; however, most water bodies are not flat as winds and currents create tilting surface wave facets. Due to the differing orientation of wave facets reflecting radiance from different parts of the sky, L<sub>SR</sub> can vary widely within a single UAS image. A common approach to model L<sub>SR</sub> is to express it as the product of sky radiance (L<sub>sky</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) and ρ, the effective sea-surface reflectance of the wave facet [@mobley_1999; @lee_ahn_mobley_arnone_2010]:
+If the water surface was perfectly flat, incident light would reflect specularly and could be measured with known viewing geometries. This specular reflection of a level surface is known as the Fresnel reflection; however, most water bodies are not flat as winds and currents create tilting surface wave facets. Due to the differing orientation of wave facets reflecting radiance from different parts of the sky, L<sub>SR</sub> can vary widely within a single UAS image. A common approach to model L<sub>SR</sub> is to express it as the product of sky radiance (L<sub>sky</sub>, W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>) and ρ, the effective sea-surface reflectance of the wave facet ([Mobley 1999](https://doi.org/10.1364/AO.38.007442), [Lee et al 2010](https://doi.org/10.1364/OE.18.026313)):
 
 <div align="center">
 Eq. 4&nbsp;&nbsp;&nbsp;&nbsp; L<sub>SR</sub>(θ, Φ, λ)= ρ(θ, Φ, λ) ∗ L<sub>sky</sub>(θ', Φ, λ)
@@ -51,25 +51,25 @@ The main processing script has the ability to **1)** convert raw multispectral i
 
 ## Removal of surface reflected light (L<sub>T</sub> - L<sub>SR</sub> = L<sub>W</sub>) 
 
-The inclusion of L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> and remotely sensed water quality retrievals, as shown in Figure 1. `DroneWQ` provides three common approaches to remove L<sub>SR</sub> as described below. An intercomparison of L<sub>SR</sub> removal methods can be found in [Windle & Silsbe 2021](https://doi.org/10.3389/fenvs.2021.674247).
+The inclusion of L<sub>SR</sub> can lead to an overestimation of R<sub>rs</sub> and remotely sensed water quality retrievals, as shown in Figure 1. `DroneWQ` provides three common approaches to remove L<sub>SR</sub> as described below. An intercomparison of L<sub>SR</sub> removal methods can be found in [Windle & Silsbe (2021)](https://doi.org/10.3389/fenvs.2021.674247).
 
 ![Caption for example figure.\label{fig:removal_Lsr_fig}](_static/figs/removal_Lsr_fig.jpg)
 <br/>
-Figure 1. Example of an individual UAS image (green band) with different radiometric values: (A) R<sub>UAS</sub>, (B) R<sub>UAS</sub> with initial sun glint masking and (C–F) remote sensing reflectance (R<sub>rs</sub>) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR > 0, (F) Deglingting methods following [@hedley_harborne_mumby_2005]. Figure taken from [Windle & Silsbe 2021](https://doi.org/10.3389/fenvs.2021.674247).
+Figure 1. Example of an individual UAS image (green band) with different radiometric values: (A) R<sub>UAS</sub>, (B) R<sub>UAS</sub> with initial sun glint masking and (C–F) remote sensing reflectance (R<sub>rs</sub>) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR > 0, (F) Deglingting methods following [Hedley et al (2005)](https://doi.org/10.1080/01431160500034086). Figure taken from [Windle & Silsbe (2021)](https://doi.org/10.3389/fenvs.2021.674247).
 
 In `DroneWQ`, we provide the following methods to calculate L<sub>w</sub>:
 
 `blackpixel_method()`
 <br/>
-One method to remove L<sub>SR</sub> relies on the so-called black pixel assumption that assumes L<sub>W</sub> in the near infrared (NIR) is negligible due to strong absorption of water. Where this assumption holds, at-sensor radiance measured in the NIR is solely L<sub>SR</sub> and allows ⍴ to be calculated if L<sub>sky</sub> is known. Studies have used this assumption to estimate and remove L<sub>SR</sub>; however, the assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and L<sub>W</sub> in the NIR [@siegel_wang_maritorena_robinson_2000]. *Therefore, this method should only be used in waters whose optical propeties are dominated and co-vary with phytoplankton (e.g. Case 1, open ocean waters).* 
+One method to remove L<sub>SR</sub> relies on the so-called black pixel assumption that assumes L<sub>W</sub> in the near infrared (NIR) is negligible due to strong absorption of water. Where this assumption holds, at-sensor radiance measured in the NIR is solely L<sub>SR</sub> and allows ⍴ to be calculated if L<sub>sky</sub> is known. Studies have used this assumption to estimate and remove L<sub>SR</sub>; however, the assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and L<sub>W</sub> in the NIR [(Siegel et al 2000)](https://doi.org/10.1364/AO.39.003582). *Therefore, this method should only be used in waters whose optical propeties are dominated and co-vary with phytoplankton (e.g. Case 1, open ocean waters).* 
 
 `mobley_rho_method()`
 <br/>
-Tabulated ρ values have been derived from numerical simulations with modelled sea surfaces, Cox and Munk wave states (wind), and viewing geometries [@mobley_1999]. Mobley (1999) provides the recommendation of collecting radiance measurements at viewing directions of θ = 40° from nadir and ɸ = 135° from the sun to minimize the effects of sun glint and nonuniform sky radiance with a ⍴ value of 0.028 for wind speeds less than 5 m/s. These suggested viewing geometries and ⍴ value have been used to estimate and remove L<sub>SR</sub> in many remote sensing studies. *This method should only be used if using a UAS sensor that is angled 30-40° from nadir throughout the flight and if wind speed is less than 5 m/s.*
+Tabulated ρ values have been derived from numerical simulations with modelled sea surfaces, Cox and Munk wave states (wind), and viewing geometries ([Mobley 1999](https://doi.org/10.1364/AO.38.007442)). Mobley (1999) provides the recommendation of collecting radiance measurements at viewing directions of θ = 40° from nadir and ɸ = 135° from the sun to minimize the effects of sun glint and nonuniform sky radiance with a ⍴ value of 0.028 for wind speeds less than 5 m/s. These suggested viewing geometries and ⍴ value have been used to estimate and remove L<sub>SR</sub> in many remote sensing studies. *This method should only be used if using a UAS sensor that is angled 30-40° from nadir throughout the flight and if wind speed is less than 5 m/s.*
 
 `hedley_method()`
 <br/>
-Other methods to remove L<sub>SR</sub> include modelling a constant 'ambient' NIR signal that is removed from all pixels. This method relies on two assumptions: 1) The brightness in the NIR is composed only of sun glint and a spatially constant 'ambient' NIR component, and 2) The amount of L<sub>SR</sub> in the visible bands is linearly related to the amount in the NIR band [@hedley_harborne_mumby_2005]. Briefly, the minimum 10% of NIR radiance, min(Lt<sub>NIR</sub>), is calculated from a random subset of images. Next, linear relationships are established between the Lt<sub>NIR</sub> and the visible band values, which would be homogenous if not for the presence of L<sub>SR</sub>. Then, the slope (*b*) of the regressions are used to predict L<sub>SR</sub> for all pixels in the visible bands that would be expected if those pixels had a Lt<sub>NIR</sub> value of min(Lt<sub>NIR</sub>):
+Other methods to remove L<sub>SR</sub> include modelling a constant 'ambient' NIR signal that is removed from all pixels. This method relies on two assumptions: 1) The brightness in the NIR is composed only of sun glint and a spatially constant 'ambient' NIR component, and 2) The amount of L<sub>SR</sub> in the visible bands is linearly related to the amount in the NIR band [(Hedley et al 2005)](https://doi.org/10.1080/01431160500034086). Briefly, the minimum 10% of NIR radiance, min(Lt<sub>NIR</sub>), is calculated from a random subset of images. Next, linear relationships are established between the Lt<sub>NIR</sub> and the visible band values, which would be homogenous if not for the presence of L<sub>SR</sub>. Then, the slope (*b*) of the regressions are used to predict L<sub>SR</sub> for all pixels in the visible bands that would be expected if those pixels had a Lt<sub>NIR</sub> value of min(Lt<sub>NIR</sub>):
 <div align="center">
 <br/>
 Lw<sub>i</sub> = Lt<sub>i</sub> - b<sub>i</sub>(Lt(NIR) - min(Lt<sub>NIR</sub>)), where i is each band
@@ -113,12 +113,12 @@ R<sub>rs</sub> is often used as input into various bio-optical algorithms to obt
 
 `chl_hu()`
 <br/>
-This is the Ocean Color Index (CI) three-band reflectance difference algorithm [@hu_lee_franz_2012]. This should only be used for waters where chlorophyll-a retrievals are expected to be below 0.15 mg m^-3.
+This is the Ocean Color Index (CI) three-band reflectance difference algorithm [(Hu et al 2012)](https://doi.org/10.1029/2011JC007395). This should only be used for waters where chlorophyll-a retrievals are expected to be below 0.15 mg m^-3.
 <br/>
 
 `chl_ocx()`
 <br/>
-This is the OCx algorithm which uses a fourth-order polynomial relationship [@oreilly_maritorena_mitchell_siegel_carder_garver_kahru_mcclain_1998]. This should be used for chlorophyll retrievals above 0.2 mg m^-3. The coefficients for OC2 (OLI/Landsat 8) are used as default as the closest match in bands to the Micasense sensors.
+This is the OCx algorithm which uses a fourth-order polynomial relationship [(O'Reilly et al 1998)](https://doi.org/10.1029/98JC02160). This should be used for chlorophyll retrievals above 0.2 mg m^-3. The coefficients for OC2 (OLI/Landsat 8) are used as default as the closest match in bands to the Micasense sensors.
 <br/>
 
 `chl_hu_ocx()`
@@ -128,12 +128,12 @@ This is the blended NASA chlorophyll algorithm which merges the Hu et al. (2012)
 
 `chl_gitelson()`
 <br/>
-This algorithm estimates chlorophyll-a concentrations using a 2-band algorithm designed and recommended for turbid coastal (Case 2) waters [@gitelson_schalles_hladik_2007].
+This algorithm estimates chlorophyll-a concentrations using a 2-band algorithm designed and recommended for turbid coastal (Case 2) waters [(Gitelson et al 2007)](https://doi.org/10.1016/j.rse.2007.01.016).
 <br/>
 
 `nechad_tsm()`
 <br/>
-This algorithm estimates total suspended matter (TSM) concentrations and is tuned and tested in turbid waters [@nechad_ruddick_park_2010].
+This algorithm estimates total suspended matter (TSM) concentrations and is tuned and tested in turbid waters [(Nechad et al 2010)](https://doi.org/10.1016/j.rse.2009.11.022).
 <br/>
 
 
@@ -177,5 +177,21 @@ Notes on georeferencing:
 Figure 2. Final orthmosaic of UAS images collected over Western Lake Erie processed to chlorophyll a concentration.  
 
 ## References:
-Windle AE and Silsbe GM (2021) Evaluation of Unoccupied Aircraft System (UAS) Remote Sensing Reflectance Retrievals for Water Quality Monitoring in Coastal Waters. Front. Environ. Sci. 9:674247. doi: 10.3389/fenvs.2021.674247
+Windle A.E. and Silsbe G.M., Evaluation of Unoccupied Aircraft System (UAS) Remote Sensing Reflectance Retrievals for Water Quality Monitoring in Coastal Waters. Front. Environ. Sci. 9:674247. (2021) doi: 10.3389/fenvs.2021.674247
+
+Mobley C.D., Estimation of the remote-sensing reflectance from above-surface measurements, Appl. Opt. 38, 7442-7455 (1999) doi: 10.1364/AO.38.007442
+
+Lee Z., Ahn Y., Mobley C.D., and Arnone R., Removal of surface-reflected light for the measurement of remote-sensing reflectance from an above-surface platform, Opt. Express 18, 26313-26324 (2010) doi: 10.1364/OE.18.026313
+
+Hedley, J. D., Harborne, A. R., & Mumby, P. J., Technical note: Simple and robust removal of sun glint for mapping shallow‐water benthos. International Journal of Remote Sensing, 26(10), 2107–2112. (2005) doi: 10.1080/01431160500034086
+
+Siegel D.A., Wang M., Maritorena S., and Robinson W., Atmospheric correction of satellite ocean color imagery: the black pixel assumption, Appl. Opt. 39, 3582-3591 (2000) doi: 10.1364/AO.39.003582
+
+Hu, C., Z. Lee, and B. Franz, Chlorophyll aalgorithms for oligotrophic oceans: A novel approach based on three-band reflectance difference, J. Geophys. Res., 117, C01011, (2012) doi: 10.1029/2011JC007395
+
+O'Reilly, J. E., S. Maritorena, B. G. Mitchell, D. A. Siegel, K. L. Carder, S. A. Garver, M. Kahru, and C. McClain, Ocean color chlorophyll algorithms for SeaWiFS, J. Geophys. Res., 103(C11), 24937–24953, (1998) doi: 10.1029/98JC02160
+
+Gitelson A.A., J. F. Schalles, C. M. Hladik, Remote chlorophyll-a retrieval in turbid, productive estuaries: Chesapeake Bay case study, Remote Sensing of Environment, 109(4), 464-472, (2007) doi: 10.1016/j.rse.2007.01.016.	
+
+Nechad B., K.G. Ruddick, Y. Park, Calibration and validation of a generic multisensor algorithm for mapping of total suspended matter in turbid waters, Remote Sensing of Environment, 114(4), 854-866, (2010) doi: 10.1016/j.rse.2009.11.022.
   

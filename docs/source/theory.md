@@ -42,7 +42,7 @@ Eq. 6&nbsp;&nbsp;&nbsp;&nbsp; R<sub>rs</sub>(θ, Φ, λ) = R<sub>UAS</sub>(θ, �
 </div>
 <br/>
 
-'DroneWQ` provides multiple options from the literature for removing L<sub>SR</sub>.
+`DroneWQ` provides multiple options from the literature for removing L<sub>SR</sub>.
 
 A secondary challenge with aquatic UAS remote sensing is georferencing and mosaicking imagery. Many UAS remote sensing studies use Structure-from-Motion (SfM) photogrammetric techniques to stitch individual UAS images into ortho- and georectified mosaics. Current photogrammetry techniques are not capable of stitching UAS images captured over large bodies of water due to a lack of key points in images of homogenous water surfaces. <br>
 
