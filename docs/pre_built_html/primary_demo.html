@@ -740,7 +740,7 @@ Index([&#39;capture_1.tif&#39;, &#39;capture_2.tif&#39;, &#39;capture_3.tif&#39;
 </div>
 <p>Let’s compare this Rrs spectra to Rrs spectra retrived by a satellite at the same location and time. Below is a plot of Rrs from the Ocean Land Color Imager (OLCI) on board the European satellite, Sentinel-3A. OLCI collects in a few more bands which is why there are more points on the plot. However, the shape looks similar to the MicaSense retrieved Rrs. The troughs at 475 nm and 668 nm is associated with chlorophyll absorption and the peak at 717 nm is likely due to phytoplankton particle
 scattering.</p>
-<p><a href="#id1"><span class="problematic" id="id2">|8c80476ecb0746f2a97fc07c55494535|</span></a></p>
+<p><img alt="Lake Erie OLCI" src="_images/OLCI_Rrs_Lake_Erie.png" /></p>
 <p>Let’s plot the Lt, Lw, Ed spectra as well. First, we need to retrieve all the data.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
@@ -1388,7 +1388,8 @@ the median yaw angle, ignoring capturing collected during turns. More informatio
 100%|██████████| 17/17 [00:02&lt;00:00,  7.87it/s]
 </pre></div></div>
 </div>
-<p>When we plot these images in QGIS, it looks like: <a href="#id3"><span class="problematic" id="id4">|e65da98156464367beb2dd29c1fa47e5|</span></a></p>
+<p>When we plot these images in QGIS, it looks like:</p>
+<p><img alt="Auto Flightlines QGIS" src="_images/automatic_flightlines_QGIS.png" /></p>
 <p>You can see that using the metadata yaw angle in georeferencing doesn’t always lead to accurate georeferencing.</p>
 <ol class="arabic simple" start="2">
 <li><p>Running <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> using fixed yaw angles of 90 and 270 degrees:</p></li>
@@ -1439,7 +1440,8 @@ the median yaw angle, ignoring capturing collected during turns. More informatio
 100%|██████████| 17/17 [00:01&lt;00:00, 10.16it/s]
 </pre></div></div>
 </div>
-<p>When we plot these images in QGIS: <a href="#id5"><span class="problematic" id="id6">|631d550879404753989febe5d18aa727|</span></a></p>
+<p>When we plot these images in QGIS:</p>
+<p><img alt="Manual Flightlines QGIS" src="_images/manual_flightlines_QGIS.png" /></p>
 <p>You can see that using these fixed yaw angles leads to better georeferencing where the shoreline better matches to the satellite basemap.</p>
 <p>Therefore, we will use fixed yaw angles of 90 and 270 degrees to georeference the masked_chl_hu_ocx_imgs:</p>
 <div class="nbinput docutils container">
