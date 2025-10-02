@@ -4,6 +4,15 @@ import os
 
 DEFAULT_CONFIG = dotdict(
     main_dir=None,
+    raw_water_img_dir=None,
+    raw_sky_img_dir=None,
+    lt_dir=None,
+    sky_lt_dir=None,
+    lw_dir=None,
+    panel_dir=None,
+    rrs_dir=None,
+    masked_rrs_dir=None,
+    warp_img_dir=None,
 )
 
 main_thread_config = copy.deepcopy(DEFAULT_CONFIG)
