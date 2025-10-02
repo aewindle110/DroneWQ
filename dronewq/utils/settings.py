@@ -1,0 +1,90 @@
+from dronewq.utils.utils import dotdict
+import copy
+import os
+
+DEFAULT_CONFIG = dotdict(
+    main_dir=None,
+)
+
+main_thread_config = copy.deepcopy(DEFAULT_CONFIG)
+
+
+## Written by Temuulen
+## Took inspo from the DSPY package's settings
+class Settings:
+    """
+    A singleton class for the whole workflow.
+    If `main_dir` is given other dependent directories are automatically populated.
+    """
+
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+
+        return cls._instance
+
+    def __getattr__(self, name):
+        if name in main_thread_config:
+            return main_thread_config[name]
+        else:
+            raise ValueError(f"Settings has no attribute '{name}'.")
+
+    def __setattr__(self, name, value):
+        if name in ("_instance",):
+            super().__setattr__(name, value)
+        else:
+            self.configure(**{name: value})
+
+    def __getitem__(self, key):
+        return self.__getattr__(key)
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
+
+    def __contains__(self, key):
+        return key in main_thread_config
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except AttributeError:
+            return default
+
+    def copy(self):
+        return dotdict({**main_thread_config})
+
+    @property
+    def config(self):
+        return self.copy()
+
+    def configure(self, **kwargs):
+        # Update global config
+        for k, v in kwargs.items():
+            main_thread_config[k] = v
+
+        # If main_dir is set, automatically populate dependent dirs
+        if "main_dir" in kwargs:
+            if not isinstance(kwargs["main_dir"], str):
+                raise ValueError("main_dir should be a string of path.")
+
+            main_dir = kwargs["main_dir"]
+            main_thread_config["raw_water_img_dir"] = os.path.join(
+                main_dir, "raw_water_imgs"
+            )
+            main_thread_config["raw_sky_img_dir"] = os.path.join(
+                main_dir, "raw_sky_imgs"
+            )
+            main_thread_config["lt_dir"] = os.path.join(main_dir, "lt_imgs")
+            main_thread_config["sky_lt_dir"] = os.path.join(main_dir, "sky_lt_imgs")
+            main_thread_config["lw_dir"] = os.path.join(main_dir, "lw_imgs")
+            main_thread_config["panel_dir"] = os.path.join(main_dir, "panel")
+            main_thread_config["rrs_dir"] = os.path.join(main_dir, "rrs_imgs")
+            main_thread_config["masked_rrs_dir"] = os.path.join(
+                main_dir, "masked_rrs_images"
+            )
+            main_thread_config["warp_img_dir"] = os.path.join(main_dir, "align_img")
+
+
+settings = Settings()
