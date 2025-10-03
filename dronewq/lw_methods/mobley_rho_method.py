@@ -52,5 +52,5 @@ def mobley_rho_method(rho=0.028):
             )  # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(lw_dir, im_name), "w", **profile) as dst:
                 dst.write(stacked_lw)
-
+    # TODO: Should fix this return statement to other data.
     return True

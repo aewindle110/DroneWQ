@@ -13,6 +13,7 @@ DEFAULT_CONFIG = dotdict(
     rrs_dir=None,
     masked_rrs_dir=None,
     warp_img_dir=None,
+    metadata=None,
 )
 
 main_thread_config = copy.deepcopy(DEFAULT_CONFIG)
@@ -94,6 +95,7 @@ class Settings:
                 main_dir, "masked_rrs_images"
             )
             main_thread_config["warp_img_dir"] = os.path.join(main_dir, "align_img")
+            main_thread_config["metadata"] = os.path.join(main_dir, "metadata.csv")
 
 
 settings = Settings()
