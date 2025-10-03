@@ -220,6 +220,8 @@ def process_micasense_images(
         New .tif files for each capture in image directory with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
 
     """
+    if settings.main_dir is None:
+        raise LookupError("Please set the main_dir path.")
 
     if sky:
         img_dir = settings.raw_sky_img_dir
