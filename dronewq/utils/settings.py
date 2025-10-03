@@ -4,8 +4,8 @@ import os
 
 DEFAULT_CONFIG = dotdict(
     main_dir=None,
-    raw_water_img_dir=None,
-    raw_sky_img_dir=None,
+    raw_water_dir=None,
+    raw_sky_dir=None,
     lt_dir=None,
     sky_lt_dir=None,
     lw_dir=None,
@@ -80,12 +80,10 @@ class Settings:
                 raise ValueError("main_dir should be a string of path.")
 
             main_dir = kwargs["main_dir"]
-            main_thread_config["raw_water_img_dir"] = os.path.join(
+            main_thread_config["raw_water_dir"] = os.path.join(
                 main_dir, "raw_water_imgs"
             )
-            main_thread_config["raw_sky_img_dir"] = os.path.join(
-                main_dir, "raw_sky_imgs"
-            )
+            main_thread_config["raw_sky_dir"] = os.path.join(main_dir, "raw_sky_imgs")
             main_thread_config["lt_dir"] = os.path.join(main_dir, "lt_imgs")
             main_thread_config["sky_lt_dir"] = os.path.join(main_dir, "sky_lt_imgs")
             main_thread_config["lw_dir"] = os.path.join(main_dir, "lw_imgs")
