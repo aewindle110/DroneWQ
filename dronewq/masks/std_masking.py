@@ -5,15 +5,12 @@ import numpy as np
 import rasterio
 from dronewq.utils.images import retrieve_imgs_and_metadata
 
-def rrs_std_pixel_masking(num_images=10, mask_std_factor=1):
+
+def std_masking(num_images=10, mask_std_factor=1):
     """
     This function masks pixels based on a user supplied value in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std*mask_std_factor is masked across all bands. The lower the mask_std_factor, the more pixels will be masked.
 
     Parameters:
-        rrs_dir: A string containing the directory filepath of images to be processed
-
-        masked_rrs_dir: A string containing the directory filepath to write the new masked .tifs
-
         num_images: Number of images in the dataset to calculate the mean and std of NIR. Default is 10.
 
         mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1.
@@ -29,7 +26,6 @@ def rrs_std_pixel_masking(num_images=10, mask_std_factor=1):
     rrs_dir = settings.rrs_dir
     masked_rrs_dir = settings.masked_rrs_dir
 
-    
     # grab the first num_images images, finds the mean and std of NIR, then anything times the glint factor is classified as glint
     rrs_imgs, _ = retrieve_imgs_and_metadata(
         rrs_dir, count=num_images, start=0, altitude_cutoff=0, random=True
@@ -69,3 +65,4 @@ def rrs_std_pixel_masking(num_images=10, mask_std_factor=1):
             ) as dst:
                 dst.write(stacked_rrs_deglint)
     return True
+

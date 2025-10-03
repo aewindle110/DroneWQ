@@ -5,15 +5,11 @@ import rasterio
 from dronewq.utils.settings import settings
 
 
-def rrs_threshold_pixel_masking(nir_threshold=0.01, green_threshold=0.005):
+def threshold_masking(nir_threshold=0.01, green_threshold=0.005):
     """
     This function masks pixels based on user supplied Rrs thresholds in an effort to remove instances of specular sun glint, shadowing, or adjacent land when present in the images.
 
     Parameters:
-        rrs_dir: A string containing the directory filepath to write the new masked .tifs
-
-        masked_rrs_dir: A string containing the name of the directory to store masked Rrs images.
-
         nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features.
 
         green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing.
@@ -24,7 +20,7 @@ def rrs_threshold_pixel_masking(nir_threshold=0.01, green_threshold=0.005):
     """
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
-    
+
     rrs_dir = settings.rrs_dir
     masked_rrs_dir = settings.masked_rrs_dir
 
@@ -63,3 +59,4 @@ def rrs_threshold_pixel_masking(nir_threshold=0.01, green_threshold=0.005):
                 dst.write(stacked_rrs_mask)
 
     return True
+
