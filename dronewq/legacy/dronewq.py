@@ -1111,13 +1111,9 @@ def chl_ocx(Rrsblue, Rrsgreen):
     a3 = 2.5635
     a4 = -0.7218
 
-    log10chl = (
-        a0
-        + a1 * (np.log10(Rrsblue / Rrsgreen))
-        + a2 * (np.log10(Rrsblue / Rrsgreen)) ** 2
-        + a3 * (np.log10(Rrsblue / Rrsgreen)) ** 3
-        + a4 * (np.log10(Rrsblue / Rrsgreen)) ** 4
-    )
+    temp = np.log10(Rrsblue / Rrsgreen)
+
+    log10chl = a0 + a1 * (temp) + a2 * (temp) ** 2 + a3 * (temp) ** 3 + a4 * (temp) ** 4
 
     ocx = np.power(10, log10chl)
     return ocx
@@ -1148,13 +1144,9 @@ def chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred):
     ci1 = -0.4909
     ci2 = 191.6590
 
-    log10chl = (
-        a0
-        + a1 * (np.log10(Rrsblue / Rrsgreen))
-        + a2 * (np.log10(Rrsblue / Rrsgreen)) ** 2
-        + a3 * (np.log10(Rrsblue / Rrsgreen)) ** 3
-        + a4 * (np.log10(Rrsblue / Rrsgreen)) ** 4
-    )
+    temp = np.log10(Rrsblue / Rrsgreen)
+
+    log10chl = a0 + a1 * (temp) + a2 * (temp) ** 2 + a3 * (temp) ** 3 + a4 * (temp) ** 4
 
     ocx = np.power(10, log10chl)
 
@@ -2389,4 +2381,3 @@ def plot_georeferenced_data(
 
 
 ### END Georeferenced Plotting
-
