@@ -110,7 +110,7 @@ def dls_ed(output_csv_path, dls_corr=False):
         dls_ed_corr_data_df = pd.DataFrame.from_records(
             dls_ed_corr_data, index="image", columns=ed_columns
         )
-        dls_ed_corr_data_df.to_csv(output_csv_path + "/dls_corr_ed.csv")
+        dls_ed_corr_data_df.to_csv(os.path.join(output_csv_path, "dls_corr_ed.csv"))
 
     # now divide the lw_imagery by ed to get rrs
     # go through each Lt image in the dir and divide it by the lsky
