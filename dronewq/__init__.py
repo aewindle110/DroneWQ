@@ -13,7 +13,14 @@ from .lw_methods import *
 from .ed_methods import *
 from .masks import *
 from .core.raw_to_rss import process_raw_to_rrs
-from .core.wq_calc import save_wq_imgs
+from .core.wq_calc import (
+    save_wq_imgs,
+    chl_hu,
+    chl_ocx,
+    chl_hu_ocx,
+    chl_gitelson,
+    tsm_nechad,
+)
 from .core.georeference import compute_flight_lines, georeference
 from .core.plot_map import plot_basemap, plot_georeferenced_data
 

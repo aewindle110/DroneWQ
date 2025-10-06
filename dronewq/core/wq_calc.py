@@ -33,7 +33,7 @@ def save_wq_imgs(wq_alg="chl_gitelson", start=0, count=10000):
 
     main_dir = settings.main_dir
     rrs_img_dir = settings.rrs_dir
-    wq_dir_name = wq_alg + "_img"
+    wq_dir_name = "masked_" + wq_alg + "_imgs"
 
     def _capture_path_to_int(path: str) -> int:
         return int(os.path.basename(path).split("_")[-1].split(".")[0])
@@ -72,6 +72,7 @@ def save_wq_imgs(wq_alg="chl_gitelson", start=0, count=10000):
             **profile,
         ) as dst:
             dst.write(wq, 1)
+    settings.wq_dir = os.path.join(main_dir, wq_dir_name)
 
 
 def chl_hu(Rrsblue, Rrsgreen, Rrsred):

@@ -90,7 +90,7 @@ class Settings:
             main_thread_config["panel_dir"] = os.path.join(main_dir, "panel")
             main_thread_config["rrs_dir"] = os.path.join(main_dir, "rrs_imgs")
             main_thread_config["masked_rrs_dir"] = os.path.join(
-                main_dir, "masked_rrs_images"
+                main_dir, "masked_rrs_imgs"
             )
             main_thread_config["warp_img_dir"] = os.path.join(main_dir, "align_img")
             main_thread_config["metadata"] = os.path.join(main_dir, "metadata.csv")
