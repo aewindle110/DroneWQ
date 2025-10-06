@@ -4,14 +4,18 @@
 
 from .utils.settings import settings
 from .utils.metadata import write_metadata_csv
-from .utils.images import retrieve_imgs_and_metadata, process_micasense_images
+from .utils.images import (
+    retrieve_imgs_and_metadata,
+    process_micasense_images,
+    downsample,
+)
 from .lw_methods import *
 from .ed_methods import *
 from .masks import *
 from .core.raw_to_rss import process_raw_to_rrs
 from .core.wq_calc import save_wq_imgs
-from .core.downsample import downsample
 from .core.georeference import compute_flight_lines, georeference
+from .core.plot_map import plot_basemap, plot_georeferenced_data
 import dronewq.legacy
 
 # Singleton definitions and aliasing
