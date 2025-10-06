@@ -4,8 +4,8 @@ from dronewq.utils.images import retrieve_imgs_and_metadata, process_micasense_i
 from dronewq.lw_methods import *
 from dronewq.ed_methods import *
 from dronewq.masks import *
-from dronewq.core import *
-from dronewq.calc.wq_calc import save_wq_imgs
+from dronewq.core.raw_to_rss import process_raw_to_rrs
+from dronewq.core.wq_calc import save_wq_imgs
 import dronewq.legacy
 
 # Singleton definitions and aliasing

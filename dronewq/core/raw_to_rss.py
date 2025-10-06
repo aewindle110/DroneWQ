@@ -9,7 +9,6 @@ import os
 
 # TODO: Make this a class
 def process_raw_to_rrs(
-    main_dir,
     output_csv_path,
     lw_method="mobley_rho_method",
     mask_pixels=False,
@@ -26,8 +25,6 @@ def process_raw_to_rrs(
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
 
     Parameters:
-        main_dir: A string containing the main image directory
-
         output_csv_path: A string containing the filepath to write the metadata.csv
 
         lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method().
@@ -61,7 +58,10 @@ def process_raw_to_rrs(
     # specify the locations of the different levels of imagery
     # I do this partially so I can just change these pointers to the data and not have to copy it or have complex logic repeated
 
-    ### os join here
+    if settings.main_dir is None:
+        raise LookupError("Please set the main_dir path.")
+
+    main_dir = settings.main_dir
     raw_water_img_dir = settings.raw_water_dir
     raw_sky_img_dir = settings.raw_sky_dir
 
