@@ -1,4 +1,4 @@
-from dronewq.legacy.micasense import imageset
+from micasense import imageset
 import numpy as np
 import pandas as pd
 import glob

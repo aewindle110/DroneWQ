@@ -16,7 +16,6 @@ from .core.raw_to_rss import process_raw_to_rrs
 from .core.wq_calc import save_wq_imgs
 from .core.georeference import compute_flight_lines, georeference
 from .core.plot_map import plot_basemap, plot_georeferenced_data
-import dronewq.legacy
 
 # Singleton definitions and aliasing
 configure = settings.configure

@@ -1,20 +1,26 @@
 import os
 import pandas as pd
 import math
+from micasense.imageset import ImageSet
 
 
-def write_metadata_csv(img_set, csv_output_path):
+def write_metadata_csv(img_dir, csv_output_path):
     """
     This function grabs the EXIF metadata from img_set and writes it to outputPath/metadata.csv. Other metadata could be added based on what is needed in your workflow.
 
     Parameters:
-        img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py
+        img_dir: a string containing the filepath of the raw .tifs
         csv_output_path: A string containing the filepath to store metadata.csv containing image EXIF metadata
 
     Returns:
         A .csv of metadata for each image capture.
 
     """
+
+    if not os.path.exists(img_dir):
+        raise FileNotFoundError(f"Image directory {img_dir} does not exist.")
+
+    img_set = ImageSet.from_directory(img_dir)
 
     def decdeg2dms(dd):
         minutes, seconds = divmod(abs(dd) * 3600, 60)

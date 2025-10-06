@@ -10,7 +10,7 @@ from tqdm import tqdm
 from rasterio.transform import Affine
 from rasterio.enums import Resampling
 from dronewq.utils.settings import settings
-from dronewq.legacy import micasense
+import micasense
 
 # FIXME: Should rename this file
 
@@ -228,9 +228,9 @@ def process_micasense_images(
         raise LookupError("Please set the main_dir path.")
 
     if sky:
-        img_dir = settings.raw_sky_img_dir
+        img_dir = settings.raw_sky_dir
     else:
-        img_dir = settings.raw_sky_img_dir
+        img_dir = settings.raw_water_dir
 
     imgset = micasense.imageset.ImageSet.from_directory(img_dir)
 
@@ -258,7 +258,7 @@ def process_micasense_images(
         overwrite_lt_lw=overwrite_lt_lw,
     ):
         print("Finished saving images.")
-        fullCsvPath = dronewq.write_metadata_csv(imgset, output_path)
+        fullCsvPath = dronewq.write_metadata_csv(img_dir, output_path)
         print("Finished saving image metadata.")
 
     return output_path

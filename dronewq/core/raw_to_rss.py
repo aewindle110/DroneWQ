@@ -1,6 +1,6 @@
 import dronewq
 from dronewq.utils.settings import settings
-from dronewq.legacy.micasense import imageset
+from micasense import imageset
 from pathlib import Path
 import glob
 import shutil
