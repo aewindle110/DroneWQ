@@ -2,7 +2,6 @@ import numpy as np
 from typing import List, Tuple
 
 
-
 def is_on_right_side(x, y, xy0, xy1):
     """
     Given a point and 2 points defining a rect, check if the point is on the right side or not.
@@ -113,7 +112,7 @@ def get_center(points):
 class Paralelogram2D:
     """This class represents a paralelogram"""
 
-    def __init__(self, points):
+    def __init__(self, points: List[Tuple[float, float]]):
         """This constructor receives a list of points and sets the pairs of lines
 
         Parameters:
@@ -124,7 +123,7 @@ class Paralelogram2D:
         self.lines = [[0, 1], [1, 2], [2, 3], [3, 0]]
         self.pairs = [[0, 2], [1, 3]]
 
-    def get_line_center(self, index):
+    def get_line_center(self, index: int):
         """This functions returns the center of a specific line of the paralelogram
 
         Parameters:
@@ -136,7 +135,7 @@ class Paralelogram2D:
 
         return sum(self.points[self.lines[index]]) / 2
 
-    def get_offset_to_lines(self, index, point):
+    def get_offset_to_lines(self, index: int, point: np.ndarray):
         """This functions returns a Vector that represents what should be direction of point for being in the specified line
 
         Parameters:
@@ -159,7 +158,7 @@ class Paralelogram2D:
 
         return get_center(self.points)
 
-    def move_line_from_offset(self, index, offset):
+    def move_line_from_offset(self, index: int, offset: np.ndarray):
         """This function moves a specific line given an offset vector
 
         Parameters:
@@ -170,7 +169,7 @@ class Paralelogram2D:
 
         self.points[self.lines[index]] += offset
 
-    def are_on_right_side_of_line(self, index, points):
+    def are_on_right_side_of_line(self, index: int, points: np.ndarray):
         """This function checks if a list of points is on the right side of a specific line
 
         Parameters:
@@ -188,3 +187,4 @@ class Paralelogram2D:
                 for point in points
             ]
         )
+

@@ -5,7 +5,7 @@ from dronewq.lw_methods import *
 from dronewq.ed_methods import *
 from dronewq.masks import *
 from dronewq.core import *
-from dronewq.wq_calc import wq_calc
+from dronewq.calc.wq_calc import save_wq_imgs
 import dronewq.legacy
 
 # Singleton definitions and aliasing

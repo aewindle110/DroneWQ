@@ -1,4 +1,77 @@
+from tqdm import tqdm
+from dronewq.utils.images import load_images
+from dronewq.utils.settings import settings
 import numpy as np
+import rasterio
+import glob
+import os
+
+
+def save_wq_imgs(wq_alg="chl_gitelson", start=0, count=10000):
+    """
+    This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
+
+    Parameters:
+        main_dir: A string containing main directory
+
+        rrs_img_dir: A string containing directory of Rrs images
+
+        wq_dir_name: A string containing the directory that the wq images will be saved
+
+        wq_alg: what wq algorithm to apply
+
+        start: The image to start loading from. Default is 0.
+
+        count: The amount of images to load. Default is 10000
+
+    Returns:
+        New georeferenced .tifs with same units of images in img_dir
+    """
+
+    if settings.main_dir is None:
+        raise LookupError("Please set the main_dir path.")
+
+    main_dir = settings.main_dir
+    rrs_img_dir = settings.rrs_dir
+    wq_dir_name = wq_alg + "_img"
+
+    def _capture_path_to_int(path: str) -> int:
+        return int(os.path.basename(path).split("_")[-1].split(".")[0])
+
+    filenames = sorted(
+        glob.glob(os.path.join(main_dir, rrs_img_dir, "*")), key=_capture_path_to_int
+    )[start:count]
+
+    # make wq_dir directory
+    if not os.path.exists(os.path.join(main_dir, wq_dir_name)):
+        os.makedirs(os.path.join(main_dir, wq_dir_name))
+
+    BLUE, GREEN, RED, RED_EDGE = 0, 1, 2, 3
+
+    for filename in tqdm(filenames, total=len(filenames)):
+        rrs = np.squeeze(load_images([filename]))
+
+        if wq_alg == "chl_hu":
+            wq = chl_hu(rrs[BLUE, :, :], rrs[GREEN, :, :], rrs[RED, :, :])
+        elif wq_alg == "chl_ocx":
+            wq = chl_ocx(rrs[BLUE, :, :], rrs[GREEN, :, :])
+        elif wq_alg == "chl_hu_ocx":
+            wq = chl_hu_ocx(rrs[BLUE, :, :], rrs[GREEN, :, :], rrs[RED, :, :])
+        elif wq_alg == "chl_gitelson":
+            wq = chl_gitelson(rrs[RED, :, :], rrs[RED_EDGE, :, :])
+        elif wq_alg == "nechad_tsm":
+            wq = tsm_nechad(rrs[RED, :, :])
+
+        with rasterio.open(filename, "r") as src:
+            profile = src.profile
+            profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
+
+        with rasterio.open(
+            os.path.join(main_dir, wq_dir_name, os.path.basename(filename)),
+            "w",
+            **profile,
+        ) as dst:
+            dst.write(wq, 1)
 
 
 def chl_hu(Rrsblue, Rrsgreen, Rrsred):
@@ -116,3 +189,24 @@ def chl_gitelson(Rrsred, Rrsrededge):
 
     chl = 59.826 * (Rrsrededge / Rrsred) - 17.546
     return chl
+
+
+######## TSM retrieval algs ######
+
+
+def tsm_nechad(Rrsred):
+    """
+    This algorithm estimates total suspended matter (TSM) concentrations using the Nechad et al. (2010) algorithm. doi:10.1016/j.rse.2009.11.022
+
+    Parameters:
+        Rrsred: numpy array of Rrs in the red band.
+
+    Returns:
+        Numpy array of derived chlorophyll (mg m^-3).
+    """
+    A = 374.11
+    B = 1.61
+    C = 17.38
+
+    tsm = (A * Rrsred / (1 - (Rrsred / C))) + B
+    return tsm
