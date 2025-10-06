@@ -352,44 +352,37 @@ class Mosaic:
                 )
 
         return final_data
+    
+    def run(self):
+        methods = {
+            "mean": self.__mean,
+            "first": self.__first,
+            "max": self.__max,
+            "min": self.__min,
+        }
+        method_func = methods.get(self.method, self.__mean)
 
-    # methods = {
-    #     "mean": __mean,
-    #     "first": __first,
-    #     "max": __max,
-    #     "min": __min,
-    # }
+        with rasterio.open(self.raster_paths[0], "r") as raster:
+            n_bands = raster.count
+            profile = raster.profile
+            if len(self.raster_paths) > 1:
+                width, height, transform = self.__get_merge_transform(self.raster_paths)
+                profile["width"] = width
+                profile["height"] = height
+                profile["transform"] = transform
+            else:
+                width, height = raster.width, raster.height
 
-    # method = methods.get(method, method)
+        if self.band_names is not None and n_bands == len(self.band_names):
+            profile["count"] = 1
+            for band_index, band_name in enumerate(self.band_names):
+                output_path = self.output_name.replace(".", f"_band_{band_name}.")
+                with rasterio.open(output_path, "w", **profile) as dst:
+                    data = method_func(dst, self.raster_paths, n_bands, width, height, self.dtype, band_index)
+                    dst.write(np.array([data[band_index]]))
+        else:
+            with rasterio.open(self.output_name, "w", **profile) as dst:
+                data = method_func(dst, self.raster_paths, n_bands, width, height, self.dtype)
+                dst.write(data)
 
-    # with rasterio.open(raster_paths[0], "r") as raster:
-    #     n_bands = raster.count
-    #     profile = raster.profile
-    #     if len(raster_paths) > 1:
-    #         width, height, transform = __get_merge_transform(raster_paths)
-    #         profile["width"] = width
-    #         profile["height"] = height
-    #         profile["transform"] = transform
-    #     else:
-    #         width, height = raster.width, raster.height
-
-    # if band_names is not None and n_bands == len(band_names):
-    #     profile["count"] = 1
-
-    #     with rasterio.open(
-    #         output_name.replace(".", f"_band_{band_names[0]}."), "w", **profile
-    #     ) as dst:
-    #         data = method(dst, raster_paths, n_bands, width, height, dtype)
-
-    #     for band_index in range(n_bands):
-    #         with rasterio.open(
-    #             output_name.replace(".", f"_band_{band_names[band_index]}."),
-    #             "w",
-    #             **profile,
-    #         ) as dst:
-    #             dst.write(np.array([data[band_index]]))
-    # else:
-    #     with rasterio.open(output_name, "w", **profile) as dst:
-    #         dst.write(method(dst, raster_paths, n_bands, width, height, dtype))
-
-    # return output_name
+        return self.output_name
