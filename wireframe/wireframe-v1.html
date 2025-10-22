@@ -654,6 +654,79 @@
                         Final georeferenced mosaic overlay. Coordinates: 42.0235°N, 83.4075°W | Resolution: 2.5 cm/pixel
                     </div>
                 </div>
+                <!-- SETTINGS -->
+            <div id="settings" class="screen">
+                <div class="content-header">
+                    <div class="content-title">Project Settings</div>
+                </div>
+                
+                <div class="back-arrow" onclick="navigate('home')">
+                    ← Back to Home Page
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h3 style="font-size: 22px; margin-bottom: 8px;">Algae Survey</h3>
+                    <p style="color: #7F8C8D;">Data Source: /user/Downloads/Algae_Survey/raw_images | Created: 09/22/2025</p>
+                </div>
+
+                <div class="form-panel">
+                    <h4 style="margin-bottom: 20px;">Change Project Settings</h4>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Sky Glint Removal Method</label>
+                        <select class="form-select">
+                            <option selected>Mobley Rho Method</option>
+                            <option>Black Pixel Method</option>
+                            <option>Hedley Method</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Irradiance Normalization Method</label>
+                        <select class="form-select">
+                            <option selected>Panel Ed</option>
+                            <option>DLS Ed</option>
+                            <option>DLS corrected by panel</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Pixel Masking</label>
+                        <select class="form-select">
+                            <option>None</option>
+                            <option selected>Value Threshold</option>
+                            <option>Standard Deviation Threshold</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Selected Outputs</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-option">
+                                <input type="checkbox" checked>
+                                <span>Chlorophyll-a (Hu Color Index)</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" checked>
+                                <span>Total Suspended Matter (TSM)</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox">
+                                <span>Chlorophyll-a (OCx Band Ratio)</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox">
+                                <span>Generate Mosaics for each metric</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" onclick="navigate('home')">Cancel</button>
+                        <button class="btn btn-primary" onclick="navigate('loading')">Process with New Settings</button>
+                    </div>
+                </div>
+            </div>
             </div>
             </div>
             </div>
