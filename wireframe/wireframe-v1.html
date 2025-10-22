@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Data Processing Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #F0F2F5;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .desktop-frame {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1920px;
+            margin: 0 auto;
+            background: white;
+        }
+        .title-bar {
+            background: #2C3E50;
+            color: white;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .title-text {
+            font-size: 14px;
+        }
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .window-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .close { background: #FF5F56; }
+        .minimize { background: #FFBD2E; }
+        .maximize { background: #27C93F; }
+        .main-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .screen {
+            display: none;
+            padding: 30px 40px;
+        }
+        .screen.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="desktop-frame">
+        <div class="title-bar">
+            <span class="title-text">Drone Data Processing Platform - CS408</span>
+            <div class="window-controls">
+                <div class="window-btn minimize"></div>
+                <div class="window-btn maximize"></div>
+                <div class="window-btn close"></div>
+            </div>
+        </div>
+        <div class="main-container">
+            <!-- Screens will go here -->
+        </div>
+    </div>
+    <script>
+        function navigate(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screen).classList.add('active');
+        }
+    </script>
+</body>
+</html>
