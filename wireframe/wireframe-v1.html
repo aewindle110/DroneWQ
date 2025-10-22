@@ -58,6 +58,67 @@
         .screen.active {
             display: block;
         }
+
+        .content-header {
+            background: #ECF0F1;
+            padding: 20px 40px;
+            border-bottom: 2px solid #BDC3C7;
+            margin: -30px -40px 30px -40px;
+        }
+        .content-title {
+            font-size: 24px;
+            color: #2C3E50;
+            font-weight: 600;
+        }
+        .toolbar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #CED4DA;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: #3498DB;
+            color: white;
+        }
+        .btn-secondary {
+            background: #ECF0F1;
+            color: #2C3E50;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #DEE2E6;
+        }
+        .data-table th {
+            background: #F8F9FA;
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 2px solid #DEE2E6;
+        }
+        .data-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #DEE2E6;
+        }
+        .project-link {
+            color: #3498DB;
+            text-decoration: none;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -71,7 +132,36 @@
             </div>
         </div>
         <div class="main-container">
-            <!-- Screens will go here -->
+            <!-- HOME -->
+            <div id="home" class="screen active">
+                <div class="content-header">
+                    <div class="content-title">Projects Dashboard</div>
+                </div>
+                <div class="toolbar">
+                    <input type="text" class="search-input" placeholder="Search projects...">
+                    <button class="btn btn-primary" onclick="navigate('upload')">+ New Project</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Method</th>
+                            <th>Data Source</th>
+                            <th>Date Created</th>
+                            <th style="text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="#" class="project-link">Algae Survey</a></td>
+                            <td>Mobley Rho Method</td>
+                            <td>/user/Downloads/Algae_Survey/raw_images</td>
+                            <td>09/22/2025</td>
+                            <td style="text-align: center;">⋮</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
     <script>
