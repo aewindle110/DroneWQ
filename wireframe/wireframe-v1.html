@@ -241,6 +241,103 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        .results-bar {
+            padding: 20px;
+            background: #F8F9FA;
+            border: 1px solid #DEE2E6;
+            border-radius: 4px;
+            margin-bottom: 25px;
+        }
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 2px solid #DEE2E6;
+            margin-bottom: 30px;
+        }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+        .tab.active {
+            color: #3498DB;
+            border-bottom-color: #3498DB;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+        .chart-container {
+            border: 1px solid #DEE2E6;
+            border-radius: 6px;
+            padding: 20px;
+        }
+        .chart-container img {
+            width: 100%;
+        }
+        .chart-container h4 {
+            margin-bottom: 15px;
+        }
+        .chart-blurb {
+            margin-top: 12px;
+            padding: 10px;
+            background: #F8F9FA;
+            border-left: 3px solid #3498DB;
+            font-size: 13px;
+            color: #495057;
+        }
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .image-box {
+            aspect-ratio: 1;
+            background: #ECF0F1;
+            border: 2px solid #DEE2E6;
+            border-radius: 4px;
+        }
+        .image-box.selected {
+            border-color: #3498DB;
+            border-width: 3px;
+        }
+        .trajectory-data {
+            background: #F8F9FA;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #DEE2E6;
+        }
+        .data-label {
+            font-weight: 600;
+            color: #2C3E50;
+        }
+        .back-arrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #3498DB;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .back-arrow:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -474,6 +571,90 @@
                 <div class="spinner"></div>
                 <p style="text-align: center;">Processing data...</p>
             </div>
+
+            <!-- RESULTS -->
+            <div id="results" class="screen">
+                <div class="content-header">
+                    <div class="content-title">Results</div>
+                </div>
+                
+                <div class="back-arrow" onclick="navigate('home')">
+                    ← Back to Projects
+                </div>
+                
+                <div class="results-bar">
+                    <h3>Algae Survey</h3>
+                    <p>22.09.2025 | Location: 42.0235°N, 83.4075°W</p>
+                </div>
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('overview')">Overview</div>
+                    <div class="tab" onclick="switchTab('images')">Images</div>
+                    <div class="tab" onclick="switchTab('trajectory')">Flight Trajectory</div>
+                    <div class="tab" onclick="switchTab('mosaic')">Mosaic</div>
+                </div>
+                <div id="overview" class="tab-content active">
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4>Remote Sensing Reflectance</h4>
+                            <img src="https://i.imgur.com/TbT82XV.png" alt="Chart">
+                            <div class="chart-blurb">How to read graph</div>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Chlorophyll Maps</h4>
+                            <img src="https://i.imgur.com/Jy2rdnZ.png" alt="Chart">
+                            <div class="chart-blurb">How to read graph</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="images" class="tab-content">
+                    <div class="images-grid">
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box selected"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                    </div>
+                </div>
+                <div id="trajectory" class="tab-content">
+                    <div class="trajectory-data">
+                        <h4 style="margin-bottom: 15px;">Flight Data Summary</h4>
+                        <div class="data-row">
+                            <span class="data-label">Altitude:</span>
+                            <span>260-268 m</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Latitude/Longitude:</span>
+                            <span>42.0235°N, 83.4075°W</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Yaw:</span>
+                            <span>0-350°</span>
+                        </div>
+                    </div>
+                    <img src="https://i.imgur.com/Jy2rdnZ.png" alt="Flight Trajectory" style="width: 100%; border-radius: 4px;">
+                </div>
+                <div id="mosaic" class="tab-content">
+                    <div style="background: #F8F9FA; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                        <strong>Map Controls:</strong> [Placeholder for API Map Integration - Leaflet/Google Maps]
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="btn btn-secondary" style="padding: 8px 16px;">🗺️ Toggle Map Layer</button>
+                            <button class="btn btn-secondary" style="padding: 8px 16px;">🔍 Zoom</button>
+                            <button class="btn btn-secondary" style="padding: 8px 16px;">📍 Add Marker</button>
+                        </div>
+                    </div>
+                    <img src="https://i.imgur.com/fBJpRAc.jpeg" alt="Mosaic" style="width: 100%;">
+                    <div class="chart-blurb" style="margin-top: 15px;">
+                        Final georeferenced mosaic overlay. Coordinates: 42.0235°N, 83.4075°W | Resolution: 2.5 cm/pixel
+                    </div>
+                </div>
+            </div>
             </div>
             </div>
         </div>
@@ -495,6 +676,14 @@
                 if (m !== menu) m.classList.remove('show');
             });
             menu.classList.toggle('show');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
         }
 
         document.addEventListener('click', function() {
