@@ -1,3 +1,10 @@
+# Node.js / Electron
+node_modules/
+package-lock.json
+dist/
+out/
+*.log
+
 ### specific to our package
 
 data/
