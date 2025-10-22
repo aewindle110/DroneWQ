@@ -58,7 +58,6 @@
         .screen.active {
             display: block;
         }
-
         .content-header {
             background: #ECF0F1;
             padding: 20px 40px;
@@ -119,7 +118,6 @@
             text-decoration: none;
             font-weight: 500;
         }
-
         .three-dots {
             cursor: pointer;
             font-size: 24px;
@@ -160,7 +158,6 @@
         .menu-item:hover {
             background: #F8F9FA;
         }
-
         .upload-zone {
             border: 3px dashed #BDC3C7;
             border-radius: 8px;
@@ -169,12 +166,6 @@
             background: #F8F9FA;
             margin: 30px 0;
         }
-        .form-actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-        }
-
         .form-panel {
             max-width: 700px;
             margin: 0 auto;
@@ -214,7 +205,6 @@
             border: 1px solid #CED4DA;
             border-radius: 4px;
         }
-
         .checkbox-group {
             max-height: 320px;
             overflow-y: auto;
@@ -229,6 +219,11 @@
             border: 1px solid #DEE2E6;
             border-radius: 4px;
         }
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
         .spinner {
             width: 60px;
             height: 60px;
@@ -241,7 +236,6 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
         .results-bar {
             padding: 20px;
             background: #F8F9FA;
@@ -350,6 +344,7 @@
                 <div class="window-btn close"></div>
             </div>
         </div>
+
         <div class="main-container">
             <!-- HOME -->
             <div id="home" class="screen active">
@@ -372,7 +367,7 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td><a href="#" class="project-link">Algae Survey</a></td>
+                            <td><a href="#" class="project-link" onclick="navigate('results'); return false;">Algae Survey</a></td>
                             <td>Mobley Rho Method</td>
                             <td>/user/Downloads/Algae_Survey/raw_images</td>
                             <td>09/22/2025</td>
@@ -388,7 +383,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><a href="#" class="project-link">Coastal Water Quality</a></td>
+                            <td><a href="#" class="project-link" onclick="navigate('results'); return false;">Coastal Water Quality</a></td>
                             <td>Black Pixel Method</td>
                             <td>/user/Documents/Coastal_Study/multispectral_data</td>
                             <td>09/15/2025</td>
@@ -404,7 +399,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><a href="#" class="project-link">Lake Michigan Study</a></td>
+                            <td><a href="#" class="project-link" onclick="navigate('results'); return false;">Lake Michigan Study</a></td>
                             <td>Hedley Method</td>
                             <td>/user/Downloads/Lake_Michigan/hyperspectral_imgs</td>
                             <td>09/08/2025</td>
@@ -420,7 +415,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><a href="#" class="project-link">Reef Monitoring 2025</a></td>
+                            <td><a href="#" class="project-link" onclick="navigate('results'); return false;">Reef Monitoring 2025</a></td>
                             <td>Mobley Rho Method</td>
                             <td>/user/Downloads/Reef_Data/rgb_images</td>
                             <td>08/30/2025</td>
@@ -436,7 +431,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><a href="#" class="project-link">Turbidity Assessment</a></td>
+                            <td><a href="#" class="project-link" onclick="navigate('results'); return false;">Turbidity Assessment</a></td>
                             <td>Black Pixel Method</td>
                             <td>/user/Downloads/Lake_Erie/raw_water_imgs</td>
                             <td>08/22/2025</td>
@@ -512,8 +507,9 @@
                         <button class="btn btn-primary" onclick="navigate('outputs')">Next</button>
                     </div>
                 </div>
+            </div>
 
-                <!-- OUTPUTS -->
+            <!-- OUTPUTS -->
             <div id="outputs" class="screen">
                 <div class="content-header">
                     <div class="content-title">Output Selection</div>
@@ -562,8 +558,9 @@
                         <button class="btn btn-primary" onclick="navigate('loading')">Process</button>
                     </div>
                 </div>
+            </div>
 
-                <!-- LOADING -->
+            <!-- LOADING -->
             <div id="loading" class="screen">
                 <div class="content-header">
                     <div class="content-title">Processing</div>
@@ -654,7 +651,9 @@
                         Final georeferenced mosaic overlay. Coordinates: 42.0235°N, 83.4075°W | Resolution: 2.5 cm/pixel
                     </div>
                 </div>
-                <!-- SETTINGS -->
+            </div>
+
+            <!-- SETTINGS -->
             <div id="settings" class="screen">
                 <div class="content-header">
                     <div class="content-title">Project Settings</div>
@@ -666,7 +665,7 @@
 
                 <div style="margin-bottom: 30px;">
                     <h3 style="font-size: 22px; margin-bottom: 8px;">Algae Survey</h3>
-                    <p style="color: #7F8C8D;">Data Source: /user/Downloads/Algae_Survey/raw_images | Created: 09/22/2025</p>
+                    <p style="color: #7F8C8D;">Data Source: Drone RGB | Created: 09/22/2025</p>
                 </div>
 
                 <div class="form-panel">
@@ -727,11 +726,9 @@
                     </div>
                 </div>
             </div>
-            </div>
-            </div>
-            </div>
         </div>
     </div>
+
     <script>
         function navigate(screen) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -742,6 +739,14 @@
             }
         }
 
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
         function toggleMenu(e) {
             e.stopPropagation();
             const menu = e.target.querySelector('.actions-menu');
@@ -749,14 +754,6 @@
                 if (m !== menu) m.classList.remove('show');
             });
             menu.classList.toggle('show');
-        }
-
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            
-            document.getElementById(tab).classList.add('active');
-            event.target.classList.add('active');
         }
 
         document.addEventListener('click', function() {
