@@ -64,6 +64,8 @@ window.initializeDashboard = initializeDashboard;
 window.deleteProject = deleteProject;
 window.duplicateProject = duplicateProject;
 window.exportProject = exportProject;
+window.addProject = addProject;
+
 
 
 // Render projects table
@@ -231,4 +233,21 @@ function showNotification(message, type = 'info') {
         notification.style.animation = 'slideIn 0.3s ease reverse';
         setTimeout(() => notification.remove(), 300);
     }, 3000);
+}
+// Add a new project (will be called when user completes processing)
+function addProject(projectData) {
+    const newProject = {
+        id: projects.length > 0 ? Math.max(...projects.map(p => p.id)) + 1 : 1,
+        name: projectData.name,
+        method: projectData.method,
+        dataSource: projectData.dataSource,
+        fullPath: projectData.fullPath,
+        dateCreated: new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+    };
+    
+    projects.push(newProject);
+    renderProjects(projects);
+    showNotification(`Project "${newProject.name}" created successfully!`, 'success');
+    
+    return newProject.id;
 }
