@@ -61,3 +61,47 @@ function initializeDashboard() {
 
 // Make functions available globally
 window.initializeDashboard = initializeDashboard;
+
+// Render projects table
+function renderProjects(projectsToRender) {
+    const tbody = document.querySelector('.data-table tbody');
+    
+    if (projectsToRender.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #7F8C8D;">
+                    No projects found. Create a new project to get started!
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = projectsToRender.map(project => `
+        <tr data-project-id="${project.id}">
+            <td>
+                <a href="#" class="project-link" onclick="navigate('results'); return false;">
+                    ${project.name}
+                </a>
+            </td>
+            <td>${project.method}</td>
+            <td>
+                <span class="data-source">
+                    ${project.dataSource}
+                    <span class="tooltip">${project.fullPath}</span>
+                </span>
+            </td>
+            <td>${project.dateCreated}</td>
+            <td style="text-align: center;">
+                <span class="three-dots" onclick="toggleMenu(event)">⋮
+                    <div class="actions-menu">
+                        <div class="menu-item" onclick="event.stopPropagation(); exportProject(${project.id})">Export</div>
+                        <div class="menu-item" onclick="event.stopPropagation(); deleteProject(${project.id})">Delete</div>
+                        <div class="menu-item" onclick="event.stopPropagation(); duplicateProject(${project.id})">Duplicate</div>
+                        <div class="menu-item" onclick="event.stopPropagation(); navigate('settings')">Project Settings</div>
+                    </div>
+                </span>
+            </td>
+        </tr>
+    `).join('');
+}
