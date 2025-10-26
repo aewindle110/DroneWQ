@@ -11,6 +11,7 @@ let selectedOutputs = [
 // Initialize chart functionality
 function initializeCharts() {
     setupChartClickHandlers();
+    addExportButtons();
     renderChartsBasedOnOutputs();
 }
 
@@ -26,6 +27,8 @@ function setupChartClickHandlers() {
 
 // Make functions globally available
 window.initializeCharts = initializeCharts;
+window.updateChartsFromSettings = updateChartsFromSettings;
+
 
 // Open chart in full-size modal
 function openChartModal(imgElement) {
@@ -98,4 +101,112 @@ function openChartModal(imgElement) {
 function closeChartModal(modal) {
     modal.style.animation = 'fadeIn 0.3s ease reverse';
     setTimeout(() => modal.remove(), 300);
+}
+
+// Export chart as PNG
+function exportChart(imgElement, chartTitle) {
+    // Create a temporary canvas to export the image
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        // Download the image
+        const link = document.createElement('a');
+        link.download = `${chartTitle.replace(/\s+/g, '_')}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+        
+        showNotification(`Chart "${chartTitle}" exported successfully!`, 'success');
+    };
+    img.src = imgElement.src;
+}
+
+// Add export buttons to each chart
+function addExportButtons() {
+    document.querySelectorAll('.chart-container').forEach(container => {
+        const exportBtn = document.createElement('button');
+        exportBtn.className = 'btn btn-secondary';
+        exportBtn.style.cssText = 'position: absolute; top: 15px; right: 15px; padding: 6px 12px; font-size: 12px;';
+        exportBtn.textContent = 'Export';
+        exportBtn.onclick = (e) => {
+            e.stopPropagation();
+            const img = container.querySelector('img');
+            const title = container.querySelector('h4').textContent;
+            exportChart(img, title);
+        };
+        
+        container.style.position = 'relative';
+        container.appendChild(exportBtn);
+    });
+}
+
+// Render charts based on selected outputs (will be connected to settings later)
+function renderChartsBasedOnOutputs() {
+    const chartsGrid = document.querySelector('.charts-grid');
+    if (!chartsGrid) return;
+    
+    // Clear existing charts
+    chartsGrid.innerHTML = '';
+    
+    // Chart configurations based on selected outputs
+    const chartConfigs = {
+        'reflectance': {
+            title: 'Remote Sensing Reflectance',
+            image: 'https://i.imgur.com/TbT82XV.png',
+            description: 'Example text on how to read reflectance spectra will go here. This shows the spectral signature of water at different wavelengths.'
+        },
+        'chlorophyll-hu': {
+            title: 'Chlorophyll-a (Hu Color Index)',
+            image: 'https://i.imgur.com/Jy2rdnZ.png',
+            description: 'Example text on how to read chlorophyll maps will go here. Green areas indicate higher chlorophyll concentrations.'
+        },
+        'chlorophyll-ocx': {
+            title: 'Chlorophyll-a (OCx Band Ratio)',
+            image: 'https://i.imgur.com/TbT82XV.png',
+            description: 'Example text on how to read OCx band ratio results will go here. This method uses blue-green ratios for estimation.'
+        },
+        'tsm': {
+            title: 'Total Suspended Matter (TSM)',
+            image: 'https://i.imgur.com/Jy2rdnZ.png',
+            description: 'Example text on how to read TSM maps will go here. Darker areas typically indicate higher sediment loads.'
+        }
+    };
+    
+    // Render only selected charts
+    selectedOutputs.forEach(outputType => {
+        if (chartConfigs[outputType]) {
+            const config = chartConfigs[outputType];
+            const chartElement = createChartElement(config);
+            chartsGrid.appendChild(chartElement);
+        }
+    });
+    
+    // Re-setup click handlers and export buttons
+    setupChartClickHandlers();
+    addExportButtons();
+}
+
+// Create individual chart element
+function createChartElement(config) {
+    const chartDiv = document.createElement('div');
+    chartDiv.className = 'chart-container';
+    chartDiv.innerHTML = `
+        <h4>${config.title}</h4>
+        <img src="${config.image}" alt="${config.title}">
+        <div class="chart-blurb">${config.description}</div>
+    `;
+    return chartDiv;
+}
+
+// Update charts based on project settings (called from settings screen)
+function updateChartsFromSettings(outputs) {
+    selectedOutputs = outputs;
+    renderChartsBasedOnOutputs();
+    showNotification('Charts updated based on selected outputs', 'success');
 }
