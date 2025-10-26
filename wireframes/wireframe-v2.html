@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Data Processing Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #F0F2F5;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .desktop-frame {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1920px;
+            margin: 0 auto;
+            background: white;
+        }
+        .title-bar {
+            background: #2C3E50;
+            color: white;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .title-text {
+            font-size: 14px;
+        }
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .window-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .close { background: #FF5F56; }
+        .minimize { background: #FFBD2E; }
+        .maximize { background: #27C93F; }
+        .main-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .screen {
+            display: none;
+            padding: 30px 40px;
+        }
+        .screen.active {
+            display: block;
+        }
+        .content-header {
+            background: #ECF0F1;
+            padding: 20px 40px;
+            border-bottom: 2px solid #BDC3C7;
+            margin: -30px -40px 30px -40px;
+        }
+        .content-title {
+            font-size: 24px;
+            color: #2C3E50;
+            font-weight: 600;
+        }
+        .toolbar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #CED4DA;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: #3498DB;
+            color: white;
+        }
+        .btn-secondary {
+            background: #ECF0F1;
+            color: #2C3E50;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #DEE2E6;
+        }
+        .data-table th {
+            background: #F8F9FA;
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 2px solid #DEE2E6;
+        }
+        .data-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #DEE2E6;
+        }
+        .data-source {
+            color: #7F8C8D;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            cursor: help;
+            position: relative;
+            display: inline-block;
+        }
+        .data-source:hover {
+            color: #2C3E50;
+        }
+        .data-source .tooltip {
+            visibility: hidden;
+            background-color: #2C3E50;
+            color: white;
+            text-align: left;
+            padding: 8px 12px;
+            border-radius: 4px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .data-source .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2C3E50 transparent transparent transparent;
+        }
+        .data-source:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        .project-link {
+            color: #3498DB;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .three-dots {
+            cursor: pointer;
+            font-size: 24px;
+            position: relative;
+            display: inline-block;
+            padding: 5px 10px;
+            user-select: none;
+        }
+        .three-dots:hover {
+            background: #F8F9FA;
+            border-radius: 4px;
+        }
+        .actions-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border: 1px solid #DEE2E6;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 180px;
+            z-index: 100;
+            margin-top: 5px;
+        }
+        .actions-menu.show {
+            display: block;
+        }
+        .menu-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #DEE2E6;
+            font-size: 13px;
+        }
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+        .menu-item:hover {
+            background: #F8F9FA;
+        }
+        .upload-zone {
+            border: 3px dashed #BDC3C7;
+            border-radius: 8px;
+            padding: 80px;
+            text-align: center;
+            background: #F8F9FA;
+            margin: 30px 0;
+        }
+        .form-panel {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #F8F9FA;
+            border: 1px solid #DEE2E6;
+            border-radius: 6px;
+            padding: 35px;
+        }
+        .form-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .step-indicator {
+            width: 40px;
+            height: 40px;
+            background: #3498DB;
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 22px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .form-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #CED4DA;
+            border-radius: 4px;
+        }
+        .checkbox-group {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border: 1px solid #DEE2E6;
+            border-radius: 4px;
+        }
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #ECF0F1;
+            border-top-color: #3498DB;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 100px auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .results-bar {
+            padding: 20px;
+            background: #F8F9FA;
+            border: 1px solid #DEE2E6;
+            border-radius: 4px;
+            margin-bottom: 25px;
+        }
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 2px solid #DEE2E6;
+            margin-bottom: 30px;
+        }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+        .tab.active {
+            color: #3498DB;
+            border-bottom-color: #3498DB;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+        .chart-container {
+            border: 1px solid #DEE2E6;
+            border-radius: 6px;
+            padding: 20px;
+        }
+        .chart-container img {
+            width: 100%;
+        }
+        .chart-container h4 {
+            margin-bottom: 15px;
+        }
+        .chart-blurb {
+            margin-top: 12px;
+            padding: 10px;
+            background: #F8F9FA;
+            border-left: 3px solid #3498DB;
+            font-size: 13px;
+            color: #495057;
+        }
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .image-box {
+            aspect-ratio: 1;
+            background: #ECF0F1;
+            border: 2px solid #DEE2E6;
+            border-radius: 4px;
+        }
+        .image-box.selected {
+            border-color: #3498DB;
+            border-width: 3px;
+        }
+        .trajectory-data {
+            background: #F8F9FA;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #DEE2E6;
+        }
+        .data-label {
+            font-weight: 600;
+            color: #2C3E50;
+        }
+        .back-arrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #3498DB;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .back-arrow:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="desktop-frame">
+        <div class="title-bar">
+            <span class="title-text">Drone Data Processing Platform - CS408</span>
+            <div class="window-controls">
+                <div class="window-btn minimize"></div>
+                <div class="window-btn maximize"></div>
+                <div class="window-btn close"></div>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <!-- HOME -->
+            <div id="home" class="screen active">
+                <div class="content-header">
+                    <div class="content-title">Projects Dashboard</div>
+                </div>
+                <div class="toolbar">
+                    <input type="text" class="search-input" placeholder="Search projects...">
+                    <button class="btn btn-primary" onclick="navigate('upload')">+ New Project</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Method</th>
+                            <th>Data Source</th>
+                            <th>Date Created</th>
+                            <th style="text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="#" class="project-link" onclick="navigate('results'); return false;">Algae Survey</a></td>
+                            <td>Mobley Rho Method</td>
+                            <td>
+                                <span class="data-source">
+                                    Algae_Survey
+                                    <span class="tooltip">/user/Downloads/Algae_Survey/raw_images</span>
+                                </span>
+                            </td>
+                            <td>09/22/2025</td>
+                            <td style="text-align: center;">
+                                <span class="three-dots" onclick="toggleMenu(event)">⋮
+                                    <div class="actions-menu">
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Export functionality')">Export</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Delete functionality')">Delete</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Duplicate functionality')">Duplicate</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); navigate('settings')">Project Settings</div>
+                                    </div>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" class="project-link" onclick="navigate('results'); return false;">Coastal Water Quality</a></td>
+                            <td>Black Pixel Method</td>
+                            <td>
+                                <span class="data-source">
+                                    Coastal_Study
+                                    <span class="tooltip">/user/Documents/Coastal_Study/multispectral_data</span>
+                                </span>
+                            </td>
+                            <td>09/15/2025</td>
+                            <td style="text-align: center;">
+                                <span class="three-dots" onclick="toggleMenu(event)">⋮
+                                    <div class="actions-menu">
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Export functionality')">Export</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Delete functionality')">Delete</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Duplicate functionality')">Duplicate</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); navigate('settings')">Project Settings</div>
+                                    </div>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" class="project-link" onclick="navigate('results'); return false;">Lake Michigan Study</a></td>
+                            <td>Hedley Method</td>
+                            <td>
+                                <span class="data-source">
+                                    Lake_Michigan
+                                    <span class="tooltip">/user/Downloads/Lake_Michigan/hyperspectral_imgs</span>
+                                </span>
+                            </td>
+                            <td>09/08/2025</td>
+                            <td style="text-align: center;">
+                                <span class="three-dots" onclick="toggleMenu(event)">⋮
+                                    <div class="actions-menu">
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Export functionality')">Export</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Delete functionality')">Delete</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Duplicate functionality')">Duplicate</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); navigate('settings')">Project Settings</div>
+                                    </div>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" class="project-link" onclick="navigate('results'); return false;">Reef Monitoring 2025</a></td>
+                            <td>Mobley Rho Method</td>
+                            <td>
+                                <span class="data-source">
+                                    Reef_Data
+                                    <span class="tooltip">/user/Downloads/Reef_Data/rgb_images</span>
+                                </span>
+                            </td>
+                            <td>08/30/2025</td>
+                            <td style="text-align: center;">
+                                <span class="three-dots" onclick="toggleMenu(event)">⋮
+                                    <div class="actions-menu">
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Export functionality')">Export</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Delete functionality')">Delete</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Duplicate functionality')">Duplicate</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); navigate('settings')">Project Settings</div>
+                                    </div>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" class="project-link" onclick="navigate('results'); return false;">Turbidity Assessment</a></td>
+                            <td>Black Pixel Method</td>
+                            <td>
+                                <span class="data-source">
+                                    Lake_Erie
+                                    <span class="tooltip">/user/Downloads/Lake_Erie/raw_water_imgs</span>
+                                </span>
+                            </td>
+                            <td>08/22/2025</td>
+                            <td style="text-align: center;">
+                                <span class="three-dots" onclick="toggleMenu(event)">⋮
+                                    <div class="actions-menu">
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Export functionality')">Export</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Delete functionality')">Delete</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); alert('Duplicate functionality')">Duplicate</div>
+                                        <div class="menu-item" onclick="event.stopPropagation(); navigate('settings')">Project Settings</div>
+                                    </div>
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- UPLOAD -->
+            <div id="upload" class="screen">
+                <div class="content-header">
+                    <div class="content-title">Upload Data</div>
+                </div>
+                <div class="upload-zone">
+                    <div style="font-size: 48px; margin-bottom: 20px;">📁</div>
+                    <div>Select your data folder with the standard structure</div>
+                    <div style="color: #7F8C8D; font-size: 13px; margin-top: 10px;">
+                        Required: panel/, raw_sky_imgs/, raw_water_imgs/, align_img/
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 20px;">Upload Folder</button>
+                    <button class="btn btn-secondary" style="margin-top: 10px;">Manual Upload</button>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="navigate('home')">Cancel</button>
+                    <button class="btn btn-primary" onclick="navigate('method')">Next</button>
+                </div>
+            </div>
+
+            <!-- METHOD -->
+            <div id="method" class="screen">
+                <div class="content-header">
+                    <div class="content-title">Method Selection</div>
+                </div>
+                <div class="form-panel">
+                    <div class="form-header">
+                        <div class="step-indicator">1</div>
+                        <div style="font-size: 20px; font-weight: 600;">Select Processing Methods</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sky Glint Removal Method</label>
+                        <select class="form-select">
+                            <option>Select method...</option>
+                            <option>Mobley Rho Method</option>
+                            <option>Black Pixel Method</option>
+                            <option>Hedley Method</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Irradiance Normalization Method</label>
+                        <select class="form-select">
+                            <option>Select method...</option>
+                            <option>Panel Ed</option>
+                            <option>DLS Ed</option>
+                            <option>DLS corrected by panel</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pixel Masking (Optional)</label>
+                        <select class="form-select">
+                            <option>None</option>
+                            <option>Value Threshold</option>
+                            <option>Standard Deviation Threshold</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" onclick="navigate('upload')">Back</button>
+                        <button class="btn btn-primary" onclick="navigate('outputs')">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OUTPUTS -->
+            <div id="outputs" class="screen">
+                <div class="content-header">
+                    <div class="content-title">Output Selection</div>
+                </div>
+                <div class="form-panel">
+                    <div class="form-header">
+                        <div class="step-indicator">2</div>
+                        <div style="font-size: 20px; font-weight: 600;">Select Outputs</div>
+                    </div>
+                    <div class="checkbox-group">
+                        <label class="checkbox-option">
+                            <input type="checkbox">
+                            <span>Reflectance spectra only</span>
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox">
+                            <span>Chlorophyll-a (Hu Color Index)</span>
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox">
+                            <span>Chlorophyll-a (OCx Band Ratio)</span>
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox">
+                            <span>Chlorophyll-a (Blended Hu+OCx)</span>
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox">
+                            <span>Chlorophyll-a (Gitelson)</span>
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox">
+                            <span>Total Suspended Matter (TSM)</span>
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox">
+                            <span>Custom Algorithm (load Python function)</span>
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox">
+                            <span>Generate Mosaics for each metric</span>
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" onclick="navigate('method')">Back</button>
+                        <button class="btn btn-primary" onclick="navigate('loading')">Process</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOADING -->
+            <div id="loading" class="screen">
+                <div class="content-header">
+                    <div class="content-title">Processing</div>
+                </div>
+                <div class="spinner"></div>
+                <p style="text-align: center;">Processing data...</p>
+            </div>
+
+            <!-- RESULTS -->
+            <div id="results" class="screen">
+                <div class="content-header">
+                    <div class="content-title">Results</div>
+                </div>
+                
+                <div class="back-arrow" onclick="navigate('home')">
+                    ← Back to Projects
+                </div>
+                
+                <div class="results-bar">
+                    <h3>Algae Survey</h3>
+                    <p>22.09.2025 | Location: 42.0235°N, 83.4075°W</p>
+                </div>
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('overview')">Overview</div>
+                    <div class="tab" onclick="switchTab('images')">Images</div>
+                    <div class="tab" onclick="switchTab('trajectory')">Flight Trajectory</div>
+                    <div class="tab" onclick="switchTab('mosaic')">Mosaic</div>
+                </div>
+                <div id="overview" class="tab-content active">
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4>Remote Sensing Reflectance</h4>
+                            <img src="https://i.imgur.com/TbT82XV.png" alt="Chart">
+                            <div class="chart-blurb">How to read graph</div>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Chlorophyll Maps</h4>
+                            <img src="https://i.imgur.com/Jy2rdnZ.png" alt="Chart">
+                            <div class="chart-blurb">How to read graph</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="images" class="tab-content">
+                    <div class="images-grid">
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box selected"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                        <div class="image-box"></div>
+                    </div>
+                </div>
+                <div id="trajectory" class="tab-content">
+                    <div class="trajectory-data">
+                        <h4 style="margin-bottom: 15px;">Flight Data Summary</h4>
+                        <div class="data-row">
+                            <span class="data-label">Altitude:</span>
+                            <span>260-268 m</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Latitude/Longitude:</span>
+                            <span>42.0235°N, 83.4075°W</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Yaw:</span>
+                            <span>0-350°</span>
+                        </div>
+                    </div>
+                    <img src="https://i.imgur.com/Jy2rdnZ.png" alt="Flight Trajectory" style="width: 100%; border-radius: 4px;">
+                </div>
+                <div id="mosaic" class="tab-content">
+                    <div style="background: #F8F9FA; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                        <strong>Map Controls:</strong>
+                        <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-secondary" style="padding: 8px 16px;">🗺️ Toggle Map Layer</button>
+                            <button class="btn btn-secondary" style="padding: 8px 16px;">🔍 Zoom</button>
+                            <button class="btn btn-secondary" style="padding: 8px 16px;">📍 Add Marker</button>
+                            <button class="btn btn-primary" style="padding: 8px 16px;" onclick="toggleMosaicEditMode()">✏️ Edit Mosaic Position</button>
+                        </div>
+                    </div>
+                    
+                    <div id="mosaicEditControls" style="display: none; background: #FFF3CD; padding: 15px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #FFC107;">
+                        <strong>Edit Mode Active</strong>
+                        <p style="margin: 10px 0; font-size: 13px;">Click and drag the mosaic to reposition. Use controls below to rotate.</p>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+                            <label style="margin-right: 10px;">Rotation:</label>
+                            <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(-5)">↶ -5°</button>
+                            <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(-1)">↶ -1°</button>
+                            <input type="number" id="rotationValue" value="0" style="width: 70px; padding: 6px; text-align: center; border: 1px solid #CED4DA; border-radius: 4px;">
+                            <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(1)">↷ +1°</button>
+                            <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(5)">↷ +5°</button>
+                            <button class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px;" onclick="saveMosaicPosition()">Save Position</button>
+                            <button class="btn btn-secondary" style="padding: 6px 16px;" onclick="toggleMosaicEditMode()">Cancel</button>
+                        </div>
+                    </div>
+                    
+                    <div id="mosaicContainer" style="position: relative; cursor: default;">
+                        <img src="https://i.imgur.com/fBJpRAc.jpeg" alt="Mosaic" id="mosaicImage" style="width: 100%; transition: transform 0.2s;">
+                    </div>
+                    
+                    <div class="chart-blurb" style="margin-top: 15px;">
+                        Final georeferenced mosaic overlay. Coordinates: 42.0235°N, 83.4075°W | Resolution: 2.5 cm/pixel
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div id="settings" class="screen">
+                <div class="content-header">
+                    <div class="content-title">Project Settings</div>
+                </div>
+                
+                <div class="back-arrow" onclick="navigate('home')">
+                    ← Back to Home Page
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h3 style="font-size: 22px; margin-bottom: 8px;">Algae Survey</h3>
+                    <p style="color: #7F8C8D;">Data Source: /user/Downloads/Algae_Survey/raw_images | Created: 09/22/2025</p>
+                </div>
+
+                <div class="form-panel">
+                    <h4 style="margin-bottom: 20px;">Change Project Settings</h4>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Sky Glint Removal Method</label>
+                        <select class="form-select">
+                            <option selected>Mobley Rho Method</option>
+                            <option>Black Pixel Method</option>
+                            <option>Hedley Method</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Irradiance Normalization Method</label>
+                        <select class="form-select">
+                            <option selected>Panel Ed</option>
+                            <option>DLS Ed</option>
+                            <option>DLS corrected by panel</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Pixel Masking</label>
+                        <select class="form-select">
+                            <option>None</option>
+                            <option selected>Value Threshold</option>
+                            <option>Standard Deviation Threshold</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Selected Outputs</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-option">
+                                <input type="checkbox" checked>
+                                <span>Chlorophyll-a (Hu Color Index)</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" checked>
+                                <span>Total Suspended Matter (TSM)</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox">
+                                <span>Chlorophyll-a (OCx Band Ratio)</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox">
+                                <span>Generate Mosaics for each metric</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" onclick="navigate('home')">Cancel</button>
+                        <button class="btn btn-primary" onclick="showProjectOptionsDialog()">Apply Changes</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROJECT OPTIONS DIALOG -->
+            <div id="projectOptionsDialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                <div style="background: white; padding: 30px; border-radius: 8px; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                    <h3 style="margin-bottom: 20px; color: #2C3E50;">Apply Settings Changes</h3>
+                    <p style="margin-bottom: 25px; color: #7F8C8D;">How would you like to apply these changes?</p>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; padding: 15px; border: 2px solid #DEE2E6; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">
+                            <input type="radio" name="projectOption" value="update" checked style="margin-right: 10px;">
+                            <strong>Update Existing Project</strong>
+                            <div style="font-size: 13px; color: #7F8C8D; margin-top: 5px; margin-left: 24px;">Reprocess and overwrite current results</div>
+                        </label>
+                        
+                        <label style="display: block; padding: 15px; border: 2px solid #DEE2E6; border-radius: 4px; cursor: pointer;">
+                            <input type="radio" name="projectOption" value="new" style="margin-right: 10px;">
+                            <strong>Process as New Project</strong>
+                            <div style="font-size: 13px; color: #7F8C8D; margin-top: 5px; margin-left: 24px;">Create a copy with a new name</div>
+                        </label>
+                    </div>
+                    
+                    <div id="newProjectNameField" style="display: none; margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">New Project Name</label>
+                        <input type="text" id="newProjectName" placeholder="Enter new project name..." style="width: 100%; padding: 10px; border: 1px solid #CED4DA; border-radius: 4px;">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
+                        <button class="btn btn-secondary" onclick="closeProjectOptionsDialog()">Cancel</button>
+                        <button class="btn btn-primary" onclick="applyProjectChanges()">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function navigate(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screen).classList.add('active');
+            
+            if (screen === 'loading') {
+                setTimeout(() => navigate('results'), 2000);
+            }
+        }
+
+        function toggleMenu(e) {
+            e.stopPropagation();
+            const menu = e.target.querySelector('.actions-menu');
+            document.querySelectorAll('.actions-menu').forEach(m => {
+                if (m !== menu) m.classList.remove('show');
+            });
+            menu.classList.toggle('show');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.actions-menu').forEach(m => m.classList.remove('show'));
+        });
+
+        // Project options dialog
+        function showProjectOptionsDialog() {
+            document.getElementById('projectOptionsDialog').style.display = 'flex';
+            
+            // Listen for radio button changes
+            document.querySelectorAll('input[name="projectOption"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const newNameField = document.getElementById('newProjectNameField');
+                    if (this.value === 'new') {
+                        newNameField.style.display = 'block';
+                    } else {
+                        newNameField.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        function closeProjectOptionsDialog() {
+            document.getElementById('projectOptionsDialog').style.display = 'none';
+        }
+
+        function applyProjectChanges() {
+            const selectedOption = document.querySelector('input[name="projectOption"]:checked').value;
+            
+            if (selectedOption === 'new') {
+                const newName = document.getElementById('newProjectName').value.trim();
+                if (!newName) {
+                    alert('Please enter a project name');
+                    return;
+                }
+                console.log('Creating new project:', newName);
+                // TODO: Implement create new project logic
+            } else {
+                console.log('Updating existing project');
+                // TODO: Implement update existing project logic
+            }
+            
+            closeProjectOptionsDialog();
+            navigate('loading');
+        }
+
+        // Mosaic editing functions
+        let mosaicEditMode = false;
+        let currentRotation = 0;
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+
+        function toggleMosaicEditMode() {
+            mosaicEditMode = !mosaicEditMode;
+            const controls = document.getElementById('mosaicEditControls');
+            const container = document.getElementById('mosaicContainer');
+            
+            if (mosaicEditMode) {
+                controls.style.display = 'block';
+                container.style.cursor = 'grab';
+                enableDragging();
+            } else {
+                controls.style.display = 'none';
+                container.style.cursor = 'default';
+                disableDragging();
+            }
+        }
+
+        function enableDragging() {
+            const container = document.getElementById('mosaicContainer');
+            
+            container.addEventListener('mousedown', startDrag);
+            container.addEventListener('mousemove', drag);
+            container.addEventListener('mouseup', endDrag);
+            container.addEventListener('mouseleave', endDrag);
+        }
+
+        function disableDragging() {
+            const container = document.getElementById('mosaicContainer');
+            container.removeEventListener('mousedown', startDrag);
+            container.removeEventListener('mousemove', drag);
+            container.removeEventListener('mouseup', endDrag);
+            container.removeEventListener('mouseleave', endDrag);
+        }
+
+        function startDrag(e) {
+            if (!mosaicEditMode) return;
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+            document.getElementById('mosaicContainer').style.cursor = 'grabbing';
+        }
+
+        function drag(e) {
+            if (!isDragging || !mosaicEditMode) return;
+            e.preventDefault();
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            updateMosaicTransform();
+        }
+
+        function endDrag() {
+            isDragging = false;
+            if (mosaicEditMode) {
+                document.getElementById('mosaicContainer').style.cursor = 'grab';
+            }
+        }
+
+        function rotateMosaic(degrees) {
+            currentRotation += degrees;
+            document.getElementById('rotationValue').value = currentRotation;
+            updateMosaicTransform();
+        }
+
+        function updateMosaicTransform() {
+            const image = document.getElementById('mosaicImage');
+            image.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${currentRotation}deg)`;
+        }
+
+        function saveMosaicPosition() {
+            console.log('Saving mosaic position:', {
+                translateX,
+                translateY,
+                rotation: currentRotation
+            });
+            alert(`Mosaic position saved!\nX: ${translateX}px, Y: ${translateY}px, Rotation: ${currentRotation}°`);
+            toggleMosaicEditMode();
+        }
+    </script>
+</body>
+</html>

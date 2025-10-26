@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const path = require('path');
 
 let mainWindow;
@@ -17,7 +17,7 @@ function createWindow() {
     });
 
     // Load the wireframe HTML
-    mainWindow.loadFile('wireframes/wireframe-v1.html');
+    mainWindow.loadFile('wireframes/wireframe-v2.html');
 
     // Open DevTools in development (optional - remove for production)
     mainWindow.webContents.openDevTools();
