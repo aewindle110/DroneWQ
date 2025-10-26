@@ -62,6 +62,7 @@ function initializeDashboard() {
 // Make functions available globally
 window.initializeDashboard = initializeDashboard;
 window.deleteProject = deleteProject;
+window.duplicateProject = duplicateProject;
 
 // Render projects table
 function renderProjects(projectsToRender) {
@@ -141,4 +142,35 @@ function deleteProject(projectId) {
         // Show success message
         showNotification(`Project "${project.name}" deleted successfully`, 'success');
     }
+}
+
+// Duplicate project
+function duplicateProject(projectId) {
+    const project = projects.find(p => p.id === projectId);
+    
+    if (!project) return;
+    
+    // Ask for new name
+    const newName = prompt(`Enter a name for the duplicated project:`, `${project.name} (Copy)`);
+    
+    if (!newName || newName.trim() === '') {
+        return;
+    }
+    
+    // Create new project with new ID
+    const newProject = {
+        ...project,
+        id: Math.max(...projects.map(p => p.id)) + 1,
+        name: newName.trim(),
+        dateCreated: new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+    };
+    
+    // Add to array
+    projects.push(newProject);
+    
+    // Re-render table
+    renderProjects(projects);
+    
+    // Show success message
+    showNotification(`Project "${newName}" created successfully`, 'success');
 }
