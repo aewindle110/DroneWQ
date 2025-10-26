@@ -66,8 +66,6 @@ window.duplicateProject = duplicateProject;
 window.exportProject = exportProject;
 window.addProject = addProject;
 
-
-
 // Render projects table
 function renderProjects(projectsToRender) {
     const tbody = document.querySelector('.data-table tbody');
@@ -154,29 +152,99 @@ function duplicateProject(projectId) {
     
     if (!project) return;
     
-    // Ask for new name
-    const newName = prompt(`Enter a name for the duplicated project:`, `${project.name} (Copy)`);
+    // Create custom input dialog instead of prompt()
+    createInputDialog(
+        'Duplicate Project',
+        'Enter a name for the duplicated project:',
+        `${project.name} (Copy)`,
+        (newName) => {
+            if (!newName || newName.trim() === '') {
+                return;
+            }
+            
+            // Create new project with new ID
+            const newProject = {
+                ...project,
+                id: Math.max(...projects.map(p => p.id)) + 1,
+                name: newName.trim(),
+                dateCreated: new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+            };
+            
+            // Add to array
+            projects.push(newProject);
+            
+            // Re-render table
+            renderProjects(projects);
+            
+            // Show success message
+            showNotification(`Project "${newName}" created successfully`, 'success');
+        }
+    );
+}
+
+// Create custom input dialog
+function createInputDialog(title, message, defaultValue, callback) {
+    // Create dialog HTML
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
     
-    if (!newName || newName.trim() === '') {
-        return;
-    }
+    dialog.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 400px; width: 90%;">
+            <h3 style="margin-bottom: 15px; color: #2C3E50;">${title}</h3>
+            <p style="margin-bottom: 20px; color: #7F8C8D;">${message}</p>
+            <input type="text" id="inputDialogValue" value="${defaultValue}" style="width: 100%; padding: 10px; border: 1px solid #CED4DA; border-radius: 4px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="inputDialogCancel" class="btn btn-secondary">Cancel</button>
+                <button id="inputDialogOK" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    `;
     
-    // Create new project with new ID
-    const newProject = {
-        ...project,
-        id: Math.max(...projects.map(p => p.id)) + 1,
-        name: newName.trim(),
-        dateCreated: new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+    // Add to page
+    document.body.appendChild(dialog);
+    
+    // Focus input and select text
+    const input = dialog.querySelector('#inputDialogValue');
+    input.focus();
+    input.select();
+    
+    // Handle buttons
+    dialog.querySelector('#inputDialogCancel').onclick = () => {
+        document.body.removeChild(dialog);
     };
     
-    // Add to array
-    projects.push(newProject);
+    dialog.querySelector('#inputDialogOK').onclick = () => {
+        const value = input.value;
+        document.body.removeChild(dialog);
+        callback(value);
+    };
     
-    // Re-render table
-    renderProjects(projects);
+    // Handle Enter key
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const value = input.value;
+            document.body.removeChild(dialog);
+            callback(value);
+        }
+    });
     
-    // Show success message
-    showNotification(`Project "${newName}" created successfully`, 'success');
+    // Handle Escape key
+    dialog.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.body.removeChild(dialog);
+        }
+    });
 }
 
 // Export project
