@@ -28,3 +28,33 @@ function initializeSettings() {
 
 // Make functions globally available
 window.initializeSettings = initializeSettings;
+window.updateSelectedOutputs = updateSelectedOutputs;
+
+// Set up checkbox event listeners
+function setupSettingsCheckboxes() {
+    const checkboxes = document.querySelectorAll('#settings .checkbox-option input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedOutputs();
+        });
+    });
+}
+
+// Update selected outputs based on checkboxes
+function updateSelectedOutputs() {
+    const selectedOutputs = [];
+    const checkboxes = document.querySelectorAll('#settings .checkbox-option input[type="checkbox"]:checked');
+    
+    checkboxes.forEach(checkbox => {
+        const label = checkbox.nextElementSibling.textContent.trim();
+        
+        // Map checkbox labels to output types using our mapping
+        if (outputMapping[label]) {
+            selectedOutputs.push(outputMapping[label]);
+        }
+    });
+    
+    currentProjectSettings.selectedOutputs = selectedOutputs;
+    console.log('Updated outputs:', selectedOutputs);
+}
