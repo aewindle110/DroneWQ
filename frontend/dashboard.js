@@ -63,6 +63,8 @@ function initializeDashboard() {
 window.initializeDashboard = initializeDashboard;
 window.deleteProject = deleteProject;
 window.duplicateProject = duplicateProject;
+window.exportProject = exportProject;
+
 
 // Render projects table
 function renderProjects(projectsToRender) {
@@ -173,4 +175,60 @@ function duplicateProject(projectId) {
     
     // Show success message
     showNotification(`Project "${newName}" created successfully`, 'success');
+}
+
+// Export project
+function exportProject(projectId) {
+    const project = projects.find(p => p.id === projectId);
+    
+    if (!project) return;
+    
+    // TODO: Implement real export functionality
+    showNotification(`Exporting "${project.name}"... (Feature coming soon!)`, 'info');
+    console.log('Export project:', project);
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498DB'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        max-width: 400px;
+    `;
+    notification.textContent = message;
+    
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
