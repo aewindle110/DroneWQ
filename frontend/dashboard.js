@@ -105,3 +105,20 @@ function renderProjects(projectsToRender) {
         </tr>
     `).join('');
 }
+
+// Search functionality
+function setupSearchListener() {
+    const searchInput = document.querySelector('.search-input');
+    
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        
+        const filteredProjects = projects.filter(project => {
+            return project.name.toLowerCase().includes(searchTerm) ||
+                   project.method.toLowerCase().includes(searchTerm) ||
+                   project.dataSource.toLowerCase().includes(searchTerm);
+        });
+        
+        renderProjects(filteredProjects);
+    });
+}
