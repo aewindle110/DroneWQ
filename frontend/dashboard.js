@@ -61,6 +61,7 @@ function initializeDashboard() {
 
 // Make functions available globally
 window.initializeDashboard = initializeDashboard;
+window.deleteProject = deleteProject;
 
 // Render projects table
 function renderProjects(projectsToRender) {
@@ -121,4 +122,23 @@ function setupSearchListener() {
         
         renderProjects(filteredProjects);
     });
+}
+
+// Delete project
+function deleteProject(projectId) {
+    const project = projects.find(p => p.id === projectId);
+    
+    if (!project) return;
+    
+    // Show confirmation dialog
+    if (confirm(`Are you sure you want to delete "${project.name}"?\n\nThis action cannot be undone.`)) {
+        // Remove from array
+        projects = projects.filter(p => p.id !== projectId);
+        
+        // Re-render table
+        renderProjects(projects);
+        
+        // Show success message
+        showNotification(`Project "${project.name}" deleted successfully`, 'success');
+    }
 }
