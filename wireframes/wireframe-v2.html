@@ -907,6 +907,11 @@
         function applyProjectChanges() {
             const selectedOption = document.querySelector('input[name="projectOption"]:checked').value;
             
+            // Apply the settings changes first
+            if (typeof applySettingsChanges === 'function') {
+                applySettingsChanges();
+            }
+            
             if (selectedOption === 'new') {
                 const newName = document.getElementById('newProjectName').value.trim();
                 if (!newName) {
@@ -923,7 +928,6 @@
             closeProjectOptionsDialog();
             navigate('loading');
         }
-
         // Mosaic editing functions
         let mosaicEditMode = false;
         let currentRotation = 0;
