@@ -195,13 +195,32 @@ function renderChartsBasedOnOutputs() {
         // Note: 'mosaics' is excluded - it goes in the Mosaics tab, not Overview
     };
     
-    // Render only selected charts
+    // Group charts by section
+    const sections = {};
+
     selectedOutputs.forEach(outputType => {
         if (chartConfigs[outputType]) {
             const config = chartConfigs[outputType];
+            if (!sections[config.section]) {
+                sections[config.section] = [];
+            }
+            sections[config.section].push(config);
+        }
+    });
+
+    // Render sections with headers
+    Object.keys(sections).forEach(sectionName => {
+        // Add section header
+        const sectionHeader = document.createElement('h2');
+        sectionHeader.style.cssText = 'grid-column: 1 / -1; color: #2C3E50; border-bottom: 2px solid #3498DB; padding-bottom: 10px; margin: 30px 0 20px 0;';
+        sectionHeader.textContent = sectionName;
+        chartsGrid.appendChild(sectionHeader);
+        
+        // Add charts in this section
+        sections[sectionName].forEach(config => {
             const chartElement = createChartElement(config);
             chartsGrid.appendChild(chartElement);
-        }
+        });
     });
     
     // Re-setup click handlers and export buttons
