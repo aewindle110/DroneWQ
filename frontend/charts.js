@@ -159,23 +159,40 @@ function renderChartsBasedOnOutputs() {
         'reflectance': {
             title: 'Remote Sensing Reflectance',
             image: 'https://i.imgur.com/TbT82XV.png',
-            description: 'Example text on how to read reflectance spectra will go here. This shows the spectral signature of water at different wavelengths.'
+            description: 'Example text on how to read reflectance spectra will go here. This shows the spectral signature of water at different wavelengths.',
+            section: 'Spectral Analysis'
         },
         'chlorophyll-hu': {
             title: 'Chlorophyll-a (Hu Color Index)',
             image: 'https://i.imgur.com/Jy2rdnZ.png',
-            description: 'Example text on how to read chlorophyll maps will go here. Green areas indicate higher chlorophyll concentrations.'
+            description: 'Example text on how to read chlorophyll maps will go here. Green areas indicate higher chlorophyll concentrations.',
+            section: 'Chlorophyll Analysis'
         },
         'chlorophyll-ocx': {
             title: 'Chlorophyll-a (OCx Band Ratio)',
             image: 'https://i.imgur.com/TbT82XV.png',
-            description: 'Example text on how to read OCx band ratio results will go here. This method uses blue-green ratios for estimation.'
+            description: 'Example text on how to read OCx band ratio results will go here. This method uses blue-green ratios for estimation.',
+            section: 'Chlorophyll Analysis'
+        },
+        'chlorophyll-blended': {
+            title: 'Chlorophyll-a (Blended Hu+OCx)',
+            image: 'https://i.imgur.com/Jy2rdnZ.png',
+            description: 'Example text on how to read blended chlorophyll results will go here. This combines multiple methods for improved accuracy.',
+            section: 'Chlorophyll Analysis'
+        },
+        'chlorophyll-gitelson': {
+            title: 'Chlorophyll-a (Gitelson)',
+            image: 'https://i.imgur.com/TbT82XV.png',
+            description: 'Example text on how to read Gitelson algorithm results will go here. This method is optimized for inland waters.',
+            section: 'Chlorophyll Analysis'
         },
         'tsm': {
             title: 'Total Suspended Matter (TSM)',
             image: 'https://i.imgur.com/Jy2rdnZ.png',
-            description: 'Example text on how to read TSM maps will go here. Darker areas typically indicate higher sediment loads.'
+            description: 'Example text on how to read TSM maps will go here. Darker areas typically indicate higher sediment loads.',
+            section: 'Water Quality Parameters'
         }
+        // Note: 'mosaics' is excluded - it goes in the Mosaics tab, not Overview
     };
     
     // Render only selected charts
