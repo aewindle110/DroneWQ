@@ -789,33 +789,34 @@
                         <label class="form-label">Selected Outputs</label>
                         <div class="checkbox-group">
                         <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Reflectance spectra</span>
-                        </label>
-                        <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Chlorophyll-a (Hu Color Index)</span>
-                        </label>
-                        <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Chlorophyll-a (OCx Band Ratio)</span>
-                        </label>
-                        <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Chlorophyll-a (Blended Hu+OCx)</span>
-                        </label>
-                        <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Chlorophyll-a (Gitelson)</span>
-                        </label>
-                        <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Total Suspended Matter (TSM)</span>
-                        </label>
-                        <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Mosaics</span>
-                        </label>
+                        <input type="checkbox" id="output-reflectance">
+                        <span>Reflectance spectra</span>
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="output-chlorophyll-hu">
+                        <span>Chlorophyll-a (Hu Color Index)</span>
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="output-chlorophyll-ocx">
+                        <span>Chlorophyll-a (OCx Band Ratio)</span>
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="output-chlorophyll-blended">
+                        <span>Chlorophyll-a (Blended Hu+OCx)</span>
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="output-chlorophyll-gitelson">
+                        <span>Chlorophyll-a (Gitelson)</span>
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="output-tsm">
+                        <span>Total Suspended Matter (TSM)</span>
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="output-mosaics">
+                        <span>Mosaics</span>
+                    </label>
+                    
                     </div>
                     </div>
 
@@ -1022,7 +1023,7 @@
 
     <script src="../frontend/dashboard.js"></script>
     <script src="../frontend/charts.js"></script>
-    <script src="../frontend/projectsettings.js"></script>
+<script src="../frontend/project_settings.js"></script>
     <script>
         // Initialize all functionality when page loads
         document.addEventListener('DOMContentLoaded', function() {
