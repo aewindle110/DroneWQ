@@ -79,6 +79,9 @@ class Settings:
             if not isinstance(kwargs["main_dir"], str):
                 raise ValueError("main_dir should be a string of path.")
 
+            if not os.path.exists(kwargs["main_dir"]):
+                raise LookupError(f"{kwargs['main_dir']} path does not exist.")
+
             main_dir = kwargs["main_dir"]
             main_thread_config["raw_water_dir"] = os.path.join(
                 main_dir, "raw_water_imgs"
