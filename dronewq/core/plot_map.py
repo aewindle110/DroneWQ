@@ -94,56 +94,61 @@ def plot_georeferenced_data(
     basemap: Bunch | str = None,
 ) -> Tuple[plt.Axes, AxesImage]:
     """
-    This function loads a raster in .tif format, and plot it (using pseudo-Mercator projection (epsg:3857)) over a given axes with its values georeferenced.
-
-    NOTE: The raster must have only one band.
+    Loads a single-band GeoTIFF, projects it to pseudo-Mercator (EPSG:3857),
+    and plots it over the given matplotlib Axes.
 
     Args:
-        ax (plt.Axes): axes where to plot
-
-        filename (str): tif file to plot
-
-        vmin (float): minimum value for colormap
-
-        vmax (float): maximum value for colormap
-
-        cmap (str): colormap name from matplotlib defaults
-
-        norm (None, optional): norm for colormap like Linear, Log10. If None it's applied Linear Norm. Defaults to None.
-
-        basemap (str | Bunch, optional): Filename or Basemap provider from contextily to plot. If it's specified, plot_basemap function will be executed with tif bounds.  Defaults to None
+        ax (plt.Axes): Matplotlib axes to plot on.
+        filename (str): Path to GeoTIFF file.
+        vmin (float): Minimum colormap value.
+        vmax (float): Maximum colormap value.
+        cmap (str): Matplotlib colormap name.
+        norm (optional): Colormap normalization (e.g. LogNorm). Default None.
+        basemap (optional): Contextily basemap provider or path. Default None.
 
     Returns:
-        Tuple[plt.Axes, AxesImage]: axes with data plotted and a new axes for colobar settings.
+        Tuple[plt.Axes, AxesImage]: The plot axes and the raster mappable.
     """
 
-    latlon_projection: str = "epsg:4326"
-    pseudo_mercator_projection: str = "epsg:3857"
-    transformer: Transformer = Transformer.from_crs(
-        latlon_projection, pseudo_mercator_projection, always_xy=True
-    )
+    latlon_projection = "EPSG:4326"
+    pseudo_mercator_projection = "EPSG:3857"
+    transformer = Transformer.from_crs(latlon_projection, pseudo_mercator_projection, always_xy=True)
 
-    with rasterio.open(filename) as src:
-        cols, rows = np.meshgrid(np.arange(src.width), np.arange(src.height))
-        xs, ys = rasterio.transform.xy(src.transform, rows, cols)
-        lons, lats = np.array(xs), np.array(ys)
+    # --- Open raster to get geometry and basemap ---
+    with rasterio.open(filename) as src_rio:
+        # Build pixel coordinate grid
+        cols, rows = np.meshgrid(np.arange(src_rio.width), np.arange(src_rio.height))
+        xs, ys = rasterio.transform.xy(src_rio.transform, rows, cols)
+        xs, ys = np.array(xs), np.array(ys)
 
+        # Convert to pseudo-Mercator
+        lon, lat = transformer.transform(xs, ys)
+
+        # Add basemap if requested
         if basemap is not None:
             ax = plot_basemap(
                 ax,
-                src.bounds.left,
-                src.bounds.bottom,
-                src.bounds.right,
-                src.bounds.top,
+                src_rio.bounds.left,
+                src_rio.bounds.bottom,
+                src_rio.bounds.right,
+                src_rio.bounds.top,
                 basemap,
                 True,
             )
 
+    # --- Open again via rioxarray for plotting ---
     with rioxarray.open_rasterio(filename) as src:
-        lon, lat = transformer.transform(lons, lats)
-        src.coords["lon"] = (("y", "x"), lon)
-        src.coords["lat"] = (("y", "x"), lat)
+        # Remove band dimension if it's a single-band raster
+        src = src.squeeze()
 
+        # Ensure lon/lat have same shape as raster
+        lon = np.array(lon).reshape(src.shape)
+        lat = np.array(lat).reshape(src.shape)
+
+        # Assign coordinates
+        src = src.assign_coords({"lon": (("y", "x"), lon), "lat": (("y", "x"), lat)})
+
+        # Plot the data
         mappable = src.plot(
             ax=ax,
             x="lon",
@@ -156,3 +161,4 @@ def plot_georeferenced_data(
         )
 
     return ax, mappable
+
