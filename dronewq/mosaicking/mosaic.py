@@ -26,9 +26,29 @@ class Mosaic:
         os.makedirs(self.out_folder_path, exist_ok=True)
         self.output_name = os.path.join(self.out_folder_path, f"{self.output_name}.tif")
 
-    def forward(self): # set later
-            return mosaic(method=self.method, dtype=self.dtype, band_names=self.band_names)
-
+    def forward(self):
+        """
+        Prepare the mosaic process by validating inputs and creating output directory.
+        
+        Returns:
+            self: Returns self for method chaining
+        """
+        if not self.raster_paths:
+            raise ValueError("No input raster files found in input directory")
+            
+        if not os.path.exists(self.out_folder_path):
+            os.makedirs(self.out_folder_path, exist_ok=True)
+            
+        # Validate that all input rasters have the same number of bands
+        band_counts = set()
+        for raster_path in self.raster_paths:
+            with rasterio.open(raster_path) as src:
+                band_counts.add(src.count)
+        
+        if len(band_counts) > 1:
+            raise ValueError("All input rasters must have the same number of bands")
+            
+        return self
     def listdir_fullpath(self, d):
         return [os.path.join(d, f) for f in os.listdir(d)]
     def __latlon_to_index(self, dst, src):
