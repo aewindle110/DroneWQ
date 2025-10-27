@@ -29,6 +29,8 @@ function initializeSettings() {
 // Make functions globally available
 window.initializeSettings = initializeSettings;
 window.updateSelectedOutputs = updateSelectedOutputs;
+window.applySettingsChanges = applySettingsChanges;
+window.getCurrentSettings = getCurrentSettings;
 
 // Set up checkbox event listeners
 function setupSettingsCheckboxes() {
@@ -57,4 +59,40 @@ function updateSelectedOutputs() {
     
     currentProjectSettings.selectedOutputs = selectedOutputs;
     console.log('Updated outputs:', selectedOutputs);
+}
+
+// Load current settings into the form
+function loadCurrentSettings() {
+    // Set checkbox states based on current settings
+    const checkboxes = document.querySelectorAll('#settings .checkbox-option input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        const label = checkbox.nextElementSibling.textContent.trim();
+        
+        // Check boxes based on current settings
+        if (outputMapping[label] && currentProjectSettings.selectedOutputs.includes(outputMapping[label])) {
+            checkbox.checked = true;
+        }
+    });
+}
+
+// Apply settings changes (called when user clicks "Apply Changes")
+function applySettingsChanges() {
+    updateSelectedOutputs();
+    
+    // Filter out mosaics for chart display (mosaics go in Mosaics tab)
+    const chartsToShow = currentProjectSettings.selectedOutputs.filter(output => output !== 'mosaics');
+    
+    // Update charts if we're viewing results
+    if (typeof updateChartsFromSettings === 'function') {
+        updateChartsFromSettings(chartsToShow);
+    }
+    
+    showNotification('Settings applied successfully! Charts updated.', 'success');
+    return currentProjectSettings;
+}
+
+// Get current settings
+function getCurrentSettings() {
+    return currentProjectSettings;
 }
