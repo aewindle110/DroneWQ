@@ -63,6 +63,7 @@ def load_img_fn_and_meta(csv_path, count=10000, start=0, random=False):
     return df
 
 
+# TODO: Divide this into one for sky images and one for water images
 def retrieve_imgs_and_metadata(
     img_dir, count=10000, start=0, altitude_cutoff=0, sky=False, random=False
 ):
@@ -202,7 +203,6 @@ def save_images(
             float(len(img_set.captures)) / float((end - start).total_seconds())
         )
     )
-    return True
 
 
 def process_micasense_images(
@@ -227,10 +227,7 @@ def process_micasense_images(
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
 
-    if sky:
-        img_dir = settings.raw_sky_dir
-    else:
-        img_dir = settings.raw_water_dir
+    img_dir = settings.raw_sky_dir if sky else settings.raw_water_dir
 
     imgset = micasense.imageset.ImageSet.from_directory(img_dir)
 
@@ -250,16 +247,16 @@ def process_micasense_images(
         output_path = settings.lt_dir
         thumbnailPath = os.path.join(project_dir, "lt_thumbnails")
 
-    if save_images(
+    save_images(
         imgset,
         output_path,
         thumbnailPath,
         warp_img_capture,
         overwrite_lt_lw=overwrite_lt_lw,
-    ):
-        print("Finished saving images.")
-        fullCsvPath = dronewq.write_metadata_csv(img_dir, output_path)
-        print("Finished saving image metadata.")
+    )
+    print("Finished saving images.")
+    fullCsvPath = dronewq.write_metadata_csv(img_dir, output_path)
+    print("Finished saving image metadata.")
 
     return output_path
 

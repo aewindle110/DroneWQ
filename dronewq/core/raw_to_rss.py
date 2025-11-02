@@ -177,5 +177,3 @@ def process_raw_to_rrs(
         dirs_to_delete = [lt_dir, sky_lt_dir, lw_dir]
         for d in dirs_to_delete:
             shutil.rmtree(d, ignore_errors=True)
-
-    return True
