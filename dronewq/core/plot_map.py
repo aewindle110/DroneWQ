@@ -119,7 +119,6 @@ def plot_georeferenced_data(
         # Build pixel coordinate grid
         cols, rows = np.meshgrid(np.arange(src_rio.width), np.arange(src_rio.height))
         xs, ys = rasterio.transform.xy(src_rio.transform, rows, cols)
-        xs, ys = np.array(xs), np.array(ys)
 
         # Convert to pseudo-Mercator
         lon, lat = transformer.transform(xs, ys)
@@ -158,7 +157,7 @@ def plot_georeferenced_data(
             cmap=cmap,
             norm=norm,
             add_colorbar=False,
-        )
+        ) # type: ignore
 
     return ax, mappable
 

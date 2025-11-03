@@ -23,6 +23,9 @@ from .core.wq_calc import (
 )
 from .core.georeference import compute_flight_lines, georeference
 from .core.plot_map import plot_basemap, plot_georeferenced_data
+from .core.mosaic import (
+    mosaic,
+)
 
 # Singleton definitions and aliasing
 configure = settings.configure
