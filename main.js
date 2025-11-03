@@ -17,7 +17,7 @@ function createWindow() {
     });
 
     // Load the wireframe HTML
-    mainWindow.loadFile('wireframes/wireframe-v2.html');
+    mainWindow.loadFile('wireframes/wireframe-v3.html');
 
     // Open DevTools in development (optional - remove for production)
     mainWindow.webContents.openDevTools();
