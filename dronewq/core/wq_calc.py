@@ -1,13 +1,57 @@
 from tqdm import tqdm
-from dronewq.utils.images import load_images
 from dronewq.utils.settings import settings
+import concurrent.futures
 import numpy as np
 import rasterio
 import glob
 import os
 
 
-def save_wq_imgs(wq_alg="chl_gitelson", start=0, count=10000):
+_wq_alg = None
+_wq_dir = None
+
+
+def _init_worker(wq_alg, wq_dir):
+    global _wq_alg, _wq_dir
+    _wq_alg = wq_alg
+    _wq_dir = wq_dir
+
+
+def _compute(filename):
+    # algorithms = {
+    #     "chl_hu": chl_hu,
+    #     "chl_ocx": chl_ocx,
+    #     "chl_hu_ocx": chl_hu_ocx,
+    #     "chl_gitelson": chl_gitelson,
+    #     "tsm_nechad": tsm_nechad,
+    # }
+    BLUE, GREEN, RED, RED_EDGE = 0, 1, 2, 3
+    with rasterio.open(filename, "r") as src:
+        # Copy geotransform if it exists
+        profile = src.profile
+        rrs = np.squeeze(src.read())
+        profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
+
+        if _wq_alg == "chl_hu":
+            wq = chl_hu(rrs[BLUE, :, :], rrs[GREEN, :, :], rrs[RED, :, :])
+        elif _wq_alg == "chl_ocx":
+            wq = chl_ocx(rrs[BLUE, :, :], rrs[GREEN, :, :])
+        elif _wq_alg == "chl_hu_ocx":
+            wq = chl_hu_ocx(rrs[BLUE, :, :], rrs[GREEN, :, :], rrs[RED, :, :])
+        elif _wq_alg == "chl_gitelson":
+            wq = chl_gitelson(rrs[RED, :, :], rrs[RED_EDGE, :, :])
+        elif _wq_alg == "nechad_tsm":
+            wq = tsm_nechad(rrs[RED, :, :])
+
+        with rasterio.open(
+            os.path.join(_wq_dir, os.path.basename(filename)),
+            "w",
+            **profile,
+        ) as dst:
+            dst.write(wq, 1)
+
+
+def save_wq_imgs(wq_alg="chl_gitelson", start=0, count=10000, num_workers=4):
     """
     This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
 
@@ -34,45 +78,25 @@ def save_wq_imgs(wq_alg="chl_gitelson", start=0, count=10000):
     main_dir = settings.main_dir
     rrs_img_dir = settings.rrs_dir
     wq_dir_name = "masked_" + wq_alg + "_imgs"
+    settings.wq_dir = os.path.join(main_dir, wq_dir_name)
 
     def _capture_path_to_int(path: str) -> int:
         return int(os.path.basename(path).split("_")[-1].split(".")[0])
 
     filenames = sorted(
-        glob.glob(os.path.join(main_dir, rrs_img_dir, "*")), key=_capture_path_to_int
+        glob.glob(os.path.join(rrs_img_dir, "*")), key=_capture_path_to_int
     )[start:count]
 
     # make wq_dir directory
     if not os.path.exists(os.path.join(main_dir, wq_dir_name)):
         os.makedirs(os.path.join(main_dir, wq_dir_name))
 
-    BLUE, GREEN, RED, RED_EDGE = 0, 1, 2, 3
-
-    for filename in tqdm(filenames, total=len(filenames)):
-        rrs = np.squeeze(load_images([filename]))
-
-        if wq_alg == "chl_hu":
-            wq = chl_hu(rrs[BLUE, :, :], rrs[GREEN, :, :], rrs[RED, :, :])
-        elif wq_alg == "chl_ocx":
-            wq = chl_ocx(rrs[BLUE, :, :], rrs[GREEN, :, :])
-        elif wq_alg == "chl_hu_ocx":
-            wq = chl_hu_ocx(rrs[BLUE, :, :], rrs[GREEN, :, :], rrs[RED, :, :])
-        elif wq_alg == "chl_gitelson":
-            wq = chl_gitelson(rrs[RED, :, :], rrs[RED_EDGE, :, :])
-        elif wq_alg == "nechad_tsm":
-            wq = tsm_nechad(rrs[RED, :, :])
-
-        with rasterio.open(filename, "r") as src:
-            profile = src.profile
-            profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
-
-        with rasterio.open(
-            os.path.join(main_dir, wq_dir_name, os.path.basename(filename)),
-            "w",
-            **profile,
-        ) as dst:
-            dst.write(wq, 1)
-    settings.wq_dir = os.path.join(main_dir, wq_dir_name)
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=num_workers,
+        initializer=_init_worker,
+        initargs=(wq_alg, settings.wq_dir),
+    ) as executor:
+        results = list(executor.map(_compute, filenames))
 
 
 def chl_hu(Rrsblue, Rrsgreen, Rrsred):
@@ -94,7 +118,27 @@ def chl_hu(Rrsblue, Rrsgreen, Rrsred):
     ci1 = -0.4909
     ci2 = 191.6590
 
-    CI = Rrsgreen - (Rrsblue + (560 - 475) / (668 - 475) * (Rrsred - Rrsblue))
+    valid_mask = (
+        (Rrsblue > 0)
+        & (Rrsgreen > 0)
+        & (Rrsred > 0)
+        & np.isfinite(Rrsblue)
+        & np.isfinite(Rrsgreen)
+        & np.isfinite(Rrsred)
+    )
+
+    ChlCI = np.full_like(Rrsblue, np.nan, dtype=np.float32)
+
+    CI = Rrsgreen[valid_mask] - (
+        Rrsblue[valid_mask]
+        + (560 - 475) / (668 - 475) * (Rrsred[valid_mask] - Rrsblue[valid_mask])
+    )
+
+    exponent = ci1 + ci2 * CI
+    exponent = np.clip(exponent, -300, 300)
+
+    ChlCI[valid_mask] = 10**exponent
+
     ChlCI = 10 ** (ci1 + ci2 * CI)
     return ChlCI
 
@@ -120,11 +164,20 @@ def chl_ocx(Rrsblue, Rrsgreen):
     a3 = 2.5635
     a4 = -0.7218
 
-    temp = np.log10(Rrsblue / Rrsgreen)
+    valid_mask = (
+        (Rrsblue > 0) & (Rrsgreen > 0) & np.isfinite(Rrsblue) & np.isfinite(Rrsgreen)
+    )
 
-    log10chl = a0 + a1 * (temp) + a2 * (temp) ** 2 + a3 * (temp) ** 3 + a4 * (temp) ** 4
+    # Initialize output with NaN
+    ocx = np.full_like(Rrsblue, np.nan, dtype=np.float32)
 
-    ocx = np.power(10, log10chl)
+    # Only compute where data is valid
+    ratio = Rrsblue[valid_mask] / Rrsgreen[valid_mask]
+    temp = np.log10(ratio)
+
+    log10chl = a0 + a1 * temp + a2 * temp**2 + a3 * temp**3 + a4 * temp**4
+    ocx[valid_mask] = np.power(10, log10chl)
+
     return ocx
 
 
@@ -144,24 +197,10 @@ def chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred):
     """
 
     thresh = [0.15, 0.20]
-    a0 = 0.1977
-    a1 = -1.8117
-    a2 = 1.9743
-    a3 = 2.5635
-    a4 = -0.7218
 
-    ci1 = -0.4909
-    ci2 = 191.6590
-
-    temp = np.log10(Rrsblue / Rrsgreen)
-
-    log10chl = a0 + a1 * (temp) + a2 * (temp) ** 2 + a3 * (temp) ** 3 + a4 * (temp) ** 4
-
-    ocx = np.power(10, log10chl)
-
-    CI = Rrsgreen - (Rrsblue + (560 - 475) / (668 - 475) * (Rrsred - Rrsblue))
-
-    ChlCI = 10 ** (ci1 + ci2 * CI)
+    # Compute both algorithms
+    ChlCI = chl_hu(Rrsblue, Rrsgreen, Rrsred)
+    ocx = chl_ocx(Rrsblue, Rrsgreen)
 
     if ChlCI.any() <= thresh[0]:
         chlor_a = ChlCI

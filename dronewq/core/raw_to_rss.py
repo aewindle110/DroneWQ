@@ -20,6 +20,7 @@ def process_raw_to_rrs(
     ed_method="dls_ed",
     overwrite_lt_lw=False,
     clean_intermediates=True,
+    num_workers=4,
 ):
     """
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
@@ -110,15 +111,15 @@ def process_raw_to_rrs(
 
     if lw_method == "mobley_rho_method":
         print("Applying the mobley_rho_method (Lt -> Lw).")
-        dronewq.mobley_rho()
+        dronewq.mobley_rho(num_workers=num_workers)
 
     elif lw_method == "blackpixel_method":
         print("Applying the blackpixel_method (Lt -> Lw)")
-        dronewq.blackpixel()
+        dronewq.blackpixel(num_workers=num_workers)
 
     elif lw_method == "hedley_method":
         print("Applying the Hochberg/Hedley (Lt -> Lw)")
-        dronewq.hedley(random_n)
+        dronewq.hedley(random_n, num_workers=num_workers)
 
     else:  # just change this pointer if we didn't do anything the lt over to the lw dir
         print("Not doing any Lw calculation.")
@@ -130,15 +131,15 @@ def process_raw_to_rrs(
 
     if ed_method == "panel_ed":
         print("Normalizing by panel irradiance (Lw/Ed -> Rrs).")
-        dronewq.panel_ed(output_csv_path)
+        dronewq.panel_ed(output_csv_path, num_workers=num_workers)
 
     elif ed_method == "dls_ed":
         print("Normalizing by DLS irradiance (Lw/Ed -> Rrs).")
-        dronewq.dls_ed(output_csv_path)
+        dronewq.dls_ed(output_csv_path, num_workers=num_workers)
 
     elif ed_method == "dls_and_panel_ed":
         print("Normalizing by DLS corrected by panel irradiance (Lw/Ed -> Rrs).")
-        dronewq.dls_ed(output_csv_path, dls_corr=True)
+        dronewq.dls_ed(output_csv_path, dls_corr=True, num_workers=num_workers)
 
     else:
         print(
@@ -160,11 +161,16 @@ def process_raw_to_rrs(
     if mask_pixels and pixel_masking_method == "value_threshold":
         print("Masking pixels using NIR and green Rrs thresholds")
         dronewq.threshold_masking(
-            nir_threshold=nir_threshold, green_threshold=green_threshold
+            nir_threshold=nir_threshold,
+            green_threshold=green_threshold,
+            num_workers=num_workers,
         )
     elif mask_pixels and pixel_masking_method == "std_threshold":
         print("Masking pixels using std Rrs(NIR)")
-        dronewq.std_masking(mask_std_factor=mask_std_factor)
+        dronewq.std_masking(
+            mask_std_factor=mask_std_factor,
+            num_workers=num_workers,
+        )
 
     else:  # if we don't do the glint correction then just change the pointer to the lt_dir
         print("Not masking pixels.")
