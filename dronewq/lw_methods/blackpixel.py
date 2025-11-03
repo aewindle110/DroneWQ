@@ -6,21 +6,30 @@ import concurrent.futures
 from dronewq.utils.settings import settings
 from dronewq.utils.images import retrieve_imgs_and_metadata
 
+_lsky_median = None
+_lw_dir = None
 
-def _compute(filepath, lsky_median):
+
+def _init_worker(lw_dir, lsky_median):
+    global _lsky_median, _lw_dir
+
+    _lw_dir = lw_dir
+    _lsky_median = lsky_median
+
+
+def _compute(filepath):
     im = filepath
-    lw_dir = settings.lw_dir
     with rasterio.open(im, "r") as Lt_src:
         profile = Lt_src.profile
         profile["count"] = 5
 
         Lt = Lt_src.read(4)
-        rho = Lt / lsky_median[4 - 1]
+        rho = Lt / _lsky_median[4 - 1]
         lw_all = []
         for i in range(1, 6):
             # TODO: this is probably faster if we read them all and divide by the vector
             lt = Lt_src.read(i)
-            lw = lt - (rho * lsky_median[i - 1])
+            lw = lt - (rho * _lsky_median[i - 1])
             lw_all.append(lw)  # append each band
         stacked_lw = np.stack(lw_all)  # stack into np.array
 
@@ -28,7 +37,7 @@ def _compute(filepath, lsky_median):
         im_name = os.path.basename(
             im
         )  # we're grabbing just the .tif file name instead of the whole path
-        with rasterio.open(os.path.join(lw_dir, im_name), "w", **profile) as dst:
+        with rasterio.open(os.path.join(_lw_dir, im_name), "w", **profile) as dst:
             dst.write(stacked_lw)
 
 
@@ -47,6 +56,7 @@ def blackpixel(num_workers=4):
 
     sky_lt_dir = settings.sky_lt_dir
     lt_dir = settings.lt_dir
+    lw_dir = settings.lw_dir
 
     filepaths = glob.glob(lt_dir + "/*.tif")
 
@@ -59,7 +69,10 @@ def blackpixel(num_workers=4):
     )  # here we want the median of each band
     del sky_imgs
 
-    args = [(filepath, lsky_median) for filepath in filepaths]
-
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-        executor.map(_compute, args)
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=num_workers,
+        initializer=_init_worker,
+        initargs=(lw_dir, lsky_median),
+    ) as executor:
+        results = list(executor.map(_compute, filepaths))
+    return results

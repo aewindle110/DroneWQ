@@ -6,9 +6,22 @@ import rasterio
 import concurrent.futures
 from dronewq.utils.images import retrieve_imgs_and_metadata
 
+_masked_rrs_dir = None
+_rrs_nir_mean = None
+_rrs_nir_std = None
+_mask_std_factor = None
 
-def _compute(filepath, rrs_nir_mean, rrs_nir_std, mask_std_factor):
-    masked_rrs_dir = settings.masked_rrs_dir
+
+def _init_worker(masked_rrs_dir, rrs_nir_mean, rrs_nir_std, mask_std_factor):
+    global _masked_rrs_dir, _rrs_nir_mean, _rrs_nir_std, _mask_std_factor
+
+    _masked_rrs_dir = masked_rrs_dir
+    _rrs_nir_mean = rrs_nir_mean
+    _rrs_nir_std = rrs_nir_std
+    _mask_std_factor = mask_std_factor
+
+
+def _compute(filepath):
     im = filepath
     with rasterio.open(im, "r") as rrs_src:
         profile = rrs_src.profile
@@ -16,7 +29,7 @@ def _compute(filepath, rrs_nir_mean, rrs_nir_std, mask_std_factor):
         rrs_deglint_all = []
         rrs_nir_deglint = rrs_src.read(5)  # nir band
         rrs_nir_deglint[
-            rrs_nir_deglint > (rrs_nir_mean + rrs_nir_std * mask_std_factor)
+            rrs_nir_deglint > (_rrs_nir_mean + _rrs_nir_std * _mask_std_factor)
         ] = np.nan
         nan_index = np.isnan(rrs_nir_deglint)
         # filter nan pixel indicies across all bands
@@ -30,7 +43,7 @@ def _compute(filepath, rrs_nir_mean, rrs_nir_std, mask_std_factor):
             im
         )  # we're grabbing just the .tif file name instead of the whole path
         with rasterio.open(
-            os.path.join(masked_rrs_dir, im_name), "w", **profile
+            os.path.join(_masked_rrs_dir, im_name), "w", **profile
         ) as dst:
             dst.write(stacked_rrs_deglint)
 
@@ -55,6 +68,7 @@ def std_masking(num_images=10, mask_std_factor=1, num_workers=4):
         raise LookupError("Please set the main_dir path.")
 
     rrs_dir = settings.rrs_dir
+    masked_rrs_dir = settings.masked_rrs_dir
 
     # grab the first num_images images, finds the mean and std of NIR, then anything times the glint factor is classified as glint
     rrs_imgs, _ = retrieve_imgs_and_metadata(
@@ -71,9 +85,11 @@ def std_masking(num_images=10, mask_std_factor=1, num_workers=4):
 
     # go through each Rrs image in the dir and mask any pixels > mean+std*glint factor
     filepaths = glob.glob(rrs_dir + "/*.tif")
-    args = [
-        (filepath, rrs_nir_mean, rrs_nir_std, mask_std_factor) for filepath in filepaths
-    ]
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-        executor.map(_compute, args)
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=num_workers,
+        initializer=_init_worker,
+        initargs=(masked_rrs_dir, rrs_nir_mean, rrs_nir_std, mask_std_factor),
+    ) as executor:
+        results = list(executor.map(_compute, filepaths))
+    return results

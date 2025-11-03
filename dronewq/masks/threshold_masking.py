@@ -5,9 +5,21 @@ import rasterio
 import concurrent.futures
 from dronewq.utils.settings import settings
 
+# Global variable for worker processes
+_nir_threshold = None
+_green_threshold = None
+_masked_rrs_dir = None
 
-def _compute(filepath, nir_threshold, green_threshold):
-    masked_rrs_dir = settings.masked_rrs_dir
+
+def _init_worker(masked_rrs_dir, nir_threshold, green_threshold):
+    """Initialize worker process with shared data."""
+    global _nir_threshold, _green_threshold, _masked_rrs_dir
+    _masked_rrs_dir = masked_rrs_dir
+    _nir_threshold = nir_threshold
+    _green_threshold = green_threshold
+
+
+def _compute(filepath):
 
     # go through each rrs image in the dir and mask pixels > nir_threshold and < green_threshold
     im = filepath
@@ -17,8 +29,8 @@ def _compute(filepath, nir_threshold, green_threshold):
         rrs_mask_all = []
         nir = rrs_src.read(5)
         green = rrs_src.read(2)
-        nir[nir > nir_threshold] = np.nan
-        green[green < green_threshold] = np.nan
+        nir[nir > _nir_threshold] = np.nan
+        green[green < _green_threshold] = np.nan
 
         nir_nan_index = np.isnan(nir)
         green_nan_index = np.isnan(green)
@@ -39,7 +51,7 @@ def _compute(filepath, nir_threshold, green_threshold):
             im
         )  # we're grabbing just the .tif file name instead of the whole path
         with rasterio.open(
-            os.path.join(masked_rrs_dir, im_name), "w", **profile
+            os.path.join(_masked_rrs_dir, im_name), "w", **profile
         ) as dst:
             dst.write(stacked_rrs_mask)
 
@@ -63,8 +75,14 @@ def threshold_masking(nir_threshold=0.01, green_threshold=0.005, num_workers=4):
         raise LookupError("Please set the main_dir path.")
 
     rrs_dir = settings.rrs_dir
+    masked_rrs_dir = settings.masked_rrs_dir
     filepaths = glob.glob(rrs_dir + "/*.tif")
-    args = [(filepath, nir_threshold, green_threshold) for filepath in filepaths]
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-        executor.map(_compute, args)
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=num_workers,
+        initializer=_init_worker,
+        initargs=(masked_rrs_dir, nir_threshold, green_threshold),
+    ) as executor:
+        results = list(executor.map(_compute, filepaths))
+
+    return results

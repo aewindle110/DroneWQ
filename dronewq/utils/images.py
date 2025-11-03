@@ -7,12 +7,29 @@ import datetime
 import dronewq
 import glob
 from tqdm import tqdm
+import concurrent.futures
 from rasterio.transform import Affine
 from rasterio.enums import Resampling
 from dronewq.utils.settings import settings
 import micasense
 
 # FIXME: Should rename this file
+
+
+def gen_load_images(img_list):
+    """
+    This function loads all images in a directory as a multidimensional numpy array.
+
+    Parameters:
+        img_list: A list of .tif files, usually called by using glob.glob(filepath)
+
+    Returns:
+        A multidimensional numpy array of all image captures in a directory
+
+    """
+    for im in img_list:
+        with rasterio.open(im, "r") as src:
+            yield np.array(src.read())
 
 
 def load_images(img_list):
@@ -143,7 +160,7 @@ def get_warp_matrix(
 def save_images(
     img_set,
     img_output_path,
-    thumbnailPath,
+    thumbnail_path,
     warp_img_capture,
     generateThumbnails=True,
     overwrite_lt_lw=False,
@@ -172,18 +189,18 @@ def save_images(
 
     if not os.path.exists(img_output_path):
         os.makedirs(img_output_path)
-    if generateThumbnails and not os.path.exists(thumbnailPath):
-        os.makedirs(thumbnailPath)
+    if generateThumbnails and not os.path.exists(thumbnail_path):
+        os.makedirs(thumbnail_path)
 
     start = datetime.datetime.now()
-    for i, capture in enumerate(img_set.captures):
-        outputFilename = "capture_" + str(i + 1) + ".tif"
-        thumbnailFilename = "capture_" + str(i + 1) + ".jpg"
+
+    for idx, capture in enumerate(img_set.captures):
+        outputFilename = "capture_" + str(idx + 1) + ".tif"
+        thumbnailFilename = "capture_" + str(idx + 1) + ".jpg"
         fullOutputPath = os.path.join(img_output_path, outputFilename)
-        fullThumbnailPath = os.path.join(thumbnailPath, thumbnailFilename)
+        fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
         if (not os.path.exists(fullOutputPath)) or overwrite_lt_lw:
             if len(capture.images) == len(img_set.captures[0].images):
-
                 capture.dls_irradiance = None
                 capture.compute_undistorted_radiance()
                 capture.create_aligned_capture(
