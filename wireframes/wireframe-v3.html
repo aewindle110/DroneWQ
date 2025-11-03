@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Data Processing Platform - Projects Dashboard</title>
+    <style>
+        /* ACCESSIBILITY: Using rem for all font sizes to respect user preferences */
+        :root {
+            --primary-blue: #1565C0;
+            --primary-blue-dark: #0D47A1;
+            --secondary-gray: #ECF0F1;
+            --text-dark: #2C3E50;
+            --text-medium: #495057;
+            --border-color: #DEE2E6;
+            --focus-color: #2196F3;
+            --success-green: #27C93F;
+            --warning-yellow: #FFC107;
+            --danger-red: #FF5F56;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            height: 100%;
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 1rem; /* 16px base - ACCESSIBILITY: relative units */
+            line-height: 1.5;
+            background: white; /* Changed to white - gray will be in specific areas */
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            max-width: 100vw;
+        }
+        
+        /* ACCESSIBILITY: Skip to main content link for keyboard users */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-blue);
+            color: white;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            z-index: 10000;
+            font-weight: 600;
+        }
+        .skip-link:focus {
+            top: 0;
+            outline: 3px solid var(--focus-color);
+            outline-offset: 2px;
+        }
+        
+        .desktop-frame {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            max-width: 100vw;
+            background: white;
+            overflow-x: hidden;
+        }
+        
+        .window-controls {
+            display: none; /* Hidden since we removed the title bar */
+        }
+        
+        .window-btn {
+            display: none; /* Hidden since we removed the title bar */
+        }
+        
+        .main-container {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden; /* ACCESSIBILITY: Prevent horizontal scroll on zoom */
+            width: 100%;
+            min-height: 0; /* Important for flex overflow */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .screen {
+            display: none;
+            padding: 1.875rem 2.5rem; /* 30px 40px */
+            width: 100%;
+            flex: 1; /* Fill available space */
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        /* ACCESSIBILITY: Proper heading styles */
+        .content-header {
+            background: var(--secondary-gray);
+            padding: 1.25rem 2.5rem;
+            border-bottom: 2px solid #BDC3C7;
+            margin: -1.875rem -2.5rem 1.875rem -2.5rem;
+        }
+        
+        h1 {
+            font-size: 1.5rem; /* 24px */
+            color: var(--text-dark);
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        h2 {
+            font-size: 1.375rem; /* 22px */
+            color: var(--text-dark);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        h3 {
+            font-size: 1.25rem; /* 20px */
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        
+        h4 {
+            font-size: 1rem; /* 16px */
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            gap: 0.9375rem;
+            margin-bottom: 1.5625rem;
+            flex-wrap: wrap; /* ACCESSIBILITY: Wrap on small screens */
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 200px; /* ACCESSIBILITY: Ensure usability on zoom */
+            padding: 0.625rem 0.9375rem;
+            border: 1px solid #CED4DA;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        /* ACCESSIBILITY: All interactive elements 44x44px minimum */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            min-height: 44px;
+            min-width: 44px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.9375rem; /* 15px */
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        /* ACCESSIBILITY: High contrast colors 4.5:1+ */
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-blue-dark);
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-gray);
+            color: var(--text-dark);
+        }
+        
+        .btn-secondary:hover {
+            background: #D5DBDB;
+        }
+        
+        /* ACCESSIBILITY: Visible focus indicators 3px outline */
+        .btn:focus,
+        .search-input:focus,
+        .form-select:focus,
+        input[type="checkbox"]:focus,
+        input[type="radio"]:focus,
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        .project-link:focus,
+        .three-dots:focus,
+        .menu-item:focus,
+        .tab:focus,
+        .back-arrow:focus,
+        .image-box:focus {
+            outline: 3px solid var(--focus-color);
+            outline-offset: 2px;
+            /* Ensure focus is visible even on dark backgrounds */
+            box-shadow: 0 0 0 2px white, 0 0 0 5px var(--focus-color);
+        }
+        
+        /* Data table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border-color);
+            table-layout: fixed; /* Fixed layout for better control */
+        }
+        
+        .data-table th {
+            background: #F8F9FA;
+            padding: 0.875rem 1.25rem;
+            text-align: left;
+            font-size: 0.8125rem; /* 13px */
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .data-table td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        /* Set column widths */
+        .data-table th:nth-child(1), .data-table td:nth-child(1) { width: 20%; } /* Project Name */
+        .data-table th:nth-child(2), .data-table td:nth-child(2) { width: 20%; } /* Method */
+        .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 20%; } /* Data Source */
+        .data-table th:nth-child(4), .data-table td:nth-child(4) { width: 15%; } /* Date */
+        .data-table th:nth-child(5), .data-table td:nth-child(5) { width: 10%; text-align: center; } /* Actions */
+        
+        /* ACCESSIBILITY: Improved contrast for data source labels */
+        .data-source {
+            color: #6c757d;  /* Subtle gray, professional look */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Same as body, not monospace */
+            font-size: 0.875rem; /* 14px - slightly larger */
+            font-weight: 400; /* Regular weight */
+            cursor: help;
+            position: relative;
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+        
+        .data-source:hover {
+            color: var(--text-dark);
+            background: #f8f9fa;
+        }
+        
+        .data-source .tooltip {
+            visibility: hidden;
+            background-color: var(--text-dark);
+            color: white;
+            text-align: left;
+            padding: 0.625rem 0.875rem;
+            border-radius: 4px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-family: 'Courier New', monospace; /* Full path uses monospace */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .data-source .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--text-dark) transparent transparent transparent;
+        }
+        
+        .data-source:hover .tooltip,
+        .data-source:focus .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* ACCESSIBILITY: High contrast project links */
+        .project-link {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.125rem 0.25rem;
+            display: inline-block;
+            border-radius: 2px;
+        }
+        
+        .project-link:hover {
+            color: var(--primary-blue-dark);
+            text-decoration: underline;
+            background: rgba(21, 101, 192, 0.1);
+        }
+        
+        /* Three dots menu with improved accessibility */
+        .three-dots {
+            cursor: pointer;
+            font-size: 1.25rem;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            min-height: 44px;
+            min-width: 44px;
+            height: 44px;
+            width: 44px;
+            user-select: none;
+            border-radius: 4px;
+            background: transparent;
+            border: none;
+            line-height: 1;
+        }
+        
+        .three-dots:hover {
+            background: #F8F9FA;
+        }
+        
+        .actions-menu {
+            display: none;
+            position: absolute;
+            right: 0.5rem;
+            top: 100%;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 11.25rem; /* 180px */
+            z-index: 100;
+        }
+        
+        .actions-menu.show {
+            display: block;
+        }
+        
+        .menu-item {
+            padding: 0.75rem 1rem;
+            min-height: 44px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            background: white;
+            border-left: none;
+            border-right: none;
+            border-top: none;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .menu-item:first-child {
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .menu-item:last-child {
+            border-bottom: none;
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .menu-item:hover,
+        .menu-item:focus {
+            background: #F8F9FA;
+        }
+        
+        /* Upload zone */
+        .upload-zone {
+            border: 3px dashed #BDC3C7;
+            border-radius: 8px;
+            padding: 5rem;
+            text-align: center;
+            background: #F8F9FA;
+            margin: 1.875rem 0;
+        }
+        
+        /* Form panel */
+        .form-panel {
+            max-width: 43.75rem; /* 700px */
+            margin: 0 auto;
+            background: #F8F9FA;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 2.1875rem; /* 35px */
+        }
+        
+        .form-header {
+            display: flex;
+            align-items: center;
+            gap: 0.9375rem;
+            margin-bottom: 1.5625rem;
+        }
+        
+        .step-indicator {
+            width: 2.75rem;  /* 44px */
+            height: 2.75rem; /* 44px */
+            background: var(--primary-blue);
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.375rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            min-height: 44px;
+            border: 1px solid #CED4DA;
+            border-radius: 4px;
+            font-size: 0.9375rem;
+            background: white;
+        }
+        
+        .checkbox-group {
+            max-height: 20rem; /* 320px */
+            overflow-y: auto;
+        }
+        
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 0.75rem;
+            min-height: 44px;
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .checkbox-option:hover {
+            background: #F8F9FA;
+        }
+        
+        .checkbox-option input[type="checkbox"] {
+            width: 1.25rem;  /* 20px */
+            height: 1.25rem; /* 20px */
+            cursor: pointer;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.875rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        /* Loading spinner with motion preference support */
+        .spinner {
+            width: 3.75rem;
+            height: 3.75rem;
+            border: 4px solid var(--secondary-gray);
+            border-top-color: var(--primary-blue);
+            border-radius: 50%;
+            margin: 6.25rem auto;
+        }
+        
+        /* ACCESSIBILITY: Respect user's motion preferences */
+        @media (prefers-reduced-motion: no-preference) {
+            .spinner {
+                animation: spin 1s linear infinite;
+            }
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+            .spinner {
+                animation: none;
+                border-top-color: transparent;
+                border-right-color: var(--primary-blue);
+            }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Results bar */
+        .results-bar {
+            padding: 1.25rem;
+            background: #F8F9FA;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 1.5625rem;
+        }
+        
+        /* Tabs with proper ARIA support */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1.875rem;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 0.875rem 1.75rem;
+            min-height: 44px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            border-radius: 0;
+            position: relative;
+            color: var(--text-medium);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .tab:hover {
+            background: rgba(21, 101, 192, 0.05);
+            color: var(--text-dark);
+        }
+        
+        /* ACCESSIBILITY: Non-color indicator for active tab */
+        .tab.active {
+            color: var(--primary-blue);
+            font-weight: 600;
+            background: transparent;
+            border-bottom: 3px solid var(--primary-blue);
+            margin-bottom: -2px;
+        }
+        
+        /* ACCESSIBILITY: Remove checkmark, use underline only */
+        .tab.active::before {
+            content: none;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Charts grid - responsive */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.875rem;
+        }
+        
+        .chart-container {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.25rem;
+        }
+        
+        .chart-container img {
+            width: 100%;
+            height: auto; /* ACCESSIBILITY: Maintain aspect ratio */
+        }
+        
+        .chart-blurb {
+            margin-top: 0.75rem;
+            padding: 0.625rem;
+            background: #F8F9FA;
+            border-left: 3px solid var(--primary-blue);
+            font-size: 0.8125rem;
+            color: var(--text-medium);
+        }
+        
+        /* Images grid - responsive */
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.9375rem;
+        }
+        
+        .image-box {
+            aspect-ratio: 1;
+            background: var(--secondary-gray);
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            min-height: 44px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .image-box:hover {
+            border-color: var(--primary-blue);
+            transform: scale(1.02);
+        }
+        
+        /* ACCESSIBILITY: Selected state with non-color indicator */
+        .image-box.selected {
+            border-color: var(--primary-blue);
+            border-width: 3px;
+            box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.2);
+        }
+        
+        /* ACCESSIBILITY: Add checkmark for selected images (not just color) */
+        .image-box.selected::after {
+            content: "✓";
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--primary-blue);
+            color: white;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        /* Trajectory data */
+        .trajectory-data {
+            background: #F8F9FA;
+            padding: 0.9375rem;
+            border-radius: 4px;
+            margin-bottom: 1.25rem;
+        }
+        
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .data-label {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        /* Back arrow */
+        .back-arrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-blue);
+            cursor: pointer;
+            margin-bottom: 1.25rem;
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            min-height: 44px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        
+        .back-arrow:hover {
+            background: #F8F9FA;
+            text-decoration: underline;
+        }
+        
+        /* Dialog/Modal styling */
+        .dialog-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .dialog-overlay.show {
+            display: flex;
+        }
+        
+        .dialog-content {
+            background: white;
+            padding: 1.875rem;
+            border-radius: 8px;
+            max-width: 31.25rem; /* 500px */
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        /* ACCESSIBILITY: Responsive design for zoom/magnification */
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .images-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+        
+        /* ACCESSIBILITY: Support for high zoom levels (200%+) */
+        @media (min-width: 1px) {
+            body {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+        
+        /* ACCESSIBILITY: Reduced transparency mode support */
+        @media (prefers-reduced-transparency: reduce) {
+            .dialog-overlay {
+                background: rgba(0,0,0,0.9);
+            }
+        }
+        
+        /* ACCESSIBILITY: High contrast mode support */
+        @media (prefers-contrast: high) {
+            .btn {
+                border: 2px solid currentColor;
+            }
+            
+            .tab.active {
+                border-bottom-width: 4px;
+            }
+        }
+        
+        /* Visual indicator for screen reader only content */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        /* ACCESSIBILITY: Ensure emojis are decorative */
+        .emoji {
+            font-size: 3rem;
+            margin-bottom: 1.25rem;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- ACCESSIBILITY: Skip to main content link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <div class="desktop-frame">
+        <!-- ACCESSIBILITY: Semantic main element with id for skip link -->
+        <main id="main-content" class="main-container" role="main">
+            <!-- HOME SCREEN -->
+            <div id="home" class="screen active">
+                <header class="content-header">
+                    <!-- ACCESSIBILITY: Proper H1 heading hierarchy -->
+                    <h1>Projects Dashboard</h1>
+                </header>
+                
+                <div class="toolbar" role="search">
+                    <label for="search-projects" class="sr-only">Search projects</label>
+                    <input 
+                        type="search" 
+                        id="search-projects"
+                        class="search-input" 
+                        placeholder="Search projects..." 
+                        aria-label="Search projects"
+                        tabindex="1">
+                    <button 
+                        class="btn btn-primary" 
+                        onclick="navigate('upload')" 
+                        tabindex="2" 
+                        aria-label="Create new project">
+                        <span aria-hidden="true">+</span> New Project
+                    </button>
+                </div>
+                
+                <table class="data-table" role="table" aria-label="Projects list">
+                    <thead>
+                        <tr>
+                            <th scope="col">Project Name</th>
+                            <th scope="col">Method</th>
+                            <th scope="col">Data Source</th>
+                            <th scope="col">Date Created</th>
+                            <th scope="col" style="text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <a href="#" 
+                                   class="project-link" 
+                                   onclick="navigate('results'); return false;" 
+                                   tabindex="3" 
+                                   aria-label="Open Algae Survey project">
+                                    Algae Survey
+                                </a>
+                            </td>
+                            <td>Mobley Rho Method</td>
+                            <td>
+                                <span class="data-source" 
+                                      tabindex="0"
+                                      aria-label="Data source: /user/Downloads/Algae_Survey/raw_images">
+                                    Algae_Survey
+                                    <span class="tooltip" role="tooltip">/user/Downloads/Algae_Survey/raw_images</span>
+                                </span>
+                            </td>
+                            <td>09/22/2025</td>
+                            <td style="text-align: center; position: relative;">
+                                <button 
+                                    class="three-dots" 
+                                    onclick="toggleMenu(event)" 
+                                    tabindex="4" 
+                                    aria-label="Open actions menu for Algae Survey project"
+                                    aria-haspopup="true"
+                                    aria-expanded="false">
+                                    ⋮
+                                </button>
+                                <nav class="actions-menu" role="menu" aria-label="Project actions for Algae Survey">
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Export functionality')" role="menuitem" tabindex="-1">Export</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Delete functionality')" role="menuitem" tabindex="-1">Delete</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Duplicate functionality')" role="menuitem" tabindex="-1">Duplicate</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); navigate('settings')" role="menuitem" tabindex="-1">Project Settings</button>
+                                </nav>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <a href="#" class="project-link" onclick="navigate('results'); return false;" tabindex="5" aria-label="Open Coastal Water Quality project">Coastal Water Quality</a>
+                            </td>
+                            <td>Black Pixel Method</td>
+                            <td>
+                                <span class="data-source" tabindex="0" aria-label="Data source: /user/Documents/Coastal_Study/multispectral_data">
+                                    Coastal_Study
+                                    <span class="tooltip" role="tooltip">/user/Documents/Coastal_Study/multispectral_data</span>
+                                </span>
+                            </td>
+                            <td>09/15/2025</td>
+                            <td style="text-align: center; position: relative;">
+                                <button class="three-dots" onclick="toggleMenu(event)" tabindex="6" aria-label="Open actions menu for Coastal Water Quality project" aria-haspopup="true" aria-expanded="false">⋮</button>
+                                <nav class="actions-menu" role="menu">
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Export functionality')" role="menuitem" tabindex="-1">Export</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Delete functionality')" role="menuitem" tabindex="-1">Delete</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Duplicate functionality')" role="menuitem" tabindex="-1">Duplicate</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); navigate('settings')" role="menuitem" tabindex="-1">Project Settings</button>
+                                </nav>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <a href="#" class="project-link" onclick="navigate('results'); return false;" tabindex="7" aria-label="Open Lake Michigan Study project">Lake Michigan Study</a>
+                            </td>
+                            <td>Hedley Method</td>
+                            <td>
+                                <span class="data-source" tabindex="0" aria-label="Data source: /user/Downloads/Lake_Michigan/hyperspectral_imgs">
+                                    Lake_Michigan
+                                    <span class="tooltip" role="tooltip">/user/Downloads/Lake_Michigan/hyperspectral_imgs</span>
+                                </span>
+                            </td>
+                            <td>09/08/2025</td>
+                            <td style="text-align: center; position: relative;">
+                                <button class="three-dots" onclick="toggleMenu(event)" tabindex="8" aria-label="Open actions menu for Lake Michigan Study project" aria-haspopup="true" aria-expanded="false">⋮</button>
+                                <nav class="actions-menu" role="menu">
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Export functionality')" role="menuitem" tabindex="-1">Export</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Delete functionality')" role="menuitem" tabindex="-1">Delete</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Duplicate functionality')" role="menuitem" tabindex="-1">Duplicate</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); navigate('settings')" role="menuitem" tabindex="-1">Project Settings</button>
+                                </nav>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <a href="#" class="project-link" onclick="navigate('results'); return false;" tabindex="9" aria-label="Open Reef Monitoring 2025 project">Reef Monitoring 2025</a>
+                            </td>
+                            <td>Mobley Rho Method</td>
+                            <td>
+                                <span class="data-source" tabindex="0" aria-label="Data source: /user/Downloads/Reef_Data/rgb_images">
+                                    Reef_Data
+                                    <span class="tooltip" role="tooltip">/user/Downloads/Reef_Data/rgb_images</span>
+                                </span>
+                            </td>
+                            <td>08/30/2025</td>
+                            <td style="text-align: center; position: relative;">
+                                <button class="three-dots" onclick="toggleMenu(event)" tabindex="10" aria-label="Open actions menu for Reef Monitoring 2025 project" aria-haspopup="true" aria-expanded="false">⋮</button>
+                                <nav class="actions-menu" role="menu">
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Export functionality')" role="menuitem" tabindex="-1">Export</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Delete functionality')" role="menuitem" tabindex="-1">Delete</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Duplicate functionality')" role="menuitem" tabindex="-1">Duplicate</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); navigate('settings')" role="menuitem" tabindex="-1">Project Settings</button>
+                                </nav>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <a href="#" class="project-link" onclick="navigate('results'); return false;" tabindex="11" aria-label="Open Turbidity Assessment project">Turbidity Assessment</a>
+                            </td>
+                            <td>Black Pixel Method</td>
+                            <td>
+                                <span class="data-source" tabindex="0" aria-label="Data source: /user/Downloads/Lake_Erie/raw_water_imgs">
+                                    Lake_Erie
+                                    <span class="tooltip" role="tooltip">/user/Downloads/Lake_Erie/raw_water_imgs</span>
+                                </span>
+                            </td>
+                            <td>08/22/2025</td>
+                            <td style="text-align: center; position: relative;">
+                                <button class="three-dots" onclick="toggleMenu(event)" tabindex="12" aria-label="Open actions menu for Turbidity Assessment project" aria-haspopup="true" aria-expanded="false">⋮</button>
+                                <nav class="actions-menu" role="menu">
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Export functionality')" role="menuitem" tabindex="-1">Export</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Delete functionality')" role="menuitem" tabindex="-1">Delete</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); alert('Duplicate functionality')" role="menuitem" tabindex="-1">Duplicate</button>
+                                    <button class="menu-item" onclick="event.stopPropagation(); navigate('settings')" role="menuitem" tabindex="-1">Project Settings</button>
+                                </nav>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- UPLOAD SCREEN -->
+            <div id="upload" class="screen">
+                <header class="content-header">
+                    <h1>Upload Data</h1>
+                </header>
+                
+                <section class="upload-zone" role="region" aria-labelledby="upload-heading">
+                    <h2 id="upload-heading" class="sr-only">File Upload Area</h2>
+                    <div class="emoji" aria-hidden="true">📁</div>
+                    <p>Select your data folder with the standard structure</p>
+                    <p style="color: var(--text-medium); font-size: 0.8125rem; margin-top: 0.625rem;">
+                        Required: panel/, raw_sky_imgs/, raw_water_imgs/, align_img/
+                    </p>
+                    <button class="btn btn-primary" style="margin-top: 1.25rem;" aria-label="Upload folder">Upload Folder</button>
+                    <button class="btn btn-secondary" style="margin-top: 0.625rem;" aria-label="Manual upload">Manual Upload</button>
+                </section>
+                
+                <nav class="form-actions" aria-label="Navigation buttons">
+                    <button class="btn btn-secondary" onclick="navigate('home')">Cancel</button>
+                    <button class="btn btn-primary" onclick="navigate('method')">Next</button>
+                </nav>
+            </div>
+
+            <!-- METHOD SCREEN -->
+            <div id="method" class="screen">
+                <header class="content-header">
+                    <h1>Method Selection</h1>
+                </header>
+                
+                <section class="form-panel" aria-labelledby="method-heading">
+                    <header class="form-header">
+                        <div class="step-indicator" aria-label="Step 1 of 2">1</div>
+                        <h2 id="method-heading">Select Processing Methods</h2>
+                    </header>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="sky-glint-method">Sky Glint Removal Method</label>
+                        <select class="form-select" id="sky-glint-method" required aria-required="true">
+                            <option value="">Select method...</option>
+                            <option value="mobley">Mobley Rho Method</option>
+                            <option value="black-pixel">Black Pixel Method</option>
+                            <option value="hedley">Hedley Method</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="irradiance-method">Irradiance Normalization Method</label>
+                        <select class="form-select" id="irradiance-method" required aria-required="true">
+                            <option value="">Select method...</option>
+                            <option value="panel">Panel Ed</option>
+                            <option value="dls">DLS Ed</option>
+                            <option value="dls-panel">DLS corrected by panel</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="pixel-masking">Pixel Masking (Optional)</label>
+                        <select class="form-select" id="pixel-masking">
+                            <option value="none">None</option>
+                            <option value="value">Value Threshold</option>
+                            <option value="std-dev">Standard Deviation Threshold</option>
+                        </select>
+                    </div>
+                    
+                    <nav class="form-actions" aria-label="Navigation buttons">
+                        <button class="btn btn-secondary" onclick="navigate('upload')">Back</button>
+                        <button class="btn btn-primary" onclick="navigate('outputs')">Next</button>
+                    </nav>
+                </section>
+            </div>
+
+            <!-- OUTPUTS SCREEN -->
+            <div id="outputs" class="screen">
+                <header class="content-header">
+                    <h1>Output Selection</h1>
+                </header>
+                
+                <section class="form-panel" aria-labelledby="outputs-heading">
+                    <header class="form-header">
+                        <div class="step-indicator" aria-label="Step 2 of 2">2</div>
+                        <h2 id="outputs-heading">Select Outputs</h2>
+                    </header>
+                    
+                    <fieldset class="checkbox-group" aria-labelledby="outputs-legend">
+                        <legend id="outputs-legend" class="sr-only">Select which outputs to generate</legend>
+                        
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="output-reflectance" name="outputs" value="reflectance">
+                            <span>Reflectance spectra</span>
+                        </label>
+                        
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="output-chlorophyll-hu" name="outputs" value="chlorophyll-hu">
+                            <span>Chlorophyll-a (Hu Color Index)</span>
+                        </label>
+                        
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="output-chlorophyll-ocx" name="outputs" value="chlorophyll-ocx">
+                            <span>Chlorophyll-a (OCx Band Ratio)</span>
+                        </label>
+                        
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="output-chlorophyll-blended" name="outputs" value="chlorophyll-blended">
+                            <span>Chlorophyll-a (Blended Hu+OCx)</span>
+                        </label>
+                        
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="output-chlorophyll-gitelson" name="outputs" value="chlorophyll-gitelson">
+                            <span>Chlorophyll-a (Gitelson)</span>
+                        </label>
+                        
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="output-tsm" name="outputs" value="tsm">
+                            <span>Total Suspended Matter (TSM)</span>
+                        </label>
+                        
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="output-mosaics" name="outputs" value="mosaics">
+                            <span>Mosaics</span>
+                        </label>
+                    </fieldset>
+                    
+                    <nav class="form-actions" aria-label="Navigation buttons">
+                        <button class="btn btn-secondary" onclick="navigate('method')">Back</button>
+                        <button class="btn btn-primary" onclick="navigate('loading')">Process</button>
+                    </nav>
+                </section>
+            </div>
+
+            <!-- LOADING SCREEN -->
+            <div id="loading" class="screen">
+                <header class="content-header">
+                    <h1>Processing</h1>
+                </header>
+                
+                <div class="spinner" role="status" aria-label="Processing data, please wait"></div>
+                <p style="text-align: center;" aria-live="polite" aria-atomic="true">Processing data...</p>
+            </div>
+
+            <!-- RESULTS SCREEN -->
+            <div id="results" class="screen">
+                <header class="content-header">
+                    <h1>Results</h1>
+                </header>
+                
+                <nav aria-label="Breadcrumb">
+                    <a href="#" class="back-arrow" onclick="navigate('home'); return false;" aria-label="Back to projects dashboard">
+                        ← Back to Projects
+                    </a>
+                </nav>
+                
+                <section class="results-bar" aria-labelledby="project-info">
+                    <h2 id="project-info">Algae Survey</h2>
+                    <p>22.09.2025 | Location: 42.0235°N, 83.4075°W</p>
+                </section>
+                
+                <nav class="tabs" role="tablist" aria-label="Results sections">
+                    <button class="tab active" onclick="switchTab('overview')" role="tab" tabindex="0" aria-selected="true" aria-controls="overview" id="tab-overview">
+                        Overview
+                    </button>
+                    <button class="tab" onclick="switchTab('images')" role="tab" tabindex="0" aria-selected="false" aria-controls="images" id="tab-images">
+                        Images
+                    </button>
+                    <button class="tab" onclick="switchTab('trajectory')" role="tab" tabindex="0" aria-selected="false" aria-controls="trajectory" id="tab-trajectory">
+                        Flight Trajectory
+                    </button>
+                    <button class="tab" onclick="switchTab('mosaic')" role="tab" tabindex="0" aria-selected="false" aria-controls="mosaic" id="tab-mosaic">
+                        Mosaic
+                    </button>
+                </nav>
+                
+                <!-- Overview Tab -->
+                <section id="overview" class="tab-content active" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+                    <div class="charts-grid">
+                        <article class="chart-container">
+                            <h3>Remote Sensing Reflectance</h3>
+                            <img src="https://i.imgur.com/TbT82XV.png" alt="Line chart showing remote sensing reflectance across wavelengths from 400 to 800 nanometers, with peak reflectance at approximately 550nm">
+                            <div class="chart-blurb">This graph shows how light reflects off the water surface at different wavelengths. Higher peaks indicate more reflection at specific colors.</div>
+                        </article>
+                        
+                        <article class="chart-container">
+                            <h3>Chlorophyll Concentration Maps</h3>
+                            <img src="https://i.imgur.com/Jy2rdnZ.png" alt="Heat map showing chlorophyll-a concentration across the survey area, with values ranging from low (blue) to high (red) concentrations">
+                            <div class="chart-blurb">This map displays chlorophyll-a levels across the survey area. Warmer colors (red/orange) indicate higher algae concentrations.</div>
+                        </article>
+                    </div>
+                </section>
+                
+                <!-- Images Tab -->
+                <section id="images" class="tab-content" role="tabpanel" aria-labelledby="tab-images" tabindex="0">
+                    <div class="images-grid" role="list" aria-label="Drone captured images">
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 1, not selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 2, not selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 3, not selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box selected" role="listitem" tabindex="0" aria-label="Drone image 4, selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 5, not selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 6, not selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 7, not selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 8, not selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 9, not selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 10, not selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 11, not selected" onclick="toggleImageSelection(this)"></button>
+                        <button class="image-box" role="listitem" tabindex="0" aria-label="Drone image 12, not selected" onclick="toggleImageSelection(this)"></button>
+                    </div>
+                </section>
+                
+                <!-- Trajectory Tab -->
+                <section id="trajectory" class="tab-content" role="tabpanel" aria-labelledby="tab-trajectory" tabindex="0">
+                    <article class="trajectory-data">
+                        <h3>Flight Data Summary</h3>
+                        <dl>
+                            <div class="data-row">
+                                <dt class="data-label">Altitude:</dt>
+                                <dd>260-268 m</dd>
+                            </div>
+                            <div class="data-row">
+                                <dt class="data-label">Latitude/Longitude:</dt>
+                                <dd>42.0235°N, 83.4075°W</dd>
+                            </div>
+                            <div class="data-row">
+                                <dt class="data-label">Yaw:</dt>
+                                <dd>0-350°</dd>
+                            </div>
+                        </dl>
+                    </article>
+                    <img src="https://i.imgur.com/Jy2rdnZ.png" alt="Flight trajectory map showing the drone's path over the survey area in a systematic grid pattern" style="width: 100%; border-radius: 4px;">
+                </section>
+                
+                <!-- Mosaic Tab -->
+                <section id="mosaic" class="tab-content" role="tabpanel" aria-labelledby="tab-mosaic" tabindex="0">
+                    <div style="background: #F8F9FA; padding: 0.9375rem; border-radius: 4px; margin-bottom: 1.25rem;">
+                        <h3>Map Controls</h3>
+                        <nav style="display: flex; gap: 0.625rem; margin-top: 0.625rem; flex-wrap: wrap;" aria-label="Map control buttons">
+                            <button class="btn btn-secondary" aria-label="Toggle map layer"><span aria-hidden="true">🗺️</span> Toggle Map Layer</button>
+                            <button class="btn btn-secondary" aria-label="Zoom map"><span aria-hidden="true">🔍</span> Zoom</button>
+                            <button class="btn btn-secondary" aria-label="Add marker to map"><span aria-hidden="true">📍</span> Add Marker</button>
+                            <button class="btn btn-primary" onclick="toggleMosaicEditMode()" aria-label="Edit mosaic position"><span aria-hidden="true">✏️</span> Edit Mosaic Position</button>
+                        </nav>
+                    </div>
+                    
+                    <div id="mosaicEditControls" style="display: none; background: #FFF3CD; padding: 0.9375rem; border-radius: 4px; margin-bottom: 1.25rem; border-left: 4px solid var(--warning-yellow);" role="alert" aria-live="assertive">
+                        <h3>Edit Mode Active</h3>
+                        <p style="margin: 0.625rem 0; font-size: 0.8125rem;">Click and drag the mosaic to reposition. Use controls below to rotate.</p>
+                        <div style="display: flex; gap: 0.625rem; align-items: center; margin-top: 0.625rem; flex-wrap: wrap;">
+                            <label for="rotationValue">Rotation:</label>
+                            <button class="btn btn-secondary" onclick="rotateMosaic(-5)" aria-label="Rotate left 5 degrees">↶ -5°</button>
+                            <button class="btn btn-secondary" onclick="rotateMosaic(-1)" aria-label="Rotate left 1 degree">↶ -1°</button>
+                            <input type="number" id="rotationValue" value="0" aria-label="Rotation value in degrees" style="width: 70px; padding: 0.375rem; text-align: center; border: 1px solid #CED4DA; border-radius: 4px;">
+                            <button class="btn btn-secondary" onclick="rotateMosaic(1)" aria-label="Rotate right 1 degree">↷ +1°</button>
+                            <button class="btn btn-secondary" onclick="rotateMosaic(5)" aria-label="Rotate right 5 degrees">↷ +5°</button>
+                            <button class="btn btn-primary" onclick="saveMosaicPosition()" style="margin-left: 1.25rem;">Save Position</button>
+                            <button class="btn btn-secondary" onclick="toggleMosaicEditMode()">Cancel</button>
+                        </div>
+                    </div>
+                    
+                    <figure id="mosaicContainer" style="position: relative; cursor: default; margin: 0;">
+                        <img src="https://i.imgur.com/fBJpRAc.jpeg" alt="Georeferenced mosaic showing water quality data overlaid on map coordinates 42.0235°N, 83.4075°W with 2.5 cm per pixel resolution" id="mosaicImage" style="width: 100%; height: auto; transition: transform 0.2s;">
+                        <figcaption class="chart-blurb" style="margin-top: 0.9375rem;">
+                            Final georeferenced mosaic overlay. Coordinates: 42.0235°N, 83.4075°W | Resolution: 2.5 cm/pixel
+                        </figcaption>
+                    </figure>
+                </section>
+            </div>
+
+            <!-- SETTINGS SCREEN -->
+            <div id="settings" class="screen">
+                <header class="content-header">
+                    <h1>Project Settings</h1>
+                </header>
+                
+                <nav aria-label="Breadcrumb">
+                    <a href="#" class="back-arrow" onclick="navigate('home'); return false;" aria-label="Back to projects dashboard">
+                        ← Back to Home Page
+                    </a>
+                </nav>
+
+                <section style="margin-bottom: 1.875rem;">
+                    <h2>Algae Survey</h2>
+                    <p style="color: var(--text-medium);">Data Source: /user/Downloads/Algae_Survey/raw_images | Created: 09/22/2025</p>
+                </section>
+
+                <section class="form-panel" aria-labelledby="settings-heading">
+                    <h3 id="settings-heading">Change Project Settings</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="settings-sky-glint">Sky Glint Removal Method</label>
+                        <select class="form-select" id="settings-sky-glint">
+                            <option value="mobley" selected>Mobley Rho Method</option>
+                            <option value="black-pixel">Black Pixel Method</option>
+                            <option value="hedley">Hedley Method</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="settings-irradiance">Irradiance Normalization Method</label>
+                        <select class="form-select" id="settings-irradiance">
+                            <option value="panel" selected>Panel Ed</option>
+                            <option value="dls">DLS Ed</option>
+                            <option value="dls-panel">DLS corrected by panel</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="settings-pixel-masking">Pixel Masking</label>
+                        <select class="form-select" id="settings-pixel-masking">
+                            <option value="none">None</option>
+                            <option value="value" selected>Value Threshold</option>
+                            <option value="std-dev">Standard Deviation Threshold</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" id="settings-outputs-label">Selected Outputs</label>
+                        <fieldset class="checkbox-group" aria-labelledby="settings-outputs-label">
+                            <legend class="sr-only">Select which outputs to generate</legend>
+                            
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="output-reflectance-settings" name="outputs-settings" value="reflectance">
+                                <span>Reflectance spectra</span>
+                            </label>
+                            
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="output-chlorophyll-hu-settings" name="outputs-settings" value="chlorophyll-hu">
+                                <span>Chlorophyll-a (Hu Color Index)</span>
+                            </label>
+                            
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="output-chlorophyll-ocx-settings" name="outputs-settings" value="chlorophyll-ocx">
+                                <span>Chlorophyll-a (OCx Band Ratio)</span>
+                            </label>
+                            
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="output-chlorophyll-blended-settings" name="outputs-settings" value="chlorophyll-blended">
+                                <span>Chlorophyll-a (Blended Hu+OCx)</span>
+                            </label>
+                            
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="output-chlorophyll-gitelson-settings" name="outputs-settings" value="chlorophyll-gitelson">
+                                <span>Chlorophyll-a (Gitelson)</span>
+                            </label>
+                            
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="output-tsm-settings" name="outputs-settings" value="tsm">
+                                <span>Total Suspended Matter (TSM)</span>
+                            </label>
+                            
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="output-mosaics-settings" name="outputs-settings" value="mosaics">
+                                <span>Mosaics</span>
+                            </label>
+                        </fieldset>
+                    </div>
+
+                    <nav class="form-actions" aria-label="Settings action buttons">
+                        <button class="btn btn-secondary" onclick="navigate('home')">Cancel</button>
+                        <button class="btn btn-primary" onclick="showProjectOptionsDialog()">Apply Changes</button>
+                    </nav>
+                </section>
+            </div>
+        </main>
+
+        <!-- PROJECT OPTIONS DIALOG -->
+        <div id="projectOptionsDialog" class="dialog-overlay" role="dialog" aria-labelledby="dialog-title" aria-modal="true" aria-hidden="true">
+            <div class="dialog-content">
+                <h2 id="dialog-title">Apply Settings Changes</h2>
+                <p style="margin-bottom: 1.5625rem; color: var(--text-medium);">How would you like to apply these changes?</p>
+                
+                <fieldset style="margin-bottom: 0.9375rem; border: none; padding: 0;">
+                    <legend class="sr-only">Choose how to apply changes</legend>
+                    
+                    <label style="display: block; padding: 0.9375rem; border: 2px solid var(--border-color); border-radius: 4px; cursor: pointer; margin-bottom: 0.625rem;">
+                        <input type="radio" name="projectOption" value="update" checked aria-label="Update existing project">
+                        <strong>Update Existing Project</strong>
+                        <div style="font-size: 0.8125rem; color: var(--text-medium); margin-top: 0.3125rem; margin-left: 1.5rem;">Reprocess and overwrite current results</div>
+                    </label>
+                    
+                    <label style="display: block; padding: 0.9375rem; border: 2px solid var(--border-color); border-radius: 4px; cursor: pointer;">
+                        <input type="radio" name="projectOption" value="new" aria-label="Process as new project">
+                        <strong>Process as New Project</strong>
+                        <div style="font-size: 0.8125rem; color: var(--text-medium); margin-top: 0.3125rem; margin-left: 1.5rem;">Create a copy with a new name</div>
+                    </label>
+                </fieldset>
+                
+                <div id="newProjectNameField" style="display: none; margin-bottom: 1.25rem;">
+                    <label for="newProjectName" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">New Project Name</label>
+                    <input type="text" id="newProjectName" placeholder="Enter new project name..." aria-label="New project name" aria-required="true" style="width: 100%; padding: 0.625rem; border: 1px solid #CED4DA; border-radius: 4px; font-size: 1rem;">
+                    <div id="nameError" role="alert" aria-live="polite" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: none;">Please enter a project name</div>
+                </div>
+                
+                <nav style="display: flex; gap: 0.625rem; justify-content: flex-end; margin-top: 1.5625rem;" aria-label="Dialog action buttons">
+                    <button class="btn btn-secondary" onclick="closeProjectOptionsDialog()">Cancel</button>
+                    <button class="btn btn-primary" onclick="applyProjectChanges()">Apply</button>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ACCESSIBILITY: Manage focus and keyboard navigation
+        let lastFocusedElement = null;
+        
+        function navigate(screen) {
+            // Store last focused element
+            lastFocusedElement = document.activeElement;
+            
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screen).classList.add('active');
+            
+            // ACCESSIBILITY: Update page title for screen readers
+            const screenTitles = {
+                'home': 'Projects Dashboard',
+                'upload': 'Upload Data',
+                'method': 'Method Selection',
+                'outputs': 'Output Selection',
+                'loading': 'Processing',
+                'results': 'Results',
+                'settings': 'Project Settings'
+            };
+            document.title = `${screenTitles[screen]} - Drone Data Processing Platform`;
+            
+            // ACCESSIBILITY: Set focus to first heading or focusable element
+            setTimeout(() => {
+                const newScreen = document.getElementById(screen);
+                const heading = newScreen.querySelector('h1');
+                if (heading) {
+                    heading.setAttribute('tabindex', '-1');
+                    heading.focus();
+                } else {
+                    const firstFocusable = newScreen.querySelector('button, input, select, a, [tabindex]:not([tabindex="-1"])');
+                    if (firstFocusable) {
+                        firstFocusable.focus();
+                    }
+                }
+            }, 100);
+            
+            if (screen === 'loading') {
+                setTimeout(() => navigate('results'), 2000);
+            }
+        }
+
+        function toggleMenu(e) {
+            e.stopPropagation();
+            const button = e.currentTarget;
+            const menu = button.nextElementSibling; // Menu is now sibling, not child
+            const isOpen = menu.classList.contains('show');
+            
+            // Close all other menus
+            document.querySelectorAll('.actions-menu').forEach(m => {
+                if (m !== menu) {
+                    m.classList.remove('show');
+                    const btn = m.previousElementSibling; // Get sibling button
+                    if (btn && btn.classList.contains('three-dots')) {
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+            
+            // Toggle current menu
+            menu.classList.toggle('show');
+            button.setAttribute('aria-expanded', !isOpen);
+            
+            // ACCESSIBILITY: Set focus to first menu item when opened
+            if (menu.classList.contains('show')) {
+                const firstMenuItem = menu.querySelector('.menu-item');
+                if (firstMenuItem) {
+                    setTimeout(() => firstMenuItem.focus(), 50);
+                }
+            }
+        }
+
+        function switchTab(tabId) {
+            // Update tab panels
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            
+            const tabContent = document.getElementById(tabId);
+            const tabButton = event.target.closest('.tab');
+            
+            if (tabContent) tabContent.classList.add('active');
+            if (tabButton) {
+                tabButton.classList.add('active');
+                tabButton.setAttribute('aria-selected', 'true');
+            }
+            
+            // ACCESSIBILITY: Set focus to tab panel content
+            setTimeout(() => {
+                if (tabContent) {
+                    tabContent.focus();
+                }
+            }, 50);
+        }
+
+        // ACCESSIBILITY: Close menus when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.three-dots') && !e.target.closest('.actions-menu')) {
+                document.querySelectorAll('.actions-menu').forEach(m => {
+                    m.classList.remove('show');
+                    const btn = m.previousElementSibling;
+                    if (btn && btn.classList.contains('three-dots')) {
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        });
+
+        // ACCESSIBILITY: Keyboard navigation for tabs (Arrow keys)
+        document.addEventListener('keydown', function(e) {
+            // Tab navigation with arrow keys
+            if (e.target.classList.contains('tab')) {
+                const tabs = Array.from(document.querySelectorAll('.tab'));
+                const currentIndex = tabs.indexOf(e.target);
+                
+                if (e.key === 'ArrowRight' && currentIndex < tabs.length - 1) {
+                    e.preventDefault();
+                    tabs[currentIndex + 1].focus();
+                    tabs[currentIndex + 1].click();
+                } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                    e.preventDefault();
+                    tabs[currentIndex - 1].focus();
+                    tabs[currentIndex - 1].click();
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    tabs[0].focus();
+                    tabs[0].click();
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    tabs[tabs.length - 1].focus();
+                    tabs[tabs.length - 1].click();
+                }
+            }
+            
+            // ACCESSIBILITY: ESC key to close menus and dialogs
+            if (e.key === 'Escape') {
+                // Close action menus
+                const openMenus = document.querySelectorAll('.actions-menu.show');
+                if (openMenus.length > 0) {
+                    openMenus.forEach(menu => {
+                        menu.classList.remove('show');
+                        const btn = menu.previousElementSibling;
+                        if (btn && btn.classList.contains('three-dots')) {
+                            btn.setAttribute('aria-expanded', 'false');
+                            btn.focus();
+                        }
+                    });
+                    e.preventDefault();
+                    return;
+                }
+                
+                // Close dialog
+                const dialog = document.getElementById('projectOptionsDialog');
+                if (dialog && dialog.classList.contains('show')) {
+                    closeProjectOptionsDialog();
+                    e.preventDefault();
+                    return;
+                }
+                
+                // Close edit mode
+                if (mosaicEditMode) {
+                    toggleMosaicEditMode();
+                    e.preventDefault();
+                }
+            }
+            
+            // Menu navigation with arrow keys
+            if (e.target.classList.contains('menu-item')) {
+                const menuItems = Array.from(e.target.closest('.actions-menu').querySelectorAll('.menu-item'));
+                const currentIndex = menuItems.indexOf(e.target);
+                
+                if (e.key === 'ArrowDown' && currentIndex < menuItems.length - 1) {
+                    e.preventDefault();
+                    menuItems[currentIndex + 1].focus();
+                } else if (e.key === 'ArrowUp' && currentIndex > 0) {
+                    e.preventDefault();
+                    menuItems[currentIndex - 1].focus();
+                }
+            }
+        });
+
+        // ACCESSIBILITY: Image selection with keyboard
+        function toggleImageSelection(element) {
+            const isSelected = element.classList.contains('selected');
+            element.classList.toggle('selected');
+            
+            // Update aria-label
+            const imageNum = Array.from(element.parentElement.children).indexOf(element) + 1;
+            element.setAttribute('aria-label', `Drone image ${imageNum}, ${isSelected ? 'not selected' : 'selected'}`);
+        }
+
+        // Project options dialog
+        function showProjectOptionsDialog() {
+            const dialog = document.getElementById('projectOptionsDialog');
+            dialog.classList.add('show');
+            dialog.setAttribute('aria-hidden', 'false');
+            
+            // ACCESSIBILITY: Trap focus in dialog
+            lastFocusedElement = document.activeElement;
+            
+            setTimeout(() => {
+                const firstFocusable = dialog.querySelector('input[type="radio"]:checked');
+                if (firstFocusable) firstFocusable.focus();
+            }, 100);
+            
+            // Listen for radio button changes
+            document.querySelectorAll('input[name="projectOption"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const newNameField = document.getElementById('newProjectNameField');
+                    const nameInput = document.getElementById('newProjectName');
+                    
+                    if (this.value === 'new') {
+                        newNameField.style.display = 'block';
+                        nameInput.setAttribute('aria-required', 'true');
+                        setTimeout(() => nameInput.focus(), 100);
+                    } else {
+                        newNameField.style.display = 'none';
+                        nameInput.removeAttribute('aria-required');
+                    }
+                });
+            });
+        }
+
+        function closeProjectOptionsDialog() {
+            const dialog = document.getElementById('projectOptionsDialog');
+            dialog.classList.remove('show');
+            dialog.setAttribute('aria-hidden', 'true');
+            
+            // Clear error
+            document.getElementById('nameError').style.display = 'none';
+            
+            // ACCESSIBILITY: Return focus to triggering element
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+            }
+        }
+
+        function applyProjectChanges() {
+            const selectedOption = document.querySelector('input[name="projectOption"]:checked').value;
+            
+            if (selectedOption === 'new') {
+                const newName = document.getElementById('newProjectName').value.trim();
+                const errorDiv = document.getElementById('nameError');
+                
+                if (!newName) {
+                    errorDiv.style.display = 'block';
+                    errorDiv.textContent = 'Please enter a project name';
+                    document.getElementById('newProjectName').setAttribute('aria-invalid', 'true');
+                    document.getElementById('newProjectName').focus();
+                    return;
+                }
+                console.log('Creating new project:', newName);
+            } else {
+                console.log('Updating existing project');
+            }
+            
+            closeProjectOptionsDialog();
+            navigate('loading');
+        }
+
+        // Mosaic editing functions
+        let mosaicEditMode = false;
+        let currentRotation = 0;
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+
+        function toggleMosaicEditMode() {
+            mosaicEditMode = !mosaicEditMode;
+            const controls = document.getElementById('mosaicEditControls');
+            const container = document.getElementById('mosaicContainer');
+            
+            if (mosaicEditMode) {
+                controls.style.display = 'block';
+                container.style.cursor = 'grab';
+                enableDragging();
+            } else {
+                controls.style.display = 'none';
+                container.style.cursor = 'default';
+                disableDragging();
+            }
+        }
+
+        function enableDragging() {
+            const container = document.getElementById('mosaicContainer');
+            container.addEventListener('mousedown', startDrag);
+            container.addEventListener('mousemove', drag);
+            container.addEventListener('mouseup', endDrag);
+            container.addEventListener('mouseleave', endDrag);
+        }
+
+        function disableDragging() {
+            const container = document.getElementById('mosaicContainer');
+            container.removeEventListener('mousedown', startDrag);
+            container.removeEventListener('mousemove', drag);
+            container.removeEventListener('mouseup', endDrag);
+            container.removeEventListener('mouseleave', endDrag);
+        }
+
+        function startDrag(e) {
+            if (!mosaicEditMode) return;
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+            document.getElementById('mosaicContainer').style.cursor = 'grabbing';
+        }
+
+        function drag(e) {
+            if (!isDragging || !mosaicEditMode) return;
+            e.preventDefault();
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            updateMosaicTransform();
+        }
+
+        function endDrag() {
+            isDragging = false;
+            if (mosaicEditMode) {
+                document.getElementById('mosaicContainer').style.cursor = 'grab';
+            }
+        }
+
+        function rotateMosaic(degrees) {
+            currentRotation += degrees;
+            document.getElementById('rotationValue').value = currentRotation;
+            updateMosaicTransform();
+        }
+
+        function updateMosaicTransform() {
+            const image = document.getElementById('mosaicImage');
+            image.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${currentRotation}deg)`;
+        }
+
+        function saveMosaicPosition() {
+            console.log('Saving mosaic position:', {
+                translateX,
+                translateY,
+                rotation: currentRotation
+            });
+            
+            // ACCESSIBILITY: Announce save success to screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'alert');
+            announcement.setAttribute('aria-live', 'assertive');
+            announcement.textContent = `Mosaic position saved successfully. X: ${translateX} pixels, Y: ${translateY} pixels, Rotation: ${currentRotation} degrees`;
+            announcement.style.position = 'absolute';
+            announcement.style.left = '-10000px';
+            document.body.appendChild(announcement);
+            
+            setTimeout(() => document.body.removeChild(announcement), 3000);
+            
+            alert(`Mosaic position saved!\nX: ${translateX}px, Y: ${translateY}px, Rotation: ${currentRotation}°`);
+            toggleMosaicEditMode();
+        }
+
+        // ACCESSIBILITY: Announce page loads to screen readers
+        window.addEventListener('load', function() {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'alert');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.textContent = 'Drone Data Processing Platform loaded. You are on the Projects Dashboard.';
+            announcement.style.position = 'absolute';
+            announcement.style.left = '-10000px';
+            document.body.appendChild(announcement);
+            
+            setTimeout(() => document.body.removeChild(announcement), 3000);
+        });
+    </script>
+
+    <script src="../frontend/dashboard.js"></script>
+    <script src="../frontend/project_settings.js"></script>
+    <script src="../frontend/charts.js"></script>
+    <script>
+        // Initialize all functionality when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initializeDashboard === 'function') initializeDashboard();
+            if (typeof initializeSettings === 'function') initializeSettings();
+            if (typeof initializeCharts === 'function') initializeCharts();
+        });
+    </script>
+</body>
+</html>
