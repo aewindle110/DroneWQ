@@ -5,7 +5,6 @@ import glob
 import rasterio
 import os
 import concurrent.futures
-from functools import partial
 from dronewq.utils.settings import settings
 
 
@@ -21,6 +20,7 @@ def _compute(filepath, mean_min_lt_NIR, lw_dir):
             lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
 
             lw_all = []
+            #NOTE: Is this supposed to also compute the NIR?
             for j in range(0, 5):
                 slopes = np.polyfit(lt_reshape[4, :], lt_reshape[j, :], 1)[0]
                 # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
@@ -59,7 +59,6 @@ def hedley(random_n=10, num_workers=4):
     lw_dir = settings.lw_dir
     filepaths = glob.glob(lt_dir + "/*.tif")
 
-    # Step 1: Calculate mean_min_lt_NIR from random subset
     lt_all = []
     rand = random.sample(filepaths, random_n)
 
