@@ -8,42 +8,32 @@ import concurrent.futures
 from functools import partial
 from dronewq.utils.settings import settings
 
-# Global variable for worker processes
-_worker_ed_data = None
-_worker_rrs_dir = None
 
-
-def _init_worker(ed_data, rrs_dir):
-    """Initialize worker process with shared data."""
-    global _worker_ed_data, _worker_rrs_dir
-    _worker_ed_data = ed_data
-    _worker_rrs_dir = rrs_dir
-
-
-def _compute(filepath_idx_tuple):
+def _compute(filepath, idx, ed_data, rrs_dir):
     """Worker function that processes a single file."""
-    filepath, idx = filepath_idx_tuple
+    try:
+        with rasterio.open(filepath, "r") as Lw_src:
+            profile = Lw_src.profile
+            profile["count"] = 5
+            rrs_all = []
 
-    with rasterio.open(filepath, "r") as Lw_src:
-        profile = Lw_src.profile
-        profile["count"] = 5
-        rrs_all = []
+            # Vectorize this for speed
+            for i in range(1, 6):
+                lw = Lw_src.read(i)
+                rrs = lw / ed_data[i]
+                rrs_all.append(rrs)
 
-        # Vectorize this for speed
-        for i in range(1, 6):
-            lw = Lw_src.read(i)
-            rrs = lw / _worker_ed_data[idx][i]
-            rrs_all.append(rrs)
+            stacked_rrs = np.stack(rrs_all)
 
-        stacked_rrs = np.stack(rrs_all)
-
-        # Write new stacked Rrs tifs
-        im_name = os.path.basename(filepath)
-        output_path = os.path.join(_worker_rrs_dir, im_name)
-        with rasterio.open(output_path, "w", **profile) as dst:
-            dst.write(stacked_rrs)
-
-    return filepath
+            # Write new stacked Rrs tifs
+            im_name = os.path.basename(filepath)
+            output_path = os.path.join(rrs_dir, im_name)
+            with rasterio.open(output_path, "w", **profile) as dst:
+                dst.write(stacked_rrs)
+        return True
+    except Exception as e:
+        print(f"Dls_ed error: File {filepath} has failed with error {e}")
+        raise
 
 
 def dls_ed(output_csv_path, dls_corr=False, num_workers=4):
@@ -156,16 +146,29 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4):
     filepaths = glob.glob(lw_dir + "/*.tif")
     ed_data_final = dls_ed_corr_data if dls_corr else ed_data
 
-    # Create tuples of (filepath, index) for each task
-    filepath_idx_tuples = [(filepath, idx) for idx, filepath in enumerate(filepaths)]
-
     # Use initializer to share ed_data once per worker, not per task
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=num_workers,
-        initializer=_init_worker,
-        initargs=(ed_data_final, rrs_dir),
-    ) as executor:
-        results = list(executor.map(_compute, filepath_idx_tuples))
+    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
+        futures = {}
+        for idx, filepath in enumerate(filepaths):
+            future = executor.submit(
+                _compute, filepaths, idx, ed_data_final[idx], rrs_dir
+            )
+            futures[future] = filepath
+        # Wait for all tasks to complete and collect results
+        results = []
+        completed = 0
 
-    print(f"Processed {len(results)} files successfully")
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                result = future.result()  # Blocks until this specific future completes
+                results.append(result)
+                completed += 1
+            except Exception as e:
+                filepath = futures[future]
+                print(f"File {filepath} failed: {e}")
+                results.append(False)
+
+    print(
+        f"Ed Stage (DLS): Successfully processed: {sum(results)}/{len(results)} captures"
+    )
     return results

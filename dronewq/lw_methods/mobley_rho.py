@@ -6,38 +6,30 @@ import dronewq
 import concurrent.futures
 from dronewq.utils.settings import settings
 
-# Global variables for worker processes
-_lw_dir = None
-_rho = None
-_lsky_median = None
 
-
-def _init_worker(lw_dir, rho, lsky_median):
-    """Initialize worker process with shared data."""
-    global _lw_dir, _rho, _lsky_median
-    _lw_dir = lw_dir
-    _rho = rho
-    _lsky_median = lsky_median
-
-
-def _compute(filepath):
+def _compute(filepath, rho, lsky_median, lw_dir):
     """Worker function that processes a single file."""
-    with rasterio.open(filepath, "r") as Lt_src:
-        profile = Lt_src.profile
-        profile["count"] = 5
-        lw_all = []
-        for i in range(1, 6):
-            lt = Lt_src.read(i)
-            lw = lt - (_rho * _lsky_median[i - 1])
-            lw_all.append(lw)
+    try:
+        with rasterio.open(filepath, "r") as Lt_src:
+            profile = Lt_src.profile
+            profile["count"] = 5
+            lw_all = []
+            for i in range(1, 6):
+                lt = Lt_src.read(i)
+                lw = lt - (rho * lsky_median[i - 1])
+                lw_all.append(lw)
 
-        stacked_lw = np.stack(lw_all)
+            stacked_lw = np.stack(lw_all)
 
-        # Write new stacked lw tifs
-        im_name = os.path.basename(filepath)
-        output_path = os.path.join(_lw_dir, im_name)
-        with rasterio.open(output_path, "w", **profile) as dst:
-            dst.write(stacked_lw)
+            # Write new stacked lw tifs
+            im_name = os.path.basename(filepath)
+            output_path = os.path.join(lw_dir, im_name)
+            with rasterio.open(output_path, "w", **profile) as dst:
+                dst.write(stacked_lw)
+        return True
+    except Exception as e:
+        print(f"Mobley_rho Error: File {filepath} has the error {e}")
+        raise
 
     return filepath
 
@@ -77,10 +69,26 @@ def mobley_rho(rho=0.028, num_workers=4):
     # Pass all shared data through initializer
     with concurrent.futures.ProcessPoolExecutor(
         max_workers=num_workers,
-        initializer=_init_worker,
-        initargs=(lw_dir, rho, lsky_median),
     ) as executor:
-        results = list(executor.map(_compute, filepaths))
+        futures = {}
+        for filepath in filepaths:
+            future = executor.submit(_compute, filepath, rho, lsky_median, lw_dir)
+            futures[future] = filepath
+        # Wait for all tasks to complete and collect results
+        results = []
+        completed = 0
 
-    print(f"Processed {len(results)} files successfully")
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                result = future.result()  # Blocks until this specific future completes
+                results.append(result)
+                completed += 1
+            except Exception as e:
+                filepath = futures[future]
+                print(f"File {filepath} failed: {e}")
+                results.append(False)
+
+    print(
+        f"Lw Stage (Mobley_rho): Successfully processed: {sum(results)}/{len(results)} captures"
+    )
     return results

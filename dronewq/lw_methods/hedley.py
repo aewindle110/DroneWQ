@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import numpy.polynomial as poly
 import glob
 import rasterio
 import os
@@ -13,28 +14,31 @@ def _compute(filepath, mean_min_lt_NIR, lw_dir):
 
     im_name = os.path.basename(filepath)
 
-    with rasterio.open(filepath, "r") as lt_src:
-        profile = lt_src.profile
-        lt = lt_src.read()
-        lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
+    try:
+        with rasterio.open(filepath, "r") as lt_src:
+            profile = lt_src.profile
+            lt = lt_src.read()
+            lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
 
-        lw_all = []
-        for j in range(0, 5):
-            slopes = np.polyfit(lt_reshape[4, :], lt_reshape[j, :], 1)[0]
-            # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
-            lw = lt[j, :, :] - slopes * (lt[4, :, :] - mean_min_lt_NIR)
-            lw_all.append(lw)
+            lw_all = []
+            for j in range(0, 5):
+                slopes = np.polyfit(lt_reshape[4, :], lt_reshape[j, :], 1)[0]
+                # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
+                lw = lt[j, :, :] - slopes * (lt[4, :, :] - mean_min_lt_NIR)
+                lw_all.append(lw)
 
-        stacked_lw = np.stack(lw_all)
-        profile["count"] = 5
+            stacked_lw = np.stack(lw_all)
+            profile["count"] = 5
 
-        output = os.path.join(lw_dir, im_name)
+            output = os.path.join(lw_dir, im_name)
 
-        # write new stacked Lw tif
-        with rasterio.open(output, "w", **profile) as dst:
-            dst.write(stacked_lw)
-
-    return filepath  # Return filepath for progress tracking
+            # write new stacked Lw tif
+            with rasterio.open(output, "w", **profile) as dst:
+                dst.write(stacked_lw)
+        return True  # Return filepath for progress tracking
+    except Exception as e:
+        print(f"Hedley Error: File {filepath} has the error {e}")
+        raise
 
 
 def hedley(random_n=10, num_workers=4):
@@ -73,13 +77,26 @@ def hedley(random_n=10, num_workers=4):
 
     mean_min_lt_NIR = np.mean(min_lt_NIR)
 
-    # Step 2: Process all files in parallel using partial to bind mean_min_lt_NIR
-    compute_with_args = partial(
-        _compute, mean_min_lt_NIR=mean_min_lt_NIR, lw_dir=lw_dir
-    )
-
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-        # Using list() to force execution and catch any errors
-        results = list(executor.map(compute_with_args, filepaths))
+        futures = {}
+        for filepath in filepaths:
+            future = executor.submit(_compute, filepath, mean_min_lt_NIR, lw_dir)
+            futures[future] = filepath
+        # Wait for all tasks to complete and collect results
+        results = []
+        completed = 0
 
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                result = future.result()  # Blocks until this specific future completes
+                results.append(result)
+                completed += 1
+            except Exception as e:
+                filepath = futures[future]
+                print(f"File {filepath} failed: {e}")
+                results.append(False)
+
+    print(
+        f"Lw Stage (Hedley): Successfully processed: {sum(results)}/{len(results)} captures"
+    )
     return results
