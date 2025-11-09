@@ -1,4 +1,5 @@
 from dronewq.utils.utils import dotdict
+import pickle
 import copy
 import os
 
@@ -64,6 +65,14 @@ class Settings:
 
     def copy(self):
         return dotdict({**main_thread_config})
+    
+    def save(self, path: str):
+        with open(path, "wb") as dst:
+            pickle.dump(self, dst)
+
+    def load(self, path: str):
+        with open(path, "rb") as src:
+            return pickle.load(src)
 
     @property
     def config(self):
