@@ -1,3 +1,4 @@
+from osgeo import gdal
 import numpy as np
 import pandas as pd
 import rasterio
@@ -157,80 +158,115 @@ def get_warp_matrix(
     return warp_matrices
 
 
+def save(
+    capture,
+    warp_matrices,
+    generateThumbnails=True,
+):
+    # Enable exceptions explicitly (recommended for Python code)
+    gdal.UseExceptions()
+    """Save a single capture with proper error handling."""
+    try:
+        capture.dls_irradiance = None
+        capture.compute_undistorted_radiance()
+        capture.create_aligned_capture(
+            irradiance_list=None,
+            img_type="radiance",
+            warp_matrices=warp_matrices,
+        )
+        capture.save_capture_as_stack(capture.fullOutputPath, sort_by_wavelength=True)
+        if generateThumbnails:
+            capture.save_capture_as_rgb(capture.fullThumbnailPath)
+        capture.clear_image_data()
+        return True
+    except Exception as e:
+        # Log the error with capture information
+        print(f"Failed to save {capture.fullOutputPath}: {e}")
+        raise  # Re-raise with full traceback
+
+
 def save_images(
     img_set,
-    img_output_path,
+    output_path,
     thumbnail_path,
     warp_img_capture,
     generateThumbnails=True,
     overwrite_lt_lw=False,
+    max_workers=None,  # None uses default based on CPU count
 ):
-    """
-    This function processes each capture in an imageset to apply a warp matrix and save new .tifs with units of radiance (W/sr/nm) and optional RGB .jpgs.
+    """Process captures in parallel using threading."""
 
-    Parameters:
-        img_set: An ImageSet is a container for a group of Captures that are processed together. It is defined by running the ImageSet.from_directory() function found in Micasense's imageset.py
-
-        img_output_path: A string containing the filepath to store a new folder of radiance .tifs
-
-        thumbnailPath: A string containing the filepath to store a new folder of RGB thumnail .jpgs
-
-        warp_img_capture: A Capture chosen to align all images. Can be created by using Micasense's ImageSet-from_directory().captures function
-
-        generateThumbnails: Option to create RGB .jpgs of all the images. Default is True
-
-        overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
-
-    Returns:
-        New .tif files for each capture in img_set with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
-    """
+    # Create output directories
+    os.makedirs(output_path, exist_ok=True)
+    if generateThumbnails:
+        os.makedirs(thumbnail_path, exist_ok=True)
 
     warp_matrices = get_warp_matrix(warp_img_capture)
 
-    if not os.path.exists(img_output_path):
-        os.makedirs(img_output_path)
-    if generateThumbnails and not os.path.exists(thumbnail_path):
-        os.makedirs(thumbnail_path)
+    # Use processes instead of threads for CPU-bound work
+    # For I/O-bound (file writing), threads are acceptable
+    max_workers = max_workers or os.cpu_count()
 
     start = datetime.datetime.now()
 
-    for idx, capture in enumerate(img_set.captures):
-        outputFilename = "capture_" + str(idx + 1) + ".tif"
-        thumbnailFilename = "capture_" + str(idx + 1) + ".jpg"
-        fullOutputPath = os.path.join(img_output_path, outputFilename)
-        fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
-        if (not os.path.exists(fullOutputPath)) or overwrite_lt_lw:
-            if len(capture.images) == len(img_set.captures[0].images):
-                capture.dls_irradiance = None
-                capture.compute_undistorted_radiance()
-                capture.create_aligned_capture(
-                    irradiance_list=None,
-                    img_type="radiance",
-                    warp_matrices=warp_matrices,
-                )
-                capture.save_capture_as_stack(fullOutputPath, sort_by_wavelength=True)
-                if generateThumbnails:
-                    capture.save_capture_as_rgb(fullThumbnailPath)
-        capture.clear_image_data()
-    end = datetime.datetime.now()
+    print("output_path: ", output_path)
 
-    print("Saving time: {}".format(end - start))
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = {}
+
+        for idx, capture in enumerate(img_set.captures):
+            outputFilename = f"capture_{idx + 1}.tif"
+            thumbnailFilename = f"capture_{idx + 1}.jpg"
+            fullOutputPath = os.path.join(output_path, outputFilename)
+            fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
+
+            # Skip if exists and not overwriting
+            if os.path.exists(fullOutputPath) and not overwrite_lt_lw:
+                continue
+
+            if len(capture.images) != len(img_set.captures[0].images):
+                continue
+
+            capture.fullOutputPath = fullOutputPath
+            capture.fullThumbnailPath = fullThumbnailPath
+
+            # Submit task and track it
+            future = executor.submit(save, capture, warp_matrices, generateThumbnails)
+            futures[future] = idx
+
+        # Wait for all tasks to complete and collect results
+        results = []
+        completed = 0
+
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                result = future.result()  # Blocks until this specific future completes
+                results.append(result)
+                completed += 1
+            except Exception as e:
+                idx = futures[future]
+                print(f"Capture {idx} failed: {e}")
+                results.append(False)
+
+    end = datetime.datetime.now()
+    elapsed = (end - start).total_seconds()
+
+    print(f"Saving time: {end - start}")
     print(
-        "Alignment+Saving rate: {:.2f} images per second".format(
-            float(len(img_set.captures)) / float((end - start).total_seconds())
-        )
+        f"Alignment+Saving rate: {len(img_set.captures)/elapsed:.2f} images per second"
     )
+    print(f"Successfully processed: {sum(results)}/{len(results)} captures")
+
+    return results
 
 
 def process_micasense_images(
-    project_dir, warp_img_dir=None, overwrite_lt_lw=False, sky=False
+    warp_img_dir=None, overwrite_lt_lw=False, sky=False, generateThumbnails=True
 ):
     """
     This function is wrapper function for the save_images() function to read in an image directory and produce new .tifs with units of radiance (W/sr/nm).
 
     Parameters:
-        project_dir: a string containing the filepath of the raw .tifs
-
         warp_img_dir: a string containing the filepath of the capture to use to create the warp matrix
 
         overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
@@ -246,7 +282,7 @@ def process_micasense_images(
 
     img_dir = settings.raw_sky_dir if sky else settings.raw_water_dir
 
-    imgset = micasense.imageset.ImageSet.from_directory(img_dir)
+    img_set = micasense.imageset.ImageSet.from_directory(img_dir)
 
     if warp_img_dir:
         warp_img_capture = micasense.imageset.ImageSet.from_directory(
@@ -254,23 +290,26 @@ def process_micasense_images(
         ).captures[0]
         print("used warp dir", warp_img_dir)
     else:
-        warp_img_capture = imgset.captures[0]
+        warp_img_capture = img_set.captures[0]
 
     # just have the sky images go into a different dir and the water imgs go into a default 'lt_imgs' dir
     if sky:
         output_path = settings.sky_lt_dir
-        thumbnailPath = os.path.join(project_dir, "sky_lt_thumbnails")
+        thumbnail_path = os.path.join(settings.main_dir, "sky_lt_thumbnails")
     else:
         output_path = settings.lt_dir
-        thumbnailPath = os.path.join(project_dir, "lt_thumbnails")
+        thumbnail_path = os.path.join(settings.main_dir, "lt_thumbnails")
 
     save_images(
-        imgset,
-        output_path,
-        thumbnailPath,
-        warp_img_capture,
+        img_set=img_set,
+        output_path=output_path,
+        thumbnail_path=thumbnail_path,
+        warp_img_capture=warp_img_capture,
+        generateThumbnails=generateThumbnails,
         overwrite_lt_lw=overwrite_lt_lw,
+        max_workers=4,
     )
+
     print("Finished saving images.")
     fullCsvPath = dronewq.write_metadata_csv(img_dir, output_path)
     print("Finished saving image metadata.")
