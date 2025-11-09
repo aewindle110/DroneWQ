@@ -869,6 +869,14 @@
             if (screen === 'loading') {
                 setTimeout(() => navigate('results'), 2000);
             }
+             // Initialize upload functionality when navigating to upload page
+            if (screen === 'upload') {
+                setTimeout(() => {
+                    if (typeof initializeUpload === 'function') {
+                        initializeUpload();
+                    }
+                }, 100);
+            }
         }
 
         function toggleMenu(e) {
