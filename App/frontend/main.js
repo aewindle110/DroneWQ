@@ -149,28 +149,6 @@ ipcMain.handle('select-files', async (event) => {
     return { success: false };
 });
 
-// IPC Handler to validate folder structure
-ipcMain.handle('validate-folder', async (event, folderPath) => {
-    const fs = require('fs');
-    const requiredSubfolders = ['panel', 'raw_sky_imgs', 'raw_water_imgs', 'align_img'];
-    
-    try {
-        const contents = fs.readdirSync(folderPath);
-        const missingFolders = requiredSubfolders.filter(folder => !contents.includes(folder));
-        
-        if (missingFolders.length === 0) {
-            return { valid: true, path: folderPath };
-        } else {
-            return { 
-                valid: false, 
-                message: `Missing required folders: ${missingFolders.join(', ')}`,
-                missingFolders 
-            };
-        }
-    } catch (error) {
-        return { valid: false, message: `Error reading folder: ${error.message}` };
-    }
-});
 
 // IPC Handler to prepare data for backend
 ipcMain.handle('process-data', async (event, projectData) => {
