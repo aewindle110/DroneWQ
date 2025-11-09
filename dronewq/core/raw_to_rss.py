@@ -94,7 +94,7 @@ def process_raw_to_rrs(
     ### convert raw imagery to radiance (Lt)
     print("Converting raw images to radiance (raw -> Lt).")
     dronewq.process_micasense_images(
-        main_dir, warp_img_dir=warp_img_dir, overwrite_lt_lw=overwrite_lt_lw, sky=False
+        warp_img_dir=warp_img_dir, overwrite_lt_lw=overwrite_lt_lw, sky=False
     )
 
     # deciding if we need to process raw sky images to radiance
@@ -102,7 +102,7 @@ def process_raw_to_rrs(
         print("Converting raw sky images to radiance (raw sky -> Lsky).")
         # we're also making an assumption that we don't need to align/warp these images properly because they'll be medianed
         dronewq.process_micasense_images(
-            main_dir, warp_img_dir=None, overwrite_lt_lw=overwrite_lt_lw, sky=True
+            warp_img_dir=None, overwrite_lt_lw=overwrite_lt_lw, sky=True
         )
 
     ##################################

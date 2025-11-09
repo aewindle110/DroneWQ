@@ -7,6 +7,7 @@ from matplotlib.image import AxesImage
 import contextily as cx
 import numpy as np
 import rioxarray
+import rasterio.transform
 import rasterio
 
 
@@ -112,16 +113,17 @@ def plot_georeferenced_data(
 
     latlon_projection = "EPSG:4326"
     pseudo_mercator_projection = "EPSG:3857"
-    transformer = Transformer.from_crs(latlon_projection, pseudo_mercator_projection, always_xy=True)
+    transformer = Transformer.from_crs(
+        latlon_projection, pseudo_mercator_projection, always_xy=True
+    )
 
     # --- Open raster to get geometry and basemap ---
     with rasterio.open(filename) as src_rio:
         # Build pixel coordinate grid
         cols, rows = np.meshgrid(np.arange(src_rio.width), np.arange(src_rio.height))
         xs, ys = rasterio.transform.xy(src_rio.transform, rows, cols)
+        xs, ys = np.array(xs), np.array(ys)
 
-        # Convert to pseudo-Mercator
-        lon, lat = transformer.transform(xs, ys)
 
         # Add basemap if requested
         if basemap is not None:
@@ -139,6 +141,8 @@ def plot_georeferenced_data(
     with rioxarray.open_rasterio(filename) as src:
         # Remove band dimension if it's a single-band raster
         src = src.squeeze()
+        # Convert to pseudo-Mercator
+        lon, lat = transformer.transform(xs, ys)
 
         # Ensure lon/lat have same shape as raster
         lon = np.array(lon).reshape(src.shape)
@@ -157,7 +161,6 @@ def plot_georeferenced_data(
             cmap=cmap,
             norm=norm,
             add_colorbar=False,
-        ) # type: ignore
+        )  # type: ignore
 
     return ax, mappable
-
