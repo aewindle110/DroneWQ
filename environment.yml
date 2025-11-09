@@ -11,7 +11,7 @@ dependencies:
   - opencv
   - jupyter
   - jupyterlab
-  - matplotlib
+  - matplotlib==3.9.2
   - scikit-image
   - contextily
   - cmocean
