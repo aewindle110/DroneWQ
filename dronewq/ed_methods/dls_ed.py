@@ -5,7 +5,6 @@ import glob
 import rasterio
 import os
 import concurrent.futures
-from functools import partial
 from dronewq.utils.settings import settings
 
 
@@ -151,7 +150,7 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4):
         futures = {}
         for idx, filepath in enumerate(filepaths):
             future = executor.submit(
-                _compute, filepaths, idx, ed_data_final[idx], rrs_dir
+                _compute, filepath, idx, ed_data_final[idx], rrs_dir
             )
             futures[future] = filepath
         # Wait for all tasks to complete and collect results
