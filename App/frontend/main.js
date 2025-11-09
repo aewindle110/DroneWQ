@@ -173,11 +173,10 @@ ipcMain.handle('validate-folder', async (event, folderPath) => {
 });
 
 // IPC Handler to prepare data for backend
-// Your teammate will implement the actual backend communication
 ipcMain.handle('process-data', async (event, projectData) => {
     console.log('Data ready for backend processing:', projectData);
-
-    // ADD BACKEND STUFF??? 
+    
+    // For now, return success so the frontend flow works
     return { 
         success: true, 
         message: 'Ready for backend processing',

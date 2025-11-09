@@ -528,8 +528,7 @@
                     <div style="color: #7F8C8D; font-size: 13px; margin-top: 10px;">
                         Required: panel/, raw_sky_imgs/, raw_water_imgs/, align_img/
                     </div>
-                    <button class="btn btn-primary" style="margin-top: 20px;">Upload Folder</button>
-                    <button class="btn btn-secondary" style="margin-top: 10px;">Manual Upload</button>
+                    <button id="uploadFolderBtn" class="btn btn-primary" type="button">Upload Folder</button>
                 </div>
                 <div class="form-actions">
                     <button class="btn btn-secondary" onclick="navigate('home')">Cancel</button>
@@ -862,22 +861,28 @@
     </div>
 
     <script>
-        function navigate(screen) {
+            function navigate(screen) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screen).classList.add('active');
-            
+
             if (screen === 'loading') {
                 setTimeout(() => navigate('results'), 2000);
             }
-             // Initialize upload functionality when navigating to upload page
+
+            // Init Upload page JS
             if (screen === 'upload') {
                 setTimeout(() => {
-                    if (typeof initializeUpload === 'function') {
-                        initializeUpload();
-                    }
-                }, 100);
+                if (typeof initializeUpload === 'function') {
+                    initializeUpload();
+                    console.log('[Upload] initializeUpload() called');
+                } else {
+                    console.warn('[Upload] initializeUpload is not defined');
+                }
+                }, 300);
             }
         }
+
+</script>
 
         function toggleMenu(e) {
             e.stopPropagation();
@@ -1029,10 +1034,10 @@
         }
     </script>
 
-    <script src="../frontend/dashboard.js"></script>
-    <script src="../frontend/project_settings.js"></script>
-    <script src="../frontend/charts.js"></script>
-    <script src="../frontend/upload.js"></script>
+    <script src="../dashboard.js"></script>
+    <script src="../project_settings.js"></script>
+    <script src="../charts.js"></script>
+    <script src="../upload.js"></script>
 
     <script>
         // Initialize all functionality when page loads
