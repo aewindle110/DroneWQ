@@ -67,10 +67,12 @@ class Settings:
         return dotdict({**main_thread_config})
     
     def save(self, path: str):
+        path = os.path.join(path, "settings.pkl")
         with open(path, "wb") as dst:
             pickle.dump(self, dst)
 
     def load(self, path: str):
+        path = os.path.join(path, "settings.pkl")
         with open(path, "rb") as src:
             return pickle.load(src)
 
