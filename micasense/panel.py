@@ -125,7 +125,7 @@ class Panel(object):
             min_rf = float(self.serial[-10:-7]) / 1000.0
             max_wl = float(self.serial[-7:-3])
             max_rf = float(self.serial[-3:]) / 1000.0
-            c = np.polynomial.Polynomial.fit([min_wl, max_wl], [min_rf, max_rf], 1)
+            c = np.polyfit([min_wl, max_wl], [min_rf, max_rf], 1)
             p = np.poly1d(c)
             return p(self.image.center_wavelength)
         else:
