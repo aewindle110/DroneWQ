@@ -1,6 +1,6 @@
 # Everything about managing Projects
 from flask import Blueprint, request, jsonify
-from dronewq.utils.settings import settings
+from dronewq.utils.settings import Settings
 import os
 import tempfile
 
@@ -38,14 +38,13 @@ def is_writable_dir(path: str, create_if_missing: bool = False) -> bool:
 
 def check_folder_structure(folder_path: str) -> bool:
     dirs = os.listdir(folder_path)
+    #TODO: Should account for uppercase beginning chars
     needed_dirs = ["panel", "raw_water_imgs", "raw_sky_imgs", "align_img"]
 
     for dir in needed_dirs:
         if dir not in dirs:
             return False
     return True
-
-    
 
 #TODO: Automatic sorting
 @bp.route('/manage/make_project', methods=["GET"])
@@ -61,10 +60,47 @@ def make_project():
     if not check_folder_structure(folder_path):
         return jsonify({"error": "Directory structure is incorrect."}), 400
 
+    settings = Settings()
     # Assuming the project sub-folders are sorted
     settings.configure(main_dir=folder_path)
 
     try: 
+        settings.save(folder_path)
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"Error while saving settings.": str(e)}), 500
+
+@bp.route('/manage/save_settings', methods=["GET"])
+def save_settings():
+    args = request.args
+    project_id = args.get("project_id")
+    project_name = args.get("project_name")
+    folder_path = args.get("folderPath")
+    lw_method = args.get("lwMethod")
+    ed_method = args.get("edMethod")
+    mask_method = args.get("maskMethod")
+    outputs = args.get("outputs")
+
+    settings = Settings()
+
+    if folder_path is None:
+        return jsonify({"error": "folderPath is not specified."}), 400
+    
+    if os.path.exists(os.path.join(folder_path, "settings.pkl")):
+        settings = settings.load(folder_path)
+    else:
+        settings.configure(main_dir=folder_path)
+    
+    settings.configure(
+        project_id=project_id,
+        project_name=project_name,
+        lw_method=lw_method,
+        ed_method=ed_method,
+        mask_method=mask_method,
+        outputs=outputs.split(",") if outputs else [],
+    )
+
+    try:
         settings.save(folder_path)
         return jsonify({"success": True}), 200
     except Exception as e:
