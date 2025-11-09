@@ -1,33 +1,92 @@
-// upload.js - Handle folder upload and validation (Frontend only)
+// upload.js - Handle folder upload with drag-and-drop support
 
 const { ipcRenderer } = require('electron');
 
 // Initialize upload page
 function initializeUpload() {
-    setupUploadButtons();
+    setupUploadButton();
+    setupDragAndDrop();
 }
 
 // Make functions globally available
 window.initializeUpload = initializeUpload;
 
-// Set up upload button handlers
-function setupUploadButtons() {
-    const uploadFolderBtn = document.querySelector('.btn-primary');
-    const manualUploadBtn = document.querySelector('.btn-secondary');
+// Set up single upload button
+function setupUploadButton() {
+    const uploadBtn = document.querySelector('.btn-primary');
     
-    if (uploadFolderBtn) {
-        uploadFolderBtn.addEventListener('click', handleFolderUpload);
-    }
-    
-    if (manualUploadBtn) {
-        manualUploadBtn.addEventListener('click', handleManualUpload);
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', handleFolderUpload);
     }
 }
 
-// Handle folder upload
+// Set up drag and drop
+function setupDragAndDrop() {
+    const uploadSection = document.querySelector('.upload-section');
+    
+    if (!uploadSection) return;
+    
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadSection.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    // Highlight drop area when dragging over
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadSection.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadSection.addEventListener(eventName, unhighlight, false);
+    });
+    
+    // Handle dropped files
+    uploadSection.addEventListener('drop', handleDrop, false);
+}
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function highlight(e) {
+    const uploadSection = document.querySelector('.upload-section');
+    uploadSection.style.background = '#e3f2fd';
+    uploadSection.style.borderColor = '#2196F3';
+}
+
+function unhighlight(e) {
+    const uploadSection = document.querySelector('.upload-section');
+    uploadSection.style.background = '';
+    uploadSection.style.borderColor = '';
+}
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const items = dt.items;
+    
+    if (items && items.length > 0) {
+        // Get the first item (folder)
+        const item = items[0];
+        
+        if (item.kind === 'file') {
+            const entry = item.webkitGetAsEntry();
+            
+            if (entry && entry.isDirectory) {
+                // User dropped a folder
+                const folderPath = entry.fullPath;
+                processFolderPath(folderPath);
+            } else {
+                showUploadStatus('Please drop a folder, not individual files', 'error');
+            }
+        }
+    }
+}
+
+// Handle folder upload via button click
 async function handleFolderUpload() {
     try {
-        // Show loading state
         showUploadStatus('Selecting folder...', 'info');
         
         // Open folder selection dialog
@@ -39,29 +98,7 @@ async function handleFolderUpload() {
         }
         
         const folderPath = result.path;
-        showUploadStatus(`Selected: ${folderPath}`, 'info');
-        showUploadStatus(`Validating folder structure...`, 'info');
-        
-        // Validate folder structure
-        const validation = await ipcRenderer.invoke('validate-folder', folderPath);
-        
-        if (!validation.valid) {
-            showUploadStatus(validation.message, 'error');
-            showFolderStructureHelp();
-            return;
-        }
-        
-        // Folder is valid - proceed to project settings
-        showUploadStatus('Folder validated successfully!', 'success');
-        
-        // Store the folder path for use in project creation
-        sessionStorage.setItem('selectedFolderPath', folderPath);
-        sessionStorage.setItem('uploadMethod', 'folder');
-        
-        // Navigate to project settings after a brief delay
-        setTimeout(() => {
-            navigate('settings');
-        }, 1000);
+        processFolderPath(folderPath);
         
     } catch (error) {
         console.error('Folder upload error:', error);
@@ -69,34 +106,59 @@ async function handleFolderUpload() {
     }
 }
 
-// Handle manual file upload
-async function handleManualUpload() {
+// Process the selected folder path
+async function processFolderPath(folderPath) {
+    showUploadStatus(`Selected: ${folderPath}`, 'info');
+    showUploadStatus(`Validating folder structure...`, 'info');
+    
+    // Validate folder structure
+    const validation = await ipcRenderer.invoke('validate-folder', folderPath);
+    
+    if (!validation.valid) {
+        showUploadStatus(validation.message, 'error');
+        showFolderStructureHelp();
+        return;
+    }
+    
+    // Folder is valid - send to backend
+    showUploadStatus('Folder validated! Sending to backend...', 'success');
+    
     try {
-        showUploadStatus('Selecting files...', 'info');
+        // Send to Flask backend
+        const response = await fetch('http://localhost:5000/manage/make_project', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                folderPath: folderPath 
+            })
+        });
         
-        // Open file selection dialog
-        const result = await ipcRenderer.invoke('select-files');
+        const result = await response.json();
         
-        if (!result.success) {
-            showUploadStatus('No files selected', 'info');
-            return;
+        if (response.ok && result.success) {
+            // Show success message from backend
+            const successMessage = result.message || 'Project created successfully!';
+            showUploadStatus(successMessage, 'success');
+            
+            // Store folder path for settings page
+            sessionStorage.setItem('projectFolderPath', folderPath);
+            
+            // Navigate to settings page after brief delay
+            setTimeout(() => {
+                navigate('settings');
+            }, 1500);
+            
+        } else {
+            // Show error message from backend
+            const errorMessage = result.message || result.error || 'Unknown error occurred';
+            showUploadStatus('Error: ' + errorMessage, 'error');
         }
         
-        const filePaths = result.paths;
-        showUploadStatus(`Selected ${filePaths.length} file(s)`, 'success');
-        
-        // Store file paths for manual organization
-        sessionStorage.setItem('selectedFiles', JSON.stringify(filePaths));
-        sessionStorage.setItem('uploadMethod', 'manual');
-        
-        // Navigate to settings (your teammate will handle file organization)
-        setTimeout(() => {
-            navigate('settings');
-        }, 1000);
-        
     } catch (error) {
-        console.error('Manual upload error:', error);
-        showUploadStatus('Error selecting files: ' + error.message, 'error');
+        console.error('Failed to connect to backend:', error);
+        showUploadStatus('Could not connect to Flask server. Is it running on port 5000?', 'error');
     }
 }
 
@@ -165,26 +227,3 @@ function showFolderStructureHelp() {
         uploadSection.appendChild(helpDiv);
     }
 }
-
-// Get the selected folder/files data to send to backend
-// Your teammate can call this function to get the data they need
-function getUploadDataForBackend() {
-    const uploadMethod = sessionStorage.getItem('uploadMethod');
-    
-    if (uploadMethod === 'folder') {
-        return {
-            method: 'folder',
-            folderPath: sessionStorage.getItem('selectedFolderPath')
-        };
-    } else if (uploadMethod === 'manual') {
-        return {
-            method: 'manual',
-            files: JSON.parse(sessionStorage.getItem('selectedFiles') || '[]')
-        };
-    }
-    
-    return null;
-}
-
-// Export function for your teammate's backend integration
-window.getUploadDataForBackend = getUploadDataForBackend;
