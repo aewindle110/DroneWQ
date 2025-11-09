@@ -48,6 +48,7 @@ async function handleUploadClick() {
   }
 }
 
+
 function initializeUpload() {
   const btn = document.getElementById('uploadFolderBtn');
   if (btn && !btn.__wired) {

@@ -1,97 +1,57 @@
-// projectsettings.js - Project settings state management
+// project_settings.js
 
-// Current project settings
-let currentProjectSettings = {
-    glintMethod: 'Mobley Rho Method',
-    irradianceMethod: 'Panel Ed',
-    pixelMasking: 'Value Threshold',
-    selectedOutputs: ['chlorophyll-hu', 'tsm'] // Default selected outputs
-};
+function initializeProjectSettings() {
+  const processBtn = document.getElementById('processBtn');
+  if (!processBtn) return;
 
-// Output mapping from checkbox labels to chart types
-const outputMapping = {
-    'Reflectance spectra': 'reflectance',
-    'Chlorophyll-a (Hu Color Index)': 'chlorophyll-hu',
-    'Chlorophyll-a (OCx Band Ratio)': 'chlorophyll-ocx',
-    'Chlorophyll-a (Blended Hu+OCx)': 'chlorophyll-blended',
-    'Chlorophyll-a (Gitelson)': 'chlorophyll-gitelson',
-    'Total Suspended Matter (TSM)': 'tsm',
-    'Mosaics': 'mosaics'
-};
-
-// Initialize settings functionality
-function initializeSettings() {
-    setupSettingsCheckboxes();
-    loadCurrentSettings();
+  processBtn.addEventListener('click', submitProcessing);
 }
 
-// Make functions globally available
-window.initializeSettings = initializeSettings;
-window.updateSelectedOutputs = updateSelectedOutputs;
-window.applySettingsChanges = applySettingsChanges;
-window.getCurrentSettings = getCurrentSettings;
+async function submitProcessing() {
+  // Pull references saved during Upload step
+  const projectId  = sessionStorage.getItem('projectId') || null;
+  const folderPath = sessionStorage.getItem('projectFolder') || null;
+  const projectName = sessionStorage.getItem('projectName') || null;
 
-// Set up checkbox event listeners
-function setupSettingsCheckboxes() {
-    const checkboxes = document.querySelectorAll('#settings .checkbox-option input[type="checkbox"]');
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            updateSelectedOutputs();
-        });
+  // Collect Methods
+  const glint = (document.getElementById('glintSelect') || {}).value || "";
+  const irr   = (document.getElementById('irradianceSelect') || {}).value || "";
+  const mask  = (document.getElementById('maskingSelect') || {}).value || "";
+
+  // Collect Outputs
+  const outputs = Array.from(document.querySelectorAll('.outputChk:checked'))
+    .map(cb => cb.getAttribute('data-key'));
+
+  const payload = {
+    project_id: projectId,         
+    project_name: projectName,    
+    folderPath: folderPath,         //folder path again
+    lwMethod: glint,            // ex: "mobley_rho"
+    edMethod: irr,             // ex: "panel_ed"
+    maskMethod: mask,        // ex:"value_threshold", "std_threshold"
+    outputs : outputs                         // ex: ["reflectance","chla_hu","tsm"]
+  };
+
+  try {
+    const res = await fetch('http://localhost:5000/manage/save_settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
-}
 
-// Update selected outputs based on checkboxes
-function updateSelectedOutputs() {
-    const selectedOutputs = [];
-    const checkboxes = document.querySelectorAll('#settings .checkbox-option input[type="checkbox"]:checked');
-    
-    checkboxes.forEach(checkbox => {
-        const label = checkbox.nextElementSibling.textContent.trim();
-        
-        // Map checkbox labels to output types using our mapping
-        if (outputMapping[label]) {
-            selectedOutputs.push(outputMapping[label]);
-        }
-    });
-    
-    currentProjectSettings.selectedOutputs = selectedOutputs;
-    console.log('Updated outputs:', selectedOutputs);
-}
-
-// Load current settings into the form
-function loadCurrentSettings() {
-    // Set checkbox states based on current settings
-    const checkboxes = document.querySelectorAll('#settings .checkbox-option input[type="checkbox"]');
-    
-    checkboxes.forEach(checkbox => {
-        const label = checkbox.nextElementSibling.textContent.trim();
-        
-        // Check boxes based on current settings
-        if (outputMapping[label] && currentProjectSettings.selectedOutputs.includes(outputMapping[label])) {
-            checkbox.checked = true;
-        }
-    });
-}
-
-// Apply settings changes (called when user clicks "Apply Changes")
-function applySettingsChanges() {
-    updateSelectedOutputs();
-    
-    // Filter out mosaics for chart display (mosaics go in Mosaics tab)
-    const chartsToShow = currentProjectSettings.selectedOutputs.filter(output => output !== 'mosaics');
-    
-    // Update charts if we're viewing results
-    if (typeof updateChartsFromSettings === 'function') {
-        updateChartsFromSettings(chartsToShow);
+    if (!res.ok) {
+      const txt = await res.text();
+      alert(`Backend error (${res.status}): ${txt || 'Processing failed'}`);
+      return;
     }
-    
-    showNotification('Settings applied successfully! Charts updated.', 'success');
-    return currentProjectSettings;
+
+    // Go to loading → results (or stay on loading and poll if you add that later)
+    navigate('loading');
+    setTimeout(() => navigate('results'), 1200);
+  } catch (e) {
+    alert(`Could not reach backend: ${e.message}`);
+  }
 }
 
-// Get current settings
-function getCurrentSettings() {
-    return currentProjectSettings;
-}
+// expose
+window.initializeProjectSettings = initializeProjectSettings;
