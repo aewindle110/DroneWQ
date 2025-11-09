@@ -1,7 +1,7 @@
 import os
 import rasterio
 import rasterio.transform
-import tqdm
+from tqdm import tqdm
 import numpy as np
 from rasterio.transform import Affine
 
