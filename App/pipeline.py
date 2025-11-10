@@ -50,7 +50,11 @@ class Pipeline:
             num_workers=4,
         )
     
-    def 
+    def plot_essentials(self, count: int = 25):
+        self.rrs_plot(count=count)
+        self.lt_plot(count=count)
+        self.ed_plot(count=count)
+        self.masked_rrs_plot(count=count)
     
     def rrs_plot(self, count: int = 25):
         masked_rrs_imgs_hedley, img_metadata = dronewq.retrieve_imgs_and_metadata(img_dir = self.settings.masked_rrs_dir, count=count)
@@ -108,7 +112,7 @@ class Pipeline:
 
         plt.legend(frameon=False)
 
-        out_path = os.path.join(self.settings.main_dir, "ed_plot.png")
+        out_path = os.path.join(self.settings.main_dir, "result", "ed_plot.png")
         fig.savefig(out_path, dpi=300, bbox_inches='tight', transparent=False)
         plt.close(fig)
 
@@ -131,3 +135,20 @@ class Pipeline:
         out_path = os.path.join(self.settings.main_dir, "masked_rrs_plot.png")
         fig.savefig(out_path, dpi=300, bbox_inches='tight', transparent=False)
         plt.close(fig)
+    
+    def point_samples_metadata(self):
+        masked_rrs_imgs, img_metadata = dronewq.retrieve_imgs_and_metadata(img_dir = self.settings.masked_rrs_dir)
+
+        if not isinstance(masked_rrs_imgs, np.ndarray):
+            masked_rrs_imgs = np.stack(masked_rrs_imgs)
+
+        # Compute per-image median for first 5 bands (shape -> (n_images, 5)) # We take median across spatial dims (H, W)
+        medians = np.nanmedian(masked_rrs_imgs[:, :5, :, :], axis=(2, 3))
+
+        # Build dataframe safely and assign median band values
+        df = img_metadata[['dirname', 'Latitude', 'Longitude']].copy()
+        df[['rrs_blue', 'rrs_green', 'rrs_red', 'rrs_rededge', 'rrs_nir']] = medians
+
+        out_path = os.path.join(self.settings.main_dir, "median_rrs.csv")
+        df.to_csv(out_path, index=False)
+        
