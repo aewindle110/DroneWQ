@@ -18,7 +18,7 @@ function startFlask() {
   const scriptPath = path.join(backendDir, 'app.py');
 
   const env = { ...process.env };
- 
+
   flaskProcess = spawn(pythonCmd(), [scriptPath], {
     cwd: backendDir,
     env,
@@ -148,14 +148,14 @@ if (!gotLock) {
   });
 
   app.whenReady().then(async () => {
-    startFlask();
-    try {
-      await waitForBackend();
-      console.log('Flask is ready.');
-    } catch (e) {
-      console.error(e);
-      dialog.showErrorBox('Backend Error', 'Flask backend did not start. Check console for logs.');
-    }
+    // startFlask();
+    // try {
+    //   await waitForBackend();
+    //   console.log('Flask is ready.');
+    // } catch (e) {
+    //   console.error(e);
+    //   dialog.showErrorBox('Backend Error', 'Flask backend did not start. Check console for logs.');
+    // }
     createWindow();
   });
 
@@ -164,9 +164,9 @@ if (!gotLock) {
   });
 
   app.on('before-quit', () => {
-    if (flaskProcess && !flaskProcess.killed) {
-      try { process.platform === 'win32' ? flaskProcess.kill() : flaskProcess.kill('SIGTERM'); } catch {}
-    }
+    // if (flaskProcess && !flaskProcess.killed) {
+    //   try { process.platform === 'win32' ? flaskProcess.kill() : flaskProcess.kill('SIGTERM'); } catch {}
+    // }
   });
 
   app.on('window-all-closed', () => {
