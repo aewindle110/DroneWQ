@@ -1,4 +1,4 @@
-// upload.js
+// frontend/upload.js
 const { ipcRenderer } = require('electron');
 
 function initializeUpload() {
@@ -6,43 +6,37 @@ function initializeUpload() {
   if (!btn) return;
 
   btn.addEventListener('click', async () => {
-    // 1) Let user pick a folder
-    const result = await ipcRenderer.invoke('select-folder');
-    if (!result || !result.success) return;
-
-    const selectedFolderPath = result.path;
-
-    // 2) Send folder to backend to create/organize the project
     try {
+      const res = await ipcRenderer.invoke('select-folder');
+      if (!res || !res.success) return;
+
+      const folderPath = res.path;
+      // Persist for later steps
+      sessionStorage.setItem('projectFolder', folderPath);
+
+
+      const projectName = folderPath.split(/[\\/]/).pop() || 'My Project';
+      sessionStorage.setItem('projectName', projectName);
+
+      // Tell backend to make project — backend expects "folderPath"
       const resp = await fetch('http://localhost:8889/manage/make_project', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folderPath: selectedFolderPath })
+        body: JSON.stringify({ folderPath })
       });
 
-      const data = await resp.json().catch(() => ({}));
-
-      if (!resp.ok || data?.success === false) {
-        alert(data?.message || `Upload failed (${resp.status})`);
+      if (!resp.ok) {
+        const msg = await resp.text();
+        alert(`Backend error (make_project): ${msg || resp.statusText}`);
         return;
       }
 
-      // 3) Stash folder + backend project ref for later
-      sessionStorage.setItem('projectFolder', selectedFolderPath);
-      if (data?.project_id) {
-        sessionStorage.setItem('projectId', String(data.project_id));
-      }
-      if (data?.project_name) {
-        sessionStorage.setItem('projectName', data.project_name);
-      }
-
-      // 4) Proceed to method selection screen
-      navigate('method');
-    } catch (e) {
-      alert(`Could not reach backend: ${e.message}`);
+      alert('Folder linked! Click Next to choose methods.');
+    } catch (err) {
+      console.error(err);
+      alert('Could not select folder.');
     }
   });
 }
 
-// expose
 window.initializeUpload = initializeUpload;

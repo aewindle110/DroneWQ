@@ -636,115 +636,116 @@
             <!-- LOADING -->
             <div id="loading" class="screen">
                 <div class="content-header">
-                    <div class="content-title">Processing</div>
+                    <div class="content-title">Processing Your Data</div>
                 </div>
-                <div class="spinner"></div>
-                <p style="text-align: center;">Processing data...</p>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;">
+                    <div class="spinner"></div>
+                    <p style="text-align: center; color: #2C3E50; font-size: 18px; margin-top: 20px; font-weight: 500;">Processing data...</p>
+                    <p style="text-align: center; color: #7F8C8D; font-size: 14px; max-width: 500px; margin-top: 10px; line-height: 1.6;">
+                        Your drone data is being processed. This may take a few moments depending on the size of your dataset and selected processing methods.
+                    </p>
+                </div>
             </div>
 
-            <!-- RESULTS -->
+                    <!-- RESULTS -->
             <div id="results" class="screen">
-                <div class="content-header">
-                    <div class="content-title">Results</div>
-                </div>
-                
-                <div class="back-arrow" onclick="navigate('home')">
-                    ← Back to Projects
-                </div>
-                
-                <div class="results-bar">
-                    <h3>Algae Survey</h3>
-                    <p>22.09.2025 | Location: 42.0235°N, 83.4075°W</p>
-                </div>
-                <div class="tabs">
-                    <div class="tab active" onclick="switchTab('overview')">Overview</div>
-                    <div class="tab" onclick="switchTab('images')">Images</div>
-                    <div class="tab" onclick="switchTab('trajectory')">Flight Trajectory</div>
-                    <div class="tab" onclick="switchTab('mosaic')">Mosaic</div>
-                </div>
-                <div id="overview" class="tab-content active">
-                    <div class="charts-grid">
-                        <div class="chart-container">
-                            <h4>Remote Sensing Reflectance</h4>
-                            <img src="https://i.imgur.com/TbT82XV.png" alt="Chart">
-                            <div class="chart-blurb">How to read graph</div>
-                        </div>
-                        <div class="chart-container">
-                            <h4>Chlorophyll Maps</h4>
-                            <img src="https://i.imgur.com/Jy2rdnZ.png" alt="Chart">
-                            <div class="chart-blurb">How to read graph</div>
-                        </div>
-                    </div>
-                </div>
-                <div id="images" class="tab-content">
-                    <div class="images-grid">
-                        <div class="image-box"></div>
-                        <div class="image-box"></div>
-                        <div class="image-box"></div>
-                        <div class="image-box selected"></div>
-                        <div class="image-box"></div>
-                        <div class="image-box"></div>
-                        <div class="image-box"></div>
-                        <div class="image-box"></div>
-                        <div class="image-box"></div>
-                        <div class="image-box"></div>
-                        <div class="image-box"></div>
-                        <div class="image-box"></div>
-                    </div>
-                </div>
-                <div id="trajectory" class="tab-content">
-                    <div class="trajectory-data">
-                        <h4 style="margin-bottom: 15px;">Flight Data Summary</h4>
-                        <div class="data-row">
-                            <span class="data-label">Altitude:</span>
-                            <span>260-268 m</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Latitude/Longitude:</span>
-                            <span>42.0235°N, 83.4075°W</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Yaw:</span>
-                            <span>0-350°</span>
-                        </div>
-                    </div>
-                    <img src="https://i.imgur.com/Jy2rdnZ.png" alt="Flight Trajectory" style="width: 100%; border-radius: 4px;">
-                </div>
-                <div id="mosaic" class="tab-content">
-                    <div style="background: #F8F9FA; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                        <strong>Map Controls:</strong>
-                        <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-secondary" style="padding: 8px 16px;">🗺️ Toggle Map Layer</button>
-                            <button class="btn btn-secondary" style="padding: 8px 16px;">🔍 Zoom</button>
-                            <button class="btn btn-secondary" style="padding: 8px 16px;">📍 Add Marker</button>
-                            <button class="btn btn-primary" style="padding: 8px 16px;" onclick="toggleMosaicEditMode()">✏️ Edit Mosaic Position</button>
-                        </div>
-                    </div>
-                    
-                    <div id="mosaicEditControls" style="display: none; background: #FFF3CD; padding: 15px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #FFC107;">
-                        <strong>Edit Mode Active</strong>
-                        <p style="margin: 10px 0; font-size: 13px;">Click and drag the mosaic to reposition. Use controls below to rotate.</p>
-                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
-                            <label style="margin-right: 10px;">Rotation:</label>
-                            <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(-5)">↶ -5°</button>
-                            <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(-1)">↶ -1°</button>
-                            <input type="number" id="rotationValue" value="0" style="width: 70px; padding: 6px; text-align: center; border: 1px solid #CED4DA; border-radius: 4px;">
-                            <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(1)">↷ +1°</button>
-                            <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(5)">↷ +5°</button>
-                            <button class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px;" onclick="saveMosaicPosition()">Save Position</button>
-                            <button class="btn btn-secondary" style="padding: 6px 16px;" onclick="toggleMosaicEditMode()">Cancel</button>
-                        </div>
-                    </div>
-                    
-                    <div id="mosaicContainer" style="position: relative; cursor: default;">
-                        <img src="https://i.imgur.com/fBJpRAc.jpeg" alt="Mosaic" id="mosaicImage" style="width: 100%; transition: transform 0.2s;">
-                    </div>
-                    
-                    <div class="chart-blurb" style="margin-top: 15px;">
-                        Final georeferenced mosaic overlay. Coordinates: 42.0235°N, 83.4075°W | Resolution: 2.5 cm/pixel
-                    </div>
+            <div class="content-header">
+                <div class="content-title">Results</div>
+            </div>
+
+            <div class="back-arrow" onclick="navigate('home')">
+                ← Back to Projects
+            </div>
+
+            <div class="results-bar">
+                <h3>Algae Survey</h3>
+                <p>22.09.2025 | Location: 42.0235°N, 83.4075°W</p>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab(event, 'overview')">Overview</div>
+                <div class="tab" onclick="switchTab(event, 'images')">Images</div>
+                <div class="tab" onclick="switchTab(event, 'trajectory')">Flight Trajectory</div>
+                <div class="tab" onclick="switchTab(event, 'mosaic')">Mosaic</div>
+            </div>
+
+            <!-- Overview now has an empty container -->
+            <div id="overview" class="tab-content active">
+                <div id="overviewCards" class="charts-grid"></div>
+            </div>
+
+            <div id="images" class="tab-content">
+                <div class="images-grid">
+                <div class="image-box"></div>
+                <div class="image-box"></div>
+                <div class="image-box"></div>
+                <div class="image-box selected"></div>
+                <div class="image-box"></div>
+                <div class="image-box"></div>
+                <div class="image-box"></div>
+                <div class="image-box"></div>
+                <div class="image-box"></div>
+                <div class="image-box"></div>
+                <div class="image-box"></div>
+                <div class="image-box"></div>
                 </div>
             </div>
+
+            <div id="trajectory" class="tab-content">
+                <div class="trajectory-data">
+                <h4 style="margin-bottom: 15px;">Flight Data Summary</h4>
+                <div class="data-row">
+                    <span class="data-label">Altitude:</span>
+                    <span>260-268 m</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Latitude/Longitude:</span>
+                    <span>42.0235°N, 83.4075°W</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Yaw:</span>
+                    <span>0-350°</span>
+                </div>
+                </div>
+                <img src="https://i.imgur.com/Jy2rdnZ.png" alt="Flight Trajectory" style="width: 100%; border-radius: 4px;">
+            </div>
+
+            <div id="mosaic" class="tab-content">
+                <div style="background: #F8F9FA; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <strong>Map Controls:</strong>
+                <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" style="padding: 8px 16px;">🗺️ Toggle Map Layer</button>
+                    <button class="btn btn-secondary" style="padding: 8px 16px;">🔍 Zoom</button>
+                    <button class="btn btn-secondary" style="padding: 8px 16px;">📍 Add Marker</button>
+                    <button class="btn btn-primary" style="padding: 8px 16px;" onclick="toggleMosaicEditMode()">✏️ Edit Mosaic Position</button>
+                </div>
+                </div>
+
+                <div id="mosaicEditControls" style="display: none; background: #FFF3CD; padding: 15px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #FFC107;">
+                <strong>Edit Mode Active</strong>
+                <p style="margin: 10px 0; font-size: 13px;">Click and drag the mosaic to reposition. Use controls below to rotate.</p>
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+                    <label style="margin-right: 10px;">Rotation:</label>
+                    <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(-5)">↶ -5°</button>
+                    <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(-1)">↶ -1°</button>
+                    <input type="number" id="rotationValue" value="0" style="width: 70px; padding: 6px; text-align: center; border: 1px solid #CED4DA; border-radius: 4px;">
+                    <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(1)">↷ +1°</button>
+                    <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="rotateMosaic(5)">↷ +5°</button>
+                    <button class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px;" onclick="saveMosaicPosition()">Save Position</button>
+                    <button class="btn btn-secondary" style="padding: 6px 16px;" onclick="toggleMosaicEditMode()">Cancel</button>
+                </div>
+                </div>
+
+                <div id="mosaicContainer" style="position: relative; cursor: default;">
+                <img src="https://i.imgur.com/fBJpRAc.jpeg" alt="Mosaic" id="mosaicImage" style="width: 100%; transition: transform 0.2s;">
+                </div>
+
+                <div class="chart-blurb" style="margin-top: 15px;">
+                Final georeferenced mosaic overlay. Coordinates: 42.0235°N, 83.4075°W | Resolution: 2.5 cm/pixel
+                </div>
+            </div>
+            </div>
+
 
             <!-- SETTINGS -->
             <div id="settings" class="screen">
@@ -872,10 +873,6 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screen).classList.add('active');
 
-            if (screen === 'loading') {
-                setTimeout(() => navigate('results'), 2000);
-            }
-
             // Init Upload page JS
             if (screen === 'upload') {
                 setTimeout(() => {
@@ -898,26 +895,38 @@
             }, 100);
             }
 
+            // Init Results page - build charts when arriving at results
+            if (screen === 'results') {
+                setTimeout(() => {
+                    if (typeof buildOverviewFromFolder === 'function') {
+                        buildOverviewFromFolder();
+                        console.log('[Results] Charts built');
+                    }
+                }, 100);
+            }
+
         }
 
         </script>
-        <script>
+       <script>
         function toggleMenu(e) {
             e.stopPropagation();
-            const menu = e.target.querySelector('.actions-menu');
+            const menu = e.currentTarget.querySelector('.actions-menu');
             document.querySelectorAll('.actions-menu').forEach(m => {
-                if (m !== menu) m.classList.remove('show');
+            if (m !== menu) m.classList.remove('show');
             });
             menu.classList.toggle('show');
         }
+        </script>
 
-        function switchTab(tab) {
+
+        function switchTab(e, tab) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            
             document.getElementById(tab).classList.add('active');
-            event.target.classList.add('active');
-        }
+            if (e && e.currentTarget) e.currentTarget.classList.add('active');
+            }
+
 
         document.addEventListener('click', function() {
             document.querySelectorAll('.actions-menu').forEach(m => m.classList.remove('show'));
