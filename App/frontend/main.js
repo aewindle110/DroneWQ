@@ -116,3 +116,48 @@ app.on('window-all-closed', () => {
         app.quit();
     }
 });
+
+// IPC Handlers for folder selection
+ipcMain.handle('select-folder', async (event) => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openDirectory'],
+        title: 'Select your data folder',
+        buttonLabel: 'Select Folder'
+    });
+    
+    if (!result.canceled && result.filePaths.length > 0) {
+        return { success: true, path: result.filePaths[0] };
+    }
+    return { success: false };
+});
+
+// IPC Handler for manual file upload (individual files)
+ipcMain.handle('select-files', async (event) => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openFile', 'multiSelections'],
+        title: 'Select your data files',
+        buttonLabel: 'Select Files',
+        filters: [
+            { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'tif', 'tiff', 'raw'] },
+            { name: 'All Files', extensions: ['*'] }
+        ]
+    });
+    
+    if (!result.canceled && result.filePaths.length > 0) {
+        return { success: true, paths: result.filePaths };
+    }
+    return { success: false };
+});
+
+
+// IPC Handler to prepare data for backend
+ipcMain.handle('process-data', async (event, projectData) => {
+    console.log('Data ready for backend processing:', projectData);
+    
+    // For now, return success so the frontend flow works
+    return { 
+        success: true, 
+        message: 'Ready for backend processing',
+        projectData: projectData
+    };
+});

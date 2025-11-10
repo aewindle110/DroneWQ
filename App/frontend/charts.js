@@ -1,15 +1,16 @@
 // charts.js - Chart interactions and modal functionality
 
 // Track which charts should be displayed based on project settings
-let selectedOutputs = [
-    'reflectance', 
-    'chlorophyll-hu', 
-    'chlorophyll-ocx', 
-    'tsm'
-]; // Default for demo
+let selectedOutputs = [];
 
 // Initialize chart functionality
 function initializeCharts() {
+    // Get the current outputs from project settings
+    if (typeof getCurrentSettings === 'function') {
+        const settings = getCurrentSettings();
+        selectedOutputs = settings.selectedOutputs.filter(output => output !== 'mosaics');
+    }
+    
     setupChartClickHandlers();
     addExportButtons();
     renderChartsBasedOnOutputs();

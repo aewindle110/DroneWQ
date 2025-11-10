@@ -528,8 +528,7 @@
                     <div style="color: #7F8C8D; font-size: 13px; margin-top: 10px;">
                         Required: panel/, raw_sky_imgs/, raw_water_imgs/, align_img/
                     </div>
-                    <button class="btn btn-primary" style="margin-top: 20px;">Upload Folder</button>
-                    <button class="btn btn-secondary" style="margin-top: 10px;">Manual Upload</button>
+                    <button id="uploadFolderBtn" class="btn btn-primary" type="button">Upload Folder</button>
                 </div>
                 <div class="form-actions">
                     <button class="btn btn-secondary" onclick="navigate('home')">Cancel</button>
@@ -539,46 +538,51 @@
 
             <!-- METHOD -->
             <div id="method" class="screen">
-                <div class="content-header">
-                    <div class="content-title">Method Selection</div>
+            <div class="content-header">
+                <div class="content-title">Method Selection</div>
+            </div>
+            <div class="form-panel">
+                <div class="form-header">
+                <div class="step-indicator">1</div>
+                <div style="font-size: 20px; font-weight: 600;">Select Processing Methods</div>
                 </div>
-                <div class="form-panel">
-                    <div class="form-header">
-                        <div class="step-indicator">1</div>
-                        <div style="font-size: 20px; font-weight: 600;">Select Processing Methods</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Sky Glint Removal Method</label>
-                        <select class="form-select">
-                            <option>Select method...</option>
-                            <option>Mobley Rho Method</option>
-                            <option>Black Pixel Method</option>
-                            <option>Hedley Method</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Irradiance Normalization Method</label>
-                        <select class="form-select">
-                            <option>Select method...</option>
-                            <option>Panel Ed</option>
-                            <option>DLS Ed</option>
-                            <option>DLS corrected by panel</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Pixel Masking (Optional)</label>
-                        <select class="form-select">
-                            <option>None</option>
-                            <option>Value Threshold</option>
-                            <option>Standard Deviation Threshold</option>
-                        </select>
-                    </div>
-                    <div class="form-actions">
-                        <button class="btn btn-secondary" onclick="navigate('upload')">Back</button>
-                        <button class="btn btn-primary" onclick="navigate('outputs')">Next</button>
-                    </div>
+
+                <div class="form-group">
+                <label class="form-label" for="glintSelect">Sky Glint Removal Method</label>
+                <select id="glintSelect" class="form-select">
+                    <option value="" selected disabled>Select method...</option>
+                    <option value="mobley_rho">Mobley Rho Method</option>
+                    <option value="black_pixel">Black Pixel Method</option>
+                    <option value="hedley">Hedley Method</option>
+                </select>
+                </div>
+
+                <div class="form-group">
+                <label class="form-label" for="irradianceSelect">Irradiance Normalization Method</label>
+                <select id="irradianceSelect" class="form-select">
+                    <option value="" selected disabled>Select method...</option>
+                    <option value="panel_ed">Panel Ed</option>
+                    <option value="dls_ed">DLS Ed</option>
+                    <option value="dls_corrected_panel">DLS corrected by panel</option>
+                </select>
+                </div>
+
+                <div class="form-group">
+                <label class="form-label" for="maskingSelect">Pixel Masking (Optional)</label>
+                <select id="maskingSelect" class="form-select">
+                    <option value="">None</option>
+                    <option value="value_threshold">Value Threshold</option>
+                    <option value="std_threshold">Standard Deviation Threshold</option>
+                </select>
+                </div>
+
+                <div class="form-actions">
+                <button class="btn btn-secondary" onclick="navigate('upload')">Back</button>
+                <button class="btn btn-primary" onclick="navigate('outputs')">Next</button>
                 </div>
             </div>
+            </div>
+
 
             <!-- OUTPUTS -->
             <div id="outputs" class="screen">
@@ -592,37 +596,39 @@
                     </div>
                     <div class="checkbox-group">
                         <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Reflectance spectra</span>
+                        <input type="checkbox" class="outputChk" data-key="reflectance">
+                        <span>Reflectance spectra</span>
                         </label>
                         <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Chlorophyll-a (Hu Color Index)</span>
+                        <input type="checkbox" class="outputChk" data-key="chla_hu">
+                        <span>Chlorophyll-a (Hu Color Index)</span>
                         </label>
                         <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Chlorophyll-a (OCx Band Ratio)</span>
+                        <input type="checkbox" class="outputChk" data-key="chla_ocx">
+                        <span>Chlorophyll-a (OCx Band Ratio)</span>
                         </label>
                         <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Chlorophyll-a (Blended Hu+OCx)</span>
+                        <input type="checkbox" class="outputChk" data-key="chla_blended">
+                        <span>Chlorophyll-a (Blended Hu+OCx)</span>
                         </label>
                         <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Chlorophyll-a (Gitelson)</span>
+                        <input type="checkbox" class="outputChk" data-key="chla_gitelson">
+                        <span>Chlorophyll-a (Gitelson)</span>
                         </label>
                         <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Total Suspended Matter (TSM)</span>
+                        <input type="checkbox" class="outputChk" data-key="tsm">
+                        <span>Total Suspended Matter (TSM)</span>
                         </label>
                         <label class="checkbox-option">
-                            <input type="checkbox">
-                            <span>Mosaics</span>
+                        <input type="checkbox" class="outputChk" data-key="mosaics">
+                        <span>Mosaics</span>
                         </label>
+
                     </div>
                     <div class="form-actions">
                         <button class="btn btn-secondary" onclick="navigate('method')">Back</button>
-                        <button class="btn btn-primary" onclick="navigate('loading')">Process</button>
+                        <button id="processBtn" class="btn btn-primary" type="button">Process</button>
+
                     </div>
                 </div>
             </div>
@@ -862,15 +868,40 @@
     </div>
 
     <script>
-        function navigate(screen) {
+            function navigate(screen) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screen).classList.add('active');
-            
+
             if (screen === 'loading') {
                 setTimeout(() => navigate('results'), 2000);
             }
+
+            // Init Upload page JS
+            if (screen === 'upload') {
+                setTimeout(() => {
+                if (typeof initializeUpload === 'function') {
+                    initializeUpload();
+                    console.log('[Upload] initializeUpload() called');
+                } else {
+                    console.warn('[Upload] initializeUpload is not defined');
+                }
+                }, 300);
+            }
+
+            // Init Settings pages
+            if (screen === 'method' || screen === 'outputs') {
+            setTimeout(() => {
+                if (typeof initializeProjectSettings === 'function') {
+                initializeProjectSettings();
+                console.log('[Settings] initialized');
+                }
+            }, 100);
+            }
+
         }
 
+        </script>
+        <script>
         function toggleMenu(e) {
             e.stopPropagation();
             const menu = e.target.querySelector('.actions-menu');
@@ -1021,9 +1052,11 @@
         }
     </script>
 
-    <script src="../frontend/dashboard.js"></script>
-    <script src="../frontend/project_settings.js"></script>
-    <script src="../frontend/charts.js"></script>
+    <script src="../dashboard.js"></script>
+    <script src="../project_settings.js"></script>
+    <script src="../charts.js"></script>
+    <script src="../upload.js"></script>
+
     <script>
         // Initialize all functionality when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -1032,6 +1065,5 @@
             initializeCharts();     // Then initialize charts with settings
         });
     </script>
-</body>
 </body>
 </html>

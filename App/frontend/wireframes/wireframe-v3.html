@@ -1401,12 +1401,20 @@
 
         function toggleMenu(e) {
             e.stopPropagation();
-            const menu = e.target.querySelector('.actions-menu');
+            const button = e.currentTarget;
+            const menu = button.nextElementSibling; // Menu is now sibling, not child
+            const isOpen = menu.classList.contains('show');
+            
+            // Close all other menus
             document.querySelectorAll('.actions-menu').forEach(m => {
-                if (m !== menu) m.classList.remove('show');
+                if (m !== menu) {
+                    m.classList.remove('show');
+                    const btn = m.previousElementSibling; // Get sibling button
+                    if (btn && btn.classList.contains('three-dots')) {
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                }
             });
-            menu.classList.toggle('show');
-        }
             
             // Toggle current menu
             menu.classList.toggle('show');
