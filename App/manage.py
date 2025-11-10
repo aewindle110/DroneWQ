@@ -95,7 +95,7 @@ def make_project():
 
 @bp.route('/manage/save_settings', methods=["POST"])
 def save_settings():
-    args = request.args
+    args = request.get_json(silent=True) or request.args
     project_id = args.get("project_id")
     project_name = args.get("project_name")
     folder_path = args.get("folderPath")
@@ -120,7 +120,7 @@ def save_settings():
         lw_method=lw_method,
         ed_method=ed_method,
         mask_method=mask_method,
-        outputs=outputs.split(",") if outputs else [],
+        outputs=outputs,
     )
 
     try:

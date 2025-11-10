@@ -9,7 +9,6 @@ import os
 
 # TODO: Make this a class
 def process_raw_to_rrs(
-    output_csv_path,
     lw_method="mobley_rho_method",
     mask_pixels=False,
     random_n=10,
@@ -26,8 +25,6 @@ def process_raw_to_rrs(
     This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
 
     Parameters:
-        output_csv_path: A string containing the filepath to write the metadata.csv
-
         lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method().
 
         random_n: The amount of random images to calculate ambient NIR level. Default is 10. Only need if lw_method = 'hedley_method'
@@ -131,15 +128,15 @@ def process_raw_to_rrs(
 
     if ed_method == "panel_ed":
         print("Normalizing by panel irradiance (Lw/Ed -> Rrs).")
-        dronewq.panel_ed(output_csv_path, num_workers=num_workers)
+        dronewq.panel_ed(main_dir, num_workers=num_workers)
 
     elif ed_method == "dls_ed":
         print("Normalizing by DLS irradiance (Lw/Ed -> Rrs).")
-        dronewq.dls_ed(output_csv_path, num_workers=num_workers)
+        dronewq.dls_ed(main_dir, num_workers=num_workers)
 
     elif ed_method == "dls_and_panel_ed":
         print("Normalizing by DLS corrected by panel irradiance (Lw/Ed -> Rrs).")
-        dronewq.dls_ed(output_csv_path, dls_corr=True, num_workers=num_workers)
+        dronewq.dls_ed(main_dir, dls_corr=True, num_workers=num_workers)
 
     else:
         print(
