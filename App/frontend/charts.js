@@ -4,10 +4,10 @@ const { pathToFileURL } = require('url');
 const fs = require('fs');
 
 function initializeCharts() {
-  // Optionally auto-build when page loads if already on results
   const resultsScreen = document.getElementById('results');
   if (resultsScreen && resultsScreen.classList.contains('active')) {
     buildOverviewFromFolder();
+    buildFlightTrajectory();
   }
 }
 
@@ -22,13 +22,8 @@ function buildOverviewFromFolder() {
     return;
   }
 
+  const resultDir = path.join(projectFolder, 'result');
   const outputs = JSON.parse(sessionStorage.getItem('selectedOutputs') || '[]');
-
-  // Backend file names (as per your teammate's Pipeline code)
-  // Always-safe cards:
-  const always = [
-    { key: 'flight_plan', title: 'Flight Plan', file: 'flight_plan.png', blurb: 'Flight path, altitude, yaw summary.' }
-  ];
 
   // Conditional cards mapped to outputs
   const byOutput = [
@@ -36,9 +31,6 @@ function buildOverviewFromFolder() {
     { out: 'reflectance',   title: 'Masked Rrs Plot', file: 'masked_rrs_plot.png',  blurb: 'Reflectance after pixel masking.' },
     { out: 'tsm',           title: 'Lt Plot',         file: 'lt_plot.png',          blurb: 'Top-of-water radiance.' },
     { out: 'panel_ed',      title: 'Ed Plot',         file: 'ed_plot.png',          blurb: 'Downwelling irradiance summary.' },
-    // If your teammate also saves chlorophyll maps as files, add them similarly:
-    // { out: 'chla_hu', title: 'Chlorophyll (Hu)', file: 'chla_hu_map.png', blurb: 'Hu color index map.' },
-    // { out: 'chla_ocx', title: 'Chlorophyll (OCx)', file: 'chla_ocx_map.png', blurb: 'OCx band ratio map.' },
   ];
 
   const container = document.getElementById('overviewCards');
@@ -91,6 +83,65 @@ function buildOverviewFromFolder() {
     container.appendChild(msg);
   }
 }
+
+/**
+ * Load the flight plan image into the trajectory tab
+ */
+function buildFlightTrajectory() {
+  const folderPath = sessionStorage.getItem('projectFolder');
+  if (!folderPath) {
+    console.warn('No project folder set in sessionStorage');
+    return;
+  }
+
+  const resultDir = path.join(projectFolder, 'result');
+  const flightPlanPath = path.join(resultDir, 'flight_plan.png');
+
+  if (!fs.existsSync(flightPlanPath)) {
+    console.log('flight_plan.png not found in', resultDir);
+    return;
+  }
+
+  const trajectoryTab = document.getElementById('trajectory');
+  if (!trajectoryTab) {
+    console.error('trajectory tab not found');
+    return;
+  }
+const url = pathToFileURL(flightPlanPath).href;
+  let img = trajectoryTab.querySelector('img');
+  if (!img) {
+    img = document.createElement('img');
+    img.style.width = '100%';
+    img.style.borderRadius = '4px';
+    img.style.marginTop = '20px';
+    trajectoryTab.appendChild(img);
+  }
+  img.src = url;
+  img.alt = 'Flight Plan';
+  console.log('Flight plan loaded from', flightPlanPath);
+}
+    
+
+  // Find the existing img tag in trajectory tab and replace its src
+  const existingImg = trajectoryTab.querySelector('img');
+  if (existingImg) {
+    const url = pathToFileURL(flightPlanPath).href;
+    existingImg.src = url;
+    existingImg.alt = 'Flight Plan';
+    console.log('Flight plan image loaded into trajectory tab');
+  } else {
+    // If no img tag exists, create one
+    const url = pathToFileURL(flightPlanPath).href;
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = 'Flight Plan';
+    img.style.width = '100%';
+    img.style.borderRadius = '4px';
+    img.style.marginTop = '20px';
+    trajectoryTab.appendChild(img);
+  }
+}
+
 
 window.initializeCharts = initializeCharts;
 window.buildOverviewFromFolder = buildOverviewFromFolder;

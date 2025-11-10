@@ -59,7 +59,7 @@ async function submitProcessing() {
     console.log("Settings saved, starting processing...");
 
     // Now trigger the actual processing
-    const processRes = await fetch('http://localhost:8889/manage/process', {
+    const processRes = await fetch('http://localhost:8889/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ folderPath: folderPath })
@@ -75,6 +75,16 @@ async function submitProcessing() {
     //  Wait until backend confirms completion
     const data = await processRes.json();
     console.log("Processing complete:", data);
+
+     if (data.success) {
+    // Charts ready = 1 (true)
+    buildOverviewFromFolder();
+    navigate('results');
+    } else {
+    // Charts not ready = 0 (false)
+    alert('Processing failed');
+    navigate('outputs');
+    }
 
     // After backend finishes, load charts and go to results
     if (typeof buildOverviewFromFolder === 'function') {
