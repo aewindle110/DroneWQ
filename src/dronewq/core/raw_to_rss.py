@@ -106,15 +106,15 @@ def process_raw_to_rrs(
     ### correct for surface reflected light ###
     ##################################
 
-    if lw_method == "mobley_rho_method":
+    if lw_method == "mobley_rho":
         print("Applying the mobley_rho_method (Lt -> Lw).")
         dronewq.mobley_rho(num_workers=num_workers)
 
-    elif lw_method == "blackpixel_method":
+    elif lw_method == "blackpixel":
         print("Applying the blackpixel_method (Lt -> Lw)")
         dronewq.blackpixel(num_workers=num_workers)
 
-    elif lw_method == "hedley_method":
+    elif lw_method == "hedley":
         print("Applying the Hochberg/Hedley (Lt -> Lw)")
         dronewq.hedley(random_n, num_workers=num_workers)
 

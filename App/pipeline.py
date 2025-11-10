@@ -1,4 +1,6 @@
 # Everything about managing Projects
+import matplotlib
+matplotlib.use("Agg")  # non-interactive backend — no GUI windows will open
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -15,6 +17,8 @@ class Pipeline:
         dronewq.write_metadata_csv(self.settings.raw_water_dir, self.settings.main_dir)
 
     def flight_plan(self):
+        output_folder = os.path.join(self.settings.main_dir, "result")
+        os.makedirs(output_folder, exist_ok=True)
         if not os.path.exists(self.settings.metadata):
             raise FileNotFoundError("Metadata file not found.")
 
@@ -31,7 +35,7 @@ class Pipeline:
         ax[2].plot(list(range(len(img_metadata))),img_metadata['Yaw'])
         ax[2].set_ylabel('Yaw')
 
-        out_path = os.path.join(self.settings.main_dir, "flight_plan.png")
+        out_path = os.path.join(output_folder, "flight_plan.png")
         fig.savefig(out_path, dpi=300, bbox_inches='tight', transparent=False)
         plt.close(fig)
     
@@ -45,7 +49,7 @@ class Pipeline:
             nir_threshold=0.02,
             random_n=10,
             #NOTE: Should probably ask this from user
-            clean_intermediates=True,
+            clean_intermediates=False,
             overwrite_lt_lw=False,
             num_workers=4,
         )
@@ -57,26 +61,30 @@ class Pipeline:
         self.masked_rrs_plot(count=count)
     
     def rrs_plot(self, count: int = 25):
-        masked_rrs_imgs_hedley, img_metadata = dronewq.retrieve_imgs_and_metadata(img_dir = self.settings.masked_rrs_dir, count=count)
+        output_folder = os.path.join(self.settings.main_dir, "result")
+        os.makedirs(output_folder, exist_ok=True)
+        rrs_imgs, img_metadata = dronewq.retrieve_imgs_and_metadata(img_dir = self.settings.rrs_dir, count=count)
 
         fig, ax = plt.subplots(1,1, figsize=(6,3))
 
         wv = [475, 560, 668, 717, 842]
-        colors = plt.cm.viridis(np.linspace(0,1,len(masked_rrs_imgs_hedley)))
+        colors = plt.cm.viridis(np.linspace(0,1,len(rrs_imgs)))
 
-        for i in range(len(masked_rrs_imgs_hedley)):
-            plt.plot(wv, np.nanmean(masked_rrs_imgs_hedley[i,0:5,:,:],axis=(1,2)), marker = 'o', color=colors[i], label="")
+        for i in range(len(rrs_imgs)):
+            plt.plot(wv, np.nanmean(rrs_imgs[i,0:5,:,:],axis=(1,2)), marker = 'o', color=colors[i], label="")
             plt.xlabel('Wavelength (nm)')
             plt.ylabel(r'$R_{rs}\ (sr^{-1})$')
-        plt.plot(wv, np.nanmean(masked_rrs_imgs_hedley[:,0:5,:,:], axis=(0,2,3)),  marker = 'o', color='black', linewidth=5, label='Mean')
+        plt.plot(wv, np.nanmean(rrs_imgs[:,0:5,:,:], axis=(0,2,3)),  marker = 'o', color='black', linewidth=5, label='Mean')
 
         plt.legend(frameon=False)
 
-        out_path = os.path.join(self.settings.main_dir, "rrs_plot.png")
+        out_path = os.path.join(output_folder, "rrs_plot.png")
         fig.savefig(out_path, dpi=300, bbox_inches='tight', transparent=False)
         plt.close(fig)
     
     def lt_plot(self, count: int = 25):
+        output_folder = os.path.join(self.settings.main_dir, "result")
+        os.makedirs(output_folder, exist_ok=True)
         lt_imgs, img_metadata = dronewq.retrieve_imgs_and_metadata(img_dir = self.settings.lt_dir, count=count)
 
         fig, ax = plt.subplots(1,1, figsize=(6,3))
@@ -92,31 +100,34 @@ class Pipeline:
 
         plt.legend(frameon=False)
 
-        out_path = os.path.join(self.settings.main_dir, "lt_plot.png")
+        out_path = os.path.join(output_folder, "lt_plot.png")
         fig.savefig(out_path, dpi=300, bbox_inches='tight', transparent=False)
         plt.close(fig)
             
     def ed_plot(self, count: int = 25):
-        ed_imgs, img_metadata = dronewq.retrieve_imgs_and_metadata(img_dir = self.settings.ed_dir, count=count)
+        output_folder = os.path.join(self.settings.main_dir, "result")
+        os.makedirs(output_folder, exist_ok=True)
 
-        fig, ax = plt.subplots(1,1, figsize=(6,3))
+        ed = pd.read_csv(self.settings.main_dir+'/dls_ed.csv')
 
         wv = [475, 560, 668, 717, 842]
-        colors = plt.cm.viridis(np.linspace(0,1,len(ed_imgs)))
+        fig, ax = plt.subplots(1,1, figsize=(6,3))
 
-        for i in range(len(ed_imgs)):
-            plt.plot(wv, np.nanmean(ed_imgs[i,0:5,:,:],axis=(1,2)), marker = 'o', color=colors[i], label="")
+        colors = plt.cm.viridis(np.linspace(0,1,len(ed)))
+
+        for i in range(len(ed)):
+            plt.plot(wv, ed.iloc[i,1:6],  marker = 'o', color=colors[i]) 
             plt.xlabel('Wavelength (nm)')
-            plt.ylabel(r'$E_{d}\ (mW\ cm^{-2}\ nm^{-1})$')
-        plt.plot(wv, np.nanmean(ed_imgs[:,0:5,:,:], axis=(0,2,3)),  marker = 'o', color='black', linewidth=5, label='Mean')
+            plt.ylabel(r'$E_d\ (mW\ m^2\ nm^{-1}$)') 
+        plt.plot(wv, ed.iloc[:,1:6].mean(axis=0),  marker = 'o', color='black', linewidth=5, label='Mean')
 
-        plt.legend(frameon=False)
-
-        out_path = os.path.join(self.settings.main_dir, "result", "ed_plot.png")
+        out_path = os.path.join(output_folder, "ed_plot.png")
         fig.savefig(out_path, dpi=300, bbox_inches='tight', transparent=False)
         plt.close(fig)
 
     def masked_rrs_plot(self, count: int = 25):
+        output_folder = os.path.join(self.settings.main_dir, "result")
+        os.makedirs(output_folder, exist_ok=True)
         masked_rrs_imgs_hedley, img_metadata = dronewq.retrieve_imgs_and_metadata(img_dir = self.settings.masked_rrs_dir, count=count)
 
         fig, ax = plt.subplots(1,1, figsize=(6,3))
@@ -132,7 +143,7 @@ class Pipeline:
 
         plt.legend(frameon=False)
 
-        out_path = os.path.join(self.settings.main_dir, "masked_rrs_plot.png")
+        out_path = os.path.join(output_folder, "masked_rrs_plot.png")
         fig.savefig(out_path, dpi=300, bbox_inches='tight', transparent=False)
         plt.close(fig)
     

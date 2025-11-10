@@ -99,9 +99,9 @@ def save_settings():
     project_id = args.get("project_id")
     project_name = args.get("project_name")
     folder_path = args.get("folderPath")
-    lw_method = args.get("lwMethod")
-    ed_method = args.get("edMethod")
-    mask_method = args.get("maskMethod")
+    lw_method = str(args.get("lwMethod"))
+    ed_method = str(args.get("edMethod"))
+    mask_method = str(args.get("maskMethod"))
     outputs = args.get("outputs")
 
     settings = Settings()
@@ -113,7 +113,11 @@ def save_settings():
         settings = settings.load(folder_path)
     else:
         settings.configure(main_dir=folder_path)
-    
+
+    lw_method = lw_method.lower().strip().replace(" ", "_")
+    ed_method = ed_method.lower().strip().replace(" ", "_")
+    mask_method = mask_method.lower().strip().replace(" ", "_")
+
     settings.configure(
         project_id=project_id,
         project_name=project_name,
