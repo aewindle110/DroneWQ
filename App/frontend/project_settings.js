@@ -12,14 +12,14 @@ function initializeProjectSettings() {
 
 async function submitProcessing() {
   // Pull references saved during Upload step
-  const projectId  = sessionStorage.getItem('projectId') || null;
+  const projectId = sessionStorage.getItem('projectId') || null;
   const folderPath = sessionStorage.getItem('projectFolder') || null;
   const projectName = sessionStorage.getItem('projectName') || null;
 
   // Collect Methods
   const glint = (document.getElementById('glintSelect') || {}).value || "";
-  const irr   = (document.getElementById('irradianceSelect') || {}).value || "";
-  const mask  = (document.getElementById('maskingSelect') || {}).value || "";
+  const irr = (document.getElementById('irradianceSelect') || {}).value || "";
+  const mask = (document.getElementById('maskingSelect') || {}).value || "";
 
   // Collect Outputs
   const outputs = Array.from(document.querySelectorAll('.outputChk:checked'))
@@ -43,7 +43,7 @@ async function submitProcessing() {
 
   try {
     // First, save the settings
-    const settingsRes = await fetch('http://localhost:5000/manage/save_settings', {
+    const settingsRes = await fetch('http://localhost:8889/manage/save_settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -76,14 +76,14 @@ async function submitProcessing() {
     const data = await processRes.json();
     console.log("Processing complete:", data);
 
-     if (data.success) {
-    // Charts ready = 1 (true)
-    buildOverviewFromFolder();
-    navigate('results');
+    if (data.success) {
+      // Charts ready = 1 (true)
+      buildOverviewFromFolder();
+      navigate('results');
     } else {
-    // Charts not ready = 0 (false)
-    alert('Processing failed');
-    navigate('outputs');
+      // Charts not ready = 0 (false)
+      alert('Processing failed');
+      navigate('outputs');
     }
 
     // After backend finishes, load charts and go to results
