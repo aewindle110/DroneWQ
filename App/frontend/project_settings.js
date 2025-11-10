@@ -1,9 +1,12 @@
-// project_settings.js
+// frontend/project_settings.js
+
+function initializeSettings() {
+  // no-op so DOMContentLoaded("initializeSettings") won't crash
+}
 
 function initializeProjectSettings() {
   const processBtn = document.getElementById('processBtn');
   if (!processBtn) return;
-
   processBtn.addEventListener('click', submitProcessing);
 }
 
@@ -23,35 +26,68 @@ async function submitProcessing() {
     .map(cb => cb.getAttribute('data-key'));
 
   const payload = {
-    project_id: projectId,         
-    project_name: projectName,    
-    folderPath: folderPath,         //folder path again
-    lwMethod: glint,            // ex: "mobley_rho"
-    edMethod: irr,             // ex: "panel_ed"
-    maskMethod: mask,        // ex:"value_threshold", "std_threshold"
-    outputs : outputs                         // ex: ["reflectance","chla_hu","tsm"]
+    project_id: projectId,
+    project_name: projectName,
+    folderPath: folderPath,
+    lwMethod: glint,
+    edMethod: irr,
+    maskMethod: mask,
+    outputs: outputs
   };
 
+  // Save outputs to sessionStorage so charts.js can use them
+  sessionStorage.setItem('selectedOutputs', JSON.stringify(outputs));
+
+  // Show the loading screen right away
+  navigate('loading');
+
   try {
-    const res = await fetch('http://localhost:8889/manage/save_settings', {
+    // First, save the settings
+    const settingsRes = await fetch('http://localhost:5000/manage/save_settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
-    if (!res.ok) {
-      const txt = await res.text();
-      alert(`Backend error (${res.status}): ${txt || 'Processing failed'}`);
+    if (!settingsRes.ok) {
+      const txt = await settingsRes.text();
+      alert(`Backend error saving settings (${settingsRes.status}): ${txt || 'Failed'}`);
+      navigate('outputs');
       return;
     }
 
-    // Go to loading → results (or stay on loading and poll if you add that later)
-    navigate('loading');
-    setTimeout(() => navigate('results'), 1200);
+    console.log("Settings saved, starting processing...");
+
+    // Now trigger the actual processing
+    const processRes = await fetch('http://localhost:8889/manage/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderPath: folderPath })
+    });
+
+    if (!processRes.ok) {
+      const txt = await processRes.text();
+      alert(`Backend error during processing (${processRes.status}): ${txt || 'Processing failed'}`);
+      navigate('outputs');
+      return;
+    }
+
+    //  Wait until backend confirms completion
+    const data = await processRes.json();
+    console.log("Processing complete:", data);
+
+    // After backend finishes, load charts and go to results
+    if (typeof buildOverviewFromFolder === 'function') {
+      buildOverviewFromFolder();
+    }
+    navigate('results');
+
   } catch (e) {
+    console.error("Processing error:", e);
     alert(`Could not reach backend: ${e.message}`);
+    navigate('outputs');
   }
 }
 
-// expose
+window.initializeSettings = initializeSettings;
 window.initializeProjectSettings = initializeProjectSettings;
