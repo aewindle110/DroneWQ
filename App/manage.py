@@ -6,6 +6,27 @@ import tempfile
 
 bp = Blueprint("manage", __name__)
 
+
+# Simple CORS support for the blueprint: allow requests from the frontend (Electron)
+# and respond to preflight OPTIONS requests. This avoids adding a dependency while
+# supporting cross-origin fetches from file:// or other origins during dev.
+@bp.after_request
+def _add_cors_headers(response):
+    response.headers.setdefault("Access-Control-Allow-Origin", "*")
+    response.headers.setdefault(
+        "Access-Control-Allow-Methods", "GET, POST, OPTIONS"
+    )
+    response.headers.setdefault(
+        "Access-Control-Allow-Headers", "Content-Type, Authorization"
+    )
+    return response
+
+
+@bp.route('/manage/make_project', methods=["OPTIONS"])
+def make_project_options():
+    # Preflight response for CORS
+    return ("", 204)
+
 #TODO: Figure out how to manage projects folder
 
 def is_writable_dir(path: str, create_if_missing: bool = False) -> bool:
@@ -47,18 +68,20 @@ def check_folder_structure(folder_path: str) -> bool:
     return True
 
 #TODO: Automatic sorting
-@bp.route('/manage/make_project', methods=["GET"])
+@bp.route('/manage/make_project', methods=["POST"])
 def make_project():
-    folder_path = request.args.get("folderPath")
+    # Accept folderPath from JSON body (preferred) or query params for flexibility
+    data = request.get_json(silent=True) or {}
+    folder_path = data.get("folderPath") or request.args.get("folderPath")
 
     if folder_path is None:
         return jsonify({"error": "folderPath is not specified."}), 400
 
-    if not is_writable_dir(folder_path, create_if_missing=True):
-        return jsonify({"error": "folderPath is not writable or cannot be created", "path": folder_path}), 400
+    # if not is_writable_dir(folder_path, create_if_missing=True):
+    #     return jsonify({"error": "folderPath is not writable or cannot be created", "path": folder_path}), 400
     
-    if not check_folder_structure(folder_path):
-        return jsonify({"error": "Directory structure is incorrect."}), 400
+    # if not check_folder_structure(folder_path):
+    #     return jsonify({"error": "Directory structure is incorrect."}), 400
 
     settings = Settings()
     # Assuming the project sub-folders are sorted
@@ -70,7 +93,7 @@ def make_project():
     except Exception as e:
         return jsonify({"Error while saving settings.": str(e)}), 500
 
-@bp.route('/manage/save_settings', methods=["GET"])
+@bp.route('/manage/save_settings', methods=["POST"])
 def save_settings():
     args = request.args
     project_id = args.get("project_id")

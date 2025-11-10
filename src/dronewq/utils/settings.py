@@ -68,14 +68,20 @@ class Settings:
     
     def save(self, path: str):
         path = os.path.join(path, "settings.pkl")
+        # write only the plain config dict (not the Settings instance)
         with open(path, "wb") as dst:
-            pickle.dump(self, dst)
+            pickle.dump(dict(main_thread_config), dst)
 
     def load(self, path: str):
         path = os.path.join(path, "settings.pkl")
         with open(path, "rb") as src:
-            return pickle.load(src)
-
+            cfg = pickle.load(src)
+        if not isinstance(cfg, dict):
+            raise ValueError("settings.pkl does not contain a valid config dict")
+        # update global config in-place and return the singleton
+        for k, v in cfg.items():
+            main_thread_config[k] = v
+        return self
     @property
     def config(self):
         return self.copy()
