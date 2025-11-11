@@ -16,7 +16,7 @@ name = "dronewq"
 version = "0.1.0"
 description = ""
 authors = [
-    { name = "Anna Wilde" },
+    { name = "Anna Windle" },
 ]
 license = "MIT"
 requires-python = ">=3.8,<3.13" # Adjust based on the minimum version of Python that you support
@@ -31,7 +31,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 # TODO: add keywords
-keywords = []
+keywords = ["drone", "water quality", "remote sensing", "gis"]
 # TODO: add dependencies
 dependencies = [
   "numpy<=1.26", # for compatibility with micasense
