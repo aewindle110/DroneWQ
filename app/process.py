@@ -3,7 +3,8 @@ from .pipeline import Pipeline
 
 bp = Blueprint("process", __name__)
 
-@bp.route('/process', methods=["POST"])
+
+@bp.route("/process", methods=["POST"])
 def process():
     data = request.get_json(silent=True) or {}
     folder_path = data.get("folderPath")
