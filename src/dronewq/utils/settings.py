@@ -1,7 +1,13 @@
 from dronewq.utils.utils import dotdict
+import logging
 import pickle
 import copy
 import os
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 DEFAULT_CONFIG = dotdict(
     main_dir=None,
@@ -20,8 +26,8 @@ DEFAULT_CONFIG = dotdict(
 main_thread_config = copy.deepcopy(DEFAULT_CONFIG)
 
 
-## Written by Temuulen
-## Took inspo from the DSPY package's settings
+# Written by Temuulen
+# Took inspo from the DSPY package's settings
 class Settings:
     """
     A singleton class for the whole workflow.
@@ -65,7 +71,7 @@ class Settings:
 
     def copy(self):
         return dotdict({**main_thread_config})
-    
+
     def save(self, path: str):
         path = os.path.join(path, "settings.pkl")
         # write only the plain config dict (not the Settings instance)
@@ -82,6 +88,7 @@ class Settings:
         for k, v in cfg.items():
             main_thread_config[k] = v
         return self
+
     @property
     def config(self):
         return self.copy()
@@ -94,7 +101,8 @@ class Settings:
         # If main_dir is set, automatically populate dependent dirs
         if "main_dir" in kwargs:
             if not isinstance(kwargs["main_dir"], str):
-                raise ValueError("main_dir should be a string of path.")
+                msg = "main_dir should be a string of path."
+                raise ValueError(msg)
 
             if not os.path.exists(kwargs["main_dir"]):
                 raise LookupError(f"{kwargs['main_dir']} path does not exist.")

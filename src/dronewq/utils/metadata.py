@@ -6,15 +6,14 @@ from micasense.imageset import ImageSet
 
 def write_metadata_csv(img_dir, csv_output_path):
     """
-    This function grabs the EXIF metadata from img_set and writes it to outputPath/metadata.csv. Other metadata could be added based on what is needed in your workflow.
+    Grabs EXIF metadata from img_set and writes it to outputPath/metadata.csv.
 
     Parameters:
-        img_dir: a string containing the filepath of the raw .tifs
-        csv_output_path: A string containing the filepath to store metadata.csv containing image EXIF metadata
+        img_dir: A string containing the filepath of the raw .tifs
+        csv_output_path: A string containing the filepath to store metadata.csv
 
     Returns:
-        A .csv of metadata for each image capture.
-
+        A string path to the generated .csv file
     """
 
     if not os.path.exists(img_dir):
@@ -23,37 +22,44 @@ def write_metadata_csv(img_dir, csv_output_path):
     img_set = ImageSet.from_directory(img_dir)
 
     def decdeg2dms(dd):
+        """Convert decimal degrees to degrees, minutes, seconds."""
         minutes, seconds = divmod(abs(dd) * 3600, 60)
         degrees, minutes = divmod(minutes, 60)
-        degrees: float = degrees if dd >= 0 else -degrees
-
+        degrees = degrees if dd >= 0 else -degrees
         return (degrees, minutes, seconds)
 
-    lines = []
+    # Build list of dictionaries instead of nested lists
+    data_records = []
+
     for i, capture in enumerate(img_set.captures):
+        filename = f"capture_{i+1}.tif"
+        fullOutputPath = os.path.join(img_dir, filename)
 
-        fullOutputPath = os.path.join(csv_output_path, f"capture_{i+1}.tif")
-
-        width, height = capture.images[0].meta.image_size()
         img = capture.images[0]
+        width, height = img.meta.image_size()
         lat, lon, alt = capture.location()
 
-        latdeg, londeg = decdeg2dms(lat)[0], decdeg2dms(lon)[0]
-        latdeg, latdir = (-latdeg, "S") if latdeg < 0 else (latdeg, "N")
-        londeg, londir = (-londeg, "W") if londeg < 0 else (londeg, "E")
+        # Vectorizable latitude/longitude calculations
+        latdeg = decdeg2dms(lat)[0]
+        londeg = decdeg2dms(lon)[0]
+        latdir = "S" if latdeg < 0 else "N"
+        londir = "W" if londeg < 0 else "E"
+        latdeg = abs(latdeg)
+        londeg = abs(londeg)
 
-        datestamp, timestamp = (
-            capture.utc_time().strftime("%Y-%m-%d,%H:%M:%S").split(",")
-        )
-        resolution = capture.images[0].focal_plane_resolution_px_per_mm
-        focal_length = capture.images[0].focal_length
-        sensor_size = (
-            width / img.focal_plane_resolution_px_per_mm[0],
-            height / img.focal_plane_resolution_px_per_mm[1],
-        )
+        # Extract timestamp once
+        utc_time = capture.utc_time()
+        datestamp = utc_time.strftime("%Y-%m-%d")
+        timestamp = utc_time.strftime("%H:%M:%S")
 
-        data = {
-            "filename": f"capture_{i+1}.tif",
+        resolution = img.focal_plane_resolution_px_per_mm
+        focal_length = img.focal_length
+        sensor_size_x = width / resolution[0]
+        sensor_size_y = height / resolution[1]
+
+        # Build record dictionary
+        record = {
+            "filename": filename,
             "dirname": fullOutputPath,
             "DateStamp": datestamp,
             "TimeStamp": timestamp,
@@ -62,13 +68,13 @@ def write_metadata_csv(img_dir, csv_output_path):
             "Longitude": lon,
             "LongitudeRef": londir,
             "Altitude": alt,
-            "SensorX": sensor_size[0],
-            "SensorY": sensor_size[1],
+            "SensorX": sensor_size_x,
+            "SensorY": sensor_size_y,
             "FocalLength": focal_length,
-            "Yaw": (capture.images[0].dls_yaw * 180 / math.pi) % 360,
-            "Pitch": (capture.images[0].dls_pitch * 180 / math.pi) % 360,
-            "Roll": (capture.images[0].dls_roll * 180 / math.pi) % 360,
-            "SolarElevation": capture.images[0].solar_elevation,
+            "Yaw": (img.dls_yaw * 180 / math.pi) % 360,
+            "Pitch": (img.dls_pitch * 180 / math.pi) % 360,
+            "Roll": (img.dls_roll * 180 / math.pi) % 360,
+            "SolarElevation": img.solar_elevation,
             "ImageWidth": width,
             "ImageHeight": height,
             "XResolution": resolution[1],
@@ -76,16 +82,19 @@ def write_metadata_csv(img_dir, csv_output_path):
             "ResolutionUnits": "mm",
         }
 
-        lines.append(list(data.values()))
-        header = list(data.keys())
+        data_records.append(record)
+
+    # Create DataFrame from list of dictionaries (more efficient)
+    df = pd.DataFrame(data_records)
+
+    # Set index and save
+    df = df.set_index("filename")
+
+    # Optional: Parse datetime column in vectorized manner
+    # df['UTC-Time'] = pd.to_datetime(df['DateStamp'] + ' ' + df['TimeStamp'],
+    #                                  format="%Y-%m-%d %H:%M:%S")
 
     fullCsvPath = os.path.join(csv_output_path, "metadata.csv")
-
-    df = pd.DataFrame(columns=header, data=lines)
-
-    df = df.set_index("filename")
-    # df['UTC-Time'] = pd.to_datetime(df['DateStamp'] +' '+ df['TimeStamp'],format="%Y:%m:%d %H:%M:%S")
-
     df.to_csv(fullCsvPath)
 
     return fullCsvPath

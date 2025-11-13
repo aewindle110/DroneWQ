@@ -1,10 +1,13 @@
+import logging
+import os
+import shutil
+from pathlib import Path
+
 import dronewq
 from dronewq.utils.settings import settings
 from micasense import imageset
-from pathlib import Path
-import glob
-import shutil
-import os
+
+logger = logging.getLogger(__name__)
 
 
 # TODO: Make this a class
@@ -22,9 +25,11 @@ def process_raw_to_rrs(
     num_workers=4,
 ):
     """
-    This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
+    This functions is the main processing script that processs raw imagery to units of
+    remote sensing reflectance (Rrs). Users can select which processing parameters to
+    use to calculate Rrs.
 
-    Parameters:
+    Args:
         lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method().
 
         random_n: The amount of random images to calculate ambient NIR level. Default is 10. Only need if lw_method = 'hedley_method'
@@ -48,16 +53,13 @@ def process_raw_to_rrs(
     Returns:
         New Rrs tifs (masked or unmasked) with units of sr^-1.
     """
-
     ############################
     #### setup the workspace ###
     ############################
 
-    # specify the locations of the different levels of imagery
-    # I do this partially so I can just change these pointers to the data and not have to copy it or have complex logic repeated
-
     if settings.main_dir is None:
-        raise LookupError("Please set the main_dir path.")
+        msg = "Please set the main_dir path."
+        raise LookupError(msg)
 
     main_dir = settings.main_dir
     raw_water_img_dir = settings.raw_water_dir
@@ -80,26 +82,34 @@ def process_raw_to_rrs(
         Path(masked_rrs_dir).mkdir(parents=True, exist_ok=True)
 
     # this makes an assumption that there is only one panel image put in this directory
-    panel_names = glob.glob(os.path.join(panel_dir, "IMG_*.tif"))
+    # panel_names = glob.glob(os.path.join(panel_dir, "IMG_*.tif"))
 
     files = os.listdir(raw_water_img_dir)  # your directory path
     num_bands = imageset.ImageSet.from_directory(warp_img_dir).captures[0].num_bands
-    print(
-        f"Processing a total of {len(files)} images or {round(len(files)/num_bands)} captures."
+
+    logger.info(
+        "Processing a total of %d images (%d captures).",
+        len(files),
+        round(len(files) / num_bands),
     )
 
-    ### convert raw imagery to radiance (Lt)
-    print("Converting raw images to radiance (raw -> Lt).")
+    # convert raw imagery to radiance (Lt)
+    logger.info("Converting raw images to radiance (raw -> Lt).")
     dronewq.process_micasense_images(
-        warp_img_dir=warp_img_dir, overwrite_lt_lw=overwrite_lt_lw, sky=False
+        warp_img_dir=warp_img_dir,
+        overwrite_lt_lw=overwrite_lt_lw,
+        sky=False,
     )
 
     # deciding if we need to process raw sky images to radiance
-    if lw_method in ["mobley_rho_method", "blackpixel_method"]:
-        print("Converting raw sky images to radiance (raw sky -> Lsky).")
-        # we're also making an assumption that we don't need to align/warp these images properly because they'll be medianed
+    if lw_method in ["mobley_rho", "blackpixel"]:
+        logger.info("Converting raw sky images to radiance (raw sky -> Lsky).")
+        # we're also making an assumption that we don't need to align/warp
+        # these images properly because they'll be medianed
         dronewq.process_micasense_images(
-            warp_img_dir=None, overwrite_lt_lw=overwrite_lt_lw, sky=True
+            warp_img_dir=None,
+            overwrite_lt_lw=overwrite_lt_lw,
+            sky=True,
         )
 
     ##################################
@@ -107,19 +117,19 @@ def process_raw_to_rrs(
     ##################################
 
     if lw_method == "mobley_rho":
-        print("Applying the mobley_rho_method (Lt -> Lw).")
+        logger.info("Applying the mobley_rho_method (Lt -> Lw).")
         dronewq.mobley_rho(num_workers=num_workers)
 
     elif lw_method == "blackpixel":
-        print("Applying the blackpixel_method (Lt -> Lw)")
+        logger.info("Applying the blackpixel_method (Lt -> Lw)")
         dronewq.blackpixel(num_workers=num_workers)
 
     elif lw_method == "hedley":
-        print("Applying the Hochberg/Hedley (Lt -> Lw)")
+        logger.info("Applying the Hochberg/Hedley (Lt -> Lw)")
         dronewq.hedley(random_n, num_workers=num_workers)
 
     else:  # just change this pointer if we didn't do anything the lt over to the lw dir
-        print("Not doing any Lw calculation.")
+        logger.info("Not doing any Lw calculation.")
         lw_dir = lt_dir
 
     #####################################
@@ -127,50 +137,52 @@ def process_raw_to_rrs(
     #####################################
 
     if ed_method == "panel_ed":
-        print("Normalizing by panel irradiance (Lw/Ed -> Rrs).")
+        logger.info("Normalizing by panel irradiance (Lw/Ed -> Rrs).")
         dronewq.panel_ed(main_dir, num_workers=num_workers)
 
     elif ed_method == "dls_ed":
-        print("Normalizing by DLS irradiance (Lw/Ed -> Rrs).")
+        logger.info("Normalizing by DLS irradiance (Lw/Ed -> Rrs).")
         dronewq.dls_ed(main_dir, num_workers=num_workers)
 
     elif ed_method == "dls_and_panel_ed":
-        print("Normalizing by DLS corrected by panel irradiance (Lw/Ed -> Rrs).")
+        logger.info("Normalizing by DLS corrected by panel irradiance (Lw/Ed -> Rrs).")
         dronewq.dls_ed(main_dir, dls_corr=True, num_workers=num_workers)
 
     else:
-        print(
-            "No other irradiance normalization methods implemented yet, panel_ed is recommended."
+        logger.info(
+            "No other irradiance normalization methods implemented\
+           yet, panel_ed is recommended.",
         )
         return False
 
-    print(
-        "All data has been saved as Rrs using the "
-        + str(lw_method)
-        + " to calculate Lw and normalized by "
-        + str(ed_method)
-        + " irradiance."
+    logger.info(
+        "All data has been saved as Rrs using the %s method \
+        to calculate Lw and normalized by %s irradiance.",
+        str(lw_method),
+        str(ed_method),
     )
 
     ########################################
     ### mask pixels in the imagery (from glint, vegetation, shadows) ###
     ########################################
     if mask_pixels and pixel_masking_method == "value_threshold":
-        print("Masking pixels using NIR and green Rrs thresholds")
+        logger.info("Masking pixels using NIR and green Rrs thresholds")
         dronewq.threshold_masking(
             nir_threshold=nir_threshold,
             green_threshold=green_threshold,
             num_workers=num_workers,
         )
     elif mask_pixels and pixel_masking_method == "std_threshold":
-        print("Masking pixels using std Rrs(NIR)")
+        logger.info("Masking pixels using std Rrs(NIR)")
         dronewq.std_masking(
             mask_std_factor=mask_std_factor,
             num_workers=num_workers,
         )
 
-    else:  # if we don't do the glint correction then just change the pointer to the lt_dir
-        print("Not masking pixels.")
+    else:
+        # if we don't do the glint correction then just change the pointer
+        # to the lt_dir
+        logger.info("Not masking pixels.")
 
     ################################################
     ### finalize and add point output ###

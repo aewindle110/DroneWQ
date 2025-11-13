@@ -174,7 +174,10 @@ def save(
             img_type="radiance",
             warp_matrices=warp_matrices,
         )
-        capture.save_capture_as_stack(capture.fullOutputPath, sort_by_wavelength=True)
+        capture.save_capture_as_stack(
+            capture.fullOutputPath,
+            sort_by_wavelength=True,
+        )
         if generateThumbnails:
             capture.save_capture_as_rgb(capture.fullThumbnailPath)
         capture.clear_image_data()

@@ -1,11 +1,9 @@
-from tqdm import tqdm
 from dronewq.utils.settings import settings
 import concurrent.futures
 import numpy as np
 import rasterio
 import glob
 import os
-import dask.array as da
 
 
 _wq_alg = None
@@ -30,8 +28,8 @@ def _compute(filename):
     with rasterio.open(filename, "r") as src:
         # Copy geotransform if it exists
         profile = src.profile
-        rrs = da.squeeze(src.read()) # does this work?
-        profile.update(dtype=rasterio.float32, count=1, nodata=da.nan) 
+        rrs = np.squeeze(src.read())
+        profile.update(dtype=rasterio.float32, count=1, nodata=da.nan)
 
         if _wq_alg == "chl_hu":
             wq = chl_hu(rrs[BLUE, :, :], rrs[GREEN, :, :], rrs[RED, :, :])
