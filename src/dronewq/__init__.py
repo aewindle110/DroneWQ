@@ -5,7 +5,8 @@
 from .utils.settings import settings
 from .utils.metadata import write_metadata_csv
 from .utils.images import (
-    retrieve_imgs_and_metadata,
+    load_imgs,
+    load_metadata,
     process_micasense_images,
     downsample,
 )

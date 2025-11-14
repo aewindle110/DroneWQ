@@ -20,7 +20,7 @@ def _compute(filepath, mean_min_lt_NIR, lw_dir):
             lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
 
             lw_all = []
-            #NOTE: Is this supposed to also compute the NIR?
+            # NOTE: Is this supposed to also compute the NIR?
             for j in range(0, 5):
                 slopes = np.polyfit(lt_reshape[4, :], lt_reshape[j, :], 1)[0]
                 # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
@@ -79,7 +79,12 @@ def hedley(random_n=10, num_workers=4):
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
         futures = {}
         for filepath in filepaths:
-            future = executor.submit(_compute, filepath, mean_min_lt_NIR, lw_dir)
+            future = executor.submit(
+                _compute,
+                filepath,
+                mean_min_lt_NIR,
+                lw_dir,
+            )
             futures[future] = filepath
         # Wait for all tasks to complete and collect results
         results = []

@@ -4,7 +4,7 @@ import rasterio
 import os
 import concurrent.futures
 from dronewq.utils.settings import settings
-from dronewq.utils.images import retrieve_imgs_and_metadata
+from dronewq.utils.images import load_imgs
 
 
 def _compute(filepath, lw_dir, lsky_median):
@@ -57,9 +57,13 @@ def blackpixel(num_workers=4):
     filepaths = glob.glob(lt_dir + "/*.tif")
 
     # grab the first ten of these images, average them, then delete this from memory
-    sky_imgs, sky_img_metadata = retrieve_imgs_and_metadata(
-        sky_lt_dir, count=10, start=0, altitude_cutoff=0, sky=True
+    sky_imgs_gen = load_imgs(
+        sky_lt_dir,
+        count=10,
+        start=0,
+        altitude_cutoff=0,
     )
+    sky_imgs = np.array(list(sky_imgs_gen))
     lsky_median = np.median(
         sky_imgs, axis=(0, 2, 3)
     )  # here we want the median of each band

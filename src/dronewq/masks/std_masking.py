@@ -1,27 +1,22 @@
 from dronewq.utils.settings import settings
+from dronewq.utils.images import load_imgs
 import glob
 import os
 import numpy as np
 import rasterio
+import logging
 import concurrent.futures
-from dronewq.utils.images import retrieve_imgs_and_metadata
 
-_masked_rrs_dir = None
-_rrs_nir_mean = None
-_rrs_nir_std = None
-_mask_std_factor = None
+logger = logging.getLogger(__name__)
 
 
-def _init_worker(masked_rrs_dir, rrs_nir_mean, rrs_nir_std, mask_std_factor):
-    global _masked_rrs_dir, _rrs_nir_mean, _rrs_nir_std, _mask_std_factor
-
-    _masked_rrs_dir = masked_rrs_dir
-    _rrs_nir_mean = rrs_nir_mean
-    _rrs_nir_std = rrs_nir_std
-    _mask_std_factor = mask_std_factor
-
-
-def _compute(filepath):
+def _compute(
+    filepath,
+    masked_rrs_dir,
+    rrs_nir_mean,
+    rrs_nir_std,
+    mask_std_factor,
+):
     im = filepath
     with rasterio.open(im, "r") as rrs_src:
         profile = rrs_src.profile
@@ -29,7 +24,7 @@ def _compute(filepath):
         rrs_deglint_all = []
         rrs_nir_deglint = rrs_src.read(5)  # nir band
         rrs_nir_deglint[
-            rrs_nir_deglint > (_rrs_nir_mean + _rrs_nir_std * _mask_std_factor)
+            rrs_nir_deglint > (rrs_nir_mean + rrs_nir_std * mask_std_factor)
         ] = np.nan
         nan_index = np.isnan(rrs_nir_deglint)
         # filter nan pixel indicies across all bands
@@ -43,7 +38,7 @@ def _compute(filepath):
             im
         )  # we're grabbing just the .tif file name instead of the whole path
         with rasterio.open(
-            os.path.join(_masked_rrs_dir, im_name), "w", **profile
+            os.path.join(masked_rrs_dir, im_name), "w", **profile
         ) as dst:
             dst.write(stacked_rrs_deglint)
 
@@ -71,14 +66,23 @@ def std_masking(num_images=10, mask_std_factor=1, num_workers=4):
     masked_rrs_dir = settings.masked_rrs_dir
 
     # grab the first num_images images, finds the mean and std of NIR, then anything times the glint factor is classified as glint
-    rrs_imgs, _ = retrieve_imgs_and_metadata(
-        rrs_dir, count=num_images, start=0, altitude_cutoff=0, random=True
+    rrs_imgs_gen = load_imgs(
+        rrs_dir,
+        count=num_images,
+        start=0,
+        altitude_cutoff=0,
+        random=True,
     )
+    rrs_imgs = np.array(list(rrs_imgs_gen))
     rrs_nir_mean = np.nanmean(rrs_imgs, axis=(0, 2, 3))[4]  # mean of NIR band
     rrs_nir_std = np.nanstd(rrs_imgs, axis=(0, 2, 3))[4]  # std of NIR band
-    print("The mean and std of Rrs from first N images is: ", rrs_nir_mean, rrs_nir_std)
-    print(
-        "Pixels will be masked where Rrs(NIR) > ",
+    logger.info(
+        "The mean and std of Rrs from first N images is: %d, %d",
+        rrs_nir_mean,
+        rrs_nir_std,
+    )
+    logger.info(
+        "Pixels will be masked where Rrs(NIR) > %d",
         rrs_nir_mean + rrs_nir_std * mask_std_factor,
     )
     del rrs_imgs  # free up the memory
@@ -86,10 +90,36 @@ def std_masking(num_images=10, mask_std_factor=1, num_workers=4):
     # go through each Rrs image in the dir and mask any pixels > mean+std*glint factor
     filepaths = glob.glob(rrs_dir + "/*.tif")
 
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=num_workers,
-        initializer=_init_worker,
-        initargs=(masked_rrs_dir, rrs_nir_mean, rrs_nir_std, mask_std_factor),
-    ) as executor:
-        results = list(executor.map(_compute, filepaths))
+    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
+        futures = {}
+        for filepath in filepaths:
+            future = executor.submit(
+                _compute,
+                filepath,
+                masked_rrs_dir,
+                rrs_nir_mean,
+                rrs_nir_std,
+                mask_std_factor,
+            )
+            futures[future] = filepath
+        # Wait for all tasks to complete and collect results
+        results = []
+        completed = 0
+
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                # Blocks until this specific future completes
+                result = future.result()
+                results.append(result)
+                completed += 1
+            except Exception as e:
+                filepath = futures[future]
+                print(f"File {filepath} failed: {e}")
+                results.append(False)
+
+    logger.info(
+        "Masking Stage (std): Successfully processed: %d/%d captures",
+        sum(results),
+        len(results),
+    )
     return results

@@ -3,8 +3,11 @@ import rasterio
 import numpy as np
 import os
 import dronewq
+import logging
 import concurrent.futures
 from dronewq.utils.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 def _compute(filepath, rho, lsky_median, lw_dir):
@@ -28,7 +31,11 @@ def _compute(filepath, rho, lsky_median, lw_dir):
                 dst.write(stacked_lw)
         return True
     except Exception as e:
-        print(f"Mobley_rho Error: File {filepath} has the error {e}")
+        logger.warn(
+            "File %s failed: %s",
+            filepath,
+            str(e),
+        )
         raise
 
     return filepath
@@ -57,9 +64,16 @@ def mobley_rho(rho=0.028, num_workers=4):
         raise LookupError("Please set the lw_dir path in settings.")
 
     # Grab the first ten sky images, average them, then delete from memory
-    sky_imgs, sky_img_metadata = dronewq.retrieve_imgs_and_metadata(
-        sky_lt_dir, count=10, start=0, altitude_cutoff=0, sky=True
+    sky_imgs_gen = dronewq.load_imgs(
+        sky_lt_dir,
+        count=10,
+        start=0,
+        altitude_cutoff=0,
+        sky=True,
     )
+
+    sky_imgs = np.array(list(sky_imgs_gen))
+
     lsky_median = np.median(sky_imgs, axis=(0, 2, 3))
     del sky_imgs  # Free up memory
 
@@ -72,7 +86,13 @@ def mobley_rho(rho=0.028, num_workers=4):
     ) as executor:
         futures = {}
         for filepath in filepaths:
-            future = executor.submit(_compute, filepath, rho, lsky_median, lw_dir)
+            future = executor.submit(
+                _compute,
+                filepath,
+                rho,
+                lsky_median,
+                lw_dir,
+            )
             futures[future] = filepath
         # Wait for all tasks to complete and collect results
         results = []
@@ -80,15 +100,22 @@ def mobley_rho(rho=0.028, num_workers=4):
 
         for future in concurrent.futures.as_completed(futures):
             try:
-                result = future.result()  # Blocks until this specific future completes
+                # Blocks until this specific future completes
+                result = future.result()
                 results.append(result)
                 completed += 1
             except Exception as e:
                 filepath = futures[future]
-                print(f"File {filepath} failed: {e}")
+                logger.warn(
+                    "File %s failed: %s",
+                    filepath,
+                    str(e),
+                )
                 results.append(False)
 
-    print(
-        f"Lw Stage (Mobley_rho): Successfully processed: {sum(results)}/{len(results)} captures"
+    logger.info(
+        "Lw Stage (Mobley_rho): Successfully processed: %d/%d captures",
+        sum(results),
+        len(results),
     )
     return results
