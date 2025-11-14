@@ -5,10 +5,13 @@ import glob
 import rasterio
 import os
 import concurrent.futures
+import logging
 from dronewq.utils.settings import settings
 
+logger = logging.getLogger(__name__)
 
-def _compute(filepath, idx, ed_data, rrs_dir):
+
+def _compute(filepath, ed_data, rrs_dir):
     """Worker function that processes a single file."""
     try:
         with rasterio.open(filepath, "r") as Lw_src:
@@ -31,16 +34,34 @@ def _compute(filepath, idx, ed_data, rrs_dir):
                 dst.write(stacked_rrs)
         return True
     except Exception as e:
-        print(f"Dls_ed error: File {filepath} has failed with error {e}")
+        logger.warn(
+            "Dls_ed error: File %s has failed with error %s",
+            filepath,
+            str(e),
+        )
         raise
 
 
-def dls_ed(output_csv_path, dls_corr=False, num_workers=4):
+def dls_ed(output_csv_path, dls_corr=False, num_workers=4, executor=None):
     """
-    This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is derived from the downwelling light sensor (DLS), which is collected at every image capture. This method does not perform well when light is variable such as partly cloudy days. It is recommended to use in overcast, completely cloudy conditions. A DLS correction can be optionally applied to tie together DLS and panel Ed measurements. In this case, a compensation factor derived from the calibration reflectance panel is applied to DLS Ed measurements. The default is False.
+    This function calculates remote sensing reflectance (Rrs)
+    by dividing downwelling irradiance (Ed) from the water
+    leaving radiance (Lw) .tifs. Ed is derived from the
+    downwelling light sensor (DLS), which is collected at
+    every image capture. This method does not perform well
+    when light is variable such as partly cloudy days.
+
+    It is recommended to use in overcast, completely cloudy
+    conditions. A DLS correction can be optionally applied to
+    tie together DLS and panel Ed measurements. In this case,
+    a compensation factor derived from the calibration
+    reflectance panel is applied to DLS Ed measurements.
+    The default is False.
 
     Parameters:
-        dls_corr: Option to apply compensation factor from calibration reflectance panel to DLS Ed measurements. Default is False.
+        dls_corr: Option to apply compensation factor from
+            calibration reflectance panel to DLS Ed measurements.
+            Default is False.
         num_workers: Number of parallel processes. Depends on hardware.
 
     Returns:
@@ -145,14 +166,22 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4):
     filepaths = glob.glob(lw_dir + "/*.tif")
     ed_data_final = dls_ed_corr_data if dls_corr else ed_data
 
-    # Use initializer to share ed_data once per worker, not per task
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
+    manually_created = False
+
+    if executor is None:
+        manually_created = True
+        executor = concurrent.futures.ProcessPoolExecutor(max_workers=num_workers)
+    try:
         futures = {}
         for idx, filepath in enumerate(filepaths):
             future = executor.submit(
-                _compute, filepath, idx, ed_data_final[idx], rrs_dir
+                _compute,
+                filepath,
+                ed_data_final[idx],
+                rrs_dir,
             )
             futures[future] = filepath
+
         # Wait for all tasks to complete and collect results
         results = []
         completed = 0
@@ -166,8 +195,13 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4):
                 filepath = futures[future]
                 print(f"File {filepath} failed: {e}")
                 results.append(False)
+    finally:
+        if manually_created:
+            executor.shutdown(wait=True)
 
-    print(
-        f"Ed Stage (DLS): Successfully processed: {sum(results)}/{len(results)} captures"
+    logger.info(
+        "Ed Stage (DLS): Successfully processed: %d/%d captures",
+        sum(results),
+        len(results),
     )
     return results

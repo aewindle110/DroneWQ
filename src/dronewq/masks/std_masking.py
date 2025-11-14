@@ -5,6 +5,7 @@ import os
 import numpy as np
 import rasterio
 import logging
+from functools import partial
 import concurrent.futures
 
 logger = logging.getLogger(__name__)
@@ -18,32 +19,40 @@ def _compute(
     mask_std_factor,
 ):
     im = filepath
-    with rasterio.open(im, "r") as rrs_src:
-        profile = rrs_src.profile
-        profile["count"] = 5
-        rrs_deglint_all = []
-        rrs_nir_deglint = rrs_src.read(5)  # nir band
-        rrs_nir_deglint[
-            rrs_nir_deglint > (rrs_nir_mean + rrs_nir_std * mask_std_factor)
-        ] = np.nan
-        nan_index = np.isnan(rrs_nir_deglint)
-        # filter nan pixel indicies across all bands
-        for i in range(1, 6):
-            rrs_deglint = rrs_src.read(i)
-            rrs_deglint[nan_index] = np.nan
-            rrs_deglint_all.append(rrs_deglint)  # append all for each band
-        stacked_rrs_deglint = np.stack(rrs_deglint_all)  # stack into np.array
-        # write new stacked tifs
-        im_name = os.path.basename(
-            im
-        )  # we're grabbing just the .tif file name instead of the whole path
-        with rasterio.open(
-            os.path.join(masked_rrs_dir, im_name), "w", **profile
-        ) as dst:
-            dst.write(stacked_rrs_deglint)
+    try:
+        with rasterio.open(im, "r") as rrs_src:
+            profile = rrs_src.profile
+            profile["count"] = 5
+            rrs_deglint_all = []
+            rrs_nir_deglint = rrs_src.read(5)  # nir band
+            rrs_nir_deglint[
+                rrs_nir_deglint > (rrs_nir_mean + rrs_nir_std * mask_std_factor)
+            ] = np.nan
+            nan_index = np.isnan(rrs_nir_deglint)
+            # filter nan pixel indicies across all bands
+            for i in range(1, 6):
+                rrs_deglint = rrs_src.read(i)
+                rrs_deglint[nan_index] = np.nan
+                rrs_deglint_all.append(rrs_deglint)  # append all for each band
+            stacked_rrs_deglint = np.stack(rrs_deglint_all)  # stack into np.array
+            # write new stacked tifs
+            im_name = os.path.basename(
+                im
+            )  # we're grabbing just the .tif file name instead of the whole path
+            with rasterio.open(
+                os.path.join(masked_rrs_dir, im_name), "w", **profile
+            ) as dst:
+                dst.write(stacked_rrs_deglint)
+    except Exception as e:
+        logger.warn(
+            "Threshold Masking error: File %s has failed with error %s",
+            filepath,
+            str(e),
+        )
+        raise
 
 
-def std_masking(num_images=10, mask_std_factor=1, num_workers=4):
+def std_masking(num_images=10, mask_std_factor=1, num_workers=4, executor=None):
     """
     This function masks pixels based on a user supplied value in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std*mask_std_factor is masked across all bands. The lower the mask_std_factor, the more pixels will be masked.
 
@@ -90,36 +99,24 @@ def std_masking(num_images=10, mask_std_factor=1, num_workers=4):
     # go through each Rrs image in the dir and mask any pixels > mean+std*glint factor
     filepaths = glob.glob(rrs_dir + "/*.tif")
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-        futures = {}
-        for filepath in filepaths:
-            future = executor.submit(
-                _compute,
-                filepath,
-                masked_rrs_dir,
-                rrs_nir_mean,
-                rrs_nir_std,
-                mask_std_factor,
-            )
-            futures[future] = filepath
-        # Wait for all tasks to complete and collect results
-        results = []
-        completed = 0
+    partial_compute = partial(
+        _compute,
+        masked_rrs_dir=masked_rrs_dir,
+        rrs_nir_mean=rrs_nir_mean,
+        rrs_nir_std=rrs_nir_std,
+        mask_std_factor=mask_std_factor,
+    )
 
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                # Blocks until this specific future completes
-                result = future.result()
-                results.append(result)
-                completed += 1
-            except Exception as e:
-                filepath = futures[future]
-                print(f"File {filepath} failed: {e}")
-                results.append(False)
+    if executor is not None:
+        results = list(executor.map(partial_compute, filepaths))
+    else:
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=num_workers
+        ) as executor:
+            results = list(executor.map(partial_compute, filepaths))
 
     logger.info(
-        "Masking Stage (std): Successfully processed: %d/%d captures",
-        sum(results),
+        "Masking Stage (std): Successfully processed: %d captures",
         len(results),
     )
     return results

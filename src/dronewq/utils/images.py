@@ -140,9 +140,8 @@ def save(
     warp_matrices,
     generateThumbnails=True,
 ):
-    # Enable exceptions explicitly (recommended for Python code)
-    gdal.UseExceptions()
     """Save a single capture with proper error handling."""
+    gdal.UseExceptions()
     try:
         capture.dls_irradiance = None
         capture.compute_undistorted_radiance()
@@ -169,7 +168,7 @@ def save_images(
     warp_img_capture,
     generateThumbnails=True,
     overwrite_lt_lw=False,
-    max_workers=None,  # None uses default based on CPU count
+    max_workers=4,  # None uses default based on CPU count
 ):
     """Process captures in parallel using threading."""
 
@@ -238,7 +237,10 @@ def save_images(
 
 
 def process_micasense_images(
-    warp_img_dir=None, overwrite_lt_lw=False, sky=False, generateThumbnails=True
+    warp_img_dir=None,
+    overwrite_lt_lw=False,
+    sky=False,
+    generateThumbnails=True,
 ):
     """
     This function is wrapper function for the save_images() function to read in an image directory and produce new .tifs with units of radiance (W/sr/nm).
@@ -284,7 +286,6 @@ def process_micasense_images(
         warp_img_capture=warp_img_capture,
         generateThumbnails=generateThumbnails,
         overwrite_lt_lw=overwrite_lt_lw,
-        max_workers=4,
     )
 
     print("Finished saving images.")

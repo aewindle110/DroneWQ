@@ -1,11 +1,14 @@
 import random
 import numpy as np
-import numpy.polynomial as poly
 import glob
 import rasterio
 import os
 import concurrent.futures
+import logging
+from functools import partial
 from dronewq.utils.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 def _compute(filepath, mean_min_lt_NIR, lw_dir):
@@ -37,17 +40,29 @@ def _compute(filepath, mean_min_lt_NIR, lw_dir):
                 dst.write(stacked_lw)
         return True  # Return filepath for progress tracking
     except Exception as e:
-        print(f"Hedley Error: File {filepath} has the error {e}")
+        logger.warn(
+            "Hedley error: File %s has failed with error %s",
+            filepath,
+            str(e),
+        )
         raise
 
 
-def hedley(random_n=10, num_workers=4):
+def hedley(random_n=10, num_workers=4, executor=None):
     """
-    This function calculates water leaving radiance (Lw) by modelling a constant 'ambient' NIR brightness level which is removed from all pixels across all bands. An ambient NIR level is calculated by averaging the minimum 10% of Lt(NIR) across a random subset images. This value represents the NIR brightness of a pixel with no sun glint. A linear relationship between Lt(NIR) and the visible bands (Lt) is established, and for each pixel, the slope of this line is multiplied by the difference between the pixel NIR value and the ambient NIR level.
+    This function calculates water leaving radiance (Lw) by modelling
+    a constant 'ambient' NIR brightness level which is removed from all
+    pixels across all bands. An ambient NIR level is calculated by
+    averaging the minimum 10% of Lt(NIR) across a random subset images.
+
+    This value represents the NIR brightness of a pixel with no sun glint.
+    A linear relationship between Lt(NIR) and the visible bands (Lt) is
+    established, and for each pixel, the slope of this line is multiplied
+    by the difference between the pixel NIR value and the ambient NIR level.
 
     Parameters:
-        num_workers: Number of parallel processes. Depends on hardware.
         random_n: The amount of random images to calculate ambient NIR level. Default is 10.
+        num_workers: Number of parallel processes. Depends on hardware.
 
     Returns:
          New Lw .tifs with units of W/sr/nm
@@ -76,31 +91,48 @@ def hedley(random_n=10, num_workers=4):
 
     mean_min_lt_NIR = np.mean(min_lt_NIR)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-        futures = {}
-        for filepath in filepaths:
-            future = executor.submit(
-                _compute,
-                filepath,
-                mean_min_lt_NIR,
-                lw_dir,
-            )
-            futures[future] = filepath
-        # Wait for all tasks to complete and collect results
-        results = []
-        completed = 0
+    if executor is not None:
+        partial_compute = partial(
+            _compute, mean_min_lt_NIR=mean_min_lt_NIR, lw_dir=lw_dir
+        )
+        results = list(executor.map(partial_compute, filepaths))
+        logger.info(
+            "Lw Stage (Hedley): Successfully processed: %d captures",
+            len(results),
+        )
 
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                result = future.result()  # Blocks until this specific future completes
-                results.append(result)
-                completed += 1
-            except Exception as e:
-                filepath = futures[future]
-                print(f"File {filepath} failed: {e}")
-                results.append(False)
+    else:
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=num_workers
+        ) as executor:
+            futures = {}
+            for filepath in filepaths:
+                future = executor.submit(
+                    _compute,
+                    filepath,
+                    mean_min_lt_NIR,
+                    lw_dir,
+                )
+                futures[future] = filepath
+            # Wait for all tasks to complete and collect results
+            results = []
+            completed = 0
 
-    print(
-        f"Lw Stage (Hedley): Successfully processed: {sum(results)}/{len(results)} captures"
-    )
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    result = (
+                        future.result()
+                    )  # Blocks until this specific future completes
+                    results.append(result)
+                    completed += 1
+                except Exception as e:
+                    filepath = futures[future]
+                    print(f"File {filepath} failed: {e}")
+                    results.append(False)
+
+        logger.info(
+            "Lw Stage (Hedley): Successfully processed: %d/%d captures",
+            sum(results),
+            len(results),
+        )
     return results
