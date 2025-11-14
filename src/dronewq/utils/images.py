@@ -17,22 +17,6 @@ import micasense
 # FIXME: Should rename this file
 
 
-def gen_load_images(img_list):
-    """
-    This function loads all images in a directory as a multidimensional numpy array.
-
-    Parameters:
-        img_list: A list of .tif files, usually called by using glob.glob(filepath)
-
-    Returns:
-        A multidimensional numpy array of all image captures in a directory
-
-    """
-    for im in img_list:
-        with rasterio.open(im, "r") as src:
-            yield np.array(src.read())
-
-
 def load_imgs(
     img_dir,
     count=10000,
@@ -58,7 +42,7 @@ def load_imgs(
         random,
     )
 
-    img_list = df["dirname"].to_list()
+    img_list = [os.path.join(img_dir, fn) for fn in df.index.values]
 
     for im in img_list:
         with rasterio.open(im, "r") as src:
@@ -88,7 +72,12 @@ def load_metadata(
         Pandas dataframe of image metadata
 
     """
-    csv_path = os.path.join(img_dir, "metadata.csv")
+    if "sky" in img_dir:
+        base = img_dir
+    else:
+        base = os.path.dirname(img_dir)
+
+    csv_path = os.path.join(base, "metadata.csv")
 
     df = pd.read_csv(csv_path)
     df = df.set_index("filename")
