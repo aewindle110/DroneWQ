@@ -86,4 +86,4 @@ def panel_ed(output_csv_path, num_workers=4, executor=None):
     # go through each Lt image in the dir and divide it by the lsky
     filepaths = glob.glob(lw_dir + "/*.tif")
     ed_data = pd.DataFrame.from_records(ed_data, index="image", columns=ed_columns)
-    ed_data.to_csv(output_csv_path + "/panel_ed.csv")
+    ed_data.to_csv(os.path.join(output_csv_path, "panel_ed.csv"))

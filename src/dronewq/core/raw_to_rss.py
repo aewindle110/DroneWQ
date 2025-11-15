@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 # TODO: Make this a class
 def process_raw_to_rrs(
-    output_csv_path,
     lw_method="mobley_rho_method",
     random_n=10,
     pixel_masking_method=None,
@@ -74,16 +73,13 @@ def process_raw_to_rrs(
     Returns:
         New Rrs tifs (masked or unmasked) with units of sr^-1.
     """
-
     ############################
     #### setup the workspace ###
     ############################
 
-    # specify the locations of the different levels of imagery
-    # I do this partially so I can just change these pointers to the data and not have to copy it or have complex logic repeated
-
     if settings.main_dir is None:
-        raise LookupError("Please set the main_dir path.")
+        msg = "Please set the main_dir path."
+        raise LookupError(msg)
 
     raw_water_img_dir = settings.raw_water_dir
 
@@ -111,18 +107,23 @@ def process_raw_to_rrs(
         round(len(files) / num_bands),
     )
 
-    ### convert raw imagery to radiance (Lt)
+    # convert raw imagery to radiance (Lt)
     logger.info("Converting raw images to radiance (raw -> Lt).")
     dronewq.process_micasense_images(
-        warp_img_dir=warp_img_dir, overwrite_lt_lw=overwrite_lt_lw, sky=False
+        warp_img_dir=warp_img_dir,
+        overwrite_lt_lw=overwrite_lt_lw,
+        sky=False,
     )
 
     # deciding if we need to process raw sky images to radiance
-    if lw_method in ["mobley_rho_method", "blackpixel_method"]:
+    if lw_method in ["mobley_rho", "blackpixel"]:
         logger.info("Converting raw sky images to radiance (raw sky -> Lsky).")
-        # we're also making an assumption that we don't need to align/warp these images properly because they'll be medianed
+        # we're also making an assumption that we don't need to align/warp
+        # these images properly because they'll be medianed
         dronewq.process_micasense_images(
-            warp_img_dir=None, overwrite_lt_lw=overwrite_lt_lw, sky=True
+            warp_img_dir=None,
+            overwrite_lt_lw=overwrite_lt_lw,
+            sky=True,
         )
 
     ##################################

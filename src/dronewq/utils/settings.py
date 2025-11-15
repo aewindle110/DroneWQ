@@ -26,8 +26,8 @@ DEFAULT_CONFIG = dotdict(
 main_thread_config = copy.deepcopy(DEFAULT_CONFIG)
 
 
-## Written by Temuulen
-## Took inspo from the DSPY package's settings
+# Written by Temuulen
+# Took inspo from the DSPY package's settings
 class Settings:
     """
     A singleton class for the whole workflow.
@@ -74,13 +74,20 @@ class Settings:
 
     def save(self, path: str):
         path = os.path.join(path, "settings.pkl")
+        # write only the plain config dict (not the Settings instance)
         with open(path, "wb") as dst:
-            pickle.dump(self, dst)
+            pickle.dump(dict(main_thread_config), dst)
 
     def load(self, path: str):
         path = os.path.join(path, "settings.pkl")
         with open(path, "rb") as src:
-            return pickle.load(src)
+            cfg = pickle.load(src)
+        if not isinstance(cfg, dict):
+            raise ValueError("settings.pkl does not contain a valid config dict")
+        # update global config in-place and return the singleton
+        for k, v in cfg.items():
+            main_thread_config[k] = v
+        return self
 
     @property
     def config(self):
@@ -94,7 +101,8 @@ class Settings:
         # If main_dir is set, automatically populate dependent dirs
         if "main_dir" in kwargs:
             if not isinstance(kwargs["main_dir"], str):
-                raise ValueError("main_dir should be a string of path.")
+                msg = "main_dir should be a string of path."
+                raise ValueError(msg)
 
             if not os.path.exists(kwargs["main_dir"]):
                 raise LookupError(f"{kwargs['main_dir']} path does not exist.")
