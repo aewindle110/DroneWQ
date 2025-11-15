@@ -18,5 +18,6 @@ def process():
     pipeline.flight_plan()
     pipeline.run()
     pipeline.plot_essentials()
+    pipeline.point_samples()
 
     return jsonify({"success": True}), 200

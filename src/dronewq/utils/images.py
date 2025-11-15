@@ -1,18 +1,20 @@
-from osgeo import gdal
+import concurrent.futures
+import datetime
+import glob
+import os
+
+import cv2
 import numpy as np
 import pandas as pd
 import rasterio
-import os
-import cv2
-import datetime
-import dronewq
-import glob
-from tqdm import tqdm
-import concurrent.futures
-from rasterio.transform import Affine
+from osgeo import gdal
 from rasterio.enums import Resampling
-from dronewq.utils.settings import settings
+from rasterio.transform import Affine
+from tqdm import tqdm
+
+import dronewq
 import micasense
+from dronewq.utils.settings import settings
 
 # FIXME: Should rename this file
 
@@ -27,10 +29,10 @@ def load_imgs(
     """
     This function loads all images in a directory as a multidimensional numpy array.
 
-    Parameters:
+    Parameters
         img_dir: A string containing the directory filepath of images to be retrieved
 
-    Returns:
+    Returns
         An iterator over numpy arrays of all image captures in a directory
 
     """
@@ -59,7 +61,7 @@ def load_metadata(
     """
     This function returns a pandas dataframe of captures and associated metadata with the options of how many to list and what number of image to start on.
 
-    Parameters:
+    Parameters
         img_dir: A string containing the directory filepath of images to be retrieved
 
         count: The amount of images to load. Default is 10000
@@ -68,7 +70,7 @@ def load_metadata(
 
         random: A boolean to load random images. Default is False
 
-    Returns:
+    Returns
         Pandas dataframe of image metadata
 
     """
@@ -105,7 +107,7 @@ def get_warp_matrix(
     """
     This function uses the MicaSense imageutils.align_capture() function to determine an alignment (warp) matrix of a single capture that can be applied to all images. From MicaSense: "For best alignment results it's recommended to select a capture which has features which visible in all bands. Man-made objects such as cars, roads, and buildings tend to work very well, while captures of only repeating crop rows tend to work poorly. Remember, once a good transformation has been found for flight, it can be generally be applied across all of the images." Ref: https://github.com/micasense/imageprocessing/blob/master/Alignment.ipynb
 
-    Parameters:
+    Parameters
         img_capture: A capture is a set of images taken by one MicaSense camera which share the same unique capture identifier (capture_id). These images share the same filename prefix, such as IMG_0000_*.tif. It is defined by running ImageSet.from_directory().captures.
 
         match_index: Index of the band. Default is 0.
@@ -116,12 +118,11 @@ def get_warp_matrix(
 
         max_alignment_iterations: The maximum number of solver iterations.
 
-    Returns:
+    Returns
         A numpy.ndarray of the warp matrix from a single image capture.
     """
-
     print(
-        "Aligning images. Depending on settings this can take from a few seconds to many minutes"
+        "Aligning images. Depending on settings this can take from a few seconds to many minutes",
     )
     # Can potentially increase max_iterations for better results, but longer runtimes
     warp_matrices, alignment_pairs = micasense.imageutils.align_capture(
@@ -174,7 +175,6 @@ def save_images(
     max_workers=4,  # None uses default based on CPU count
 ):
     """Process captures in parallel using threading."""
-
     # Create output directories
     os.makedirs(output_path, exist_ok=True)
     if generateThumbnails:
@@ -232,7 +232,7 @@ def save_images(
 
     print(f"Saving time: {end - start}")
     print(
-        f"Alignment+Saving rate: {len(img_set.captures)/elapsed:.2f} images per second"
+        f"Alignment+Saving rate: {len(img_set.captures)/elapsed:.2f} images per second",
     )
     print(f"Successfully processed: {sum(results)}/{len(results)} captures")
 
@@ -248,14 +248,14 @@ def process_micasense_images(
     """
     This function is wrapper function for the save_images() function to read in an image directory and produce new .tifs with units of radiance (W/sr/nm).
 
-    Parameters:
+    Parameters
         warp_img_dir: a string containing the filepath of the capture to use to create the warp matrix
 
         overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
 
         sky: Option to run raw sky captures to collected Lsky. If True, the save_images() is run on raw .tif files and saves new .tifs in sky_lt directories. If False, save_images() is run on raw .tif files and saves new .tifs in lt directories.
 
-    Returns:
+    Returns
         New .tif files for each capture in image directory with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
 
     """
@@ -268,7 +268,7 @@ def process_micasense_images(
 
     if warp_img_dir:
         warp_img_capture = micasense.imageset.ImageSet.from_directory(
-            warp_img_dir
+            warp_img_dir,
         ).captures[0]
         print("used warp dir", warp_img_dir)
     else:
@@ -303,7 +303,7 @@ def downsample(input_dir, output_dir, scale_x, scale_y, method=Resampling.averag
     """
     This function performs a downsampling to reduce the spatial resolution of the final mosaic.
 
-    Parameters:
+    Parameters
         input_dir: A string containing input directory filepath
 
         output_dir: A string containing output directory filepath
@@ -314,10 +314,9 @@ def downsample(input_dir, output_dir, scale_x, scale_y, method=Resampling.averag
 
         method: the resampling method to perform. Defaults to Resampling.nearest. Please see https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling for other resampling methods.
 
-    Returns:
+    Returns
         None, downsampled raster is written to output_dir.
     """
-
     os.makedirs(output_dir, exist_ok=True)
     raster_paths = glob.glob(os.path.join(input_dir, "*"))
 
@@ -339,7 +338,7 @@ def downsample(input_dir, output_dir, scale_x, scale_y, method=Resampling.averag
             )
 
             dst_transform: Affine = dataset.transform * dataset.transform.scale(
-                (dataset.width / data.shape[-1]), (dataset.height / data.shape[-2])
+                (dataset.width / data.shape[-1]), (dataset.height / data.shape[-2]),
             )
 
             dst_kwargs = dataset.meta.copy()
@@ -349,7 +348,7 @@ def downsample(input_dir, output_dir, scale_x, scale_y, method=Resampling.averag
                     "transform": dst_transform,
                     "width": data.shape[-1],
                     "height": data.shape[-2],
-                }
+                },
             )
 
             with rasterio.open(out_name, "w", **dst_kwargs) as dst:

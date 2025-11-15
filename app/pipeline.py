@@ -1,8 +1,10 @@
+import os
+
 import matplotlib
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
-import os
+import pandas as pd
+
 import dronewq
 from dronewq.utils.settings import Settings
 
@@ -20,17 +22,19 @@ class Pipeline:
             self.settings.main_dir,
         )
 
-    def point_samples_metadata(self):
-        masked_rrs_imgs, img_metadata = dronewq.retrieve_imgs_and_metadata(
-            img_dir=self.settings.masked_rrs_dir
+    def point_samples(self):
+        masked_rrs_imgs = dronewq.load_imgs(
+            img_dir=self.settings.masked_rrs_dir,
         )
-
-        if not isinstance(masked_rrs_imgs, np.ndarray):
-            masked_rrs_imgs = np.stack(masked_rrs_imgs)
+        img_metadata = dronewq.load_metadata(
+            img_dir=self.settings.masked_rrs_dir,
+        )
 
         # Compute per-image median for first 5 bands (shape -> (n_images, 5))
         # We take median across spatial dims (H, W)
-        medians = np.nanmedian(masked_rrs_imgs[:, :5, :, :], axis=(2, 3))
+        medians = []
+        for img in masked_rrs_imgs:
+            medians.append(np.nanmedian(img[:5, :, :], axis=(1, 2)))
 
         # Build dataframe safely and assign median band values
         df = img_metadata[["dirname", "Latitude", "Longitude"]].copy()
@@ -63,11 +67,10 @@ class Pipeline:
         plt.close(fig)
 
     def run(self):
-        mask_pixels = True if self.settings.mask_method else False
         dronewq.process_raw_to_rrs(
+            output_csv_path=self.settings.main_dir,
             lw_method=self.settings.lw_method,
             ed_method=self.settings.ed_method,
-            mask_pixels=mask_pixels,
             pixel_masking_method=self.settings.mask_method,
             nir_threshold=0.02,
             random_n=10,
@@ -76,6 +79,9 @@ class Pipeline:
             overwrite_lt_lw=False,
             num_workers=4,
         )
+
+    def wq_run(self, wq_alg):
+        dronewq.save_wq_imgs(wq_alg=wq_alg)
 
     def plot_essentials(self, count: int = 25):
         self.rrs_plot(count=count)
@@ -86,19 +92,23 @@ class Pipeline:
     def rrs_plot(self, count: int = 25):
         output_folder = os.path.join(self.settings.main_dir, "result")
         os.makedirs(output_folder, exist_ok=True)
-        rrs_imgs, img_metadata = dronewq.retrieve_imgs_and_metadata(
-            img_dir=self.settings.rrs_dir, count=count
+        rrs_imgs_gen = dronewq.load_imgs(
+            img_dir=self.settings.rrs_dir,
+            count=count,
         )
 
         fig, ax = plt.subplots(1, 1, figsize=(6, 3))
 
         wv = [475, 560, 668, 717, 842]
-        colors = plt.cm.viridis(np.linspace(0, 1, len(rrs_imgs)))
+        colors = plt.cm.viridis(np.linspace(0, 1, count))
 
-        for i in range(len(rrs_imgs)):
+        total_mean = []
+        for i, img in enumerate(rrs_imgs_gen):
+            img_mean = np.nanmean(img[:5, :, :], axis=(1, 2))
+            total_mean.append(img_mean)
             plt.plot(
                 wv,
-                np.nanmean(rrs_imgs[i, 0:5, :, :], axis=(1, 2)),
+                img_mean,
                 marker="o",
                 color=colors[i],
                 label="",
@@ -107,7 +117,7 @@ class Pipeline:
             plt.ylabel(r"$R_{rs}\ (sr^{-1})$")
         plt.plot(
             wv,
-            np.nanmean(rrs_imgs[:, 0:5, :, :], axis=(0, 2, 3)),
+            np.mean(total_mean, axis=0),
             marker="o",
             color="black",
             linewidth=5,
@@ -123,19 +133,23 @@ class Pipeline:
     def lt_plot(self, count: int = 25):
         output_folder = os.path.join(self.settings.main_dir, "result")
         os.makedirs(output_folder, exist_ok=True)
-        lt_imgs, img_metadata = dronewq.retrieve_imgs_and_metadata(
-            img_dir=self.settings.lt_dir, count=count
+        lt_imgs_gen = dronewq.load_imgs(
+            img_dir=self.settings.lt_dir,
+            count=count,
         )
 
         fig, ax = plt.subplots(1, 1, figsize=(6, 3))
 
         wv = [475, 560, 668, 717, 842]
-        colors = plt.cm.viridis(np.linspace(0, 1, len(lt_imgs)))
+        colors = plt.cm.viridis(np.linspace(0, 1, count))
 
-        for i in range(len(lt_imgs)):
+        total_mean = []
+        for i, img in enumerate(lt_imgs_gen):
+            img_mean = np.nanmean(img[0:5, :, :], axis=(1, 2))
+            total_mean.append(img_mean)
             plt.plot(
                 wv,
-                np.nanmean(lt_imgs[i, 0:5, :, :], axis=(1, 2)),
+                img_mean,
                 marker="o",
                 color=colors[i],
                 label="",
@@ -144,7 +158,7 @@ class Pipeline:
             plt.ylabel(r"$L_{t}\ (mW\ cm^{-2}\ nm^{-1}\ sr^{-1})$")
         plt.plot(
             wv,
-            np.nanmean(lt_imgs[:, 0:5, :, :], axis=(0, 2, 3)),
+            np.mean(total_mean, axis=0),
             marker="o",
             color="black",
             linewidth=5,
@@ -188,19 +202,24 @@ class Pipeline:
     def masked_rrs_plot(self, count: int = 25):
         output_folder = os.path.join(self.settings.main_dir, "result")
         os.makedirs(output_folder, exist_ok=True)
-        masked_rrs_imgs_hedley, img_metadata = dronewq.retrieve_imgs_and_metadata(
-            img_dir=self.settings.masked_rrs_dir, count=count
+        masked_rrs_imgs_hedley = dronewq.load_imgs(
+            img_dir=self.settings.masked_rrs_dir,
+            count=count,
         )
 
         fig, ax = plt.subplots(1, 1, figsize=(6, 3))
 
         wv = [475, 560, 668, 717, 842]
-        colors = plt.cm.viridis(np.linspace(0, 1, len(masked_rrs_imgs_hedley)))
+        colors = plt.cm.viridis(np.linspace(0, 1, count))
 
-        for i in range(len(masked_rrs_imgs_hedley)):
+        total_mean = []
+        for i, img in enumerate(masked_rrs_imgs_hedley):
+            img_mean = np.nanmean(img[0:5, :, :], axis=(1, 2))
+            total_mean.append(img_mean)
+
             plt.plot(
                 wv,
-                np.nanmean(masked_rrs_imgs_hedley[i, 0:5, :, :], axis=(1, 2)),
+                img_mean,
                 marker="o",
                 color=colors[i],
                 label="",
@@ -209,7 +228,7 @@ class Pipeline:
             plt.ylabel(r"$R_{rs}\ (sr^{-1})$")
         plt.plot(
             wv,
-            np.nanmean(masked_rrs_imgs_hedley[:, 0:5, :, :], axis=(0, 2, 3)),
+            np.mean(total_mean, axis=0),
             marker="o",
             color="black",
             linewidth=5,
