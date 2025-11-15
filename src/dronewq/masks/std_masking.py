@@ -8,7 +8,7 @@ import logging
 from functools import partial
 import concurrent.futures
 
-logger = logging.getLogger(__name__).setLevel(settings.logging_level)
+logger = logging.getLogger(__name__)
 
 
 def _compute(

@@ -8,7 +8,7 @@ from functools import partial
 from dronewq.utils.settings import settings
 from dronewq.utils.images import load_imgs
 
-logger = logging.getLogger(__name__).setLevel(settings.logging_level)
+logger = logging.getLogger(__name__)
 
 
 def _compute(filepath, lw_dir, lsky_median):
@@ -43,7 +43,18 @@ def _compute(filepath, lw_dir, lsky_median):
 
 def blackpixel(num_workers=4, executor=None):
     """
-    This function calculates water leaving radiance (Lw) by applying the black pixel assumption which assumes Lw in the NIR is negligable due to strong absorption of water. Therefore, total radiance (Lt) in the NIR is considered to be solely surface reflected light (Lsr) , which allows rho to be calculated if sky radiance (Lsky) is known. This method should only be used for waters where there is little to none NIR signal (i.e. Case 1 waters). The assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and Lw in the NIR (i.e. Case 2 waters).
+    This function calculates water leaving radiance (Lw)
+    by applying the black pixel assumption which assumes
+    Lw in the NIR is negligable due to strong absorption
+    of water. Therefore, total radiance (Lt) in the NIR is
+    considered to be solely surface reflected light (Lsr),
+    which allows rho to be calculated if sky radiance (Lsky)
+    is known.
+    This method should only be used for waters where
+    there is little to none NIR signal (i.e. Case 1 waters).
+    The assumption tends to fail in more turbid waters where
+    high concentrations of particles enhance backscattering
+    and Lw in the NIR (i.e. Case 2 waters).
 
     Parameters:
         num_workers: Number of parallelizing done on different cores. Depends on hardware.

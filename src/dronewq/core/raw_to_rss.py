@@ -8,7 +8,7 @@ import glob
 import shutil
 import os
 
-logger = logging.getLogger(__name__).setLevel(settings.logging_level)
+logger = logging.getLogger(__name__)
 
 
 # TODO: Make this a class

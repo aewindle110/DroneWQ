@@ -4,6 +4,11 @@ import pickle
 import copy
 import os
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+
 DEFAULT_CONFIG = dotdict(
     main_dir=None,
     raw_water_dir=None,
@@ -16,7 +21,6 @@ DEFAULT_CONFIG = dotdict(
     masked_rrs_dir=None,
     warp_img_dir=None,
     metadata=None,
-    logging_level=logging.INFO,
 )
 
 main_thread_config = copy.deepcopy(DEFAULT_CONFIG)
