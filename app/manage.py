@@ -61,18 +61,24 @@ def check_folder_structure(folder_path: str) -> bool:
     # TODO: Should account for uppercase beginning chars
     needed_dirs = ["panel", "raw_water_imgs", "raw_sky_imgs", "align_img"]
 
+    count = 0
+
     for dir in needed_dirs:
-        if dir not in dirs:
-            return False
-    return True
+        if dir in dirs:
+            count += 1
+
+    if count >= 3:
+        return True
+    else:
+        return False
 
 
 # TODO: Automatic sorting
 @bp.route("/manage/make_project", methods=["POST"])
 def make_project():
     # Accept folderPath from JSON body (preferred) or query params for flexibility
-    data = request.get_json(silent=True) or {}
-    folder_path = data.get("folderPath") or request.args.get("folderPath")
+    data = request.get_json(silent=True) or request.args
+    folder_path = data.get("folderPath")
 
     if folder_path is None:
         return jsonify({"error": "folderPath is not specified."}), 400
@@ -80,8 +86,8 @@ def make_project():
     # if not is_writable_dir(folder_path, create_if_missing=True):
     #     return jsonify({"error": "folderPath is not writable or cannot be created", "path": folder_path}), 400
 
-    # if not check_folder_structure(folder_path):
-    #     return jsonify({"error": "Directory structure is incorrect."}), 400
+    if not check_folder_structure(folder_path):
+        return jsonify({"error": "Directory structure is incorrect."}), 400
 
     settings = Settings()
     # Assuming the project sub-folders are sorted
@@ -137,4 +143,3 @@ def save_settings():
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"Error while saving settings.": str(e)}), 500
-
