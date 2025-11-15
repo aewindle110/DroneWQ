@@ -61,6 +61,14 @@ Each time you start a new anaconda prompt, you'll need to run `conda activate dr
 
 To access jupyter notebook or lab, run `jupyter lab` or `jupyter notebook`
 
+## Alternate Installation (venv)
+
+The installation process for usign a virtual environment is similar to conda. However, there are certain packages that you still need to install.
+* gdal-config
+* exiftool
+* zbar
+You may need to use older Python versions, such as 3.11. 
+
 
 ## ***MicaSense Folder Structure*** 
 Once all MicaSense images have been downloaded into a local directory (e.g. `\data`), you will need to manually separate images into 4 sub-directories as below:

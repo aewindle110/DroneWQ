@@ -17,46 +17,50 @@ import micasense
 # FIXME: Should rename this file
 
 
-def gen_load_images(img_list):
+def load_imgs(
+    img_dir,
+    count=10000,
+    start=0,
+    altitude_cutoff=0,
+    random=False,
+):
     """
     This function loads all images in a directory as a multidimensional numpy array.
 
     Parameters:
-        img_list: A list of .tif files, usually called by using glob.glob(filepath)
+        img_dir: A string containing the directory filepath of images to be retrieved
 
     Returns:
-        A multidimensional numpy array of all image captures in a directory
+        An iterator over numpy arrays of all image captures in a directory
 
     """
+    df = load_metadata(
+        img_dir,
+        count,
+        start,
+        altitude_cutoff,
+        random,
+    )
+
+    img_list = [os.path.join(img_dir, fn) for fn in df.index.values]
+
     for im in img_list:
         with rasterio.open(im, "r") as src:
             yield np.array(src.read())
 
 
-def load_images(img_list):
-    """
-    This function loads all images in a directory as a multidimensional numpy array.
-
-    Parameters:
-        img_list: A list of .tif files, usually called by using glob.glob(filepath)
-
-    Returns:
-        A multidimensional numpy array of all image captures in a directory
-
-    """
-    all_imgs = []
-    for im in img_list:
-        with rasterio.open(im, "r") as src:
-            all_imgs.append(src.read())
-    return np.array(all_imgs)
-
-
-def load_img_fn_and_meta(csv_path, count=10000, start=0, random=False):
+def load_metadata(
+    img_dir,
+    count=10000,
+    start=0,
+    altitude_cutoff=0,
+    random=False,
+):
     """
     This function returns a pandas dataframe of captures and associated metadata with the options of how many to list and what number of image to start on.
 
     Parameters:
-        csv_path: A string containing the filepath
+        img_dir: A string containing the directory filepath of images to be retrieved
 
         count: The amount of images to load. Default is 10000
 
@@ -68,6 +72,13 @@ def load_img_fn_and_meta(csv_path, count=10000, start=0, random=False):
         Pandas dataframe of image metadata
 
     """
+    if "sky" in img_dir:
+        base = img_dir
+    else:
+        base = os.path.dirname(img_dir)
+
+    csv_path = os.path.join(base, "metadata.csv")
+
     df = pd.read_csv(csv_path)
     df = df.set_index("filename")
     # df['UTC-Time'] = pd.to_datetime(df['UTC-Time'])
@@ -78,44 +89,10 @@ def load_img_fn_and_meta(csv_path, count=10000, start=0, random=False):
         else df.loc[np.random.choice(df.index, count)]
     )
 
-    return df
-
-
-# TODO: Divide this into one for sky images and one for water images
-def retrieve_imgs_and_metadata(
-    img_dir, count=10000, start=0, altitude_cutoff=0, sky=False, random=False
-):
-    """
-    This function is the main interface we expect the user to use when grabbing a subset of imagery from any stage in processing. This returns the images as a numpy array and metadata as a pandas dataframe.
-
-    Parameters:
-        img_dir: A string containing the directory filepath of images to be retrieved
-
-        count: The amount of images you want to list. Default is 10000
-
-        start: The number of image to start on. Default is 0 (first image in img_dir).
-
-        random: A boolean to load random images. Default is False
-
-    Returns:
-        A multidimensional numpy array of all image captures in a directory and a Pandas dataframe of image metadata.
-
-    """
-    if sky:
-        csv_path = os.path.join(img_dir, "metadata.csv")
-    else:
-        csv_path = os.path.join(os.path.dirname(img_dir), "metadata.csv")
-
-    df = load_img_fn_and_meta(csv_path, count=count, start=start, random=random)
-
     # apply altitiude threshold and set IDs as the indez
     df = df[df["Altitude"] > altitude_cutoff]
 
-    # this grabs the filenames from the subset of the dataframe we've selected, then preprends the image_dir that we want.
-    # the filename is the index
-    all_imgs = load_images([os.path.join(img_dir, fn) for fn in df.index.values])
-
-    return (all_imgs, df)
+    return df
 
 
 def get_warp_matrix(
@@ -163,9 +140,8 @@ def save(
     warp_matrices,
     generateThumbnails=True,
 ):
-    # Enable exceptions explicitly (recommended for Python code)
-    gdal.UseExceptions()
     """Save a single capture with proper error handling."""
+    gdal.UseExceptions()
     try:
         capture.dls_irradiance = None
         capture.compute_undistorted_radiance()
@@ -195,7 +171,7 @@ def save_images(
     warp_img_capture,
     generateThumbnails=True,
     overwrite_lt_lw=False,
-    max_workers=None,  # None uses default based on CPU count
+    max_workers=4,  # None uses default based on CPU count
 ):
     """Process captures in parallel using threading."""
 
@@ -264,7 +240,10 @@ def save_images(
 
 
 def process_micasense_images(
-    warp_img_dir=None, overwrite_lt_lw=False, sky=False, generateThumbnails=True
+    warp_img_dir=None,
+    overwrite_lt_lw=False,
+    sky=False,
+    generateThumbnails=True,
 ):
     """
     This function is wrapper function for the save_images() function to read in an image directory and produce new .tifs with units of radiance (W/sr/nm).
@@ -310,7 +289,6 @@ def process_micasense_images(
         warp_img_capture=warp_img_capture,
         generateThumbnails=generateThumbnails,
         overwrite_lt_lw=overwrite_lt_lw,
-        max_workers=4,
     )
 
     print("Finished saving images.")

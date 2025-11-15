@@ -31,9 +31,14 @@ def _compute(filepath):
             dst.write(stacked_rrs)
 
 
-def panel_ed(output_csv_path, num_workers=4):
+def panel_ed(output_csv_path, num_workers=4, executor=None):
     """
-    This function calculates remote sensing reflectance (Rrs) by dividing downwelling irradiance (Ed) from the water leaving radiance (Lw) .tifs. Ed is calculated from the calibrated reflectance panel. This method does not perform well when light is variable such as partly cloudy days. It is recommended to use in the case of a clear, sunny day.
+    This function calculates remote sensing reflectance (Rrs)
+    by dividing downwelling irradiance (Ed) from the water
+    leaving radiance (Lw) .tifs. Ed is calculated from the
+    calibrated reflectance panel. This method does not perform
+    well when light is variable such as partly cloudy days.
+    It is recommended to use in the case of a clear, sunny day.
 
     Parameters:
         lw_dir: A string containing the directory filepath of lw images
