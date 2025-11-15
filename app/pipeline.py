@@ -1,4 +1,5 @@
 import os
+import concurrent.futures
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -14,7 +15,11 @@ matplotlib.use("Agg")  # non-interactive backend — no GUI windows will open
 class Pipeline:
     def __init__(self, folder_path: str):
         self.settings = Settings()
-        self.settings = self.settings.load(folder_path)
+        if os.path.exists(folder_path):
+            self.settings = self.settings.load(folder_path)
+        else:
+            msg = f"{folder_path} does not exist."
+            raise LookupError(msg)
 
     def water_metadata(self):
         dronewq.write_metadata_csv(
@@ -80,8 +85,48 @@ class Pipeline:
             num_workers=4,
         )
 
-    def wq_run(self, wq_alg):
-        dronewq.save_wq_imgs(wq_alg=wq_alg)
+    def wq_run(self):
+
+        csv_path = os.path.join(self.settings.main_dir, "median_rrs_and_wq.csv")
+
+        if not os.path.exists(csv_path):
+            csv_path = os.path.join(self.settings.main_dir, "median_rrs.csv")
+
+        df = pd.read_csv(csv_path, index_col="filename")
+
+        columns = df.columns.to_list()
+
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=4,
+        ) as executor:
+            algs = {
+                "chl_hu": dronewq.chl_hu,
+                "chl_ocx": dronewq.chl_ocx,
+                "chl_hu_ocx": dronewq.chl_hu_ocx,
+                "chl_gitelson": dronewq.chl_gitelson,
+                "tsm_nechad": dronewq.tsm_nechad,
+            }
+
+            for wq_alg in self.settings.wq_algs:
+                if wq_alg in columns:
+                    continue
+
+                masked_rrs_imgs_hedley = dronewq.load_imgs(
+                    img_dir=self.settings.masked_rrs_dir,
+                )
+
+                results = list(executor.map(algs[wq_alg], masked_rrs_imgs_hedley))
+
+                results_array = np.array(results)
+
+                df[wq_alg] = np.nanmedian(results_array, axis=(1, 2))
+
+        out_csv_path = os.path.join(
+            self.settings.main_dir,
+            "median_rrs_and_wq.csv",
+        )
+
+        df.to_csv(out_csv_path)
 
     def plot_essentials(self, count: int = 25):
         self.rrs_plot(count=count)
