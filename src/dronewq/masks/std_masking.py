@@ -8,7 +8,7 @@ import logging
 from functools import partial
 import concurrent.futures
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__).setLevel(settings.logging_level)
 
 
 def _compute(
@@ -54,14 +54,22 @@ def _compute(
 
 def std_masking(num_images=10, mask_std_factor=1, num_workers=4, executor=None):
     """
-    This function masks pixels based on a user supplied value in an effort to remove instances of specular sun glint. The mean and standard deviation of NIR values from the first N images is calculated and any pixels containing an NIR value > mean + std*mask_std_factor is masked across all bands. The lower the mask_std_factor, the more pixels will be masked.
+    This function masks pixels based on a user supplied value in
+    an effort to remove instances of specular sun glint. The mean
+    and standard deviation of NIR values from the first N images
+    is calculated and any pixels containing an
+    NIR value > mean + std*mask_std_factor is masked across all bands.
+    The lower the mask_std_factor, the more pixels will be masked.
 
     Parameters:
-        num_images: Number of images in the dataset to calculate the mean and std of NIR. Default is 10.
+        num_images: Number of images in the dataset to calculate
+            the mean and std of NIR. Default is 10.
 
-        mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1.
+        mask_std_factor: A factor to multiply to the standard deviation
+            of NIR values. Default is 1.
 
-        num_workers: Number of parallelizing done on different cores. Depends on hardware.
+        num_workers: Number of parallelizing done on different cores.
+            Depends on hardware.
 
     Returns:
         New masked .tifs

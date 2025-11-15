@@ -8,7 +8,7 @@ from functools import partial
 from dronewq.utils.settings import settings
 from dronewq.utils.images import load_imgs
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__).setLevel(settings.logging_level)
 
 
 def _compute(filepath, lw_dir, lsky_median):

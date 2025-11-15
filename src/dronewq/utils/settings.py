@@ -1,4 +1,5 @@
 from dronewq.utils.utils import dotdict
+import logging
 import pickle
 import copy
 import os
@@ -15,6 +16,7 @@ DEFAULT_CONFIG = dotdict(
     masked_rrs_dir=None,
     warp_img_dir=None,
     metadata=None,
+    logging_level=logging.INFO,
 )
 
 main_thread_config = copy.deepcopy(DEFAULT_CONFIG)
@@ -65,7 +67,7 @@ class Settings:
 
     def copy(self):
         return dotdict({**main_thread_config})
-    
+
     def save(self, path: str):
         path = os.path.join(path, "settings.pkl")
         with open(path, "wb") as dst:

@@ -7,7 +7,7 @@ import logging
 from functools import partial
 from dronewq.utils.settings import settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__).setLevel(settings.logging_level)
 
 
 def _compute(

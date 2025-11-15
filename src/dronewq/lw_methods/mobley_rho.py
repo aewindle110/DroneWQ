@@ -8,7 +8,7 @@ import concurrent.futures
 from functools import partial
 from dronewq.utils.settings import settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__).setLevel(settings.logging_level)
 
 
 def _compute(filepath, rho, lsky_median, lw_dir):
