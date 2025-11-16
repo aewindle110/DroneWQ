@@ -13,8 +13,10 @@ requires = ["hatchling", "hatch-vcs"]
 [project]
 name = "dronewq"
 # You can chose to use dynamic versioning with hatch or static where you add it manually.
-version = "0.1.2"
-description = ""
+version = "0.1.1"
+description = """DroneWQ is a Python package that can be used to analyze multispectral
+data collected from a drone to derive ocean color radiometry and water quality properties.
+These scripts are specific for the MicaSense RedEdge and Altum cameras."""
 authors = [
     { name = "Anna Windle" },
 ]
@@ -30,12 +32,10 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Typing :: Typed",
 ]
-# TODO: add keywords
 keywords = ["drone", "water quality", "remote sensing", "gis"]
-# TODO: add dependencies
 dependencies = [
   "numpy<=1.26", # for compatibility with micasense
-  "gdal",
+  "gdal~=3.9.2",
   "rasterio==1.3.11",
   "geopandas==1.0.1",
   "geopy==2.4.1",
