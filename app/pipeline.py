@@ -1,5 +1,5 @@
 import os
-import concurrent.futures
+from collections import defaultdict
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -86,40 +86,41 @@ class Pipeline:
         )
 
     def wq_run(self):
-
         csv_path = os.path.join(self.settings.main_dir, "median_rrs_and_wq.csv")
 
         if not os.path.exists(csv_path):
             csv_path = os.path.join(self.settings.main_dir, "median_rrs.csv")
 
         df = pd.read_csv(csv_path, index_col="filename")
-
         columns = df.columns.to_list()
 
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=4,
-        ) as executor:
-            algs = {
-                "chl_hu": dronewq.chl_hu,
-                "chl_ocx": dronewq.chl_ocx,
-                "chl_hu_ocx": dronewq.chl_hu_ocx,
-                "chl_gitelson": dronewq.chl_gitelson,
-                "tsm_nechad": dronewq.tsm_nechad,
-            }
+        algs = {
+            "chl_hu": dronewq.chl_hu,
+            "chl_ocx": dronewq.chl_ocx,
+            "chl_hu_ocx": dronewq.chl_hu_ocx,
+            "chl_gitelson": dronewq.chl_gitelson,
+            "tsm_nechad": dronewq.tsm_nechad,
+        }
 
+        masked_rrs_imgs_hedley = dronewq.load_imgs(
+            img_dir=self.settings.masked_rrs_dir,
+        )
+
+        wq_results = defaultdict(list)
+
+        for img in masked_rrs_imgs_hedley:
             for wq_alg in self.settings.wq_algs:
                 if wq_alg in columns:
                     continue
 
-                masked_rrs_imgs_hedley = dronewq.load_imgs(
-                    img_dir=self.settings.masked_rrs_dir,
-                )
+                result = algs[wq_alg](img)
+                results_array = np.array(result)
+                median = np.nanmedian(results_array, axis=(0, 1))
+                wq_results[wq_alg].append(median)
 
-                results = list(executor.map(algs[wq_alg], masked_rrs_imgs_hedley))
-
-                results_array = np.array(results)
-
-                df[wq_alg] = np.nanmedian(results_array, axis=(1, 2))
+        for wq_alg in wq_results:
+            results_array = np.array(wq_results[wq_alg])
+            df[wq_alg] = results_array
 
         out_csv_path = os.path.join(
             self.settings.main_dir,
