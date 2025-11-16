@@ -3,8 +3,12 @@ import glob
 import rasterio
 import os
 import concurrent.futures
+import logging
+from functools import partial
 from dronewq.utils.settings import settings
-from dronewq.utils.images import retrieve_imgs_and_metadata
+from dronewq.utils.images import load_imgs
+
+logger = logging.getLogger(__name__)
 
 
 def _compute(filepath, lw_dir, lsky_median):
@@ -37,9 +41,20 @@ def _compute(filepath, lw_dir, lsky_median):
         raise
 
 
-def blackpixel(num_workers=4):
+def blackpixel(num_workers=4, executor=None):
     """
-    This function calculates water leaving radiance (Lw) by applying the black pixel assumption which assumes Lw in the NIR is negligable due to strong absorption of water. Therefore, total radiance (Lt) in the NIR is considered to be solely surface reflected light (Lsr) , which allows rho to be calculated if sky radiance (Lsky) is known. This method should only be used for waters where there is little to none NIR signal (i.e. Case 1 waters). The assumption tends to fail in more turbid waters where high concentrations of particles enhance backscattering and Lw in the NIR (i.e. Case 2 waters).
+    This function calculates water leaving radiance (Lw)
+    by applying the black pixel assumption which assumes
+    Lw in the NIR is negligable due to strong absorption
+    of water. Therefore, total radiance (Lt) in the NIR is
+    considered to be solely surface reflected light (Lsr),
+    which allows rho to be calculated if sky radiance (Lsky)
+    is known.
+    This method should only be used for waters where
+    there is little to none NIR signal (i.e. Case 1 waters).
+    The assumption tends to fail in more turbid waters where
+    high concentrations of particles enhance backscattering
+    and Lw in the NIR (i.e. Case 2 waters).
 
     Parameters:
         num_workers: Number of parallelizing done on different cores. Depends on hardware.
@@ -57,34 +72,56 @@ def blackpixel(num_workers=4):
     filepaths = glob.glob(lt_dir + "/*.tif")
 
     # grab the first ten of these images, average them, then delete this from memory
-    sky_imgs, sky_img_metadata = retrieve_imgs_and_metadata(
-        sky_lt_dir, count=10, start=0, altitude_cutoff=0, sky=True
+    sky_imgs_gen = load_imgs(
+        sky_lt_dir,
+        count=10,
+        start=0,
+        altitude_cutoff=0,
     )
+    sky_imgs = np.array(list(sky_imgs_gen))
     lsky_median = np.median(
         sky_imgs, axis=(0, 2, 3)
     )  # here we want the median of each band
     del sky_imgs
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-        futures = {}
-        for filepath in filepaths:
-            future = executor.submit(_compute, filepath, lw_dir, lsky_median)
-            futures[future] = filepath
-        # Wait for all tasks to complete and collect results
-        results = []
-        completed = 0
+    if executor is not None:
+        partial_compute = partial(
+            _compute,
+            lw_dir=lw_dir,
+            lsky_median=lsky_median,
+        )
+        results = list(executor.map(partial_compute, filepaths))
+        logger.info(
+            "Lw Stage (blackpixel): Successfully processed: %d captures",
+            len(results),
+        )
+    else:
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=num_workers
+        ) as executor:
+            futures = {}
+            for filepath in filepaths:
+                future = executor.submit(_compute, filepath, lw_dir, lsky_median)
+                futures[future] = filepath
+            # Wait for all tasks to complete and collect results
+            results = []
+            completed = 0
 
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                result = future.result()  # Blocks until this specific future completes
-                results.append(result)
-                completed += 1
-            except Exception as e:
-                filepath = futures[future]
-                print(f"File {filepath} failed: {e}")
-                results.append(False)
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    result = (
+                        future.result()
+                    )  # Blocks until this specific future completes
+                    results.append(result)
+                    completed += 1
+                except Exception as e:
+                    filepath = futures[future]
+                    print(f"File {filepath} failed: {e}")
+                    results.append(False)
 
-    print(
-        f"Lw Stage (blackpixel): Successfully processed: {sum(results)}/{len(results)} captures"
-    )
+        logger.info(
+            "Lw Stage (blackpixel): Successfully processed: %d/%d captures",
+            sum(results),
+            len(results),
+        )
     return results
