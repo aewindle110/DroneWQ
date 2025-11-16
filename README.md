@@ -47,11 +47,14 @@ DroneWQ requires Python 3.8-3.12. Some dependencies may require additional syste
 - **ExifTool**: Required for reading MicaSense image metadata
 - **ZBar**: Required for QR code reading from calibration panels
 
+
+
 On Ubuntu/Debian:
 ```bash
 sudo apt-get update
-sudo apt-get install gdal-bin libgdal-dev exiftool zbar-tools python3-gdal
+sudo apt-get install gdal-bin libgdal-dev exiftool zbar-tools python3-gdal python3-cartopy
 ```
+
 
 On macOS (using Homebrew):
 ```bash
