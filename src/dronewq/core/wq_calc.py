@@ -196,15 +196,11 @@ def chl_hu_ocx(rrs):
     Returns:
         Numpy array of derived chlorophyll (mg m^-3).
     """
-    Rrsblue = rrs[0, :, :]
-    Rrsgreen = rrs[1, :, :]
-    Rrsred = rrs[2, :, :]
-
     thresh = [0.15, 0.20]
 
     # Compute both algorithms
-    ChlCI = chl_hu(Rrsblue, Rrsgreen, Rrsred)
-    ocx = chl_ocx(Rrsblue, Rrsgreen)
+    ChlCI = chl_hu(rrs)
+    ocx = chl_ocx(rrs)
 
     if ChlCI.any() <= thresh[0]:
         chlor_a = ChlCI
