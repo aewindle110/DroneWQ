@@ -102,25 +102,28 @@ class Pipeline:
             "tsm_nechad": dronewq.tsm_nechad,
         }
 
-        masked_rrs_imgs_hedley = dronewq.load_imgs(
-            img_dir=self.settings.masked_rrs_dir,
-        )
+        # Filter to only algorithms not already in dataframe
+        wq_algs_to_compute = [
+            alg for alg in self.settings.wq_algs if alg not in columns
+        ]
 
-        wq_results = defaultdict(list)
+        if wq_algs_to_compute:
+            masked_rrs_imgs_hedley = dronewq.load_imgs(
+                img_dir=self.settings.masked_rrs_dir,
+            )
 
-        for img in masked_rrs_imgs_hedley:
-            for wq_alg in self.settings.wq_algs:
-                if wq_alg in columns:
-                    continue
+            wq_results = defaultdict(list)
 
-                result = algs[wq_alg](img)
-                results_array = np.array(result)
-                median = np.nanmedian(results_array, axis=(0, 1))
-                wq_results[wq_alg].append(median)
+            for img in masked_rrs_imgs_hedley:
+                for wq_alg in wq_algs_to_compute:
+                    result = algs[wq_alg](img)
+                    results_array = np.array(result)
+                    median = np.nanmedian(results_array, axis=(0, 1))
+                    wq_results[wq_alg].append(median)
 
-        for wq_alg in wq_results:
-            results_array = np.array(wq_results[wq_alg])
-            df[wq_alg] = results_array
+            for wq_alg in wq_results:
+                results_array = np.array(wq_results[wq_alg])
+                df[wq_alg] = results_array
 
         out_csv_path = os.path.join(
             self.settings.main_dir,
