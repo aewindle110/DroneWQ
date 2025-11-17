@@ -34,7 +34,7 @@ def _compute(filepath, ed_data, rrs_dir):
                 dst.write(stacked_rrs)
         return True
     except Exception as e:
-        logger.warn(
+        logger.warning(
             "Dls_ed error: File %s has failed with error %s",
             filepath,
             str(e),

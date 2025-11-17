@@ -20,7 +20,8 @@ def _compute(filepath, mean_min_lt_NIR, lw_dir):
         with rasterio.open(filepath, "r") as lt_src:
             profile = lt_src.profile
             lt = lt_src.read()
-            lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
+            # flatten last two dims
+            lt_reshape = lt.reshape(*lt.shape[:-2], -1)
 
             lw_all = []
             # NOTE: Is this supposed to also compute the NIR?
@@ -40,7 +41,7 @@ def _compute(filepath, mean_min_lt_NIR, lw_dir):
                 dst.write(stacked_lw)
         return True  # Return filepath for progress tracking
     except Exception as e:
-        logger.warn(
+        logger.warning(
             "Hedley error: File %s has failed with error %s",
             filepath,
             str(e),

@@ -32,7 +32,7 @@ def _compute(filepath, rho, lsky_median, lw_dir):
                 dst.write(stacked_lw)
         return True
     except Exception as e:
-        logger.warn(
+        logger.warning(
             "File %s failed: %s",
             filepath,
             str(e),
@@ -126,7 +126,7 @@ def mobley_rho(rho=0.028, executor=None, num_workers=4):
                     completed += 1
                 except Exception as e:
                     filepath = futures[future]
-                    logger.warn(
+                    logger.warning(
                         "File %s failed: %s",
                         filepath,
                         str(e),

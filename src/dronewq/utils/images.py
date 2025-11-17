@@ -1,6 +1,6 @@
 import concurrent.futures
 import datetime
-import glob
+import logging
 import os
 
 import cv2
@@ -8,15 +8,12 @@ import numpy as np
 import pandas as pd
 import rasterio
 from osgeo import gdal
-from rasterio.enums import Resampling
-from rasterio.transform import Affine
-from tqdm import tqdm
 
 import dronewq
 import micasense
 from dronewq.utils.settings import settings
 
-# FIXME: Should rename this file
+logger = logging.getLogger(__name__)
 
 
 def load_imgs(
@@ -188,9 +185,11 @@ def save_images(
 
     start = datetime.datetime.now()
 
-    print("output_path: ", output_path)
+    logger.info("output_path: %s", output_path)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=max_workers,
+    ) as executor:
         futures = {}
 
         for idx, capture in enumerate(img_set.captures):
@@ -210,7 +209,12 @@ def save_images(
             capture.fullThumbnailPath = fullThumbnailPath
 
             # Submit task and track it
-            future = executor.submit(save, capture, warp_matrices, generateThumbnails)
+            future = executor.submit(
+                save,
+                capture,
+                warp_matrices,
+                generateThumbnails,
+            )
             futures[future] = idx
 
         # Wait for all tasks to complete and collect results
@@ -219,22 +223,35 @@ def save_images(
 
         for future in concurrent.futures.as_completed(futures):
             try:
-                result = future.result()  # Blocks until this specific future completes
+                # Blocks until this specific future completes
+                result = future.result()
                 results.append(result)
                 completed += 1
             except Exception as e:
                 idx = futures[future]
-                print(f"Capture {idx} failed: {e}")
+                logger.error(
+                    "Capture %d failed: %s",
+                    idx,
+                    str(e),
+                )
                 results.append(False)
 
     end = datetime.datetime.now()
     elapsed = (end - start).total_seconds()
 
-    print(f"Saving time: {end - start}")
-    print(
-        f"Alignment+Saving rate: {len(img_set.captures)/elapsed:.2f} images per second",
+    logger.info(
+        "Saving time: %.2f",
+        end - start,
     )
-    print(f"Successfully processed: {sum(results)}/{len(results)} captures")
+    logger.info(
+        "Alignment+Saving rate: %.2f images per second",
+        len(img_set.captures) / elapsed,
+    )
+    logger.info(
+        "Successfully processed: %d/%d captures",
+        sum(results),
+        len(results),
+    )
 
     return results
 
@@ -270,7 +287,7 @@ def process_micasense_images(
         warp_img_capture = micasense.imageset.ImageSet.from_directory(
             warp_img_dir,
         ).captures[0]
-        print("used warp dir", warp_img_dir)
+        logger.info("Used warp dir: %s", warp_img_dir)
     else:
         warp_img_capture = img_set.captures[0]
 
@@ -291,65 +308,8 @@ def process_micasense_images(
         overwrite_lt_lw=overwrite_lt_lw,
     )
 
-    print("Finished saving images.")
+    logger.info("Finished saving images at: %s", output_path)
     fullCsvPath = dronewq.write_metadata_csv(img_dir, output_path)
-    print("Finished saving image metadata.")
+    logger.info("Finished saving image metadata at: %s", fullCsvPath)
 
     return output_path
-
-
-# TODO: Fix method default
-def downsample(input_dir, output_dir, scale_x, scale_y, method=Resampling.average):
-    """
-    This function performs a downsampling to reduce the spatial resolution of the final mosaic.
-
-    Parameters
-        input_dir: A string containing input directory filepath
-
-        output_dir: A string containing output directory filepath
-
-        scale_x: proportion by which the width of each file will be resized
-
-        scale_y: proportion by which the height of each file will be resized
-
-        method: the resampling method to perform. Defaults to Resampling.nearest. Please see https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling for other resampling methods.
-
-    Returns
-        None, downsampled raster is written to output_dir.
-    """
-    os.makedirs(output_dir, exist_ok=True)
-    raster_paths = glob.glob(os.path.join(input_dir, "*"))
-
-    for raster_path in tqdm(raster_paths):
-        raster_name = os.path.basename(raster_path)
-        out_name = os.path.join(
-            output_dir,
-            f'{raster_name.split(".")[0]}_x_{scale_x}_y_{scale_y}_method_{method.name}.tif',
-        )
-
-        with rasterio.open(raster_path, "r") as dataset:
-            data = dataset.read(
-                out_shape=(
-                    dataset.count,
-                    dataset.height // scale_x,
-                    dataset.width // scale_y,
-                ),
-                resampling=method,
-            )
-
-            dst_transform: Affine = dataset.transform * dataset.transform.scale(
-                (dataset.width / data.shape[-1]), (dataset.height / data.shape[-2]),
-            )
-
-            dst_kwargs = dataset.meta.copy()
-            dst_kwargs.update(
-                {
-                    "crs": dataset.crs,
-                    "transform": dst_transform,
-                    "width": data.shape[-1],
-                    "height": data.shape[-2],
-                },
-            )
-
-            with rasterio.open(out_name, "w", **dst_kwargs) as dst:
-                dst.write(data)
