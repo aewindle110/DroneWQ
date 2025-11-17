@@ -3,8 +3,11 @@ from functools import partial
 import concurrent.futures
 import numpy as np
 import rasterio
+import logging
 import glob
 import os
+
+logger = logging.getLogger(__name__)
 
 
 def _compute(filename, wq_alg, wq_dir):
@@ -15,23 +18,34 @@ def _compute(filename, wq_alg, wq_dir):
         "chl_gitelson": chl_gitelson,
         "tsm_nechad": tsm_nechad,
     }
-    with rasterio.open(filename, "r") as src:
-        # Copy geotransform if it exists
-        profile = src.profile
-        rrs = np.squeeze(src.read())
-        profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
+    try:
+        with rasterio.open(filename, "r") as src:
+            # Copy geotransform if it exists
+            profile = src.profile
+            rrs = np.squeeze(src.read())
+            profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
 
-        wq = algorithms[wq_alg](rrs)
+            wq = algorithms[wq_alg](rrs)
 
-        with rasterio.open(
-            os.path.join(wq_dir, os.path.basename(filename)),
-            "w",
-            **profile,
-        ) as dst:
-            dst.write(wq, 1)
+            with rasterio.open(
+                os.path.join(wq_dir, os.path.basename(filename)),
+                "w",
+                **profile,
+            ) as dst:
+                dst.write(wq, 1)
+        return True
+    except Exception as e:
+        logger.error(
+            "File %s: %s using algorithm %s",
+            filename,
+            str(e),
+            wq_alg,
+        )
+        return False
 
 
 def save_wq_imgs(
+    rrs_dir,
     wq_alg="chl_gitelson",
     start=0,
     count=10000,
@@ -42,11 +56,7 @@ def save_wq_imgs(
     This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
 
     Parameters:
-        main_dir: A string containing main directory
-
-        rrs_img_dir: A string containing directory of Rrs images
-
-        wq_dir_name: A string containing the directory that the wq images will be saved
+        rrs_dir: A string containing directory of Rrs images
 
         wq_alg: what wq algorithm to apply
 
@@ -62,7 +72,6 @@ def save_wq_imgs(
         raise LookupError("Please set the main_dir path.")
 
     main_dir = settings.main_dir
-    rrs_img_dir = settings.masked_rrs_dir
     wq_dir_name = "masked_" + wq_alg + "_imgs"
     dir_path = os.path.join(main_dir, wq_dir_name)
     attribute_name = wq_alg + "_dir"
@@ -73,7 +82,8 @@ def save_wq_imgs(
         return int(os.path.basename(path).split("_")[-1].split(".")[0])
 
     filenames = sorted(
-        glob.glob(os.path.join(rrs_img_dir, "*")), key=_capture_path_to_int
+        glob.glob(os.path.join(rrs_dir, "*")),
+        key=_capture_path_to_int,
     )[start:count]
 
     # make wq_dir directory
@@ -93,26 +103,28 @@ def save_wq_imgs(
             max_workers=num_workers,
         ) as executor:
             results = list(executor.map(partial_compute, filenames))
+    logger.info(
+        "WQ Stage (%s): Successfully processed: %d/%d captures",
+        wq_alg,
+        sum(results),
+        len(results),
+    )
 
 
-def chl_hu(rrs):
+def chl_hu(Rrs):
     """
     This is the Ocean Color Index (CI) three-band reflectance difference algorithm (Hu et al. 2012). This should only be used for chlorophyll retrievals below 0.15 mg m^-3. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. doi: 10.1029/2011jc007395
 
     Parameters:
-        Rrsblue: numpy array of Rrs in the blue band.
-
-        Rrsgreen: numpy array of Rrs in the green band.
-
-        Rrsred: numpy array of Rrs in the red band.
+        Rrs: Takes in a numpy array of shape (bands, width, height).
 
     Returns:
         Numpy array of derived chlorophyll (mg m^-3).
 
     """
-    Rrsblue = rrs[0, :, :]
-    Rrsgreen = rrs[1, :, :]
-    Rrsred = rrs[2, :, :]
+    Rrsblue = Rrs[0, :, :]
+    Rrsgreen = Rrs[1, :, :]
+    Rrsred = Rrs[2, :, :]
 
     ci1 = -0.4909
     ci2 = 191.6590
@@ -134,7 +146,7 @@ def chl_hu(rrs):
     )
 
     exponent = ci1 + ci2 * CI
-    exponent = np.clip(exponent, -300, 300)
+    # exponent = np.clip(exponent, -300, 300)
 
     ChlCI[valid_mask] = 10**exponent
 
@@ -142,21 +154,19 @@ def chl_hu(rrs):
     return ChlCI
 
 
-def chl_ocx(rrs):
+def chl_ocx(Rrs):
     """
     This is the OCx algorithm which uses a fourth-order polynomial relationship (O'Reilly et al. 1998). This should be used for chlorophyll retrievals above 0.2 mg m^-3. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. The coefficients for OC2 (OLI/Landsat 8) are used as default. doi: 10.1029/98JC02160.
 
     Parameters:
-        Rrsblue: numpy array of Rrs in the blue band.
-
-        Rrsgreen: numpy array of Rrs in the green band.
+        Rrs: Takes in a numpy array of shape (bands, width, height).
 
     Returns:
         Numpy array of derived chlorophyll (mg m^-3).
 
     """
-    Rrsblue = rrs[0, :, :]
-    Rrsgreen = rrs[1, :, :]
+    Rrsblue = Rrs[0, :, :]
+    Rrsgreen = Rrs[1, :, :]
 
     # L8 OC2 coefficients
     a0 = 0.1977
@@ -182,16 +192,12 @@ def chl_ocx(rrs):
     return ocx
 
 
-def chl_hu_ocx(rrs):
+def chl_hu_ocx(Rrs):
     """
     This is the blended NASA chlorophyll algorithm which combines Hu color index (CI) algorithm (chl_hu) and the O'Reilly band ratio OCx algortihm (chl_ocx). This specific code is grabbed from https://github.com/nasa/HyperInSPACE. Documentation can be found here https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0#introduction.
 
     Parameters:
-        Rrsblue: numpy array of Rrs in the blue band.
-
-        Rrsgreen: numpy array of Rrs in the green band.
-
-        Rrsred: numpy array of Rrs in the red band.
+        Rrs: Takes in a numpy array of shape (bands, width, height).
 
     Returns:
         Numpy array of derived chlorophyll (mg m^-3).
@@ -199,8 +205,8 @@ def chl_hu_ocx(rrs):
     thresh = [0.15, 0.20]
 
     # Compute both algorithms
-    ChlCI = chl_hu(rrs)
-    ocx = chl_ocx(rrs)
+    ChlCI = chl_hu(Rrs)
+    ocx = chl_ocx(Rrs)
 
     if ChlCI.any() <= thresh[0]:
         chlor_a = ChlCI
@@ -214,20 +220,18 @@ def chl_hu_ocx(rrs):
     return chlor_a
 
 
-def chl_gitelson(rrs):
+def chl_gitelson(Rrs):
     """
     This algorithm estimates chlorophyll a concentrations using a 2-band algorithm with coefficients from Gitelson et al. 2007. This algorithm is recommended for coastal (Case 2) waters. doi:10.1016/j.rse.2007.01.016
 
     Parameters:
-        Rrsred: numpy array of Rrs in the red band.
-
-        Rrsrededge: numpy array of Rrs in the red edge band.
+        Rrs: Takes in a numpy array of shape (bands, width, height).
 
     Returns:
         Numpy array of derived chlorophyll (mg m^-3).
     """
-    Rrsred = rrs[2, :, :]
-    Rrsrededge = rrs[3, :, :]
+    Rrsred = Rrs[2, :, :]
+    Rrsrededge = Rrs[3, :, :]
 
     chl = 59.826 * (Rrsrededge / Rrsred) - 17.546
     return chl
@@ -236,17 +240,17 @@ def chl_gitelson(rrs):
 ######## TSM retrieval algs ######
 
 
-def tsm_nechad(rrs):
+def tsm_nechad(Rrs):
     """
     This algorithm estimates total suspended matter (TSM) concentrations using the Nechad et al. (2010) algorithm. doi:10.1016/j.rse.2009.11.022
 
     Parameters:
-        Rrsred: numpy array of Rrs in the red band.
+        Rrs: Takes in a numpy array of shape (bands, width, height).
 
     Returns:
         Numpy array of derived chlorophyll (mg m^-3).
     """
-    Rrsred = rrs[2, :, :]
+    Rrsred = Rrs[2, :, :]
     A = 374.11
     B = 1.61
     C = 17.38

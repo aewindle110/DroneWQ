@@ -8,7 +8,6 @@ from .utils.images import (
     load_imgs,
     load_metadata,
     process_micasense_images,
-    downsample,
 )
 from .lw_methods import *
 from .ed_methods import *
@@ -26,6 +25,7 @@ from .core.georeference import compute_flight_lines, georeference
 from .core.plot_map import plot_basemap, plot_georeferenced_data
 from .core.mosaic import (
     mosaic,
+    downsample,
 )
 
 # Singleton definitions and aliasing

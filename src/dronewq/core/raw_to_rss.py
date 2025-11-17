@@ -10,7 +10,6 @@ import os
 logger = logging.getLogger(__name__)
 
 
-# TODO: Make this a class
 def process_raw_to_rrs(
     output_csv_path: str,
     lw_method="mobley_rho_method",
@@ -39,11 +38,8 @@ def process_raw_to_rrs(
         random_n: The amount of random images to calculate ambient
             NIR level. Default is 10. Only need if lw_method = 'hedley_method'
 
-        mask_pixels: Option to mask pixels containing specular sun
-            glint, shadowing, adjacent vegetation, etc. Default is False.
-
         pixel_masking_method: Method to mask pixels. Options are
-            'value_threshold' or 'std_threshold'. Default is value_threshold.
+            'value_threshold', 'std_threshold', or None. Default is None.
 
         mask_std_factor: A factor to multiply to the standard
             deviation of NIR values. Default is 1.
@@ -69,6 +65,9 @@ def process_raw_to_rrs(
 
         clean_intermediates: Option to erase intermediates of
             processing (Lt, Lw, unmasked Rrs)
+
+        num_workers: Number of parallelizing done on different cores.
+            Depends on hardware.
 
     Returns:
         New Rrs tifs (masked or unmasked) with units of sr^-1.
@@ -130,7 +129,9 @@ def process_raw_to_rrs(
     ### correct for surface reflected light ###
     ##################################
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as Executor:
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=num_workers,
+    ) as Executor:
         if lw_method == "mobley_rho":
             logger.info("Applying the mobley_rho_method (Lt -> Lw).")
             dronewq.mobley_rho(num_workers=num_workers, executor=Executor)
@@ -141,9 +142,14 @@ def process_raw_to_rrs(
 
         elif lw_method == "hedley":
             logger.info("Applying the Hochberg/Hedley (Lt -> Lw)")
-            dronewq.hedley(random_n, num_workers=num_workers, executor=Executor)
-
-        else:  # just change this pointer if we didn't do anything the lt over to the lw dir
+            dronewq.hedley(
+                random_n,
+                num_workers=num_workers,
+                executor=Executor,
+            )
+        # just change this pointer if we didn't do anything
+        # the lt over to the lw dir
+        else:
             logger.info("Not doing any Lw calculation.")
             lw_dir = lt_dir
 
@@ -181,7 +187,7 @@ def process_raw_to_rrs(
             return False
 
         logger.info(
-            "All data has been saved as Rrs using the %s to \
+            "All data has been saved as Rrs using the %s to\
             calculate Lw and normalized by %s irradiance.",
             str(lw_method),
             str(ed_method),
@@ -207,7 +213,7 @@ def process_raw_to_rrs(
             )
 
         else:  # if we don't do the glint correction then just change the pointer to the lt_dir
-            print("Not masking pixels.")
+            logger.info("Not masking pixels.")
 
     ################################################
     ### finalize and add point output ###
@@ -217,3 +223,4 @@ def process_raw_to_rrs(
         dirs_to_delete = [lt_dir, sky_lt_dir, lw_dir]
         for d in dirs_to_delete:
             shutil.rmtree(d, ignore_errors=True)
+        logger.info("Deleted intermediate results.")

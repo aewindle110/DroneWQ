@@ -124,7 +124,6 @@ def plot_georeferenced_data(
         xs, ys = rasterio.transform.xy(src_rio.transform, rows, cols)
         xs, ys = np.array(xs), np.array(ys)
 
-
         # Add basemap if requested
         if basemap is not None:
             ax = plot_basemap(
