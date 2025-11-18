@@ -63,6 +63,7 @@ dependencies = [
   "pyzbar==0.1.9",
   "pyexiftool<=0.4.13",
   "rawpy==0.21.0",
+  "opencv-python~=4.10.0",
 ]
 
 [project.urls]
