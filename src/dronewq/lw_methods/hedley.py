@@ -6,6 +6,7 @@ import os
 import concurrent.futures
 import logging
 from functools import partial
+from numpy.polynomial import Polynomial
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -16,39 +17,34 @@ def _compute(filepath, mean_min_lt_NIR, lw_dir):
 
     im_name = os.path.basename(filepath)
 
-    try:
-        with rasterio.open(filepath, "r") as lt_src:
-            profile = lt_src.profile
-            lt = lt_src.read()
-            # flatten last two dims
-            lt_reshape = lt.reshape(*lt.shape[:-2], -1)
+    with rasterio.open(filepath, "r") as lt_src:
+        profile = lt_src.profile
+        lt = lt_src.read()
+        lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
 
-            lw_all = []
-            for j in range(0, 4):
-                slopes = np.polyfit(lt_reshape[4, :], lt_reshape[j, :], 1)[0]
-                # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
-                lw = lt[j, :, :] - slopes * (lt[4, :, :] - mean_min_lt_NIR)
-                lw_all.append(lw)
+        lw_all = []
+        for j in range(0, 4):
+            # Fit polynomial using new API
+            p = Polynomial.fit(lt_reshape[4, :], lt_reshape[j, :], 1)
+            # Extract slope coefficient (coefficient of x^1 term)
+            slopes = p.convert().coef[1]
+            # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
+            lw = lt[j, :, :] - slopes * (lt[4, :, :] - mean_min_lt_NIR)
+            lw_all.append(lw)
 
-            # Keep the original NIR band
-            lw_all.append(lt[4, :, :])
+        # Keep the original NIR band
+        lw_all.append(lt[4, :, :])
 
-            stacked_lw = np.stack(lw_all)
-            profile["count"] = 5
+        stacked_lw = np.stack(lw_all)
+        profile["count"] = 5
 
-            output = os.path.join(lw_dir, im_name)
+        output = os.path.join(lw_dir, im_name)
 
-            # write new stacked Lw tif
-            with rasterio.open(output, "w", **profile) as dst:
-                dst.write(stacked_lw)
-        return True  # Return filepath for progress tracking
-    except Exception as e:
-        logger.warning(
-            "Hedley error: File %s has failed with error %s",
-            filepath,
-            str(e),
-        )
-        raise
+        # write new stacked Lw tif
+        with rasterio.open(output, "w", **profile) as dst:
+            dst.write(stacked_lw)
+
+    return filepath  # Return filepath for progress tracking
 
 
 def hedley(random_n=10, num_workers=4, executor=None):
@@ -64,7 +60,8 @@ def hedley(random_n=10, num_workers=4, executor=None):
     by the difference between the pixel NIR value and the ambient NIR level.
 
     Parameters:
-        random_n: The amount of random images to calculate ambient NIR level. Default is 10.
+        random_n: The amount of random images to calculate ambient NIR level.
+            Default is 10.
         num_workers: Number of parallel processes. Depends on hardware.
 
     Returns:

@@ -112,6 +112,7 @@ def process_raw_to_rrs(
         warp_img_dir=warp_img_dir,
         overwrite_lt_lw=overwrite_lt_lw,
         sky=False,
+        num_workers=num_workers,
     )
 
     # deciding if we need to process raw sky images to radiance
@@ -123,6 +124,7 @@ def process_raw_to_rrs(
             warp_img_dir=None,
             overwrite_lt_lw=overwrite_lt_lw,
             sky=True,
+            num_workers=num_workers,
         )
 
     ##################################

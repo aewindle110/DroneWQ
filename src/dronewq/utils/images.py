@@ -169,7 +169,7 @@ def save_images(
     warp_img_capture,
     generateThumbnails=True,
     overwrite_lt_lw=False,
-    max_workers=4,  # None uses default based on CPU count
+    num_workers=4,  # None uses default based on CPU count
 ):
     """Process captures in parallel using threading."""
     # Create output directories
@@ -181,7 +181,7 @@ def save_images(
 
     # Use processes instead of threads for CPU-bound work
     # For I/O-bound (file writing), threads are acceptable
-    max_workers = max_workers or os.cpu_count()
+    max_workers = num_workers
 
     start = datetime.datetime.now()
 
@@ -261,6 +261,7 @@ def process_micasense_images(
     overwrite_lt_lw=False,
     sky=False,
     generateThumbnails=True,
+    num_workers=4,
 ):
     """
     This function is wrapper function for the save_images() function to read in an image directory and produce new .tifs with units of radiance (W/sr/nm).
@@ -306,6 +307,7 @@ def process_micasense_images(
         warp_img_capture=warp_img_capture,
         generateThumbnails=generateThumbnails,
         overwrite_lt_lw=overwrite_lt_lw,
+        num_workers=num_workers,
     )
 
     logger.info("Finished saving images at: %s", output_path)
