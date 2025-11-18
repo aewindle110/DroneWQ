@@ -57,7 +57,8 @@ def blackpixel(num_workers=4, executor=None):
     and Lw in the NIR (i.e. Case 2 waters).
 
     Parameters:
-        num_workers: Number of parallelizing done on different cores. Depends on hardware.
+        num_workers: Number of parallelizing done on different cores.
+            Depends on hardware.
     Returns:
         New Lw .tifs with units of W/sr/nm
 

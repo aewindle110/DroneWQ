@@ -44,7 +44,7 @@ def _compute(
             ) as dst:
                 dst.write(stacked_rrs_deglint)
     except Exception as e:
-        logger.warn(
+        logger.warning(
             "Threshold Masking error: File %s has failed with error %s",
             filepath,
             str(e),

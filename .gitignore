@@ -15,6 +15,11 @@ Lake_Erie
 
 .DS_store
 
+### npm related
+node_modules/
+package-lock.json
+package.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -42,6 +47,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+_version.py
 MANIFEST
 
 # PyInstaller
@@ -95,6 +101,8 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
+
 
 # IPython
 profile_default/
