@@ -241,11 +241,11 @@ def save_images(
 
     logger.info(
         "Saving time: %.2f",
-        end - start,
+        elapsed,
     )
     logger.info(
         "Alignment+Saving rate: %.2f images per second",
-        len(img_set.captures) / elapsed,
+        len(results) / elapsed if elapsed > 0 else 0,
     )
     logger.info(
         "Successfully processed: %d/%d captures",

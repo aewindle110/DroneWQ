@@ -16,42 +16,40 @@ def _compute(
     green_threshold,
     masked_rrs_dir,
 ):
+    """Worker function that masks a single file based on NIR and green thresholds."""
 
-    # go through each rrs image in the dir and mask pixels > nir_threshold and < green_threshold
-    im = filepath
     try:
-        with rasterio.open(im, "r") as rrs_src:
+        with rasterio.open(filepath, "r") as rrs_src:
             profile = rrs_src.profile
             profile["count"] = 5
-            rrs_mask_all = []
-            nir = rrs_src.read(5)
-            green = rrs_src.read(2)
-            nir[nir > nir_threshold] = np.nan
-            green[green < green_threshold] = np.nan
-
-            nir_nan_index = np.isnan(nir)
-            green_nan_index = np.isnan(green)
-
-            # filter nan pixel indicies across all bands
-            for i in range(1, 6):
-
-                rrs_mask = rrs_src.read(i)
-                rrs_mask[nir_nan_index] = np.nan
-                rrs_mask[green_nan_index] = np.nan
-
-                rrs_mask_all.append(rrs_mask)
-
-            stacked_rrs_mask = np.stack(rrs_mask_all)  # stack into np.array
-
-            # write new stacked rrs tifs
-            im_name = os.path.basename(
-                im
-            )  # we're grabbing just the .tif file name instead of the whole path
-            with rasterio.open(
-                os.path.join(masked_rrs_dir, im_name), "w", **profile
-            ) as dst:
-                dst.write(stacked_rrs_mask)
+            
+            # Read all bands once
+            rrs = rrs_src.read()  # Shape: (5, H, W)
+            
+            # Extract NIR (band 5) and green (band 2)
+            # Note: rasterio uses 1-based indexing in read(), 0-based in arrays
+            nir = rrs[4, :, :]   # Band 5 -> index 4
+            green = rrs[1, :, :]  # Band 2 -> index 1
+            
+            # Create boolean masks (True = invalid pixel)
+            nir_mask = nir > nir_threshold
+            green_mask = green < green_threshold
+            
+            # Combine masks: pixel is invalid if EITHER condition is true
+            combined_mask = nir_mask | green_mask
+            
+            # Apply mask to all bands
+            rrs[:, combined_mask] = np.nan
+            
+            # Write masked output
+            im_name = os.path.basename(filepath)
+            output_path = os.path.join(masked_rrs_dir, im_name)
+            
+            with rasterio.open(output_path, "w", **profile) as dst:
+                dst.write(rrs)
+                
         return True
+        
     except Exception as e:
         logger.warning(
             "Threshold Masking error: File %s has failed with error %s",
@@ -59,6 +57,7 @@ def _compute(
             str(e),
         )
         raise
+
 
 
 def threshold_masking(

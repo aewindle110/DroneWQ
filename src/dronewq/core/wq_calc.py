@@ -129,27 +129,7 @@ def chl_hu(Rrs):
     ci1 = -0.4909
     ci2 = 191.6590
 
-    valid_mask = (
-        (Rrsblue > 0)
-        & (Rrsgreen > 0)
-        & (Rrsred > 0)
-        & np.isfinite(Rrsblue)
-        & np.isfinite(Rrsgreen)
-        & np.isfinite(Rrsred)
-    )
-
-    ChlCI = np.full_like(Rrsblue, np.nan, dtype=np.float32)
-
-    CI = Rrsgreen[valid_mask] - (
-        Rrsblue[valid_mask]
-        + (560 - 475) / (668 - 475) * (Rrsred[valid_mask] - Rrsblue[valid_mask])
-    )
-
-    exponent = ci1 + ci2 * CI
-    # exponent = np.clip(exponent, -300, 300)
-
-    ChlCI[valid_mask] = 10**exponent
-
+    CI = Rrsgreen - (Rrsblue + (560 - 475) / (668 - 475) * (Rrsred - Rrsblue))
     ChlCI = 10 ** (ci1 + ci2 * CI)
     return ChlCI
 
@@ -175,20 +155,11 @@ def chl_ocx(Rrs):
     a3 = 2.5635
     a4 = -0.7218
 
-    valid_mask = (
-        (Rrsblue > 0) & (Rrsgreen > 0) & np.isfinite(Rrsblue) & np.isfinite(Rrsgreen)
-    )
+    temp = np.log10(Rrsblue / Rrsgreen)
 
-    # Initialize output with NaN
-    ocx = np.full_like(Rrsblue, np.nan, dtype=np.float32)
+    log10chl = a0 + a1 * (temp) + a2 * (temp) ** 2 + a3 * (temp) ** 3 + a4 * (temp) ** 4
 
-    # Only compute where data is valid
-    ratio = Rrsblue[valid_mask] / Rrsgreen[valid_mask]
-    temp = np.log10(ratio)
-
-    log10chl = a0 + a1 * temp + a2 * temp**2 + a3 * temp**3 + a4 * temp**4
-    ocx[valid_mask] = np.power(10, log10chl)
-
+    ocx = np.power(10, log10chl)
     return ocx
 
 

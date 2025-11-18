@@ -24,12 +24,14 @@ def _compute(filepath, mean_min_lt_NIR, lw_dir):
             lt_reshape = lt.reshape(*lt.shape[:-2], -1)
 
             lw_all = []
-            # NOTE: Is this supposed to also compute the NIR?
-            for j in range(0, 5):
+            for j in range(0, 4):
                 slopes = np.polyfit(lt_reshape[4, :], lt_reshape[j, :], 1)[0]
                 # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
                 lw = lt[j, :, :] - slopes * (lt[4, :, :] - mean_min_lt_NIR)
                 lw_all.append(lw)
+
+            # Keep the original NIR band
+            lw_all.append(lt[4, :, :])
 
             stacked_lw = np.stack(lw_all)
             profile["count"] = 5
