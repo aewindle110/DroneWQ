@@ -12,11 +12,14 @@ def process():
     if folder_path is None:
         return jsonify({"error": "folderPath is not specified."}), 400
 
-    pipeline = Pipeline(folder_path)
-
-    pipeline.water_metadata()
-    pipeline.flight_plan()
-    pipeline.run()
-    pipeline.plot_essentials()
-
-    return jsonify({"success": True}), 200
+    try:
+        pipeline = Pipeline(folder_path)
+        pipeline.water_metadata()
+        pipeline.flight_plan()
+        pipeline.run()
+        pipeline.plot_essentials()
+        pipeline.point_samples()
+        pipeline.wq_run()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

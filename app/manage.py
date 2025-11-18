@@ -109,7 +109,8 @@ def save_settings():
     lw_method = str(args.get("lwMethod"))
     ed_method = str(args.get("edMethod"))
     mask_method = str(args.get("maskMethod"))
-    outputs = args.get("outputs")
+    wq_algs = args.get("wqAlgs")
+    mosaic = args.get("mosaic")
 
     settings = Settings()
 
@@ -135,7 +136,8 @@ def save_settings():
         lw_method=lw_method,
         ed_method=ed_method,
         mask_method=mask_method,
-        outputs=outputs,
+        wq_algs=wq_algs,
+        mosaic=mosaic,
     )
 
     try:
