@@ -15,28 +15,20 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.10'
     - name: Add conda to system path
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-        conda create -y -n dronewq python=3.10
-        conda activate dronewq
-        echo "conda activate myenv" >> ~/.bashrc
-    - name: Install gdal
-      run: |
-        conda install gdal -y
-    - name: Install dependencies
-      run: |
-        source ~/.bashrc
-        pip install -e .
-        pip install hatch
+        conda create -y -n dronewq python=3.10 gdal
+
+    - name: Install deps
+      run: conda run -n dronewq pip install -e .
+
+    - name: Install hatch
+      run: conda run -n dronewq pip install hatch
+
     - name: Test with pytest
-      run: |
-        hatch run test:run
+      run: conda run -n dronewq hatch run test:run
     - name: Lint
       run: |
         conda install flake8
