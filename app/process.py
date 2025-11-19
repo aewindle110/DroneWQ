@@ -14,6 +14,7 @@ def process():
 
     try:
         pipeline = Pipeline(folder_path)
+
         pipeline.water_metadata()
         pipeline.flight_plan()
         pipeline.run()

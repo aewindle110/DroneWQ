@@ -86,7 +86,10 @@ class Pipeline:
         )
 
     def wq_run(self):
-        csv_path = os.path.join(self.settings.main_dir, "median_rrs_and_wq.csv")
+        csv_path = os.path.join(
+            self.settings.main_dir,
+            "median_rrs_and_wq.csv",
+        )
 
         if not os.path.exists(csv_path):
             csv_path = os.path.join(self.settings.main_dir, "median_rrs.csv")
@@ -108,13 +111,18 @@ class Pipeline:
         ]
 
         if wq_algs_to_compute:
-            masked_rrs_imgs_hedley = dronewq.load_imgs(
-                img_dir=self.settings.masked_rrs_dir,
-            )
+            if self.settings.masked_rrs_dir:
+                rrs_imgs = dronewq.load_imgs(
+                    img_dir=self.settings.masked_rrs_dir,
+                )
+            else:
+                rrs_imgs = dronewq.load_imgs(
+                    img_dir=self.settings.rrs_dir,
+                )
 
             wq_results = defaultdict(list)
 
-            for img in masked_rrs_imgs_hedley:
+            for img in rrs_imgs:
                 for wq_alg in wq_algs_to_compute:
                     result = algs[wq_alg](img)
                     results_array = np.array(result)
@@ -131,6 +139,49 @@ class Pipeline:
         )
 
         df.to_csv(out_csv_path)
+
+    def plot_wq(self, plot_args: dict[str, dict]):
+        output_folder = os.path.join(self.settings.main_dir, "result")
+
+        # TODO: add more algorithms in here
+        COLORS = {
+            "chl_hu_ocx": "Greens",
+            "tsm_nechad": "YlOrRd",
+        }
+        LABELS = {
+            "chl_hu_ocx": "Chlorophyll a (mg $m^{-3}$)",
+            "tsm_nechad": "TSM (mg/L)",
+        }
+
+        csv_path = os.path.join(
+            self.settings.main_dir,
+            "median_rrs_and_wq.csv",
+        )
+
+        df = pd.read_csv(csv_path)
+        for alg in plot_args:
+            vmin = plot_args[alg]["vmin"]
+            vmax = plot_args[alg]["vmax"]
+            fig, ax = plt.subplots(1, 1, figsize=(4, 3), layout="tight")
+            g = ax[0].scatter(
+                df["Latitude"],
+                df["Longitude"],
+                c=df[alg],
+                cmap=COLORS[alg],
+                vmin=vmin,
+                vmax=vmax,
+            )
+
+            cbar = fig.colorbar(g, ax=ax[0])
+            cbar.set_label(LABELS[alg], rotation=270, labelpad=12)
+            out_path = os.path.join(output_folder, alg + "_plot.png")
+            fig.savefig(
+                out_path,
+                dpi=300,
+                bbox_inches="tight",
+                transparent=False,
+            )
+            plt.close(fig)
 
     def plot_essentials(self, count: int = 25):
         self.rrs_plot(count=count)
