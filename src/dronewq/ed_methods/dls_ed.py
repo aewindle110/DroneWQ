@@ -138,7 +138,9 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4, executor=None):
             dls_ed_corr_data.append(dls_ed_corr_row)
 
         dls_ed_corr_data_df = pd.DataFrame.from_records(
-            dls_ed_corr_data, index="image", columns=ed_columns,
+            dls_ed_corr_data,
+            index="image",
+            columns=ed_columns,
         )
         dls_ed_corr_data_df.to_csv(os.path.join(output_csv_path, "dls_corr_ed.csv"))
         del dls_ed_corr_data_df
@@ -159,7 +161,9 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4, executor=None):
             ed_data.append(ed_row)
 
         ed_data_df = pd.DataFrame.from_records(
-            ed_data, index="image", columns=ed_columns,
+            ed_data,
+            index="image",
+            columns=ed_columns,
         )
         ed_data_df.to_csv(os.path.join(output_csv_path, "dls_ed.csv"))
         del ed_data_df

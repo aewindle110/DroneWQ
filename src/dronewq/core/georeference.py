@@ -1,5 +1,4 @@
 import os
-from typing import List, Tuple
 
 import cameratransform as ct
 import numpy as np
@@ -27,7 +26,10 @@ def compute_flight_lines(captures_yaw, altitude, pitch, roll, threshold=10):
     """
 
     def __compute_lines(
-        lines: List[Tuple[int, int]], indexes: List[int], start: int = 0, end: int = 0,
+        lines: list[tuple[int, int]],
+        indexes: list[int],
+        start: int = 0,
+        end: int = 0,
     ):
         """
         A function that given a list of indexes where there are gaps,
@@ -156,7 +158,9 @@ def georeference(
         """
         cam = ct.Camera(
             ct.RectilinearProjection(
-                focallength_mm=f, sensor=sensor_size, image=image_size,
+                focallength_mm=f,
+                sensor=sensor_size,
+                image=image_size,
             ),
             ct.SpatialOrientation(
                 elevation_m=alt,
@@ -180,10 +184,18 @@ def georeference(
         )
 
         gcp1 = rasterio.control.GroundControlPoint(
-            row=0, col=0, x=coords[0, 1], y=coords[0, 0], z=coords[0, 2],
+            row=0,
+            col=0,
+            x=coords[0, 1],
+            y=coords[0, 0],
+            z=coords[0, 2],
         )
         gcp2 = rasterio.control.GroundControlPoint(
-            row=image_size[0] - 1, col=0, x=coords[1, 1], y=coords[1, 0], z=coords[1, 2],
+            row=image_size[0] - 1,
+            col=0,
+            x=coords[1, 1],
+            y=coords[1, 0],
+            z=coords[1, 2],
         )
         gcp3 = rasterio.control.GroundControlPoint(
             row=image_size[0] - 1,
@@ -193,13 +205,22 @@ def georeference(
             z=coords[2, 2],
         )
         gcp4 = rasterio.control.GroundControlPoint(
-            row=0, col=image_size[1] - 1, x=coords[3, 1], y=coords[3, 0], z=coords[3, 2],
+            row=0,
+            col=image_size[1] - 1,
+            x=coords[3, 1],
+            y=coords[3, 0],
+            z=coords[3, 2],
         )
 
         return rasterio.transform.from_gcps([gcp1, gcp2, gcp3, gcp4])
 
     def __get_georefence_by_uuid(
-        metadata, lines=None, altitude=None, yaw=None, pitch=None, roll=None,
+        metadata,
+        lines=None,
+        altitude=None,
+        yaw=None,
+        pitch=None,
+        roll=None,
     ):
         """
         Given a DataFrame and a list of flight lines, calculate a dictionary with the transformation matrix for each capture
@@ -282,13 +303,18 @@ def georeference(
 
     metadata = metadata.set_index(metadata["filename"])
     georefence_by_uuid = __get_georefence_by_uuid(
-        metadata, lines, altitude, yaw, pitch, roll,
+        metadata,
+        lines,
+        altitude,
+        yaw,
+        pitch,
+        roll,
     )
 
     for uuid, transform in tqdm(
-        georefence_by_uuid.items(), total=len(georefence_by_uuid.items()),
+        georefence_by_uuid.items(),
+        total=len(georefence_by_uuid.items()),
     ):
-
         with rasterio.open(os.path.join(input_dir, uuid), "r") as src:
             data = src.read()
 
@@ -304,7 +330,9 @@ def georeference(
             }
 
             with rasterio.open(
-                os.path.join(output_dir, __convert_to_tif(uuid)), "w", **profile,
+                os.path.join(output_dir, __convert_to_tif(uuid)),
+                "w",
+                **profile,
             ) as dst:
                 dst.write(
                     data if axis_to_flip is None else np.flip(data, axis=axis_to_flip),

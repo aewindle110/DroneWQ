@@ -94,7 +94,9 @@ def hedley(random_n=10, num_workers=4, executor=None):
 
     if executor is not None:
         partial_compute = partial(
-            _compute, mean_min_lt_NIR=mean_min_lt_NIR, lw_dir=lw_dir,
+            _compute,
+            mean_min_lt_NIR=mean_min_lt_NIR,
+            lw_dir=lw_dir,
         )
         results = list(executor.map(partial_compute, filepaths))
         logger.info(

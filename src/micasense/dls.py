@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 """
 MicaSense Downwelling Light Sensor Utilities
 
@@ -22,7 +21,6 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-
 
 import numpy as np
 
@@ -58,7 +56,7 @@ def fresnel(phi):
 
 # define functions to compute the DLS-Sun angle:
 def __fresnel_transmission(phi, n1=1.000277, n2=1.38, polarization=[0.5, 0.5]):
-    """compute fresnel transmission between media with refractive indices n1 and n2"""
+    """Compute fresnel transmission between media with refractive indices n1 and n2"""
     # computes the reflection and transmittance
     # for incidence angles  phi for transition from medium
     # with refractive index n1 to n2
@@ -84,7 +82,7 @@ def __fresnel_transmission(phi, n1=1.000277, n2=1.38, polarization=[0.5, 0.5]):
 def __multilayer_transmission(phi, n, polarization=[0.5, 0.5]):
     T = 1.0
     phi_eff = np.copy(phi)
-    for i in range(0, len(n) - 1):
+    for i in range(len(n) - 1):
         n1 = n[i]
         n2 = n[i + 1]
         phi_eff = np.arcsin(np.sin(phi_eff) / n1)
@@ -139,7 +137,7 @@ def compute_sun_angle(
     utc_datetime,
     sensor_orientation,
 ):
-    """compute the sun angle using pysolar functions"""
+    """Compute the sun angle using pysolar functions"""
     altitude = 0
     azimuth = 0
     import warnings

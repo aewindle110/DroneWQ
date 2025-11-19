@@ -29,7 +29,7 @@ def _compute(
 
             # Extract NIR (band 5) and green (band 2)
             # Note: rasterio uses 1-based indexing in read(), 0-based in arrays
-            nir = rrs[4, :, :]   # Band 5 -> index 4
+            nir = rrs[4, :, :]  # Band 5 -> index 4
             green = rrs[1, :, :]  # Band 2 -> index 1
 
             # Create boolean masks (True = invalid pixel)
@@ -58,7 +58,6 @@ def _compute(
             str(e),
         )
         raise
-
 
 
 def threshold_masking(

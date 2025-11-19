@@ -32,7 +32,7 @@ def write_metadata_csv(img_dir, csv_output_path):
     data_records = []
 
     for i, capture in enumerate(img_set.captures):
-        filename = f"capture_{i+1}.tif"
+        filename = f"capture_{i + 1}.tif"
         fullOutputPath = os.path.join(img_dir, filename)
 
         img = capture.images[0]

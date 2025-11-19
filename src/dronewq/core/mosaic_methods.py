@@ -109,9 +109,10 @@ def __get_merge_transform(raster_paths, max_iterations=10000):
 
     mid_point = get_center(raster_corners)
     mid_point_first_capture = get_center(raster_corners[0:4])
-    c, f = mid_point[0] + (
-        raster_corners[0][0] - mid_point_first_capture[0]
-    ), mid_point[1] + (raster_corners[0][1] - mid_point_first_capture[1])
+    c, f = (
+        mid_point[0] + (raster_corners[0][0] - mid_point_first_capture[0]),
+        mid_point[1] + (raster_corners[0][1] - mid_point_first_capture[1]),
+    )
 
     transform = Affine(
         a=original_transform.a,
@@ -157,7 +158,13 @@ def __get_merge_transform(raster_paths, max_iterations=10000):
 
 
 def __mean(
-    dst, raster_paths, n_bands, width, height, dtype=np.float32, band_index=None,
+    dst,
+    raster_paths,
+    n_bands,
+    width,
+    height,
+    dtype=np.float32,
+    band_index=None,
 ):
     """
     Merge method that calculates the mean value in those positions where more than one raster write its values.
@@ -192,17 +199,25 @@ def __mean(
             lons, lats = __latlon_to_index(dst, src)
 
             final_data[:, lons, lats] = np.nansum(
-                [data, final_data[:, lons, lats]], axis=0,
+                [data, final_data[:, lons, lats]],
+                axis=0,
             )
             count[:, lons, lats] = np.nansum(
-                [~np.isnan(data), count[:, lons, lats]], axis=0,
+                [~np.isnan(data), count[:, lons, lats]],
+                axis=0,
             )
 
     return np.divide(final_data, count)
 
 
 def __first(
-    dst, raster_paths, n_bands, width, height, dtype=np.float32, band_index=None,
+    dst,
+    raster_paths,
+    n_bands,
+    width,
+    height,
+    dtype=np.float32,
+    band_index=None,
 ):
     """
     Merge method that keeps the first value in write those positions where more than one raster write its values.
@@ -277,7 +292,8 @@ def __max(dst, raster_paths, n_bands, width, height, dtype=np.float32, band_inde
             lons, lats = __latlon_to_index(dst, src)
 
             final_data[:, lons, lats] = np.nanmax(
-                [data, final_data[:, lons, lats]], axis=0,
+                [data, final_data[:, lons, lats]],
+                axis=0,
             )
 
     return final_data
@@ -317,7 +333,8 @@ def __min(dst, raster_paths, n_bands, width, height, dtype=np.float32, band_inde
             lons, lats = __latlon_to_index(dst, src)
 
             final_data[:, lons, lats] = np.nanmin(
-                [data, final_data[:, lons, lats]], axis=0,
+                [data, final_data[:, lons, lats]],
+                axis=0,
             )
 
     return final_data

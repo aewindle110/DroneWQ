@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 """
 RedEdge Image Class
 
@@ -26,16 +25,13 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import os
-import cv2
 import math
+import os
+
+import cv2
 import numpy as np
 
-import matplotlib.pyplot as plt
-import micasense.plotutils as plotutils
-import micasense.metadata as metadata
-import micasense.dls as dls
-
+from micasense import dls, metadata, plotutils
 
 # helper function to convert euler angles to a rotation matrix
 def rotations_degrees_to_rotation_matrix(rotation_degrees):
@@ -55,7 +51,7 @@ def rotations_degrees_to_rotation_matrix(rotation_degrees):
     return R
 
 
-class Image(object):
+class Image:
     """
     An Image is a single file taken by a RedEdge camera representing one
     band of multispectral information
@@ -63,13 +59,13 @@ class Image(object):
 
     def __init__(self, image_path, exiftool_obj=None):
         if not os.path.isfile(image_path):
-            raise IOError("Provided path is not a file: {}".format(image_path))
+            raise OSError(f"Provided path is not a file: {image_path}")
         self.path = image_path
         self.meta = metadata.Metadata(self.path, exiftool_obj=exiftool_obj)
 
         if self.meta.band_name() is None:
             raise ValueError(
-                "Provided file path does not have a band name: {}".format(image_path)
+                f"Provided file path does not have a band name: {image_path}",
             )
         if (
             self.meta.band_name().upper() != "LWIR"
@@ -77,7 +73,7 @@ class Image(object):
         ):
             raise ValueError(
                 "Library requires images taken with RedEdge-(3/M/MX) camera firmware v2.1.0 or later. "
-                + "Upgrade your camera firmware to at least version 2.1.0 to use this library with RedEdge-(3/M/MX) cameras."
+                 "Upgrade your camera firmware to at least version 2.1.0 to use this library with RedEdge-(3/M/MX) cameras.",
             )
 
         self.utc_time = self.meta.utc_time()
@@ -164,7 +160,7 @@ class Image(object):
                 self.solar_elevation,
                 self.solar_azimuth,
             ) = dls.compute_sun_angle(
-                self.location, (0, 0, 0), self.utc_time, self.dls_orientation_vector
+                self.location, (0, 0, 0), self.utc_time, self.dls_orientation_vector,
             )
             self.angular_correction = dls.fresnel(self.sun_sensor_angle)
             self.horizontal_irradiance = 0
@@ -207,10 +203,12 @@ class Image(object):
         return self.horizontal_irradiance_from_direct_scattered()
 
     def compute_horizontal_irradiance_dls2(self):
-        """Compute the proper solar elevation, solar azimuth, and horizontal irradiance
-        for cases where the camera system did not do it correctly"""
+        """
+        Compute the proper solar elevation, solar azimuth, and horizontal irradiance
+        for cases where the camera system did not do it correctly
+        """
         _, _, _, self.solar_elevation, self.solar_azimuth = dls.compute_sun_angle(
-            self.location, (0, 0, 0), self.utc_time, np.array([0, 0, -1])
+            self.location, (0, 0, 0), self.utc_time, np.array([0, 0, -1]),
         )
         return self.horizontal_irradiance_from_direct_scattered()
 
@@ -239,17 +237,17 @@ class Image(object):
                 self.__raw_image = rawpy.imread(self.path).raw_image
             except ImportError:
                 self.__raw_image = cv2.imread(self.path, -1)
-            except IOError:
-                print("Could not open image at path {}".format(self.path))
+            except OSError:
+                print(f"Could not open image at path {self.path}")
                 raise
         return self.__raw_image
 
     def set_raw(self, img):
-        """set raw image from input img"""
+        """Set raw image from input img"""
         self.__raw_image = img.astype(np.uint16)
 
     def set_undistorted(self, img):
-        """set undistorted image from input img"""
+        """Set undistorted image from input img"""
         self.__undistorted_image = img.astype(np.uint16)
 
     def set_external_rig_relatives(self, external_rig_relatives):
@@ -267,7 +265,7 @@ class Image(object):
         # to do - set the distortion etc.
 
     def clear_image_data(self):
-        """clear all computed images to reduce memory overhead"""
+        """Clear all computed images to reduce memory overhead"""
         self.__raw_image = None
         self.__intensity_image = None
         self.__radiance_image = None
@@ -293,7 +291,7 @@ class Image(object):
                 irradiance = self.horizontal_irradiance
             else:
                 raise RuntimeError(
-                    "Provide a band-specific spectral irradiance to compute reflectance"
+                    "Provide a band-specific spectral irradiance to compute reflectance",
                 )
         if self.band_name != "LWIR":
             self.__reflectance_irradiance = irradiance
@@ -303,9 +301,11 @@ class Image(object):
         return self.__reflectance_image
 
     def intensity(self, force_recompute=False):
-        """Lazy=computes and returns the intensity image after black level,
+        """
+        Lazy=computes and returns the intensity image after black level,
         vignette, and row correction applied.
-        Intensity is in units of DN*Seconds without a radiance correction"""
+        Intensity is in units of DN*Seconds without a radiance correction
+        """
         if self.__intensity_image is not None and force_recompute == False:
             return self.__intensity_image
 
@@ -333,8 +333,10 @@ class Image(object):
         return self.__intensity_image
 
     def radiance(self, force_recompute=False):
-        """Lazy=computes and returns the radiance image after all radiometric
-        corrections have been applied"""
+        """
+        Lazy=computes and returns the radiance image after all radiometric
+        corrections have been applied
+        """
         if self.__radiance_image is not None and force_recompute == False:
             return self.__radiance_image
 
@@ -365,7 +367,8 @@ class Image(object):
         return self.__radiance_image
 
     def vignette(self):
-        """Get a numpy array which defines the value to multiply each pixel by to correct
+        """
+        Get a numpy array which defines the value to multiply each pixel by to correct
         for optical vignetting effects.
         Note: this array is transposed from normal image orientation and comes as part
         of a three-tuple, the other parts of which are also used by the radiance method.
@@ -441,7 +444,7 @@ class Image(object):
         return (t_x, t_y)
 
     def undistorted(self, image):
-        """return the undistorted image from input image"""
+        """Return the undistorted image from input image"""
         # If we have already undistorted the same source, just return that here
         # otherwise, lazy compute the undstorted image
         if (
@@ -453,7 +456,7 @@ class Image(object):
         self.__undistorted_source = image
 
         new_cam_mat, _ = cv2.getOptimalNewCameraMatrix(
-            self.cv2_camera_matrix(), self.cv2_distortion_coeff(), self.size(), 1
+            self.cv2_camera_matrix(), self.cv2_distortion_coeff(), self.size(), 1,
         )
         map1, map2 = cv2.initUndistortRectifyMap(
             self.cv2_camera_matrix(),
@@ -470,41 +473,37 @@ class Image(object):
     def plot_raw(self, title=None, figsize=None):
         """Create a single plot of the raw image"""
         if title is None:
-            title = "{} Band {} Raw DN".format(self.band_name, self.band_index)
+            title = f"{self.band_name} Band {self.band_index} Raw DN"
         return plotutils.plotwithcolorbar(self.raw(), title=title, figsize=figsize)
 
     def plot_intensity(self, title=None, figsize=None):
         """Create a single plot of the image converted to uncalibrated intensity"""
         if title is None:
-            title = "{} Band {} Intensity (DN*sec)".format(
-                self.band_name, self.band_index
-            )
+            title = f"{self.band_name} Band {self.band_index} Intensity (DN*sec)"
         return plotutils.plotwithcolorbar(
-            self.intensity(), title=title, figsize=figsize
+            self.intensity(), title=title, figsize=figsize,
         )
 
     def plot_radiance(self, title=None, figsize=None):
         """Create a single plot of the image converted to radiance"""
         if title is None:
-            title = "{} Band {} Radiance".format(self.band_name, self.band_index)
+            title = f"{self.band_name} Band {self.band_index} Radiance"
         return plotutils.plotwithcolorbar(self.radiance(), title=title, figsize=figsize)
 
     def plot_vignette(self, title=None, figsize=None):
         """Create a single plot of the vignette"""
         if title is None:
-            title = "{} Band {} Vignette".format(self.band_name, self.band_index)
+            title = f"{self.band_name} Band {self.band_index} Vignette"
         return plotutils.plotwithcolorbar(
-            self.plottable_vignette(), title=title, figsize=figsize
+            self.plottable_vignette(), title=title, figsize=figsize,
         )
 
     def plot_undistorted_radiance(self, title=None, figsize=None):
         """Create a single plot of the undistorted radiance"""
         if title is None:
-            title = "{} Band {} Undistorted Radiance".format(
-                self.band_name, self.band_index
-            )
+            title = f"{self.band_name} Band {self.band_index} Undistorted Radiance"
         return plotutils.plotwithcolorbar(
-            self.undistorted(self.radiance()), title=title, figsize=figsize
+            self.undistorted(self.radiance()), title=title, figsize=figsize,
         )
 
     def plot_all(self, figsize=(13, 10)):
@@ -516,7 +515,7 @@ class Image(object):
         ]
         plot_types = ["Raw", "Vignette", "Radiance", "Undistorted Radiance"]
         titles = [
-            "{} Band {} {}".format(str(self.band_name), str(self.band_index), tpe)
+            f"{self.band_name!s} Band {self.band_index!s} {tpe}"
             for tpe in plot_types
         ]
         plotutils.subplotwithcolorbar(2, 2, plots, titles, figsize=figsize)
@@ -536,10 +535,10 @@ class Image(object):
         A[0:3, 3] = T
         A[3, 3] = 1.0
         C, _ = cv2.getOptimalNewCameraMatrix(
-            self.cv2_camera_matrix(), self.cv2_distortion_coeff(), self.size(), 1
+            self.cv2_camera_matrix(), self.cv2_distortion_coeff(), self.size(), 1,
         )
         Cr, _ = cv2.getOptimalNewCameraMatrix(
-            ref.cv2_camera_matrix(), ref.cv2_distortion_coeff(), ref.size(), 1
+            ref.cv2_camera_matrix(), ref.cv2_distortion_coeff(), ref.size(), 1,
         )
         CC = np.zeros((4, 4))
         CC[0:3, 0:3] = C

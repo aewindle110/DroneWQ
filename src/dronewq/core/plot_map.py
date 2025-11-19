@@ -1,4 +1,3 @@
-from typing import Tuple
 
 import contextily as cx
 import matplotlib.pyplot as plt
@@ -50,7 +49,9 @@ def plot_basemap(
         latlon_projection: str = "epsg:4326"
         pseudo_mercator_projection: str = "epsg:3857"
         transformer: Transformer = Transformer.from_crs(
-            latlon_projection, pseudo_mercator_projection, always_xy=True,
+            latlon_projection,
+            pseudo_mercator_projection,
+            always_xy=True,
         )
 
         with rioxarray.open_rasterio(source) as src:
@@ -59,15 +60,16 @@ def plot_basemap(
                 mask_lat = (src.y >= south) & (src.y <= north)
                 new_src = src.where(mask_lon & mask_lat, drop=True)
             else:
-
                 new_src = src
 
             data = np.transpose(new_src.values, (1, 2, 0))
             new_west, new_north = transformer.transform(
-                new_src.x.min(), new_src.y.max(),
+                new_src.x.min(),
+                new_src.y.max(),
             )
             new_east, new_south = transformer.transform(
-                new_src.x.max(), new_src.y.min(),
+                new_src.x.max(),
+                new_src.y.min(),
             )
             extent = new_west, new_east, new_south, new_north
 
@@ -76,7 +78,11 @@ def plot_basemap(
 
     ax.imshow(data, extent=extent)
     gl = ax.gridlines(
-        draw_labels=True, linewidth=0.8, color="black", alpha=0.3, linestyle="-",
+        draw_labels=True,
+        linewidth=0.8,
+        color="black",
+        alpha=0.3,
+        linestyle="-",
     )
     gl.top_labels = gl.right_labels = False
     gl.xformatter, gl.yyformatter = LONGITUDE_FORMATTER, LATITUDE_FORMATTER
@@ -92,7 +98,7 @@ def plot_georeferenced_data(
     cmap: str,
     norm: None = None,
     basemap: Bunch | str = None,
-) -> Tuple[plt.Axes, AxesImage]:
+) -> tuple[plt.Axes, AxesImage]:
     """
     Loads a single-band GeoTIFF, projects it to pseudo-Mercator (EPSG:3857),
     and plots it over the given matplotlib Axes.
@@ -112,7 +118,9 @@ def plot_georeferenced_data(
     latlon_projection = "EPSG:4326"
     pseudo_mercator_projection = "EPSG:3857"
     transformer = Transformer.from_crs(
-        latlon_projection, pseudo_mercator_projection, always_xy=True,
+        latlon_projection,
+        pseudo_mercator_projection,
+        always_xy=True,
     )
 
     # --- Open raster to get geometry and basemap ---

@@ -42,7 +42,9 @@ def _compute(
                 im,
             )  # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(
-                os.path.join(masked_rrs_dir, im_name), "w", **profile,
+                os.path.join(masked_rrs_dir, im_name),
+                "w",
+                **profile,
             ) as dst:
                 dst.write(stacked_rrs_deglint)
     except Exception as e:

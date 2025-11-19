@@ -79,7 +79,9 @@ def mosaic(
         profile["count"] = 1
 
         with rasterio.open(
-            output_name.replace(".", f"_band_{band_names[0]}."), "w", **profile,
+            output_name.replace(".", f"_band_{band_names[0]}."),
+            "w",
+            **profile,
         ) as dst:
             data = method(dst, raster_paths, n_bands, width, height, dtype)
 
@@ -129,7 +131,7 @@ def downsample(
         raster_name = os.path.basename(raster_path)
         out_name = os.path.join(
             output_dir,
-            f'{raster_name.split(".")[0]}_x_{scale_x}_y_{scale_y}_method_{method.name}.tif',
+            f"{raster_name.split('.')[0]}_x_{scale_x}_y_{scale_y}_method_{method.name}.tif",
         )
 
         with rasterio.open(raster_path, "r") as dataset:

@@ -1,15 +1,15 @@
 import numpy as np
 
 class Paralelogram2D:
-    """This class represents a paralelogram"""
+    """
+    This class represents a paralelogram
+    It receives a list of points and sets the pairs of lines
+
+    Parameters
+        points (List[Tuple[float, float]]): list of corner points that determinate a paralelogram
+    """
 
     def __init__(self, points):
-        """
-        This constructor receives a list of points and sets the pairs of lines
-
-        Parameters
-            points (List[Tuple[float, float]]): list of corner points that determinate a paralelogram
-        """
         self.points = points
         self.lines = [[0, 1], [1, 2], [2, 3], [3, 0]]
         self.pairs = [[0, 2], [1, 3]]
@@ -145,7 +145,9 @@ def are_points_within_vertices(vertices, points):
 
     for point in points:
         all_points_in_merge &= is_point_within_vertices(
-            x=point[0], y=point[1], vertices=vertices,
+            x=point[0],
+            y=point[1],
+            vertices=vertices,
         )
 
     return all_points_in_merge

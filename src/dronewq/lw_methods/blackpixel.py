@@ -84,7 +84,8 @@ def blackpixel(num_workers=4, executor=None):
     )
     sky_imgs = np.array(list(sky_imgs_gen))
     lsky_median = np.median(
-        sky_imgs, axis=(0, 2, 3),
+        sky_imgs,
+        axis=(0, 2, 3),
     )  # here we want the median of each band
     del sky_imgs
 

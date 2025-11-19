@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 """
 PanelResolver class
 
@@ -24,23 +23,20 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import math
-import numpy as np
-import cv2
 import re
-import pyzbar.pyzbar as pyzbar
 
-from skimage import measure
+import cv2
 import matplotlib.pyplot as plt
-import micasense.imageutils as imageutils
+import numpy as np
+from pyzbar import pyzbar
+from skimage import measure
 
-
-class Panel(object):
-
+class Panel:
     def __init__(self, img, panelCorners=None, ignore_autocalibration=False):
         # if we have panel images with QR metadata, panel detection is not called,
         # so this can be forced here
         if img is None:
-            raise IOError("Must provide an image")
+            raise OSError("Must provide an image")
 
         self.image = img
         bias = img.radiance().min()
@@ -128,8 +124,7 @@ class Panel(object):
             c = np.polyfit([min_wl, max_wl], [min_rf, max_rf], 1)
             p = np.poly1d(c)
             return p(self.image.center_wavelength)
-        else:
-            return None
+        return None
 
     def qr_corners(self):
         if self.__panel_type == "auto":
@@ -151,7 +146,8 @@ class Panel(object):
         return self.qr_bounds is not None
 
     def panel_corners(self):
-        """get the corners of a panel region based on the qr code location
+        """
+        Get the corners of a panel region based on the qr code location
         Our algorithm to do this uses a 'reference' qr code location and
         it's associate panel region.  We find the affine transform
         between the reference qr and our qr, and apply that same transform to the
@@ -200,11 +196,11 @@ class Panel(object):
             np.asarray([[-s, s], [s, s], [s, -s], [-s, -s]], dtype=np.float32) * 0.5 + T
         )
         reference_qr_pts = np.asarray(
-            [[-p, p], [p, p], [p, -p], [-p, -p]], dtype=np.float32
+            [[-p, p], [p, p], [p, -p], [-p, -p]], dtype=np.float32,
         )
         bounds = []
         costs = []
-        for rotation in range(0, 4):
+        for rotation in range(4):
             qr_points = np.roll(reference_qr_pts, rotation, axis=0)
 
             src = np.asarray([tuple(row) for row in qr_points[:]], np.float32)
@@ -217,7 +213,7 @@ class Panel(object):
 
             pts = np.asarray([reference_panel_pts], "float32")
             panel_bounds = cv2.convexHull(
-                cv2.perspectiveTransform(pts, warp_matrix), clockwise=False
+                cv2.perspectiveTransform(pts, warp_matrix), clockwise=False,
             )
             panel_bounds = np.squeeze(panel_bounds)  # remove nested lists
 
@@ -227,7 +223,7 @@ class Panel(object):
                     bounds_in_image = False
             if bounds_in_image:
                 mean, std, _, _ = self.region_stats(
-                    self.image.raw(), panel_bounds, sat_threshold=65000
+                    self.image.raw(), panel_bounds, sat_threshold=65000,
                 )
                 bounds.append(panel_bounds.astype(np.int32))
                 costs.append(std / mean)
@@ -261,9 +257,11 @@ class Panel(object):
         ]
 
     def region_stats(self, img, region, sat_threshold=None):
-        """Provide regional statistics for a image over a region
+        """
+        Provide regional statistics for a image over a region
         Inputs: img is any image ndarray, region is a skimage shape
-        Outputs: mean, std, count, and saturated count tuple for the region"""
+        Outputs: mean, std, count, and saturated count tuple for the region
+        """
         rev_panel_pts = np.fliplr(region)  # skimage and opencv coords are reversed
         w, h = img.shape
         mask = measure.grid_points_in_poly((w, h), rev_panel_pts)
@@ -286,7 +284,7 @@ class Panel(object):
     def intensity(self):
         intensity_img = self.image.undistorted(self.image.intensity())
         return self.region_stats(
-            intensity_img, self.panel_corners(), sat_threshold=65000
+            intensity_img, self.panel_corners(), sat_threshold=65000,
         )
 
     def radiance(self):
@@ -297,7 +295,7 @@ class Panel(object):
         reflectance_image = self.image.reflectance()
         if reflectance_image is None:
             print(
-                "First calculate the reflectance image by providing a\n band specific irradiance to the calling image.reflectance(irradiance)"
+                "First calculate the reflectance image by providing a\n band specific irradiance to the calling image.reflectance(irradiance)",
             )
         mean, _, _, _ = self.region_stats(reflectance_image, self.panel_corners())
         return mean
