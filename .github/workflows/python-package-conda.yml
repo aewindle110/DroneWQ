@@ -23,15 +23,16 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-        conda activate base
+        conda create -y -n dronewq python=3.10
+        conda activate dronewq
+        echo "conda activate myenv" >> ~/.bashrc
     - name: Install gdal
       run: |
         conda install gdal -y
     - name: Install dependencies
       run: |
+        source ~/.bashrc
         pip install -e .
-    - name: Install hatch
-      run: |
         pip install hatch
     - name: Test with pytest
       run: |
