@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 import pandas as pd
 import rasterio
-from osgeo import gdal
 
 import dronewq
 import micasense
@@ -139,7 +138,6 @@ def save(
     generateThumbnails=True,
 ):
     """Save a single capture with proper error handling."""
-    gdal.UseExceptions()
     try:
         capture.dls_irradiance = None
         capture.compute_undistorted_radiance()
