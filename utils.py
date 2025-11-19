@@ -12,8 +12,6 @@ import scipy.ndimage as ndimage
 from skimage.transform import resize
 from pathlib import Path
 
-from ipywidgets import FloatProgress, Layout
-from IPython.display import display
 
 from micasense import imageset as imageset
 from micasense import capture as capture
