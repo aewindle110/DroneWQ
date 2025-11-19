@@ -1,12 +1,14 @@
-import random
-import numpy as np
-import glob
-import rasterio
-import os
 import concurrent.futures
+import glob
 import logging
+import os
+import random
 from functools import partial
+
+import numpy as np
+import rasterio
 from numpy.polynomial import Polynomial
+
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -14,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 def _compute(filepath, mean_min_lt_NIR, lw_dir):
     """Worker function that processes a single file."""
-
     im_name = os.path.basename(filepath)
 
     with rasterio.open(filepath, "r") as lt_src:
@@ -23,7 +24,7 @@ def _compute(filepath, mean_min_lt_NIR, lw_dir):
         lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
 
         lw_all = []
-        for j in range(0, 4):
+        for j in range(4):
             # Fit polynomial using new API
             p = Polynomial.fit(lt_reshape[4, :], lt_reshape[j, :], 1)
             # Extract slope coefficient (coefficient of x^1 term)
@@ -59,12 +60,12 @@ def hedley(random_n=10, num_workers=4, executor=None):
     established, and for each pixel, the slope of this line is multiplied
     by the difference between the pixel NIR value and the ambient NIR level.
 
-    Parameters:
+    Parameters
         random_n: The amount of random images to calculate ambient NIR level.
             Default is 10.
         num_workers: Number of parallel processes. Depends on hardware.
 
-    Returns:
+    Returns
          New Lw .tifs with units of W/sr/nm
     """
     if settings.main_dir is None:
@@ -93,7 +94,7 @@ def hedley(random_n=10, num_workers=4, executor=None):
 
     if executor is not None:
         partial_compute = partial(
-            _compute, mean_min_lt_NIR=mean_min_lt_NIR, lw_dir=lw_dir
+            _compute, mean_min_lt_NIR=mean_min_lt_NIR, lw_dir=lw_dir,
         )
         results = list(executor.map(partial_compute, filepaths))
         logger.info(
@@ -103,7 +104,7 @@ def hedley(random_n=10, num_workers=4, executor=None):
 
     else:
         with concurrent.futures.ProcessPoolExecutor(
-            max_workers=num_workers
+            max_workers=num_workers,
         ) as executor:
             futures = {}
             for filepath in filepaths:

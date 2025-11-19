@@ -1,12 +1,14 @@
-from dronewq.utils.settings import settings
-from dronewq.utils.images import load_imgs
+import concurrent.futures
 import glob
+import logging
 import os
+from functools import partial
+
 import numpy as np
 import rasterio
-import logging
-from functools import partial
-import concurrent.futures
+
+from dronewq.utils.images import load_imgs
+from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +39,10 @@ def _compute(
             stacked_rrs_deglint = np.stack(rrs_deglint_all)  # stack into np.array
             # write new stacked tifs
             im_name = os.path.basename(
-                im
+                im,
             )  # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(
-                os.path.join(masked_rrs_dir, im_name), "w", **profile
+                os.path.join(masked_rrs_dir, im_name), "w", **profile,
             ) as dst:
                 dst.write(stacked_rrs_deglint)
     except Exception as e:
@@ -61,7 +63,7 @@ def std_masking(num_images=10, mask_std_factor=1, num_workers=4, executor=None):
     NIR value > mean + std*mask_std_factor is masked across all bands.
     The lower the mask_std_factor, the more pixels will be masked.
 
-    Parameters:
+    Parameters
         num_images: Number of images in the dataset to calculate
             the mean and std of NIR. Default is 10.
 
@@ -71,11 +73,10 @@ def std_masking(num_images=10, mask_std_factor=1, num_workers=4, executor=None):
         num_workers: Number of parallelizing done on different cores.
             Depends on hardware.
 
-    Returns:
+    Returns
         New masked .tifs
 
     """
-
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
 
@@ -119,7 +120,7 @@ def std_masking(num_images=10, mask_std_factor=1, num_workers=4, executor=None):
         results = list(executor.map(partial_compute, filepaths))
     else:
         with concurrent.futures.ProcessPoolExecutor(
-            max_workers=num_workers
+            max_workers=num_workers,
         ) as executor:
             results = list(executor.map(partial_compute, filepaths))
 

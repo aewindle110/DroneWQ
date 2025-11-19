@@ -1,11 +1,13 @@
-from dronewq.utils.settings import settings
-from functools import partial
 import concurrent.futures
+import glob
+import logging
+import os
+from functools import partial
+
 import numpy as np
 import rasterio
-import logging
-import glob
-import os
+
+from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +57,7 @@ def save_wq_imgs(
     """
     This function saves new .tifs with units of chl (ug/L) or TSM (mg/m3).
 
-    Parameters:
+    Parameters
         rrs_dir: A string containing directory of Rrs images
 
         wq_alg: what wq algorithm to apply
@@ -64,10 +66,9 @@ def save_wq_imgs(
 
         count: The amount of images to load. Default is 10000
 
-    Returns:
+    Returns
         New georeferenced .tifs with same units of images in img_dir
     """
-
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
 
@@ -119,10 +120,10 @@ def chl_hu(Rrs):
     Documentation can be found here:
     https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. doi: 10.1029/2011jc007395
 
-    Parameters:
+    Parameters
         Rrs: Takes in a numpy array of shape (bands, width, height).
 
-    Returns:
+    Returns
         ChlCI: Numpy array of derived chlorophyll (mg m^-3).
 
     """
@@ -148,10 +149,10 @@ def chl_ocx(Rrs):
     The coefficients for OC2 (OLI/Landsat 8) are used as default.
     doi: 10.1029/98JC02160.
 
-    Parameters:
+    Parameters
         Rrs: Takes in a numpy array of shape (bands, width, height).
 
-    Returns:
+    Returns
         Numpy array of derived chlorophyll (mg m^-3).
 
     """
@@ -182,10 +183,10 @@ def chl_hu_ocx(Rrs):
     Documentation can be found here:
     https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0#introduction.
 
-    Parameters:
+    Parameters
         Rrs: Takes in a numpy array of shape (bands, width, height).
 
-    Returns:
+    Returns
         chlor_a: Numpy array of derived chlorophyll (mg m^-3).
     """
     thresh = [0.15, 0.20]
@@ -213,10 +214,10 @@ def chl_gitelson(Rrs):
     This algorithm is recommended for coastal (Case 2) waters.
     doi:10.1016/j.rse.2007.01.016
 
-    Parameters:
+    Parameters
         Rrs: Takes in a numpy array of shape (bands, width, height).
 
-    Returns:
+    Returns
         chl: Numpy array of derived chlorophyll (mg m^-3).
     """
     Rrsred = Rrs[2, :, :]
@@ -235,10 +236,10 @@ def tsm_nechad(Rrs):
     concentrations using the Nechad et al. (2010) algorithm.
     doi:10.1016/j.rse.2009.11.022
 
-    Parameters:
+    Parameters
         Rrs: Takes in a numpy array of shape (bands, width, height).
 
-    Returns:
+    Returns
         tsm: Numpy array of derived chlorophyll (mg m^-3).
     """
     Rrsred = Rrs[2, :, :]

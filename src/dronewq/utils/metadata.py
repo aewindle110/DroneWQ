@@ -1,21 +1,21 @@
-import os
-import pandas as pd
 import math
-from micasense.imageset import ImageSet
+import os
 
+import pandas as pd
+
+from micasense.imageset import ImageSet
 
 def write_metadata_csv(img_dir, csv_output_path):
     """
     Grabs EXIF metadata from img_set and writes it to outputPath/metadata.csv.
 
-    Parameters:
+    Parameters
         img_dir: A string containing the filepath of the raw .tifs
         csv_output_path: A string containing the filepath to store metadata.csv
 
-    Returns:
+    Returns
         A string path to the generated .csv file
     """
-
     if not os.path.exists(img_dir):
         raise FileNotFoundError(f"Image directory {img_dir} does not exist.")
 

@@ -1,8 +1,9 @@
-from dronewq.utils.utils import dotdict
-import logging
-import pickle
 import copy
+import logging
 import os
+import pickle
+
+from dronewq.utils.utils import dotdict
 
 logging.basicConfig(
     level=logging.INFO,
@@ -45,8 +46,8 @@ class Settings:
     def __getattr__(self, name):
         if name in main_thread_config:
             return main_thread_config[name]
-        else:
-            raise ValueError(f"Settings has no attribute '{name}'.")
+        msg = f"Settings has no attribute '{name}'."
+        raise ValueError(msg)
 
     def __setattr__(self, name, value):
         if name in ("_instance",):
@@ -83,7 +84,8 @@ class Settings:
         with open(path, "rb") as src:
             cfg = pickle.load(src)
         if not isinstance(cfg, dict):
-            raise ValueError("settings.pkl does not contain a valid config dict")
+            msg = "settings.pkl does not contain a valid config dict"
+            raise ValueError(msg)
         # update global config in-place and return the singleton
         for k, v in cfg.items():
             main_thread_config[k] = v
@@ -109,7 +111,7 @@ class Settings:
 
             main_dir = kwargs["main_dir"]
             main_thread_config["raw_water_dir"] = os.path.join(
-                main_dir, "raw_water_imgs"
+                main_dir, "raw_water_imgs",
             )
             main_thread_config["raw_sky_dir"] = os.path.join(main_dir, "raw_sky_imgs")
             main_thread_config["lt_dir"] = os.path.join(main_dir, "lt_imgs")
@@ -118,7 +120,7 @@ class Settings:
             main_thread_config["panel_dir"] = os.path.join(main_dir, "panel")
             main_thread_config["rrs_dir"] = os.path.join(main_dir, "rrs_imgs")
             main_thread_config["masked_rrs_dir"] = os.path.join(
-                main_dir, "masked_rrs_imgs"
+                main_dir, "masked_rrs_imgs",
             )
             main_thread_config["warp_img_dir"] = os.path.join(main_dir, "align_img")
             main_thread_config["metadata"] = os.path.join(main_dir, "metadata.csv")

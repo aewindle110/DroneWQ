@@ -1,12 +1,14 @@
-import numpy as np
-import glob
-import rasterio
-import os
 import concurrent.futures
+import glob
 import logging
+import os
 from functools import partial
-from dronewq.utils.settings import settings
+
+import numpy as np
+import rasterio
+
 from dronewq.utils.images import load_imgs
+from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,7 @@ def _compute(filepath, lw_dir, lsky_median):
 
             # write new stacked lw tifs
             im_name = os.path.basename(
-                im
+                im,
             )  # we're grabbing just the .tif file name instead of the whole path
             with rasterio.open(os.path.join(lw_dir, im_name), "w", **profile) as dst:
                 dst.write(stacked_lw)
@@ -56,10 +58,11 @@ def blackpixel(num_workers=4, executor=None):
     high concentrations of particles enhance backscattering
     and Lw in the NIR (i.e. Case 2 waters).
 
-    Parameters:
+    Parameters
         num_workers: Number of parallelizing done on different cores.
             Depends on hardware.
-    Returns:
+
+    Returns
         New Lw .tifs with units of W/sr/nm
 
     """
@@ -81,7 +84,7 @@ def blackpixel(num_workers=4, executor=None):
     )
     sky_imgs = np.array(list(sky_imgs_gen))
     lsky_median = np.median(
-        sky_imgs, axis=(0, 2, 3)
+        sky_imgs, axis=(0, 2, 3),
     )  # here we want the median of each band
     del sky_imgs
 
@@ -98,7 +101,7 @@ def blackpixel(num_workers=4, executor=None):
         )
     else:
         with concurrent.futures.ProcessPoolExecutor(
-            max_workers=num_workers
+            max_workers=num_workers,
         ) as executor:
             futures = {}
             for filepath in filepaths:

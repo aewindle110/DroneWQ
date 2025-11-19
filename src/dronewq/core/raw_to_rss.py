@@ -1,11 +1,12 @@
-from dronewq.utils.settings import settings
-from micasense import imageset
-from pathlib import Path
 import concurrent.futures
 import logging
-import dronewq
-import shutil
 import os
+import shutil
+from pathlib import Path
+
+import dronewq
+from dronewq.utils.settings import settings
+from micasense import imageset
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ def process_raw_to_rrs(
     imagery to units of remote sensing reflectance (Rrs). Users can
     select which processing parameters to use to calculate Rrs.
 
-    Parameters:
+    Parameters
         output_csv_path: A string containing the filepath to write
             the metadata.csv
 
@@ -69,7 +70,7 @@ def process_raw_to_rrs(
         num_workers: Number of parallelizing done on different cores.
             Depends on hardware.
 
-    Returns:
+    Returns
         New Rrs tifs (masked or unmasked) with units of sr^-1.
     """
     ############################
@@ -173,7 +174,7 @@ def process_raw_to_rrs(
 
         elif ed_method == "dls_and_panel_ed":
             logger.info(
-                "Normalizing by DLS corrected by panel irradiance (Lw/Ed -> Rrs)."
+                "Normalizing by DLS corrected by panel irradiance (Lw/Ed -> Rrs).",
             )
             dronewq.dls_ed(
                 output_csv_path,
@@ -184,7 +185,7 @@ def process_raw_to_rrs(
 
         else:
             logger.info(
-                "No other irradiance normalization methods implemented yet, panel_ed is recommended."
+                "No other irradiance normalization methods implemented yet, panel_ed is recommended.",
             )
             return False
 
@@ -214,7 +215,8 @@ def process_raw_to_rrs(
                 executor=Executor,
             )
 
-        else:  # if we don't do the glint correction then just change the pointer to the lt_dir
+        # if we don't do the glint correction then just change the pointer to the lt_dir
+        else:
             logger.info("Not masking pixels.")
 
     ################################################
