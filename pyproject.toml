@@ -24,7 +24,7 @@ authors = [
     { name = "Greg Silsbe" },
 ]
 license = "MIT"
-requires-python = ">=3.8,<3.13" # Adjust based on the minimum version of Python that you support
+requires-python = ">=3.10,<3.13" # Adjust based on the minimum version of Python that you support
 readme = {"file" = "README.md", "content-type" = "text/markdown"}
 # Please consult https://pypi.org/classifiers/ for a full list.
 classifiers = [
@@ -58,6 +58,7 @@ dependencies = [
   "pyzbar==0.1.9",
   "pyexiftool<=0.4.13",
   "rawpy==0.21.0",
+  "opencv-python~=4.10.0",
 ]
 
 [project.urls]
