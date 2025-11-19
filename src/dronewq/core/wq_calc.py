@@ -113,13 +113,17 @@ def save_wq_imgs(
 
 def chl_hu(Rrs):
     """
-    This is the Ocean Color Index (CI) three-band reflectance difference algorithm (Hu et al. 2012). This should only be used for chlorophyll retrievals below 0.15 mg m^-3. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. doi: 10.1029/2011jc007395
+    This is the Ocean Color Index (CI) three-band reflectance
+    difference algorithm (Hu et al. 2012). This should only be
+    used for chlorophyll retrievals below 0.15 mg m^-3.
+    Documentation can be found here:
+    https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. doi: 10.1029/2011jc007395
 
     Parameters:
         Rrs: Takes in a numpy array of shape (bands, width, height).
 
     Returns:
-        Numpy array of derived chlorophyll (mg m^-3).
+        ChlCI: Numpy array of derived chlorophyll (mg m^-3).
 
     """
     Rrsblue = Rrs[0, :, :]
@@ -136,7 +140,13 @@ def chl_hu(Rrs):
 
 def chl_ocx(Rrs):
     """
-    This is the OCx algorithm which uses a fourth-order polynomial relationship (O'Reilly et al. 1998). This should be used for chlorophyll retrievals above 0.2 mg m^-3. Documentation can be found here https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/. The coefficients for OC2 (OLI/Landsat 8) are used as default. doi: 10.1029/98JC02160.
+    This is the OCx algorithm which uses a fourth-order polynomial
+    relationship (O'Reilly et al. 1998). This should be used for
+    chlorophyll retrievals above 0.2 mg m^-3.
+    Documentation can be found here:
+    https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/.
+    The coefficients for OC2 (OLI/Landsat 8) are used as default.
+    doi: 10.1029/98JC02160.
 
     Parameters:
         Rrs: Takes in a numpy array of shape (bands, width, height).
@@ -165,13 +175,18 @@ def chl_ocx(Rrs):
 
 def chl_hu_ocx(Rrs):
     """
-    This is the blended NASA chlorophyll algorithm which combines Hu color index (CI) algorithm (chl_hu) and the O'Reilly band ratio OCx algortihm (chl_ocx). This specific code is grabbed from https://github.com/nasa/HyperInSPACE. Documentation can be found here https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0#introduction.
+    This is the blended NASA chlorophyll algorithm which combines
+    Hu color index (CI) algorithm (chl_hu) and the O'Reilly band
+    ratio OCx algortihm (chl_ocx).
+    This specific code is grabbed from https://github.com/nasa/HyperInSPACE.
+    Documentation can be found here:
+    https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0#introduction.
 
     Parameters:
         Rrs: Takes in a numpy array of shape (bands, width, height).
 
     Returns:
-        Numpy array of derived chlorophyll (mg m^-3).
+        chlor_a: Numpy array of derived chlorophyll (mg m^-3).
     """
     thresh = [0.15, 0.20]
 
@@ -193,13 +208,16 @@ def chl_hu_ocx(Rrs):
 
 def chl_gitelson(Rrs):
     """
-    This algorithm estimates chlorophyll a concentrations using a 2-band algorithm with coefficients from Gitelson et al. 2007. This algorithm is recommended for coastal (Case 2) waters. doi:10.1016/j.rse.2007.01.016
+    This algorithm estimates chlorophyll a concentrations using a
+    2-band algorithm with coefficients from Gitelson et al. 2007.
+    This algorithm is recommended for coastal (Case 2) waters.
+    doi:10.1016/j.rse.2007.01.016
 
     Parameters:
         Rrs: Takes in a numpy array of shape (bands, width, height).
 
     Returns:
-        Numpy array of derived chlorophyll (mg m^-3).
+        chl: Numpy array of derived chlorophyll (mg m^-3).
     """
     Rrsred = Rrs[2, :, :]
     Rrsrededge = Rrs[3, :, :]
@@ -213,13 +231,15 @@ def chl_gitelson(Rrs):
 
 def tsm_nechad(Rrs):
     """
-    This algorithm estimates total suspended matter (TSM) concentrations using the Nechad et al. (2010) algorithm. doi:10.1016/j.rse.2009.11.022
+    This algorithm estimates total suspended matter (TSM)
+    concentrations using the Nechad et al. (2010) algorithm.
+    doi:10.1016/j.rse.2009.11.022
 
     Parameters:
         Rrs: Takes in a numpy array of shape (bands, width, height).
 
     Returns:
-        Numpy array of derived chlorophyll (mg m^-3).
+        tsm: Numpy array of derived chlorophyll (mg m^-3).
     """
     Rrsred = Rrs[2, :, :]
     A = 374.11
