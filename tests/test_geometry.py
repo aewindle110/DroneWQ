@@ -302,7 +302,9 @@ class TestParalelogram2D(unittest.TestCase):
 
     def test_are_on_right_side_of_line_empty_list(self):
         """Test are_on_right_side_of_line with empty point list"""
-        result = self.parallelogram.are_on_right_side_of_line(0, np.array([]).reshape(0, 2))
+        result = self.parallelogram.are_on_right_side_of_line(
+            0, np.array([]).reshape(0, 2),
+        )
         self.assertTrue(result)  # all() of empty list is True
 
 
