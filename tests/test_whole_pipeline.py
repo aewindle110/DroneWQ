@@ -16,7 +16,7 @@ settings.configure(main_dir=test_path)
 
 dronewq.write_metadata_csv(settings.raw_water_dir, settings.main_dir)
 
-dronewq.process_raw_to_rrs(settings.main_dir, num_workers=1, clean_intermediates=False)
+dronewq.process_raw_to_rrs(settings.main_dir, clean_intermediates=False)
 
 
 def test_Lt():

@@ -1,8 +1,6 @@
-import concurrent.futures
 import glob
 import logging
 import os
-from functools import partial
 
 import numpy as np
 import rasterio
@@ -88,55 +86,20 @@ def mobley_rho(rho=0.028, executor=None, num_workers=4):
     # Process each Lt image
     filepaths = glob.glob(lt_dir + "/*.tif")
 
-    if executor is not None:
-        partial_compute = partial(
-            _compute,
-            rho=rho,
-            lsky_median=lsky_median,
-            lw_dir=lw_dir,
-        )
-        results = list(executor.map(partial_compute, filepaths, chunksize=5))
-        logger.info(
-            "Lw Stage (Mobley_rho): Successfully processed: %d captures",
-            len(results),
+    results = []
+    for filepath in filepaths:
+        results.append(
+            _compute(
+                filepath,
+                rho,
+                lsky_median,
+                lw_dir,
+            )
         )
 
-    else:
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=num_workers,
-        ) as executor:
-            futures = {}
-            for filepath in filepaths:
-                future = executor.submit(
-                    _compute,
-                    filepath,
-                    rho,
-                    lsky_median,
-                    lw_dir,
-                )
-                futures[future] = filepath
-            # Wait for all tasks to complete and collect results
-            results = []
-            completed = 0
-
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    # Blocks until this specific future completes
-                    result = future.result()
-                    results.append(result)
-                    completed += 1
-                except Exception as e:
-                    filepath = futures[future]
-                    logger.warning(
-                        "File %s failed: %s",
-                        filepath,
-                        str(e),
-                    )
-                    results.append(False)
-
-        logger.info(
-            "Lw Stage (Mobley_rho): Successfully processed: %d/%d captures",
-            sum(results),
-            len(results),
-        )
+    logger.info(
+        "Lw Stage (Mobley_rho): Successfully processed: %d/%d captures",
+        sum(results),
+        len(results),
+    )
     return results

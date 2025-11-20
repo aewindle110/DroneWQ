@@ -1,4 +1,3 @@
-import concurrent.futures
 import datetime
 import logging
 import os
@@ -181,54 +180,24 @@ def save_images(
 
     logger.info("output_path: %s", output_path)
 
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=num_workers,
-    ) as executor:
-        futures = {}
+    results = []
+    for idx, capture in enumerate(img_set.captures):
+        outputFilename = f"capture_{idx + 1}.tif"
+        thumbnailFilename = f"capture_{idx + 1}.jpg"
+        fullOutputPath = os.path.join(output_path, outputFilename)
+        fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
 
-        for idx, capture in enumerate(img_set.captures):
-            outputFilename = f"capture_{idx + 1}.tif"
-            thumbnailFilename = f"capture_{idx + 1}.jpg"
-            fullOutputPath = os.path.join(output_path, outputFilename)
-            fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
+        # Skip if exists and not overwriting
+        if os.path.exists(fullOutputPath) and not overwrite_lt_lw:
+            continue
 
-            # Skip if exists and not overwriting
-            if os.path.exists(fullOutputPath) and not overwrite_lt_lw:
-                continue
+        if len(capture.images) != len(img_set.captures[0].images):
+            continue
 
-            if len(capture.images) != len(img_set.captures[0].images):
-                continue
+        capture.fullOutputPath = fullOutputPath
+        capture.fullThumbnailPath = fullThumbnailPath
 
-            capture.fullOutputPath = fullOutputPath
-            capture.fullThumbnailPath = fullThumbnailPath
-
-            # Submit task and track it
-            future = executor.submit(
-                save,
-                capture,
-                warp_matrices,
-                generateThumbnails,
-            )
-            futures[future] = idx
-
-        # Wait for all tasks to complete and collect results
-        results = []
-        completed = 0
-
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                # Blocks until this specific future completes
-                result = future.result()
-                results.append(result)
-                completed += 1
-            except Exception as e:
-                idx = futures[future]
-                logger.error(
-                    "Capture %d failed: %s",
-                    idx,
-                    str(e),
-                )
-                results.append(False)
+        results.append(save(capture, warp_matrices, generateThumbnails))
 
     end = datetime.datetime.now()
     elapsed = (end - start).total_seconds()

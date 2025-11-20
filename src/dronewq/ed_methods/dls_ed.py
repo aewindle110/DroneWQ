@@ -1,4 +1,3 @@
-import concurrent.futures
 import glob
 import logging
 import os
@@ -172,38 +171,15 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4, executor=None):
     filepaths = glob.glob(lw_dir + "/*.tif")
     ed_data_final = dls_ed_corr_data if dls_corr else ed_data
 
-    manually_created = False
-
-    if executor is None:
-        manually_created = True
-        executor = concurrent.futures.ProcessPoolExecutor(max_workers=num_workers)
-    try:
-        futures = {}
-        for idx, filepath in enumerate(filepaths):
-            future = executor.submit(
-                _compute,
+    results = []
+    for idx, filepath in enumerate(filepaths):
+        results.append(
+            _compute(
                 filepath,
                 ed_data_final[idx],
                 rrs_dir,
             )
-            futures[future] = filepath
-
-        # Wait for all tasks to complete and collect results
-        results = []
-        completed = 0
-
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                result = future.result()  # Blocks until this specific future completes
-                results.append(result)
-                completed += 1
-            except Exception as e:
-                filepath = futures[future]
-                print(f"File {filepath} failed: {e}")
-                results.append(False)
-    finally:
-        if manually_created:
-            executor.shutdown(wait=True)
+        )
 
     logger.info(
         "Ed Stage (DLS): Successfully processed: %d/%d captures",
