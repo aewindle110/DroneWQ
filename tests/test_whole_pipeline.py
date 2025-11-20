@@ -2,13 +2,14 @@ import dronewq
 import numpy as np
 import pandas as pd
 import os
+from pathlib import Path
 from dronewq import settings
 from numpy.testing import assert_allclose
 
-test_path = os.path.abspath(__file__)
-test_path = os.path.join(os.path.dirname(test_path), "test_set")
+test_path = Path(__file__).absolute().parent
+test_path = test_path.joinpath("test_set")
 
-if not os.path.exists(test_path):
+if not test_path.exists():
     msg = f"Could not find {test_path}"
     raise LookupError(msg)
 
@@ -97,7 +98,7 @@ def test_Ed():
         dtype=np.float32,
     )
 
-    dls_path = os.path.join(test_path, "dls_ed.csv")
+    dls_path = test_path.joinpath("dls_ed.csv")
     df = pd.read_csv(dls_path)
 
     row = df[df["image"] == "capture_1"].to_numpy()
