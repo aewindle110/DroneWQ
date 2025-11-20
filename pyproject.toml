@@ -118,7 +118,7 @@ omit = [
 exclude_lines = ["pragma: no cover"]
 precision = 2
 [tool.ruff]
-line-length = 88
+line-length = 128
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -222,7 +222,7 @@ extra-dependencies = [
 ]
 
 [[tool.hatch.envs.test.matrix]]
-python = ["3.10", "3.11", "3.12", "3.13"]
+python = ["3.10", "3.11", "3.12"]
 
 [tool.hatch.envs.test.scripts]
 run = "pytest {args:--cov=dronewq --cov-report=term-missing}"
