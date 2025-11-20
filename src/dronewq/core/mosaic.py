@@ -16,6 +16,7 @@ from .mosaic_methods import (
     __min,
 )
 
+
 # Geometry functions
 def mosaic(
     input_dir,

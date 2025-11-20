@@ -1,16 +1,37 @@
 import os
+from typing import List, Dict, Tuple
 
 import cameratransform as ct
 import numpy as np
+import pandas as pd
 import rasterio
 from pyproj import CRS
 from tqdm import tqdm
 
-def compute_flight_lines(captures_yaw, altitude, pitch, roll, threshold=10):
+
+def compute_flight_lines(
+    captures_yaw,
+    altitude,
+    pitch,
+    roll,
+    threshold=10,
+) -> List[Dict[str, float]]:
     """
-    A function that returns a list of yaw, altitude, pitch, roll values from different flight transects to be used in the georeference() function. The function calculates the median of all yaw angles. For yaw angles < median, it calculates the median of filtered captures. If yaw angle is between filtered median - threshold and filtered median + threshold, it is considered a valid capture. Simiarly, for yaw angles > median, if yaw angle is between filtered median - threshold and filtered median + threshold, it is considered a valid capture.
+    A function that returns a list of yaw, altitude, pitch, roll values from
+    different flight transects to be used in the georeference() function.
+    The function calculates the median of all yaw angles.
+
+    For yaw angles < median, it calculates the median of filtered captures.
+
+    If yaw angle is between filtered median - threshold and filtered
+    median + threshold, it is considered a valid capture.
+
+    Simiarly, for yaw angles > median, if yaw angle is between filtered
+    median - threshold and filtered median + threshold,
+    it is considered a valid capture.
 
     Parameters
+    ----------
         captures_yaw: Can either be a fixed number or pulled from the metadata
 
         altitude: Can either be a fixed number or pulled from the metadata
@@ -19,33 +40,37 @@ def compute_flight_lines(captures_yaw, altitude, pitch, roll, threshold=10):
 
         roll: Can either be a fixed number or pulled from the metadata
 
-        threshold: A value to be used to determine what captures have yaw angles that are considered valid. Default is 10.
+        threshold: A value to be used to determine what captures have
+            yaw angles that are considered valid. Default is 10.
 
     Returns
-        List[int]: list of pairs(start, end) for each trasenct
+    -------
+        List[Dict[str, float]]: list of pairs(start, end) for each trasenct
     """
 
     def __compute_lines(
-        lines: list[tuple[int, int]],
-        indexes: list[int],
+        lines: List[Tuple[int, int]],
+        indexes: List[int] | np.ndarray,
         start: int = 0,
         end: int = 0,
-    ):
+    ) -> List[Tuple[int, int]]:
         """
         A function that given a list of indexes where there are gaps,
         returns a list of pairs(start, end) for each interval
 
         Parameters
+        ----------
             lines (List[Tuple[int, int]]): list where to write the result
 
-            indexes (List[int]): list of indexes
+            indexes (List[int] | np.ndarray): list of indexes
 
             start (int, optional): first index. Defaults to 0.
 
             end (int, optional): last index. Defaults to 0.
 
         Returns
-            List[int]: list of pairs(start, end) for each interval
+        -------
+            List[set]: list of pairs(start, end) for each interval
         """
         for index in indexes:
             if abs(end - index) > 1:
@@ -56,7 +81,7 @@ def compute_flight_lines(captures_yaw, altitude, pitch, roll, threshold=10):
         if start != end:
             lines.append((int(start), int(end)))
 
-        return list(set(lines))
+        return lines
 
     median_yaw = np.median(captures_yaw)
     indexes = np.where(captures_yaw < median_yaw)[0]
@@ -103,43 +128,71 @@ def georeference(
     pitch=0,
     roll=0,
     axis_to_flip=1,
-):
+) -> None:
     """
-    This function georeferences all the captures indicated in the line parameter following the specification of the other parameters such as altitude, yaw, pitch, roll, axis_to_flip
+    This function georeferences all the captures indicated in
+    the line parameter following the specification of the other
+    parameters such as altitude, yaw, pitch, roll, axis_to_flip
 
     Parameters
+    ----------
         metadata: A Pandas dataframe of the metadata
 
-        input_dir: A string containing the directory filepath of the images to be retrieved for georeferencing.
+        input_dir: A string containing the directory filepath
+            of the images to be retrieved for georeferencing.
 
-        output_dir: A string containing the directory filepath to be saved.
+        output_dir: A string containing the directory filepath
+            to be saved.
 
-        lines: Selection of images to be processed. Defaults to None. Example: [slice(0,10)]
+        lines: Selection of images to be processed.
+            Defaults to None. Example: [slice(0,10)]
 
-        altitude: sets the altitude where all captures were taken. Defaults to None which uses the altitude data saved in the metadata for each respective capture.
+        altitude: sets the altitude where all captures were taken.
+            Defaults to None which uses the altitude data saved in
+            the metadata for each respective capture.
 
-        yaw: sets the sensor's direction angle during all captures. Defaults to None which uses the yaw angle saved in the metadata for each respective capture.
+        yaw: sets the sensor's direction angle during all captures.
+            Defaults to None which uses the yaw angle saved in the
+            metadata for each respective capture.
 
-        pitch: sets the sensor's pitch angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+        pitch: sets the sensor's pitch angle during all captures.
+            Defaults to 0 which means the sensor was horizontal to
+            the ground.
 
-        roll: sets the sensor's roll angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
+        roll: sets the sensor's roll angle during all captures.
+            Defaults to 0 which means the sensor was horizontal
+            to the ground.
 
         axis_to_flip: The axis to apply a flip. Defaults to 1.
 
     Returns
+    -------
         Georeferenced .tifs in output_dir
     """
 
-    def __get_transform(f, sensor_size, image_size, lat, lon, alt, yaw, pitch, roll):
+    def __get_transform(
+        f: float,
+        sensor_size: Tuple[float, float],
+        image_size: Tuple[int, int],
+        lat: float,
+        lon: float,
+        alt: float,
+        yaw: float,
+        pitch: float,
+        roll: float,
+    ):
         """
-        Calculates a transformation matrix for a given capture in order to get every lat, lon for each pixel in the image.
+        Calculates a transformation matrix for a given capture
+        in order to get every lat, lon for each pixel in the image.
 
         Parameters
             f (float): focal_length
 
-            sensor_size (Tuple[float, float]): correspondence pixel -> milimeter
+            sensor_size (Tuple[float, float]): correspondence
+                pixel -> milimeter
 
-            image_size (Tuple[int, int]): number of pixels for width and height
+            image_size (Tuple[int, int]): number of pixels for
+                width and height
 
             lat (float): latitude of camera
 
@@ -215,20 +268,24 @@ def georeference(
         return rasterio.transform.from_gcps([gcp1, gcp2, gcp3, gcp4])
 
     def __get_georefence_by_uuid(
-        metadata,
-        lines=None,
-        altitude=None,
-        yaw=None,
-        pitch=None,
-        roll=None,
+        metadata: pd.DataFrame,
+        lines: list[dict[str, float | None]] | None = None,
+        altitude: float | None = None,
+        yaw: float | None = None,
+        pitch: float | None = None,
+        roll: float | None = None,
     ):
         """
-        Given a DataFrame and a list of flight lines, calculate a dictionary with the transformation matrix for each capture
+        Given a DataFrame and a list of flight lines, calculate a
+        dictionary with the transformation matrix for each capture.
 
         Parameters
-            metadata (DataFrame): Pandas DataFrame that contains information like capture latitude, longitude, ...
+            metadata (DataFrame): Pandas DataFrame that contains
+                information like capture latitude, longitude, ...
 
-            lines (List[slice], optional): List that indicates the flight lines. Defaults to None which means [ slice(0, None) ] = all captures.
+            lines (List[slice], optional): List that indicates the
+                flight lines.
+                Defaults to None which means [ slice(0, None) ] = all captures.
 
             altitude (float, optional): altitude of camera
 
@@ -239,7 +296,8 @@ def georeference(
             roll (float, optional): roll of camera
 
         Returns
-            Mapping[str, Affine]: Dictionary that gathers captures IDs and transformation matrices
+            Mapping[str, Affine]: Dictionary that gathers captures IDs
+            and transformation matrices
         """
         lines = (
             lines
