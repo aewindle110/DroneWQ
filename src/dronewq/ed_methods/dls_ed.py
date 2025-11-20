@@ -1,12 +1,14 @@
-from micasense import imageset
+import concurrent.futures
+import glob
+import logging
+import os
+
 import numpy as np
 import pandas as pd
-import glob
 import rasterio
-import os
-import concurrent.futures
-import logging
+
 from dronewq.utils.settings import settings
+from micasense import imageset
 
 logger = logging.getLogger(__name__)
 
@@ -58,13 +60,13 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4, executor=None):
     reflectance panel is applied to DLS Ed measurements.
     The default is False.
 
-    Parameters:
+    Parameters
         dls_corr: Option to apply compensation factor from
             calibration reflectance panel to DLS Ed measurements.
             Default is False.
         num_workers: Number of parallel processes. Depends on hardware.
 
-    Returns:
+    Returns
         New Rrs .tifs with units of sr^-1
         New .csv file with average Ed measurements (mW/m2/nm) calculated from DLS measurements
     """
@@ -136,7 +138,9 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4, executor=None):
             dls_ed_corr_data.append(dls_ed_corr_row)
 
         dls_ed_corr_data_df = pd.DataFrame.from_records(
-            dls_ed_corr_data, index="image", columns=ed_columns
+            dls_ed_corr_data,
+            index="image",
+            columns=ed_columns,
         )
         dls_ed_corr_data_df.to_csv(os.path.join(output_csv_path, "dls_corr_ed.csv"))
         del dls_ed_corr_data_df
@@ -157,7 +161,9 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4, executor=None):
             ed_data.append(ed_row)
 
         ed_data_df = pd.DataFrame.from_records(
-            ed_data, index="image", columns=ed_columns
+            ed_data,
+            index="image",
+            columns=ed_columns,
         )
         ed_data_df.to_csv(os.path.join(output_csv_path, "dls_ed.csv"))
         del ed_data_df

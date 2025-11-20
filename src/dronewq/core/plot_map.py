@@ -1,15 +1,14 @@
-from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-from pyproj import Transformer
-from typing import Tuple
-from xyzservices import Bunch
-import matplotlib.pyplot as plt
-from matplotlib.image import AxesImage
-import contextily as cx
-import numpy as np
-import rioxarray
-import rasterio.transform
-import rasterio
 
+import contextily as cx
+import matplotlib.pyplot as plt
+import numpy as np
+import rasterio
+import rasterio.transform
+import rioxarray
+from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
+from matplotlib.image import AxesImage
+from pyproj import Transformer
+from xyzservices import Bunch
 
 def plot_basemap(
     ax: plt.Axes,
@@ -28,7 +27,7 @@ def plot_basemap(
         - local basemaps like Sentinel-2 must be georeferenced with crs=epsg:4326.
         - If basemap param is a string (filename) it is loaded and plotted; Otherwise a basemap is searched with contextily based on west, east, south and north params.
 
-    Parameters:
+    Parameters
         ax (plt.Axes): axes where to plot
 
         west (float): minimum longitude
@@ -43,15 +42,16 @@ def plot_basemap(
 
         clip (bool, optional): If True and source is a filename, the local basemap will be clipped base on west, east, south and north params. Defaults to False.
 
-    Returns:
+    Returns
         plt.Axes: axes with the basemap plotted
     """
-
     if isinstance(source, str):
         latlon_projection: str = "epsg:4326"
         pseudo_mercator_projection: str = "epsg:3857"
         transformer: Transformer = Transformer.from_crs(
-            latlon_projection, pseudo_mercator_projection, always_xy=True
+            latlon_projection,
+            pseudo_mercator_projection,
+            always_xy=True,
         )
 
         with rioxarray.open_rasterio(source) as src:
@@ -60,15 +60,16 @@ def plot_basemap(
                 mask_lat = (src.y >= south) & (src.y <= north)
                 new_src = src.where(mask_lon & mask_lat, drop=True)
             else:
-
                 new_src = src
 
             data = np.transpose(new_src.values, (1, 2, 0))
             new_west, new_north = transformer.transform(
-                new_src.x.min(), new_src.y.max()
+                new_src.x.min(),
+                new_src.y.max(),
             )
             new_east, new_south = transformer.transform(
-                new_src.x.max(), new_src.y.min()
+                new_src.x.max(),
+                new_src.y.min(),
             )
             extent = new_west, new_east, new_south, new_north
 
@@ -77,7 +78,11 @@ def plot_basemap(
 
     ax.imshow(data, extent=extent)
     gl = ax.gridlines(
-        draw_labels=True, linewidth=0.8, color="black", alpha=0.3, linestyle="-"
+        draw_labels=True,
+        linewidth=0.8,
+        color="black",
+        alpha=0.3,
+        linestyle="-",
     )
     gl.top_labels = gl.right_labels = False
     gl.xformatter, gl.yyformatter = LONGITUDE_FORMATTER, LATITUDE_FORMATTER
@@ -93,7 +98,7 @@ def plot_georeferenced_data(
     cmap: str,
     norm: None = None,
     basemap: Bunch | str = None,
-) -> Tuple[plt.Axes, AxesImage]:
+) -> tuple[plt.Axes, AxesImage]:
     """
     Loads a single-band GeoTIFF, projects it to pseudo-Mercator (EPSG:3857),
     and plots it over the given matplotlib Axes.
@@ -110,11 +115,12 @@ def plot_georeferenced_data(
     Returns:
         Tuple[plt.Axes, AxesImage]: The plot axes and the raster mappable.
     """
-
     latlon_projection = "EPSG:4326"
     pseudo_mercator_projection = "EPSG:3857"
     transformer = Transformer.from_crs(
-        latlon_projection, pseudo_mercator_projection, always_xy=True
+        latlon_projection,
+        pseudo_mercator_projection,
+        always_xy=True,
     )
 
     # --- Open raster to get geometry and basemap ---

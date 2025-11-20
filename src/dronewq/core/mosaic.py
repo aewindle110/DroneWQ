@@ -1,19 +1,20 @@
-import os
-import rasterio
 import glob
-import rasterio.transform
-from tqdm import tqdm
-import numpy as np
-from rasterio.transform import Affine
-from rasterio.enums import Resampling
-from .mosaic_methods import (
-    __mean,
-    __first,
-    __max,
-    __min,
-    __get_merge_transform,
-)
+import os
 
+import numpy as np
+import rasterio
+import rasterio.transform
+from rasterio.enums import Resampling
+from rasterio.transform import Affine
+from tqdm import tqdm
+
+from .mosaic_methods import (
+    __first,
+    __get_merge_transform,
+    __max,
+    __mean,
+    __min,
+)
 
 # Geometry functions
 def mosaic(
@@ -24,9 +25,10 @@ def mosaic(
     dtype=np.float32,
     band_names=None,
 ):
-    """This function moasics all the given rasters into a single raster file
+    """
+    This function moasics all the given rasters into a single raster file
 
-    Parameters:
+    Parameters
         input_dir: a string containing the directory filepath of images to be mosaicked
 
         output_dir: a string containing the directory filepath to save the output
@@ -39,7 +41,7 @@ def mosaic(
 
         band_names: List of band names. If it is not None, it writes one file for each band instead of one file with all the bands. Defaults to None.
 
-    Returns:
+    Returns
         Mosaicked .tif file
     """
 
@@ -77,7 +79,9 @@ def mosaic(
         profile["count"] = 1
 
         with rasterio.open(
-            output_name.replace(".", f"_band_{band_names[0]}."), "w", **profile
+            output_name.replace(".", f"_band_{band_names[0]}."),
+            "w",
+            **profile,
         ) as dst:
             data = method(dst, raster_paths, n_bands, width, height, dtype)
 
@@ -127,7 +131,7 @@ def downsample(
         raster_name = os.path.basename(raster_path)
         out_name = os.path.join(
             output_dir,
-            f'{raster_name.split(".")[0]}_x_{scale_x}_y_{scale_y}_method_{method.name}.tif',
+            f"{raster_name.split('.')[0]}_x_{scale_x}_y_{scale_y}_method_{method.name}.tif",
         )
 
         with rasterio.open(raster_path, "r") as dataset:

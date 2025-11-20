@@ -1,8 +1,10 @@
 # Everything about managing Projects
-from flask import Blueprint, request, jsonify
-from dronewq.utils.settings import Settings
 import os
 import tempfile
+
+from flask import Blueprint, jsonify, request
+
+from dronewq.utils.settings import Settings
 
 bp = Blueprint("manage", __name__)
 
@@ -15,7 +17,7 @@ def _add_cors_headers(response):
     response.headers.setdefault("Access-Control-Allow-Origin", "*")
     response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
     response.headers.setdefault(
-        "Access-Control-Allow-Headers", "Content-Type, Authorization"
+        "Access-Control-Allow-Headers", "Content-Type, Authorization",
     )
     return response
 
@@ -69,8 +71,7 @@ def check_folder_structure(folder_path: str) -> bool:
 
     if count >= 3:
         return True
-    else:
-        return False
+    return False
 
 
 # TODO: Automatic sorting

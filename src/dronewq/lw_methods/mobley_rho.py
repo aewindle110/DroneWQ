@@ -1,11 +1,13 @@
-import glob
-import rasterio
-import numpy as np
-import os
-import dronewq
-import logging
 import concurrent.futures
+import glob
+import logging
+import os
 from functools import partial
+
+import numpy as np
+import rasterio
+
+import dronewq
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -51,12 +53,12 @@ def mobley_rho(rho=0.028, executor=None, num_workers=4):
     This approach should only be used if sky conditions are not
     changing substantially during the flight and winds are less than 5 m/s.
 
-    Parameters:
+    Parameters
         rho: The effective sea-surface reflectance of a wave facet. Default is 0.028
         executor: Worker pool executor
         num_workers: Number of parallel processes. Depends on hardware.
 
-    Returns:
+    Returns
         New Lw .tifs with units of W/sr/nm
     """
     if settings.main_dir is None:

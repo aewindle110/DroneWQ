@@ -24,7 +24,7 @@ authors = [
     { name = "Greg Silsbe" },
 ]
 license = "MIT"
-requires-python = ">=3.8,<3.13" # Adjust based on the minimum version of Python that you support
+requires-python = ">=3.10,<3.13" # Adjust based on the minimum version of Python that you support
 readme = {"file" = "README.md", "content-type" = "text/markdown"}
 # Please consult https://pypi.org/classifiers/ for a full list.
 classifiers = [
@@ -58,6 +58,7 @@ dependencies = [
   "pyzbar==0.1.9",
   "pyexiftool<=0.4.13",
   "rawpy==0.21.0",
+  "opencv-python~=4.10.0",
 ]
 
 [project.urls]
@@ -72,7 +73,6 @@ dev = [
     "hatch",
     "pre-commit",
 ]
-gdal = ["gdal"]
 ################################################################################
 # Tool Configuration
 ################################################################################
@@ -96,7 +96,7 @@ source = "vcs"
 
 ######## Configure pytest for your test suite ########
 [tool.pytest.ini_options]
-testpaths = ["tests"] # Tells pytest what directory tests are in
+testpaths = ["tests/"] # Tells pytest what directory tests are in
 markers = ["raises"] # Tells pytest to not raise a warning if you use @pytest.mark.raises
 
 [tool.coverage.paths]
@@ -163,7 +163,7 @@ arg-type-hints-in-signature = true
 arg-type-hints-in-docstring = true
 check-return-types = false
 check-yield-types = false
-exclude = "_version.py"
+exclude = "src/dronewq/_version.py"
 # TODO: Adjust mypy configuration.
 #[tool.mypy]
 #plugins = [

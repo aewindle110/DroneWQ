@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
+
 from .pipeline import Pipeline
 
 bp = Blueprint("process", __name__)
