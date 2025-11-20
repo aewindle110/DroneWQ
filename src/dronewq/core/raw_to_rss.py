@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def process_raw_to_rrs(
     output_csv_path: str,
-    lw_method="mobley_rho_method",
+    lw_method="mobley_rho",
     random_n=10,
     pixel_masking_method=None,
     mask_std_factor=1,

@@ -78,7 +78,6 @@ def mobley_rho(rho=0.028, executor=None, num_workers=4):
         count=10,
         start=0,
         altitude_cutoff=0,
-        sky=True,
     )
 
     sky_imgs = np.array(list(sky_imgs_gen))

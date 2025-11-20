@@ -177,16 +177,12 @@ def save_images(
 
     warp_matrices = get_warp_matrix(warp_img_capture)
 
-    # Use processes instead of threads for CPU-bound work
-    # For I/O-bound (file writing), threads are acceptable
-    max_workers = num_workers
-
     start = datetime.datetime.now()
 
     logger.info("output_path: %s", output_path)
 
     with concurrent.futures.ProcessPoolExecutor(
-        max_workers=max_workers,
+        max_workers=num_workers,
     ) as executor:
         futures = {}
 

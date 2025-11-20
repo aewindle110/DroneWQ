@@ -2,6 +2,7 @@ import copy
 import logging
 import os
 import pickle
+from pathlib import Path
 
 from dronewq.utils.utils import dotdict
 
@@ -102,7 +103,7 @@ class Settings:
 
         # If main_dir is set, automatically populate dependent dirs
         if "main_dir" in kwargs:
-            if not isinstance(kwargs["main_dir"], str):
+            if not isinstance(kwargs["main_dir"], (str, Path)):
                 msg = "main_dir should be a string of path."
                 raise ValueError(msg)
 
