@@ -78,8 +78,8 @@ async function submitProcessing() {
 
     if (data.success) {
       // Charts ready = 1 (true)
-      buildOverviewFromFolder();
       navigate('results');
+      buildOverviewFromFolder();
     } else {
       // Charts not ready = 0 (false)
       alert('Processing failed');

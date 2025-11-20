@@ -31,7 +31,7 @@ function initializeUpload() {
         return;
       }
 
-      alert('Folder linked! Click Next to choose methods.');
+      navigate('method');
     } catch (err) {
       console.error(err);
       alert('Could not select folder.');
