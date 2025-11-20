@@ -21,9 +21,13 @@ async function submitProcessing() {
   const irr = (document.getElementById('irradianceSelect') || {}).value || "";
   const mask = (document.getElementById('maskingSelect') || {}).value || "";
 
-  // Collect Outputs
-  const outputs = Array.from(document.querySelectorAll('.outputChk:checked'))
+  // Collect all selected output keys
+  const selected = Array.from(document.querySelectorAll('.outputChk:checked'))
     .map(cb => cb.getAttribute('data-key'));
+
+  // Split into wqAlg vs mosaic
+  const wqAlgs = selected.filter(key => key !== 'mosaics');
+  const mosaic = selected.includes('mosaics');
 
   const payload = {
     project_id: projectId,
@@ -32,7 +36,8 @@ async function submitProcessing() {
     lwMethod: glint,
     edMethod: irr,
     maskMethod: mask,
-    outputs: outputs
+    wqAlgs: wqAlgs,
+    mosaic: mosaic
   };
 
   // Save outputs to sessionStorage so charts.js can use them

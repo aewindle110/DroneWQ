@@ -16,12 +16,12 @@ def process():
     try:
         pipeline = Pipeline(folder_path)
 
-        pipeline.water_metadata()
-        pipeline.flight_plan()
-        pipeline.run()
-        pipeline.plot_essentials()
-        pipeline.point_samples()
-        pipeline.wq_run()
+        # pipeline.water_metadata()
+        # pipeline.flight_plan()
+        # pipeline.run()
+        # pipeline.plot_essentials()
+        # pipeline.point_samples()
+        # pipeline.wq_run()
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

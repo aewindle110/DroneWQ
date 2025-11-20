@@ -143,13 +143,18 @@ class Pipeline:
     def plot_wq(self, plot_args: dict[str, dict]):
         output_folder = os.path.join(self.settings.main_dir, "result")
 
-        # TODO: add more algorithms in here
         COLORS = {
+            "chl_hu": "Greens",
+            "chl_ocx": "Greens",
             "chl_hu_ocx": "Greens",
+            "chl_gitelson": "Greens",
             "tsm_nechad": "YlOrRd",
         }
         LABELS = {
+            "chl_hu": "Chlorophyll a (mg $m^{-3}$)",
+            "chl_ocx": "Chlorophyll a (mg $m^{-3}$)",
             "chl_hu_ocx": "Chlorophyll a (mg $m^{-3}$)",
+            "chl_gitelson": "Chlorophyll a (mg $m^{-3}$)",
             "tsm_nechad": "TSM (mg/L)",
         }
 

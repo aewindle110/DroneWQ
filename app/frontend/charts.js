@@ -24,14 +24,18 @@ function buildOverviewFromFolder() {
 
   // Always included cards
   const always = [
-    { title: 'RGB Preview', file: 'rgb_preview.png', blurb: 'RGB overview of the scene.' }
+    { out: 'rrs', title: 'Radiometry Spectra Plot', file: 'rrs_plot.png', blurb: 'Remote sensing reflectance (Rrs) from 25 image captures that have not been masked for sun glint and image artifacts.' },
+    { out: 'rrs', title: 'Radiometry Spectra Masked Plot', file: 'masked_rrs_plot.png', blurb: 'Rrs from same set of 25 images that have been masked for sun glint and artifacts. Bold black line shows the mean spectrum across all 25 images.' },
+    { out: 'rrs', title: 'Lt Plot', file: 'lt_plot.png', blurb: 'Total radiance (Lt) spectra from the same 25 image captures.' },
+    { out: 'rrs', title: 'Ed Plot', file: 'ed_plot.png', blurb: 'Downwelling irradiance (Ed) from the same 25 image captures.' },
   ];
 
   const byOutput = [
-    { out: 'rrs', title: 'Rrs Plot', file: 'rrs_plot.png', blurb: 'Remote sensing reflectance across wavelengths.' },
-    { out: 'rrs', title: 'Masked Rrs Plot', file: 'masked_rrs_plot.png', blurb: 'Reflectance after masking.' },
-    { out: 'rrs', title: 'Lt Plot', file: 'lt_plot.png', blurb: 'Top-of-water radiance.' },
-    { out: 'rrs', title: 'Ed Plot', file: 'ed_plot.png', blurb: 'Downwelling irradiance summary.' },
+    { out: 'chl_hu', title: '', file: 'chl_hu_plot.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration. (mg/m^3)' },
+    { out: 'chl_ocx', title: 'Masked Rrs Plot', file: 'chl_ocx_plot.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration. (mg/m^3)' },
+    { out: 'chl_hu_ocx', title: 'Lt Plot', file: 'chl_hu_ocx.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration. (mg/m^3)' },
+    { out: 'chl_gitelson', title: 'Ed Plot', file: 'chl_gitelson.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration. (mg/m^3)' },
+    { out: 'tsm_nechad', title: 'Ed Plot', file: 'tsm_nechad.png', blurb: 'Coordinate locations of individual image captures colored by total suspended matter (TSM, mg L-1).' },
   ];
 
   const container = document.getElementById('overviewCards');
@@ -59,7 +63,7 @@ function buildOverviewFromFolder() {
   }
 
   // Always show
-  // for (const a of always) addCardIfExists(a.title, a.file, a.blurb);
+  for (const a of always) addCardIfExists(a.title, a.file, a.blurb);
 
   // Conditional cards
   console.log(outputs)
