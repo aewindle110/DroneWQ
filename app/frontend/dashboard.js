@@ -88,13 +88,16 @@ async function initializeDashboard() {
 
   // Render them
   renderProjects(projects);
-
-  // Search box
-  setupSearchListener();
 }
 
+function setupDashboardOnce() {
+  // Search box
+  setupSearchListener();  // run only once
+}
 // Make functions available globally
 window.initializeDashboard = initializeDashboard;
+window.setupDashboardOnce = setupDashboardOnce;
+window.loadProjectsFromBackend = loadProjectsFromBackend;
 window.deleteProject = deleteProject;
 window.duplicateProject = duplicateProject;
 window.exportProject = exportProject;
