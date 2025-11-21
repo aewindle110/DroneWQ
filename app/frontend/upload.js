@@ -19,7 +19,7 @@ function initializeUpload() {
       sessionStorage.setItem('projectName', projectName);
 
       // Tell backend to make project — backend expects "folderPath"
-      const resp = await fetch('http://localhost:8889/manage/make_project', {
+      const resp = await fetch('http://localhost:8889/api/projects/check_folder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ folderPath })
@@ -27,7 +27,7 @@ function initializeUpload() {
 
       if (!resp.ok) {
         const msg = await resp.text();
-        alert(`Backend error (make_project): ${msg || resp.statusText}`);
+        alert(`Backend error (check_folder): ${msg || resp.statusText}`);
         return;
       }
 

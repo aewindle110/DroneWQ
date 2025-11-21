@@ -1,34 +1,44 @@
 # Everything about managing Projects
 import os
 import tempfile
+from datetime import datetime
+import json
+from pathlib import Path
 
 from flask import Blueprint, jsonify, request
-
-from dronewq.utils.settings import Settings
-
-bp = Blueprint("manage", __name__)
+from flask import current_app as app
+import sqlite3
 
 
-# Simple CORS support for the blueprint: allow requests from the frontend (Electron)
-# and respond to preflight OPTIONS requests. This avoids adding a dependency while
-# supporting cross-origin fetches from file:// or other origins during dev.
-@bp.after_request
-def _add_cors_headers(response):
-    response.headers.setdefault("Access-Control-Allow-Origin", "*")
-    response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-    response.headers.setdefault(
-        "Access-Control-Allow-Headers", "Content-Type, Authorization",
-    )
-    return response
+bp = Blueprint("projects", __name__)
 
 
-@bp.route("/manage/make_project", methods=["OPTIONS"])
-def make_project_options():
-    # Preflight response for CORS
-    return ("", 204)
+@bp.route("/api/projects")
+def get_all_projects():
+    conn = sqlite3.connect(app.config["DATABASE_PATH"])
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    projects = c.execute("SELECT * FROM projects").fetchall()
+    conn.close()
+
+    # Convert rows → JSON
+    result = []
+    for p in projects:
+        result.append(
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "folder_path": p["folder_path"],
+                "data_source": Path(p["folder_path"]).name,
+                "lw_method": p["lw_method"],
+                "created_at": p["created_at"],
+            }
+        )
+
+    return jsonify(result)
 
 
-# TODO: Figure out how to manage projects folder
 def is_writable_dir(path: str, create_if_missing: bool = False) -> bool:
     """
     Return True if current process can write inside `path`.
@@ -75,9 +85,11 @@ def check_folder_structure(folder_path: str) -> bool:
 
 
 # TODO: Automatic sorting
-@bp.route("/manage/make_project", methods=["POST"])
-def make_project():
-    # Accept folderPath from JSON body (preferred) or query params for flexibility
+# @bp.route("/manage/make_project", methods=["POST"])
+@bp.route("/api/projects/check_folder", methods=["POST"])
+def check_folder():
+    # Accept folderPath from JSON body (preferred)
+    # or query params for flexibility
     data = request.get_json(silent=True) or request.args
     folder_path = data.get("folderPath")
 
@@ -90,21 +102,15 @@ def make_project():
     if not check_folder_structure(folder_path):
         return jsonify({"error": "Directory structure is incorrect."}), 400
 
-    settings = Settings()
-    # Assuming the project sub-folders are sorted
-    settings.configure(main_dir=folder_path)
-
-    try:
-        settings.save(folder_path)
-        return jsonify({"success": True}), 200
-    except Exception as e:
-        return jsonify({"Error while saving settings.": str(e)}), 500
+    return jsonify({"success": True}), 200
 
 
-@bp.route("/manage/save_settings", methods=["POST"])
-def save_settings():
+# @bp.route("/manage/save_settings", methods=["POST"])
+@bp.route("/api/projects/new", methods=["POST"])
+def new_project():
+    """Create new project"""
+    # receive payload from frontend
     args = request.get_json(silent=True) or request.args
-    project_id = args.get("project_id")
     project_name = args.get("project_name")
     folder_path = args.get("folderPath")
     lw_method = str(args.get("lwMethod"))
@@ -113,17 +119,10 @@ def save_settings():
     wq_algs = args.get("wqAlgs")
     mosaic = args.get("mosaic")
 
-    settings = Settings()
-
     if folder_path is None:
         return jsonify({"error": "folderPath is not specified."}), 400
-
-    settings_path = os.path.join(folder_path, "settings.pkl")
-
-    if os.path.exists(settings_path):
-        settings = settings.load(folder_path)
-    else:
-        settings.configure(main_dir=folder_path)
+    if not Path(folder_path).exists():
+        return jsonify({"error": f"{folder_path} does not exist."}), 400
 
     lw_method = lw_method.lower().strip().replace(" ", "_")
     ed_method = ed_method.lower().strip().replace(" ", "_")
@@ -131,18 +130,50 @@ def save_settings():
     if mask_method is not None:
         mask_method = mask_method.lower().strip().replace(" ", "_")
 
-    settings.configure(
-        project_id=project_id,
-        project_name=project_name,
-        lw_method=lw_method,
-        ed_method=ed_method,
-        mask_method=mask_method,
-        wq_algs=wq_algs,
-        mosaic=mosaic,
-    )
+    created_at = datetime.now().isoformat()
 
     try:
-        settings.save(folder_path)
-        return jsonify({"success": True}), 200
+        # Insert project into DB
+        with sqlite3.connect(app.config["DATABASE_PATH"]) as conn:
+            c = conn.cursor()
+
+            c.execute(
+                """
+                INSERT INTO projects 
+                    (name, folder_path, created_at, lw_method, ed_method, mask_method, wq_algs, mosaic)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+                (
+                    project_name,
+                    folder_path,
+                    created_at,
+                    lw_method,
+                    ed_method,
+                    mask_method,
+                    json.dumps(wq_algs) if wq_algs else None,
+                    mosaic,
+                ),
+            )
+
+            project_id = c.lastrowid
+            conn.commit()
+
+        return (
+            jsonify(
+                {
+                    "id": project_id,
+                    "name": project_name,
+                    "folder_path": folder_path,
+                    "data_source": Path(folder_path).name,
+                    "created_at": created_at,
+                    "lw_method": lw_method,
+                    "ed_method": ed_method,
+                    "mask_method": mask_method,
+                    "wq_algs": wq_algs,
+                    "mosaic": mosaic,
+                }
+            ),
+            200,
+        )
     except Exception as e:
         return jsonify({"Error while saving settings.": str(e)}), 500

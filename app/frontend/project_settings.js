@@ -12,7 +12,6 @@ function initializeProjectSettings() {
 
 async function submitProcessing() {
   // Pull references saved during Upload step
-  const projectId = sessionStorage.getItem('projectId') || null;
   const folderPath = sessionStorage.getItem('projectFolder') || null;
   const projectName = sessionStorage.getItem('projectName') || null;
 
@@ -30,7 +29,6 @@ async function submitProcessing() {
   const mosaic = selected.includes('mosaics');
 
   const payload = {
-    project_id: projectId,
     project_name: projectName,
     folderPath: folderPath,
     lwMethod: glint,
@@ -41,14 +39,15 @@ async function submitProcessing() {
   };
 
   // Save outputs to sessionStorage so charts.js can use them
-  sessionStorage.setItem('selectedOutputs', JSON.stringify(outputs));
+  sessionStorage.setItem('selectedWQAlgs', JSON.stringify(wqAlgs));
+  sessionStorage.setItem('mosaic', JSON.stringify(mosaic));
 
   // Show the loading screen right away
   navigate('loading');
 
   try {
     // First, save the settings
-    const settingsRes = await fetch('http://localhost:8889/manage/save_settings', {
+    const settingsRes = await fetch('http://localhost:8889/api/projects/new', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -64,7 +63,7 @@ async function submitProcessing() {
     console.log("Settings saved, starting processing...");
 
     // Now trigger the actual processing
-    const processRes = await fetch('http://localhost:8889/process', {
+    const processRes = await fetch('http://localhost:8889/api/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ folderPath: folderPath })
@@ -83,8 +82,8 @@ async function submitProcessing() {
 
     if (data.success) {
       // Charts ready = 1 (true)
-      navigate('results');
       buildOverviewFromFolder();
+      navigate('results');
     } else {
       // Charts not ready = 0 (false)
       alert('Processing failed');

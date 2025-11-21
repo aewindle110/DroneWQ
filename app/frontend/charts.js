@@ -20,7 +20,8 @@ function buildOverviewFromFolder() {
 
   const resultDir = path.join(folderPath, 'result');
   console.log(resultDir)
-  const outputs = JSON.parse(sessionStorage.getItem('selectedOutputs') || '[]');
+  const wqAlgs = JSON.parse(sessionStorage.getItem('selectedWQAlgs') || '[]');
+  const mosaic = JSON.parse(sessionStorage.getItem('mosaic') || '[]');
 
   // Always included cards
   const always = [
@@ -66,8 +67,8 @@ function buildOverviewFromFolder() {
   for (const a of always) addCardIfExists(a.title, a.file, a.blurb);
 
   // Conditional cards
-  console.log(outputs)
-  const outSet = new Set(outputs);
+  console.log(wqAlgs)
+  const outSet = new Set(wqAlgs);
   for (const item of byOutput) {
     if (outSet.has(item.out)) {
       addCardIfExists(item.title, item.file, item.blurb);
