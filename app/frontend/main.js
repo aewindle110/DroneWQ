@@ -14,7 +14,7 @@ function pythonCmd() {
 }
 
 function startFlask() {
-  const backendDir = path.join(__dirname, "..", ".."); // adjust if needed
+  const backendDir = path.join(__dirname, ".."); // adjust if needed
 
   const env = { ...process.env };
 
