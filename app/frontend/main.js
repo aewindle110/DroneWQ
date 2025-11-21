@@ -10,24 +10,35 @@ let flaskProcess;
 /* ---------- Flask child process helpers ---------- */
 function pythonCmd() {
   if (process.env.PYTHON_BIN) return process.env.PYTHON_BIN;
-  return process.platform === 'win32' ? 'python' : 'python3';
+  return process.platform === "win32" ? "python" : "python3";
 }
 
 function startFlask() {
-  const backendDir = path.join(__dirname, '..', 'backend'); // adjust if needed
-  const scriptPath = path.join(backendDir, 'app.py');
+  const backendDir = path.join(__dirname, "..", ".."); // adjust if needed
 
   const env = { ...process.env };
 
-  flaskProcess = spawn(pythonCmd(), [scriptPath], {
-    cwd: backendDir,
-    env,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  // Ensure FLASK_APP is set so `flask run` knows what to run
+  // env.FLASK_APP = "app.py";
 
-  flaskProcess.stdout.on('data', d => console.log(`[flask] ${d}`.trim()));
-  flaskProcess.stderr.on('data', d => console.error(`[flask ERR] ${d}`.trim()));
-  flaskProcess.on('exit', (code, sig) => {
+  // Start: python3 -m flask run --port 8889
+  flaskProcess = spawn(
+    pythonCmd(),
+    ["-m", "flask", "run", "--port", "8889"],
+    {
+      cwd: backendDir,
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    }
+  );
+
+  flaskProcess.stdout.on("data", (d) =>
+    console.log(`[flask] ${d}`.trim())
+  );
+  flaskProcess.stderr.on("data", (d) =>
+    console.error(`[flask ERR] ${d}`.trim())
+  );
+  flaskProcess.on("exit", (code, sig) => {
     console.log(`[flask] exited code=${code} signal=${sig}`);
   });
 }
@@ -36,7 +47,7 @@ function waitForBackend(timeoutMs = 15000, intervalMs = 300) {
   const deadline = Date.now() + timeoutMs;
   return new Promise((resolve, reject) => {
     const ping = () => {
-      const req = http.get('http://127.0.0.1:5000/health', res => {
+      const req = http.get('http://127.0.0.1:8889/health', res => {
         res.destroy();
         if (res.statusCode === 200) return resolve();
         if (Date.now() > deadline) return reject(new Error('Backend not ready (HTTP status)'));
@@ -148,14 +159,14 @@ if (!gotLock) {
   });
 
   app.whenReady().then(async () => {
-    // startFlask();
-    // try {
-    //   await waitForBackend();
-    //   console.log('Flask is ready.');
-    // } catch (e) {
-    //   console.error(e);
-    //   dialog.showErrorBox('Backend Error', 'Flask backend did not start. Check console for logs.');
-    // }
+    startFlask();
+    try {
+      await waitForBackend();
+      console.log('Flask is ready.');
+    } catch (e) {
+      console.error(e);
+      dialog.showErrorBox('Backend Error', 'Flask backend did not start. Check console for logs.');
+    }
     createWindow();
   });
 
@@ -164,9 +175,9 @@ if (!gotLock) {
   });
 
   app.on('before-quit', () => {
-    // if (flaskProcess && !flaskProcess.killed) {
-    //   try { process.platform === 'win32' ? flaskProcess.kill() : flaskProcess.kill('SIGTERM'); } catch {}
-    // }
+    if (flaskProcess && !flaskProcess.killed) {
+      try { process.platform === 'win32' ? flaskProcess.kill() : flaskProcess.kill('SIGTERM'); } catch { }
+    }
   });
 
   app.on('window-all-closed', () => {

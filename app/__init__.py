@@ -4,6 +4,7 @@ from flask import Flask
 from .config import Config
 from .process import bp as process_bp
 from .projects import bp as projects_bp
+from .health import bp as health_bp
 
 
 def init_db(DB_PATH):
@@ -35,6 +36,8 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     init_db(app.config["DATABASE_PATH"])
+
+    app.register_blueprint(health_bp)
 
     app.register_blueprint(projects_bp)
 
