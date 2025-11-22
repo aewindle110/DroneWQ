@@ -14,7 +14,7 @@ def process():
         return jsonify({"error": "folderPath is not specified."}), 400
 
     try:
-        pipeline = Pipeline(folder_path)
+        # pipeline = Pipeline(folder_path)
 
         # pipeline.water_metadata()
         # pipeline.flight_plan()
