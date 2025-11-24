@@ -24,6 +24,13 @@ function buildOverviewFromFolder() {
 
  const resultDir = path.join(folderPath, 'result');
 
+ const always = [
+  { title: 'Rrs Plot', file: 'rrs_plot.png', blurb: 'Remote sensing reflectance (Rrs) from 25 image captures.' },
+  { title: 'Masked Rrs Plot', file: 'masked_rrs_plot.png', blurb: 'Rrs from masked images.' },
+  { title: 'Lt Plot', file: 'lt_plot.png', blurb: 'Total radiance (Lt) spectra.' },
+  { title: 'Ed Plot', file: 'ed_plot.png', blurb: 'Downwelling irradiance (Ed).' },
+];
+
 
   const outputs = JSON.parse(sessionStorage.getItem('selectedOutputs') || '[]');
 
