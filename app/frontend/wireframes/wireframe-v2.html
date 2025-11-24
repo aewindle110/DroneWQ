@@ -38,30 +38,82 @@
           </table>
         </div>
 
-        <!-- UPLOAD -->
+        <!-- PROJECT NAME SCREEN -->
+        <div id="project-name" class="screen">
+          <div class="content-header">
+            <div class="content-title">New Project</div>
+          </div>
+          
+          <div class="form-panel" style="max-width: 600px; margin: 80px auto;">
+            <div class="form-header">
+              <div class="step-indicator">1</div>
+              <div style="font-size: 20px; font-weight: 600">
+                Name Your Project
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="projectNameInput">Project Name *</label>
+              <input 
+                type="text" 
+                id="projectNameInput" 
+                class="form-select" 
+                placeholder="Enter project name..."
+                style="font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 16px;"
+              />
+              <div style="color: #7f8c8d; font-size: 13px; margin-top: 8px">
+                Project Name: 
+              </div>
+            </div>
+            
+            <div class="form-actions">
+              <button class="btn btn-secondary" onclick="navigate('home')">
+                Cancel
+              </button>
+              <button id="projectNameNextBtn" class="btn btn-primary" onclick="proceedToUpload()" disabled>
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- UPLOAD SCREEN -->
         <div id="upload" class="screen">
           <div class="content-header">
             <div class="content-title">Upload Data</div>
           </div>
-          <div class="upload-zone">
-            <div style="font-size: 48px; margin-bottom: 20px">📁</div>
-            <div>Select your data folder with the standard structure</div>
-            <div style="color: #7f8c8d; font-size: 13px; margin-top: 10px">
-              Required: panel/, raw_sky_imgs/, raw_water_imgs/, align_img/
+          
+          <div style="max-width: 800px; margin: 0 auto;">
+            <!-- Show selected project name -->
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 30px; border-left: 4px solid #3498db;">
+              <strong>Project Name:</strong> <span id="displayProjectName" style="color: #2c3e50;"></span>
             </div>
-            <button id="uploadFolderBtn" class="btn btn-primary" type="button">
-              Upload Folder
-            </button>
-          </div>
-          <div class="form-actions">
-            <button class="btn btn-secondary" onclick="navigate('home')">
-              Cancel
-            </button>
-            <button class="btn btn-primary" onclick="navigate('method')">
-              Next
-            </button>
+
+            <div class="upload-zone">
+              <div style="font-size: 48px; margin-bottom: 20px">📁</div>
+              <div style="font-weight: 500; margin-bottom: 10px;">Select your data folder with the standard structure</div>
+              <div style="color: #7f8c8d; font-size: 13px; margin-top: 10px">
+                Required: panel/, raw_sky_imgs/, raw_water_imgs/, align_img/
+              </div>
+              <div id="selectedFolderDisplay" style="margin-top: 15px; color: #27ae60; font-weight: 500; display: none;">
+                ✓ Folder selected: <span id="selectedFolderPath"></span>
+              </div>
+              <button id="uploadFolderBtn" class="btn btn-primary" type="button" style="margin-top: 15px;">
+                Select Folder
+              </button>
+            </div>
+            
+            <div class="form-actions">
+              <button class="btn btn-secondary" onclick="navigate('project-name')">
+                Back
+              </button>
+              <button id="uploadNextBtn" class="btn btn-primary" onclick="proceedToMethod()" disabled>
+                Next
+              </button>
+            </div>
           </div>
         </div>
+
 
         <!-- METHOD -->
         <div id="method" class="screen">
