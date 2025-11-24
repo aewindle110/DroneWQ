@@ -20,7 +20,8 @@
               class="search-input"
               placeholder="Search projects..."
             />
-            <button class="btn btn-primary" onclick="navigate('upload')">
+            <button class="btn btn-primary" onclick="navigate('project-name')">
+
               + New Project
             </button>
           </div>
@@ -46,14 +47,12 @@
           
           <div class="form-panel" style="max-width: 600px; margin: 80px auto;">
             <div class="form-header">
-              <div class="step-indicator">1</div>
               <div style="font-size: 20px; font-weight: 600">
                 Name Your Project
               </div>
             </div>
             
             <div class="form-group">
-              <label class="form-label" for="projectNameInput">Project Name *</label>
               <input 
                 type="text" 
                 id="projectNameInput" 
@@ -61,9 +60,6 @@
                 placeholder="Enter project name..."
                 style="font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 16px;"
               />
-              <div style="color: #7f8c8d; font-size: 13px; margin-top: 8px">
-                Project Name: 
-              </div>
             </div>
             
             <div class="form-actions">
@@ -723,54 +719,52 @@
     </div>
 
     <script>
-      function navigate(screen) {
-        document
-          .querySelectorAll(".screen")
-          .forEach((s) => s.classList.remove("active"));
-        document.getElementById(screen).classList.add("active");
+     // Add this to your <script> section in wireframe-v2.html
 
-        // Refresh dashboard when returning to home
-        if (screen === "home") {
-          if (typeof initializeDashboard === "function") {
-            initializeDashboard();
-            console.log("[Home] Dashboard refreshed");
-          } else {
-            console.warn("[Home] initializeDashboard() not found");
-          }
-        }
+    function navigate(screen) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screen).classList.add('active');
 
-        // Init Upload page JS
-        if (screen === "upload") {
-          setTimeout(() => {
-            if (typeof initializeUpload === "function") {
-              initializeUpload();
-              console.log("[Upload] initializeUpload() called");
-            } else {
-              console.warn("[Upload] initializeUpload is not defined");
-            }
-          }, 300);
+    // Initialize project name screen
+    if (screen === 'project-name') {
+        setTimeout(() => {
+        if (typeof initializeProjectName === 'function') {
+            initializeProjectName();
+            console.log('[ProjectName] initialized');
         }
+        }, 100);
+    }
 
-        // Init Settings pages
-        if (screen === "method" || screen === "outputs") {
-          setTimeout(() => {
-            if (typeof initializeProjectSettings === "function") {
-              initializeProjectSettings();
-              console.log("[Settings] initialized");
-            }
-          }, 100);
+    // Initialize upload screen
+    if (screen === 'upload') {
+        setTimeout(() => {
+        if (typeof initializeUpload === 'function') {
+            initializeUpload();
+            console.log('[Upload] initialized');
         }
+        }, 100);
+    }
 
-        // Init Results page - build charts when arriving at results
-        if (screen === "results") {
-          setTimeout(() => {
-            if (typeof buildOverviewFromFolder === "function") {
-              buildOverviewFromFolder();
-              console.log("[Results] Charts built");
-            }
-          }, 100);
+    // Initialize method/output screens
+    if (screen === 'method' || screen === 'outputs') {
+        setTimeout(() => {
+        if (typeof initializeProjectSettings === 'function') {
+            initializeProjectSettings();
+            console.log('[Settings] initialized');
         }
-      }
+        }, 100);
+    }
+
+    // Initialize results screen
+    if (screen === 'results') {
+        setTimeout(() => {
+        if (typeof buildOverviewFromFolder === 'function') {
+            buildOverviewFromFolder();
+            console.log('[Results] Charts built');
+        }
+        }, 100);
+    }
+    }
 
       function toggleMenu(e) {
         e.stopPropagation();

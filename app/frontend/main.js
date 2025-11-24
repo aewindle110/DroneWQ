@@ -87,7 +87,7 @@ function createWindow() {
         {
           label: 'New Project',
           accelerator: 'CmdOrCtrl+N',
-          click: () => mainWindow.webContents.executeJavaScript("navigate('upload')"),
+          click: () => mainWindow.webContents.executeJavaScript("navigate('project-name')"),
         },
         {
           label: 'Open Project',
