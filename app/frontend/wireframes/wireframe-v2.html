@@ -165,7 +165,7 @@
               <button class="btn btn-secondary" onclick="navigate('upload')">
                 Back
               </button>
-              <button class="btn btn-primary" onclick="navigate('outputs')">
+            <button id="methodNextBtn" class="btn btn-primary">
                 Next
               </button>
             </div>
@@ -719,52 +719,69 @@
     </div>
 
     <script>
-     // Add this to your <script> section in wireframe-v2.html
 
     function navigate(screen) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screen).classList.add('active');
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screen).classList.add('active');
 
-    // Initialize project name screen
-    if (screen === 'project-name') {
-        setTimeout(() => {
-        if (typeof initializeProjectName === 'function') {
-            initializeProjectName();
-            console.log('[ProjectName] initialized');
+        // Clear all data when returning to dashboard
+        if (screen === 'home') {
+            if (typeof clearProjectData === 'function') {
+            clearProjectData();
+            console.log('[Dashboard] All project data cleared');
+            }
         }
-        }, 100);
-    }
 
-    // Initialize upload screen
-    if (screen === 'upload') {
-        setTimeout(() => {
-        if (typeof initializeUpload === 'function') {
-            initializeUpload();
-            console.log('[Upload] initialized');
+        // Initialize project name screen
+        if (screen === 'project-name') {
+            setTimeout(() => {
+            if (typeof initializeProjectName === 'function') {
+                initializeProjectName();
+                console.log('[ProjectName] initialized');
+            }
+            }, 100);
         }
-        }, 100);
-    }
 
-    // Initialize method/output screens
-    if (screen === 'method' || screen === 'outputs') {
-        setTimeout(() => {
-        if (typeof initializeProjectSettings === 'function') {
-            initializeProjectSettings();
-            console.log('[Settings] initialized');
+        // Initialize upload screen
+        if (screen === 'upload') {
+            setTimeout(() => {
+            if (typeof initializeUpload === 'function') {
+                initializeUpload();
+                console.log('[Upload] initialized');
+            }
+            }, 100);
         }
-        }, 100);
-    }
 
-    // Initialize results screen
-    if (screen === 'results') {
-        setTimeout(() => {
-        if (typeof buildOverviewFromFolder === 'function') {
-            buildOverviewFromFolder();
-            console.log('[Results] Charts built');
+        // Initialize method screen with validation
+        if (screen === 'method') {
+            setTimeout(() => {
+            if (typeof initializeProjectSettings === 'function') {
+                initializeProjectSettings();
+                console.log('[Method] initialized with validation');
+            }
+            }, 100);
         }
-        }, 100);
-    }
-    }
+
+        // Initialize output screen
+        if (screen === 'outputs') {
+            setTimeout(() => {
+            if (typeof initializeProjectSettings === 'function') {
+                initializeProjectSettings();
+                console.log('[Outputs] initialized');
+            }
+            }, 100);
+        }
+
+        // Initialize results screen
+        if (screen === 'results') {
+            setTimeout(() => {
+            if (typeof buildOverviewFromFolder === 'function') {
+                buildOverviewFromFolder();
+                console.log('[Results] Charts built');
+            }
+            }, 100);
+        }
+        }
 
       function toggleMenu(e) {
         e.stopPropagation();
@@ -943,7 +960,6 @@
       document.addEventListener("DOMContentLoaded", function () {
         setupDashboardOnce();
         initializeDashboard();
-        initializeSettings(); // Initialize settings first
         initializeCharts(); // Then initialize charts with settings
       });
     </script>

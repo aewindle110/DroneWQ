@@ -3,6 +3,8 @@ const { ipcRenderer } = require('electron');
 
 let selectedFolderPath = null;
 let projectName = null;
+let uploadInitialized = false; // Flag to prevent duplicate listeners
+let projectNameInitialized = false; // Flag for project name screen
 
 // Initialize project name screen (Screen 1)
 function initializeProjectName() {
@@ -11,13 +13,30 @@ function initializeProjectName() {
   
   if (!projectNameInput || !nextBtn) return;
   
-  // Clear any previous values
-  projectNameInput.value = '';
-  selectedFolderPath = null;
+  // Check if we already have a project name (user went back)
+  const savedName = sessionStorage.getItem('projectName');
+  if (savedName) {
+    projectNameInput.value = savedName;
+  } else {
+    projectNameInput.value = '';
+  }
   
   // Enable/disable Next button
-  projectNameInput.addEventListener('input', () => {
+  function checkNextButton() {
     nextBtn.disabled = projectNameInput.value.trim() === '';
+  }
+  
+  checkNextButton();
+  
+  // Only add listeners once
+  if (projectNameInitialized) return;
+  projectNameInitialized = true;
+  
+  projectNameInput.addEventListener('input', checkNextButton);
+  
+  // Add click handler to Next button
+  nextBtn.addEventListener('click', function() {
+    proceedToUpload();
   });
   
   // Handle Enter key
@@ -109,20 +128,37 @@ async function proceedToUpload() {
 function initializeUpload() {
   const btn = document.getElementById('uploadFolderBtn');
   const nextBtn = document.getElementById('uploadNextBtn');
+  const displayDiv = document.getElementById('selectedFolderDisplay');
+  const pathSpan = document.getElementById('selectedFolderPath');
   
   if (!btn) return;
   
-  // Reset folder selection
-  selectedFolderPath = null;
-  const displayDiv = document.getElementById('selectedFolderDisplay');
-  if (displayDiv) displayDiv.style.display = 'none';
-  if (nextBtn) nextBtn.disabled = true;
+  // Check if we already have a folder selected (user went back)
+  const savedFolder = sessionStorage.getItem('projectFolder');
+  if (savedFolder) {
+    selectedFolderPath = savedFolder;
+    if (displayDiv && pathSpan) {
+      pathSpan.textContent = savedFolder;
+      displayDiv.style.display = 'block';
+    }
+    if (nextBtn) nextBtn.disabled = false;
+  } else {
+    selectedFolderPath = null;
+    if (displayDiv) displayDiv.style.display = 'none';
+    if (nextBtn) nextBtn.disabled = true;
+  }
   
   // Display project name
   const displayNameSpan = document.getElementById('displayProjectName');
-  if (displayNameSpan && projectName) {
-    displayNameSpan.textContent = projectName;
+  const savedName = sessionStorage.getItem('projectName');
+  if (displayNameSpan && savedName) {
+    displayNameSpan.textContent = savedName;
+    projectName = savedName;
   }
+  
+  // Only add listener once
+  if (uploadInitialized) return;
+  uploadInitialized = true;
   
   btn.addEventListener('click', async () => {
     try {
@@ -142,17 +178,25 @@ function initializeUpload() {
         const msg = await resp.text();
         alert(`Folder structure error: ${msg || resp.statusText}`);
         selectedFolderPath = null;
+        const displayDiv = document.getElementById('selectedFolderDisplay');
+        const nextBtn = document.getElementById('uploadNextBtn');
         if (displayDiv) displayDiv.style.display = 'none';
         if (nextBtn) nextBtn.disabled = true;
         return;
       }
       
       // Show selected folder
+      const displayDiv = document.getElementById('selectedFolderDisplay');
       const pathSpan = document.getElementById('selectedFolderPath');
+      const nextBtn = document.getElementById('uploadNextBtn');
+      
       if (displayDiv && pathSpan) {
         pathSpan.textContent = selectedFolderPath;
         displayDiv.style.display = 'block';
       }
+      
+      // Save to session
+      sessionStorage.setItem('projectFolder', selectedFolderPath);
       
       // Enable next button
       if (nextBtn) nextBtn.disabled = false;
@@ -161,6 +205,7 @@ function initializeUpload() {
       console.error(err);
       alert('Could not select folder.');
       selectedFolderPath = null;
+      const nextBtn = document.getElementById('uploadNextBtn');
       if (nextBtn) nextBtn.disabled = true;
     }
   });
@@ -177,9 +222,7 @@ function proceedToMethod() {
     projectName = sessionStorage.getItem('projectName');
   }
   
-  // Store folder path
-  sessionStorage.setItem('projectFolder', selectedFolderPath);
-  
+  // Folder path already saved to session
   console.log('Project Name:', projectName);
   console.log('Folder Path:', selectedFolderPath);
   
