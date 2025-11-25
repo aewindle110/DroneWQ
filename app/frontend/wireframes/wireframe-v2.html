@@ -299,6 +299,7 @@
             <div class="tab" onclick="switchTab(this, 'trajectory')">
               Flight Trajectory
             </div>
+            <div class="tab" onclick="switchTab(this, 'csvdata')">CSV Data</div>
             <div class="tab" onclick="switchTab(this, 'mosaic')">Mosaic</div>
           </div>
 
@@ -346,6 +347,19 @@
               style="width: 100%; border-radius: 4px"
             />
           </div>
+
+          <div id="csvdata" class="tab-content">
+        <div style="margin-bottom: 30px;">
+            <h4 style="margin-bottom: 15px;">Available Data Files</h4>
+            <p style="color: #7F8C8D; margin-bottom: 20px;">
+            View and download CSV data files for each plot.
+            </p>
+        </div>
+        
+        <div id="csvDataContainer">
+            <!-- CSV tables will be inserted here by JavaScript -->
+        </div>
+        </div>
 
           <div id="mosaic" class="tab-content">
             <div
@@ -778,51 +792,57 @@
         }
 
         // Initialize results screen
-if (screen === 'results') {
-  setTimeout(async () => {
-    const projectId = sessionStorage.getItem('currentProjectId');
-    
-    if (!projectId) {
-      console.error('No project ID found');
-      return;
-    }
-    
-    try {
-      // Fetch all projects from backend
-      const response = await fetch('http://localhost:8889/api/projects');
-      if (!response.ok) throw new Error('Failed to fetch projects');
-      
-      const allProjects = await response.json();
-      
-      // Find the specific project
-      const project = allProjects.find(p => p.id == projectId);
-      
-      if (!project) {
-        console.error('Project not found in database');
-        return;
-      }
-      
-    // Update UI with project details
-        const dateCreated = new Date(project.created_at).toLocaleDateString(
-        "en-US",
-        { month: "2-digit", day: "2-digit", year: "numeric" }
-        );
+        if (screen === 'results') {
+        setTimeout(async () => {
+            const projectId = sessionStorage.getItem('currentProjectId');
+            
+            if (!projectId) {
+            console.error('No project ID found');
+            return;
+            }
+            
+            try {
+            const response = await fetch('http://localhost:8889/api/projects');
+            if (!response.ok) throw new Error('Failed to fetch projects');
+            
+            const allProjects = await response.json();
+            const project = allProjects.find(p => p.id == projectId);
+            
+            if (!project) {
+                console.error('Project not found in database');
+                return;
+            }
+            
+            // Update UI with project details
+            const dateCreated = new Date(project.created_at).toLocaleDateString(
+                "en-US",
+                { month: "2-digit", day: "2-digit", year: "numeric" }
+            );
+            
+            document.getElementById('resultsProjectName').textContent = project.name;
+            document.getElementById('resultsProjectSettings').textContent = 
+                `${dateCreated} | Sky Glint: ${project.lw_method} | Irradiance: ${project.ed_method} | Masking: ${project.mask_method || 'None'}`;
+            
+            // Build charts with folder path
+            if (typeof buildOverviewFromFolder === 'function') {
+                buildOverviewFromFolder(project.folder_path);
+                console.log('[Results] Charts built');
+            }
+            
+            // Load CSV data (ADD THIS)
+            if (typeof loadCSVData === 'function') {
+                loadCSVData(project.folder_path);
+                console.log('[Results] CSV data loaded');
+            }
+            
+            } catch (err) {
+            console.error('Failed to load project:', err);
+            }
+        }, 100);
+        }
+        }
 
-        document.getElementById('resultsProjectName').textContent = project.name;
-        document.getElementById('resultsProjectSettings').textContent = 
-        `${dateCreated} | Sky Glint: ${project.lw_method} | Irradiance: ${project.ed_method} | Masking: ${project.mask_method || 'None'}`;
-        
-      // Build charts with folder path
-      if (typeof buildOverviewFromFolder === 'function') {
-        buildOverviewFromFolder(project.folder_path);
-        console.log('[Results] Charts built');
-      }
-      
-    } catch (err) {
-      console.error('Failed to load project:', err);
-    }
-  }, 100);
-}}
+     
 
       function toggleMenu(e) {
         e.stopPropagation();
@@ -995,6 +1015,7 @@ if (screen === 'results') {
     <script src="../charts.js"></script>
     <script src="../upload.js"></script>
     <script src="../project_settings.js"></script>
+    <script src="../csv_handler.js"></script>
 
     <script>
       // Initialize all functionality when page loads

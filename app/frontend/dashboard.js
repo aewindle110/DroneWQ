@@ -318,9 +318,11 @@ function viewProjectResults(projectId) {
     return;
   }
   
-  // Only store the project ID
+  // Store the project ID
   sessionStorage.setItem('currentProjectId', projectId);
   
   // Navigate to results
-  navigate('results');
+  window.navigate('results');  // Use window.navigate
 }
+
+window.viewProjectResults = viewProjectResults;
