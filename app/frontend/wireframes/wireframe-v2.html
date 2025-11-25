@@ -823,12 +823,11 @@
             document.getElementById('resultsProjectSettings').textContent = 
                 `${dateCreated} | Sky Glint: ${project.lw_method} | Irradiance: ${project.ed_method} | Masking: ${project.mask_method || 'None'}`;
             
-            // Build charts with folder path
+           // Build charts with folder path and selected WQ algs
             if (typeof buildOverviewFromFolder === 'function') {
-                buildOverviewFromFolder(project.folder_path);
-                console.log('[Results] Charts built');
+            buildOverviewFromFolder(project.folder_path, project.wq_algs || []);
+            console.log('[Results] Charts built');
             }
-            
             // Load CSV data (ADD THIS)
             if (typeof loadCSVData === 'function') {
                 loadCSVData(project.folder_path);

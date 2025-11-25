@@ -15,7 +15,13 @@ function initializeCharts() {
  * Build the Overview cards from images the backend writes into the project's main folder.
  * We show only the cards that make sense based on selected outputs.
  */
-function buildOverviewFromFolder(folderPath) {
+function buildOverviewFromFolder(folderPath, selectedWQAlgs) {
+  console.log('=== buildOverviewFromFolder DEBUG ===');
+  console.log('folderPath:', folderPath);
+  console.log('selectedWQAlgs:', selectedWQAlgs);
+  console.log('selectedWQAlgs type:', typeof selectedWQAlgs);
+  console.log('selectedWQAlgs is array?', Array.isArray(selectedWQAlgs));
+
   //const folderPath = sessionStorage.getItem('projectFolder');
   if (!folderPath) {
     console.warn('No project folder set in sessionStorage');
@@ -72,16 +78,24 @@ const byOutput = [
     container.appendChild(card);
   }
 
-  // Always add these if present
+  // Always show the 4 basic radiometry plots
   for (const a of always) addCardIfExists(a.title, a.file, a.blurb);
 
-  // Decide which conditional plots to show
-  const outSet = new Set(outputs || []);
+  
+
+ // Only show WQ plots that the user selected
+  const selectedSet = new Set(selectedWQAlgs || []);
+  console.log('Selected WQ algorithms:', selectedWQAlgs);
+  console.log('selectedSet:', selectedSet);
+  console.log('selectedSet size:', selectedSet.size);
+  
   for (const item of byOutput) {
-    if (outSet.has(item.out)) {
-      addCardIfExists(item.title, item.file, item.blurb);
+    console.log(`Checking ${item.out}:`, selectedSet.has(item.out));
+    if (selectedSet.has(item.out)) {
+      addCardIfExists(item.title, item.file, item.blurb, folderPath);
     }
   }
+  console.log('=== END DEBUG ===');
 
   // Fallback: if nothing rendered, show a friendly message
   if (!container.children.length) {
