@@ -282,7 +282,7 @@
             <div class="content-title">Results</div>
           </div>
 
-          <div class="back-arrow" onclick="navigate('home')">
+          <div class="back-arrow" onclick="navigate('home', 'results')">
             ← Back to Projects
           </div>
 
@@ -720,22 +720,23 @@
 
     <script>
 
-    function navigate(screen) {
+    function navigate(screen, fromScreen) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screen).classList.add('active');
 
-        // Clear all data AND reload dashboard when returning to home
+        // Only clear data when starting a NEW project, not when viewing results
         if (screen === 'home') {
+        if (fromScreen !== 'results') {
             if (typeof clearProjectData === 'function') {
-            clearProjectData();
-            console.log('[Dashboard] All project data cleared');
-            }
-            // RELOAD THE DASHBOARD - this is what's missing!
-            if (typeof initializeDashboard === 'function') {
-            initializeDashboard();
-            console.log('[Dashboard] Projects reloaded');
+                clearProjectData();
+                console.log('[Dashboard] All project data cleared');
             }
         }
+        if (typeof initializeDashboard === 'function') {
+            initializeDashboard();
+            console.log('[Dashboard] Projects reloaded');
+        }
+    }
         // Initialize project name screen
         if (screen === 'project-name') {
             setTimeout(() => {

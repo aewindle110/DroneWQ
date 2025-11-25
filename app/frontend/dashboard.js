@@ -54,6 +54,8 @@ window.deleteProject = deleteProject;
 window.duplicateProject = duplicateProject;
 window.exportProject = exportProject;
 window.addProject = addProject;
+window.viewProjectResults = viewProjectResults;
+
 
 // Render projects table
 function renderProjects(projectsToRender) {
@@ -73,7 +75,7 @@ function renderProjects(projectsToRender) {
   tbody.innerHTML = projectsToRender.map(project => `
         <tr data-project-id="${project.id}">
             <td>
-                <a href="#" class="project-link" onclick="navigate('results'); return false;">
+                <a href="#" class="project-link" onclick="viewProjectResults(${project.id}); return false;">
                     ${project.name}
                 </a>
             </td>
@@ -307,4 +309,19 @@ function addProject(projectData) {
   showNotification(`Project "${newProject.name}" created successfully!`, 'success');
 
   return newProject.id;
+}
+
+function viewProjectResults(projectId) {
+  const project = projects.find(p => p.id === projectId);
+  if (!project) {
+    console.error('Project not found:', projectId);
+    return;
+  }
+  
+  // Set project data in sessionStorage
+  sessionStorage.setItem('projectFolder', project.fullPath);
+  sessionStorage.setItem('projectName', project.name);
+  
+  // Navigate to results
+  navigate('results');
 }

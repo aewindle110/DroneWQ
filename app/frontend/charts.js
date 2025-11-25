@@ -52,7 +52,8 @@ const byOutput = [
 
   // Helper: create a card if file exists
   function addCardIfExists(title, fileName, blurb) {
-    const fullPath = path.join(folderPath, fileName);
+    const fullPath = path.join(resultDir, fileName);
+
     
     // Check if file exists
     if (!fs.existsSync(fullPath)) {
