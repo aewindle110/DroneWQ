@@ -724,14 +724,18 @@
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screen).classList.add('active');
 
-        // Clear all data when returning to dashboard
+        // Clear all data AND reload dashboard when returning to home
         if (screen === 'home') {
             if (typeof clearProjectData === 'function') {
             clearProjectData();
             console.log('[Dashboard] All project data cleared');
             }
+            // RELOAD THE DASHBOARD - this is what's missing!
+            if (typeof initializeDashboard === 'function') {
+            initializeDashboard();
+            console.log('[Dashboard] Projects reloaded');
+            }
         }
-
         // Initialize project name screen
         if (screen === 'project-name') {
             setTimeout(() => {

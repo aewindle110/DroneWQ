@@ -24,23 +24,24 @@ function buildOverviewFromFolder() {
 
  const resultDir = path.join(folderPath, 'result');
 
- const always = [
-  { title: 'Rrs Plot', file: 'rrs_plot.png', blurb: 'Remote sensing reflectance (Rrs) from 25 image captures.' },
-  { title: 'Masked Rrs Plot', file: 'masked_rrs_plot.png', blurb: 'Rrs from masked images.' },
-  { title: 'Lt Plot', file: 'lt_plot.png', blurb: 'Total radiance (Lt) spectra.' },
-  { title: 'Ed Plot', file: 'ed_plot.png', blurb: 'Downwelling irradiance (Ed).' },
-];
+// Always included cards
+  const always = [
+    { out: 'rrs', title: 'Radiometry Spectra Plot', file: 'rrs_plot.png', blurb: 'Remote sensing reflectance (Rrs) from 25 image captures that have not been masked for sun glint and image artifacts.' },
+    { out: 'rrs', title: 'Radiometry Spectra Masked Plot', file: 'masked_rrs_plot.png', blurb: 'Rrs from same set of 25 images that have been masked for sun glint and artifacts. Bold black line shows the mean spectrum across all 25 images.' },
+    { out: 'rrs', title: 'Lt Plot', file: 'lt_plot.png', blurb: 'Total radiance (Lt) spectra from the same 25 image captures.' },
+    { out: 'rrs', title: 'Ed Plot', file: 'ed_plot.png', blurb: 'Downwelling irradiance (Ed) from the same 25 image captures.' },
+  ];
 
 
   const outputs = JSON.parse(sessionStorage.getItem('selectedOutputs') || '[]');
 
-  // Conditional cards mapped to outputs
-  const byOutput = [
-    { out: 'reflectance',   title: 'Rrs Plot',        file: 'rrs_plot.png',         blurb: 'Remote sensing reflectance across key wavelengths.' },
-    { out: 'reflectance',   title: 'Masked Rrs Plot', file: 'masked_rrs_plot.png',  blurb: 'Reflectance after pixel masking.' },
-    { out: 'tsm',           title: 'Lt Plot',         file: 'lt_plot.png',          blurb: 'Top-of-water radiance.' },
-    { out: 'panel_ed',      title: 'Ed Plot',         file: 'ed_plot.png',          blurb: 'Downwelling irradiance summary.' },
-  ];
+const byOutput = [
+    { out: 'chl_hu', title: '', file: 'chl_hu_plot.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration. (mg/m^3)' },
+    { out: 'chl_ocx', title: 'Masked Rrs Plot', file: 'chl_ocx_plot.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration. (mg/m^3)' },
+    { out: 'chl_hu_ocx', title: 'Lt Plot', file: 'chl_hu_ocx.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration. (mg/m^3)' },
+    { out: 'chl_gitelson', title: 'Ed Plot', file: 'chl_gitelson.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration. (mg/m^3)' },
+    { out: 'tsm_nechad', title: 'Ed Plot', file: 'tsm_nechad.png', blurb: 'Coordinate locations of individual image captures colored by total suspended matter (TSM, mg L-1).' },
+]
 
   const container = document.getElementById('overviewCards');
   if (!container) {
