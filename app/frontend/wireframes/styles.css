@@ -375,3 +375,55 @@ body {
 .back-arrow:hover {
   text-decoration: underline;
 }
+
+.csv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.csv-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  background: white;
+  transition: box-shadow 0.2s;
+}
+
+.csv-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.csv-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.csv-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.csv-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.csv-stat-label {
+  color: #7F8C8D;
+  font-size: 14px;
+}
+
+.csv-stat-value {
+  color: #2C3E50;
+  font-weight: 600;
+  font-size: 16px;
+}
