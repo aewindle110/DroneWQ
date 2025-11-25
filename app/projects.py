@@ -32,6 +32,9 @@ def get_all_projects():
                 "folder_path": p["folder_path"],
                 "data_source": Path(p["folder_path"]).name,
                 "lw_method": p["lw_method"],
+                "ed_method": p["ed_method"],
+                "mask_method": p["mask_method"], 
+                "wq_algs": json.loads(p["wq_algs"]) if p["wq_algs"] else [],
                 "created_at": p["created_at"],
             }
         )
