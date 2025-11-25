@@ -172,20 +172,22 @@ async function submitProcessing() {
   try {
     // First, save the settings
     const settingsRes = await fetch('http://localhost:8889/api/projects/new', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    
-    if (!settingsRes.ok) {
-      const txt = await settingsRes.text();
-      alert(`Backend error saving settings (${settingsRes.status}): ${txt || 'Failed'}`);
-      navigate('outputs');
-      return;
-    }
-    
-    console.log("Settings saved, starting processing...");
-    
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload)
+});
+
+if (!settingsRes.ok) {
+  const txt = await settingsRes.text();
+  alert(`Backend error saving settings (${settingsRes.status}): ${txt || 'Failed'}`);
+  navigate('outputs');
+  return;
+}
+
+const newProject = await settingsRes.json();
+sessionStorage.setItem('currentProjectId', newProject.id);
+console.log("Settings saved, project ID:", newProject.id);
+
     // Now trigger the actual processing
     const processRes = await fetch('http://localhost:8889/api/process', {
       method: 'POST',

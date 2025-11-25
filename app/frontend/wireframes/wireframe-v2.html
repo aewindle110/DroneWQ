@@ -308,22 +308,17 @@
             <div id="overviewCards" class="charts-grid"></div>
           </div>
 
-          <div id="images" class="tab-content">
-            <div class="images-grid">
-              <div class="image-box"></div>
-              <div class="image-box"></div>
-              <div class="image-box"></div>
-              <div class="image-box selected"></div>
-              <div class="image-box"></div>
-              <div class="image-box"></div>
-              <div class="image-box"></div>
-              <div class="image-box"></div>
-              <div class="image-box"></div>
-              <div class="image-box"></div>
-              <div class="image-box"></div>
-              <div class="image-box"></div>
-            </div>
-          </div>
+       <div id="images" class="tab-content">
+  <div style="margin-bottom: 20px;">
+    <h4 style="margin-bottom: 10px;">Lt Thumbnail Images</h4>
+    <p style="color: #7F8C8D; font-size: 14px;">
+      Click on any image to view full size. 
+    </p>
+  </div>
+  <div class="images-grid">
+    <!-- Images will be loaded here -->
+  </div>
+</div>
 
           <div id="trajectory" class="tab-content">
             <div class="trajectory-data">
@@ -828,18 +823,25 @@
             buildOverviewFromFolder(project.folder_path, project.wq_algs || []);
             console.log('[Results] Charts built');
             }
-            // Load CSV data (ADD THIS)
+            // Load CSV data 
             if (typeof loadCSVData === 'function') {
                 loadCSVData(project.folder_path);
                 console.log('[Results] CSV data loaded');
+            }
+
+            // Load images 
+            console.log('About to load images, project.folder_path:', project.folder_path);
+            if (typeof loadImages === 'function') {
+            loadImages(project.folder_path);
+            console.log('[Results] Images loaded');
             }
             
             } catch (err) {
             console.error('Failed to load project:', err);
             }
         }, 100);
-        }
-        }
+    }
+}
 
      
 
@@ -1015,6 +1017,9 @@
     <script src="../upload.js"></script>
     <script src="../project_settings.js"></script>
     <script src="../csv_handler.js"></script>
+    <script src="../image_handler.js"></script>
+
+
 
     <script>
       // Initialize all functionality when page loads
