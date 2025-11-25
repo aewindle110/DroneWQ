@@ -15,8 +15,8 @@ function initializeCharts() {
  * Build the Overview cards from images the backend writes into the project's main folder.
  * We show only the cards that make sense based on selected outputs.
  */
-function buildOverviewFromFolder() {
-  const folderPath = sessionStorage.getItem('projectFolder');
+function buildOverviewFromFolder(folderPath) {
+  //const folderPath = sessionStorage.getItem('projectFolder');
   if (!folderPath) {
     console.warn('No project folder set in sessionStorage');
     return;

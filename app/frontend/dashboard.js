@@ -318,9 +318,8 @@ function viewProjectResults(projectId) {
     return;
   }
   
-  // Set project data in sessionStorage
-  sessionStorage.setItem('projectFolder', project.fullPath);
-  sessionStorage.setItem('projectName', project.name);
+  // Only store the project ID
+  sessionStorage.setItem('currentProjectId', projectId);
   
   // Navigate to results
   navigate('results');
