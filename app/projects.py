@@ -48,40 +48,25 @@ def get_all_projects():
     return jsonify(result)
 
 
-@bp.route("/api/projects/<int:id>")
-def get_project(id: int):
-    with sqlite3.connect(
-        app.config["DATABASE_PATH"],
-    ) as conn:
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
+@bp.route("/api/projects/<int:project_id>", methods=["DELETE"])
+def delete_project(project_id: int):
+    try:
+        with sqlite3.connect(
+            app.config["DATABASE_PATH"],
+        ) as conn:
+            c = conn.cursor()
 
-        project = c.execute(
-            """
-            SELECT id, name, folder_path, lw_method, ed_method, mask_method, wq_algs, created_at
-            FROM projects
-            WHERE id=?
-            """,
-            (id,),
-        ).fetchone()
+            c.execute(
+                """
+                DELETE FROM projects
+                WHERE id=?
+                """,
+                (project_id,),
+            )
 
-    if project is None:
-        return jsonify({"error": "Project not found"}), 404
-
-    # Convert rows → JSON
-    result = {
-        "id": project["id"],
-        "name": project["name"],
-        "folder_path": project["folder_path"],
-        "data_source": Path(project["folder_path"]).name,
-        "lw_method": project["lw_method"],
-        "ed_method": project["ed_method"],
-        "mask_method": project["mask_method"],
-        "wq_algs": json.loads(project["wq_algs"]) if project["wq_algs"] else [],
-        "created_at": project["created_at"],
-    }
-
-    return jsonify(result)
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 def is_writable_dir(path: str, create_if_missing: bool = False) -> bool:
