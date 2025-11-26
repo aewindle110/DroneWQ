@@ -50,7 +50,9 @@ function setupDashboardOnce() {
 window.initializeDashboard = initializeDashboard;
 window.setupDashboardOnce = setupDashboardOnce;
 window.loadProjectsFromBackend = loadProjectsFromBackend;
-window.deleteProject = deleteProject;
+window.showDeleteModal = showDeleteModal;
+window.closeDeleteModal = closeDeleteModal;
+window.confirmDeleteProject = confirmDeleteProject;
 window.duplicateProject = duplicateProject;
 window.exportProject = exportProject;
 window.addProject = addProject;
@@ -91,7 +93,7 @@ function renderProjects(projectsToRender) {
                 <span class="three-dots" onclick="toggleMenu(event)">⋮
                     <div class="actions-menu">
                         <div class="menu-item" onclick="event.stopPropagation(); exportProject(${project.id})">Export</div>
-                        <div class="menu-item" onclick="event.stopPropagation(); deleteProject(${project.id})">Delete</div>
+                        <div class="menu-item" onclick="event.stopPropagation(); showDeleteModal(${project.id})">Delete</div>
                         <div class="menu-item" onclick="event.stopPropagation(); duplicateProject(${project.id})">Duplicate</div>
                         <div class="menu-item" onclick="event.stopPropagation(); navigate('settings')">Project Settings</div>
                     </div>
@@ -118,22 +120,65 @@ function setupSearchListener() {
   });
 }
 
-// Delete project
-function deleteProject(projectId) {
+// Store project ID to delete
+let projectToDelete = null;
+
+// Show delete confirmation modal
+function showDeleteModal(projectId) {
   const project = projects.find(p => p.id === projectId);
-
   if (!project) return;
+  
+  projectToDelete = projectId;
+  document.getElementById('deleteProjectName').textContent = project.name;
+  document.getElementById('deleteProjectModal').style.display = 'flex';
+}
 
-  // Show confirmation dialog
-  if (confirm(`Are you sure you want to delete "${project.name}"?\n\nThis action cannot be undone.`)) {
+// Close delete modal
+function closeDeleteModal() {
+  projectToDelete = null;
+  document.getElementById('deleteProjectModal').style.display = 'none';
+}
+
+// Confirm and delete project
+async function confirmDeleteProject() {
+  if (!projectToDelete) return;
+  
+  const projectId = projectToDelete; 
+  const project = projects.find(p => p.id === projectId);  
+  
+  try {
+    const response = await fetch(
+      `http://localhost:8889/api/projects/${projectId}/delete`,  
+      { method: 'DELETE' }
+    );
+    
+    if (!response.ok) {
+      const error = await response.json();
+      alert(`Failed to delete project: ${error.error || 'Unknown error'}`);
+      return;
+    }
+    
+    // Success
+    closeDeleteModal();  // This sets projectToDelete to null
+    
+    // Debug: check before and after
+    //console.log('Projects BEFORE delete:', projects.length);
+    //console.log('Deleting project ID:', projectId);  
+    
     // Remove from array
-    projects = projects.filter(p => p.id !== projectId);
-
-    // Re-render table
+    projects = projects.filter(p => p.id !== projectId); 
+    
+    //console.log('Projects AFTER delete:', projects.length);
+    //console.log('Calling renderProjects...');
+    
+    // Re-render
     renderProjects(projects);
-
-    // Show success message
+    
     showNotification(`Project "${project.name}" deleted successfully`, 'success');
+    
+  } catch (err) {
+    console.error('Error deleting project:', err);
+    alert('Error deleting project: ' + err.message);
   }
 }
 

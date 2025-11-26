@@ -905,5 +905,64 @@
         initializeCharts(); // Then initialize charts with settings
       });
     </script>
+
+   <!-- DELETE PROJECT MODAL -->
+<div
+  id="deleteProjectModal"
+  style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  "
+>
+  <div
+    style="
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    "
+  >
+    <h3 style="margin-bottom: 20px; color: #2c3e50">
+      Delete Project
+    </h3>
+    <p style="margin-bottom: 25px; color: #7f8c8d">
+      Are you sure you want to delete "<strong id="deleteProjectName"></strong>"?
+    </p>
+    <p style="margin-bottom: 25px; color: #e67e22; font-size: 14px;">
+      Note: This will only remove the project from the database. Your project files will remain in their original location.
+    </p>
+
+    <div
+      style="
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      "
+    >
+      <button
+        class="btn btn-secondary"
+        onclick="closeDeleteModal()"
+      >
+        Cancel
+      </button>
+      <button
+        class="btn"
+        style="background: #e74c3c; color: white;"
+        onclick="confirmDeleteProject()"
+      >
+        Delete Project
+      </button>
+    </div>
+  </div>
+</div>
   </body>
 </html>
