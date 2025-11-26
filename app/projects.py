@@ -15,12 +15,18 @@ bp = Blueprint("projects", __name__)
 
 @bp.route("/api/projects")
 def get_all_projects():
-    conn = sqlite3.connect(app.config["DATABASE_PATH"])
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
+    with sqlite3.connect(
+        app.config["DATABASE_PATH"],
+    ) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
 
-    projects = c.execute("SELECT * FROM projects").fetchall()
-    conn.close()
+        projects = c.execute(
+            """
+            SELECT id, name, folder_path, lw_method, ed_method, mask_method, wq_algs, created_at
+            FROM projects
+            """,
+        ).fetchall()
 
     # Convert rows → JSON
     result = []
@@ -33,11 +39,44 @@ def get_all_projects():
                 "data_source": Path(p["folder_path"]).name,
                 "lw_method": p["lw_method"],
                 "ed_method": p["ed_method"],
-                "mask_method": p["mask_method"], 
+                "mask_method": p["mask_method"],
                 "wq_algs": json.loads(p["wq_algs"]) if p["wq_algs"] else [],
                 "created_at": p["created_at"],
             }
         )
+
+    return jsonify(result)
+
+
+@bp.route("/api/projects/<int:id>")
+def get_project(id: int):
+    with sqlite3.connect(
+        app.config["DATABASE_PATH"],
+    ) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        project = c.execute(
+            """
+            SELECT id, name, folder_path, lw_method, ed_method, mask_method, wq_algs, created_at
+            FROM projects
+            WHERE id=?
+            """,
+            id,
+        ).fetchall()
+
+    # Convert rows → JSON
+    result = {
+        "id": project["id"],
+        "name": project["name"],
+        "folder_path": project["folder_path"],
+        "data_source": Path(project["folder_path"]).name,
+        "lw_method": project["lw_method"],
+        "ed_method": project["ed_method"],
+        "mask_method": project["mask_method"],
+        "wq_algs": json.loads(project["wq_algs"]) if project["wq_algs"] else [],
+        "created_at": project["created_at"],
+    }
 
     return jsonify(result)
 
@@ -51,7 +90,8 @@ def is_writable_dir(path: str, create_if_missing: bool = False) -> bool:
     a temporary file inside `path` to confirm writability.
 
     This approach is preferred over os.access(path, os.W_OK) because it
-    actually exercises the filesystem and handles ACLs/network mounts more reliably.
+    actually exercises the filesystem and handles ACLs/network mounts more
+    reliably.
     """
     try:
         if not os.path.exists(path):
@@ -88,7 +128,6 @@ def check_folder_structure(folder_path: str) -> bool:
 
 
 # TODO: Automatic sorting
-# @bp.route("/manage/make_project", methods=["POST"])
 @bp.route("/api/projects/check_folder", methods=["POST"])
 def check_folder():
     # Accept folderPath from JSON body (preferred)
@@ -108,7 +147,6 @@ def check_folder():
     return jsonify({"success": True}), 200
 
 
-# @bp.route("/manage/save_settings", methods=["POST"])
 @bp.route("/api/projects/new", methods=["POST"])
 def new_project():
     """Create new project"""
