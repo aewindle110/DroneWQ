@@ -5,6 +5,7 @@ from config import Config
 from process import bp as process_bp
 from projects import bp as projects_bp
 from health import bp as health_bp
+from result import bp as result_bp
 
 
 def init_db(DB_PATH):
@@ -41,6 +42,8 @@ app.register_blueprint(health_bp)
 app.register_blueprint(projects_bp)
 
 app.register_blueprint(process_bp)
+
+app.register_blueprint(result_bp)
 
 
 if __name__ == "__main__":
