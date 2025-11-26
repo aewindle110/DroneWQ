@@ -345,144 +345,16 @@
         </div>
         </div>
 
-          <div id="mosaic" class="tab-content">
-            <div
-              style="
-                background: #f8f9fa;
-                padding: 15px;
-                border-radius: 4px;
-                margin-bottom: 20px;
-              "
-            >
-              <strong>Map Controls:</strong>
-              <div
-                style="
-                  display: flex;
-                  gap: 10px;
-                  margin-top: 10px;
-                  flex-wrap: wrap;
-                "
-              >
-                <button class="btn btn-secondary" style="padding: 8px 16px">
-                  🗺️ Toggle Map Layer
-                </button>
-                <button class="btn btn-secondary" style="padding: 8px 16px">
-                  🔍 Zoom
-                </button>
-                <button class="btn btn-secondary" style="padding: 8px 16px">
-                  📍 Add Marker
-                </button>
-                <button
-                  class="btn btn-primary"
-                  style="padding: 8px 16px"
-                  onclick="toggleMosaicEditMode()"
-                >
-                  ✏️ Edit Mosaic Position
-                </button>
-              </div>
-            </div>
-
-            <div
-              id="mosaicEditControls"
-              style="
-                display: none;
-                background: #fff3cd;
-                padding: 15px;
-                border-radius: 4px;
-                margin-bottom: 20px;
-                border-left: 4px solid #ffc107;
-              "
-            >
-              <strong>Edit Mode Active</strong>
-              <p style="margin: 10px 0; font-size: 13px">
-                Click and drag the mosaic to reposition. Use controls below to
-                rotate.
-              </p>
-              <div
-                style="
-                  display: flex;
-                  gap: 10px;
-                  align-items: center;
-                  margin-top: 10px;
-                  flex-wrap: wrap;
-                "
-              >
-                <label style="margin-right: 10px">Rotation:</label>
-                <button
-                  class="btn btn-secondary"
-                  style="padding: 6px 12px"
-                  onclick="rotateMosaic(-5)"
-                >
-                  ↶ -5°
-                </button>
-                <button
-                  class="btn btn-secondary"
-                  style="padding: 6px 12px"
-                  onclick="rotateMosaic(-1)"
-                >
-                  ↶ -1°
-                </button>
-                <input
-                  type="number"
-                  id="rotationValue"
-                  value="0"
-                  style="
-                    width: 70px;
-                    padding: 6px;
-                    text-align: center;
-                    border: 1px solid #ced4da;
-                    border-radius: 4px;
-                  "
-                />
-                <button
-                  class="btn btn-secondary"
-                  style="padding: 6px 12px"
-                  onclick="rotateMosaic(1)"
-                >
-                  ↷ +1°
-                </button>
-                <button
-                  class="btn btn-secondary"
-                  style="padding: 6px 12px"
-                  onclick="rotateMosaic(5)"
-                >
-                  ↷ +5°
-                </button>
-                <button
-                  class="btn btn-primary"
-                  style="padding: 6px 16px; margin-left: 20px"
-                  onclick="saveMosaicPosition()"
-                >
-                  Save Position
-                </button>
-                <button
-                  class="btn btn-secondary"
-                  style="padding: 6px 16px"
-                  onclick="toggleMosaicEditMode()"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-
-            <div
-              id="mosaicContainer"
-              style="position: relative; cursor: default"
-            >
-              <img
-                src="https://i.imgur.com/fBJpRAc.jpeg"
-                alt="Mosaic"
-                id="mosaicImage"
-                style="width: 100%; transition: transform 0.2s"
-              />
-            </div>
-
-            <div class="chart-blurb" style="margin-top: 15px">
-              Final georeferenced mosaic overlay. Coordinates: 42.0235°N,
-              83.4075°W | Resolution: 2.5 cm/pixel
-            </div>
-          </div>
+            <div id="mosaic" class="tab-content">
+        <div style="margin-bottom: 20px;">
+            <h4 style="margin-bottom: 10px;">Georeferenced Mosaic</h4>
         </div>
+        
+        <div id="mosaicContainer">
+            <p style="padding: 40px; text-align: center; color: #7F8C8D;">Loading mosaic...</p>
+        </div>
+        </div>
+
 
         <!-- SETTINGS -->
         <div id="settings" class="screen">
@@ -830,6 +702,12 @@
             loadTrajectoryData(project.folder_path);
             console.log('[Results] Trajectory data loaded');
             }
+
+            // Load mosaic image
+            if (typeof loadMosaicImage === 'function') {
+            loadMosaicImage(project.folder_path);
+            console.log('[Results] Mosaic loaded');
+            }
                         
             } catch (err) {
             console.error('Failed to load project:', err);
@@ -1014,6 +892,8 @@
     <script src="../csv_handler.js"></script>
     <script src="../image_handler.js"></script>
     <script src="../trajectory_handler.js"></script>
+    <script src="../mosaic_handler.js"></script>
+
 
 
 
