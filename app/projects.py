@@ -48,7 +48,7 @@ def get_all_projects():
     return jsonify(result)
 
 
-@bp.route("/api/projects/<int:project_id>", methods=["DELETE"])
+@bp.route("/api/projects/<int:project_id>/delete", methods=["DELETE"])
 def delete_project(project_id: int):
     try:
         with sqlite3.connect(
