@@ -308,40 +308,29 @@
             <div id="overviewCards" class="charts-grid"></div>
           </div>
 
-       <div id="images" class="tab-content">
-  <div style="margin-bottom: 20px;">
-    <h4 style="margin-bottom: 10px;">Lt Thumbnail Images</h4>
-    <p style="color: #7F8C8D; font-size: 14px;">
-      Click on any image to view full size. 
-    </p>
-  </div>
-  <div class="images-grid">
-    <!-- Images will be loaded here -->
-  </div>
-</div>
+            <div id="images" class="tab-content">
+        <div style="margin-bottom: 20px;">
+            <h4 style="margin-bottom: 10px;">Lt Thumbnail Images</h4>
+            <p style="color: #7F8C8D; font-size: 14px;">
+            Click on any image to view full size. 
+            </p>
+        </div>
+        <div class="images-grid">
+            <!-- Images will be loaded here -->
+        </div>
+        </div>
 
-          <div id="trajectory" class="tab-content">
-            <div class="trajectory-data">
-              <h4 style="margin-bottom: 15px">Flight Data Summary</h4>
-              <div class="data-row">
-                <span class="data-label">Altitude:</span>
-                <span>260-268 m</span>
-              </div>
-              <div class="data-row">
-                <span class="data-label">Latitude/Longitude:</span>
-                <span>42.0235°N, 83.4075°W</span>
-              </div>
-              <div class="data-row">
-                <span class="data-label">Yaw:</span>
-                <span>0-350°</span>
-              </div>
+            <div id="trajectory" class="tab-content">
+        <div class="trajectory-data">
+            <h4 style="margin-bottom: 15px">Flight Data Summary</h4>
+            <div id="flightDataSummary">
+            <p style="color: #7F8C8D;">Loading flight data...</p>
             </div>
-            <img
-              src="https://i.imgur.com/Jy2rdnZ.png"
-              alt="Flight Trajectory"
-              style="width: 100%; border-radius: 4px"
-            />
-          </div>
+        </div>
+        <div id="flightPlanImage" style="margin-top: 20px;">
+            <p style="color: #7F8C8D;">Loading flight plan...</p>
+        </div>
+        </div>
 
           <div id="csvdata" class="tab-content">
         <div style="margin-bottom: 30px;">
@@ -835,7 +824,13 @@
             loadImages(project.folder_path);
             console.log('[Results] Images loaded');
             }
-            
+
+            // Load trajectory data
+            if (typeof loadTrajectoryData === 'function') {
+            loadTrajectoryData(project.folder_path);
+            console.log('[Results] Trajectory data loaded');
+            }
+                        
             } catch (err) {
             console.error('Failed to load project:', err);
             }
@@ -1018,6 +1013,7 @@
     <script src="../project_settings.js"></script>
     <script src="../csv_handler.js"></script>
     <script src="../image_handler.js"></script>
+    <script src="../trajectory_handler.js"></script>
 
 
 
