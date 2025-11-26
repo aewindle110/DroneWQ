@@ -62,8 +62,11 @@ def get_project(id: int):
             FROM projects
             WHERE id=?
             """,
-            id,
-        ).fetchall()
+            (id,),
+        ).fetchone()
+
+    if project is None:
+        return jsonify({"error": "Project not found"}), 404
 
     # Convert rows → JSON
     result = {
