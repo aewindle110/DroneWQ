@@ -54,8 +54,7 @@ window.showDeleteModal = showDeleteModal;
 window.closeDeleteModal = closeDeleteModal;
 window.confirmDeleteProject = confirmDeleteProject;
 window.duplicateProject = duplicateProject;
-window.exportProject = exportProject;
-window.addProject = addProject;
+window.findProjectInFolder = findProjectInFolder; 
 window.viewProjectResults = viewProjectResults;
 
 
@@ -92,10 +91,8 @@ function renderProjects(projectsToRender) {
             <td style="text-align: center;">
                 <span class="three-dots" onclick="toggleMenu(event)">⋮
                     <div class="actions-menu">
-                        <div class="menu-item" onclick="event.stopPropagation(); exportProject(${project.id})">Export</div>
+                        <div class="menu-item" onclick="event.stopPropagation(); findProjectInFolder(${project.id})">Find in Folder</div>
                         <div class="menu-item" onclick="event.stopPropagation(); showDeleteModal(${project.id})">Delete</div>
-                        <div class="menu-item" onclick="event.stopPropagation(); duplicateProject(${project.id})">Duplicate</div>
-
                     </div>
                 </span>
             </td>
@@ -283,15 +280,22 @@ function createInputDialog(title, message, defaultValue, callback) {
   });
 }
 
-// Export project
-function exportProject(projectId) {
+// Find project in folder
+function findProjectInFolder(projectId) {
   const project = projects.find(p => p.id === projectId);
 
   if (!project) return;
 
-  // TODO: Implement real export functionality
-  showNotification(`Exporting "${project.name}"... (Feature coming soon!)`, 'info');
-  console.log('Export project:', project);
+  // Open the result folder in Finder/Explorer
+  const { shell } = require('electron');
+  const resultFolder = path.join(project.fullPath, 'result');
+  
+  // Check if result folder exists, otherwise open project folder
+  if (fs.existsSync(resultFolder)) {
+    shell.showItemInFolder(resultFolder);
+  } else {
+    shell.showItemInFolder(project.fullPath);
+  }
 }
 
 // Show notification
