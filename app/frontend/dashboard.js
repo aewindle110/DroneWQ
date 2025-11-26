@@ -95,7 +95,7 @@ function renderProjects(projectsToRender) {
                         <div class="menu-item" onclick="event.stopPropagation(); exportProject(${project.id})">Export</div>
                         <div class="menu-item" onclick="event.stopPropagation(); showDeleteModal(${project.id})">Delete</div>
                         <div class="menu-item" onclick="event.stopPropagation(); duplicateProject(${project.id})">Duplicate</div>
-                        <div class="menu-item" onclick="event.stopPropagation(); navigate('settings')">Project Settings</div>
+
                     </div>
                 </span>
             </td>
@@ -369,5 +369,6 @@ function viewProjectResults(projectId) {
   // Navigate to results
   window.navigate('results');  // Use window.navigate
 }
+
 
 window.viewProjectResults = viewProjectResults;

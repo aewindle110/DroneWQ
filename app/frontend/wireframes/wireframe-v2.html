@@ -357,100 +357,94 @@
 
 
         <!-- SETTINGS -->
-        <div id="settings" class="screen">
-          <div class="content-header">
-            <div class="content-title">Project Settings</div>
-          </div>
+<div id="settings" class="screen">
+  <div class="content-header">
+    <div class="content-title">Project Settings</div>
+  </div>
 
-          <div class="back-arrow" onclick="navigate('home')">
-            ← Back to Home Page
-          </div>
+  <div class="back-arrow" onclick="navigate('home')">
+    ← Back to Home Page
+  </div>
 
-          <div style="margin-bottom: 30px">
-            <h3 style="font-size: 22px; margin-bottom: 8px">Algae Survey</h3>
-            <p style="color: #7f8c8d">
-              Data Source: /user/Downloads/Algae_Survey/raw_images | Created:
-              09/22/2025
-            </p>
-          </div>
+  <div style="margin-bottom: 30px">
+    <h3 id="settingsProjectName" style="font-size: 22px; margin-bottom: 8px">Loading...</h3>
+    <p id="settingsProjectInfo" style="color: #7f8c8d">
+      Loading project info...
+    </p>
+  </div>
 
-          <div class="form-panel">
-            <h4 style="margin-bottom: 20px">Change Project Settings</h4>
+  <div class="form-panel">
+    <h4 style="margin-bottom: 20px">Change Project Settings</h4>
 
-            <div class="form-group">
-              <label class="form-label">Sky Glint Removal Method</label>
-              <select class="form-select">
-                <option selected>Mobley Rho Method</option>
-                <option>Black Pixel Method</option>
-                <option>Hedley Method</option>
-              </select>
-            </div>
+    <div class="form-group">
+      <label class="form-label">Sky Glint Removal Method</label>
+      <select id="settingsGlintSelect" class="form-select">
+        <option value="">Select method...</option>
+        <option value="mobley_rho">Mobley Rho Method</option>
+        <option value="blackpixel">Black Pixel Method</option>
+        <option value="hedley">Hedley Method</option>
+      </select>
+    </div>
 
-            <div class="form-group">
-              <label class="form-label">Irradiance Normalization Method</label>
-              <select class="form-select">
-                <option selected>Panel Ed</option>
-                <option>DLS Ed</option>
-                <option>DLS corrected by panel</option>
-              </select>
-            </div>
+    <div class="form-group">
+      <label class="form-label">Irradiance Normalization Method</label>
+      <select id="settingsIrradianceSelect" class="form-select">
+        <option value="">Select method...</option>
+        <option value="panel_ed">Panel Ed</option>
+        <option value="dls_ed">DLS Ed</option>
+        <option value="dls_and_panel_ed">DLS corrected by panel</option>
+      </select>
+    </div>
 
-            <div class="form-group">
-              <label class="form-label">Pixel Masking</label>
-              <select class="form-select">
-                <option>None</option>
-                <option selected>Value Threshold</option>
-                <option>Standard Deviation Threshold</option>
-              </select>
-            </div>
+    <div class="form-group">
+      <label class="form-label">Pixel Masking (Optional)</label>
+      <select id="settingsMaskingSelect" class="form-select">
+        <option value="">None</option>
+        <option value="value_threshold">Value Threshold</option>
+        <option value="std_threshold">Standard Deviation Threshold</option>
+      </select>
+    </div>
 
-            <div class="form-group">
-              <label class="form-label">Selected Outputs</label>
-              <div class="checkbox-group">
-                <label class="checkbox-option">
-                  <input type="checkbox" id="output-reflectance" />
-                  <span>Reflectance spectra</span>
-                </label>
-                <label class="checkbox-option">
-                  <input type="checkbox" id="output-chlorophyll-hu" />
-                  <span>Chlorophyll-a (Hu Color Index)</span>
-                </label>
-                <label class="checkbox-option">
-                  <input type="checkbox" id="output-chlorophyll-ocx" />
-                  <span>Chlorophyll-a (OCx Band Ratio)</span>
-                </label>
-                <label class="checkbox-option">
-                  <input type="checkbox" id="output-chlorophyll-blended" />
-                  <span>Chlorophyll-a (Blended Hu+OCx)</span>
-                </label>
-                <label class="checkbox-option">
-                  <input type="checkbox" id="output-chlorophyll-gitelson" />
-                  <span>Chlorophyll-a (Gitelson)</span>
-                </label>
-                <label class="checkbox-option">
-                  <input type="checkbox" id="output-tsm" />
-                  <span>Total Suspended Matter (TSM)</span>
-                </label>
-                <label class="checkbox-option">
-                  <input type="checkbox" id="output-mosaics" />
-                  <span>Mosaics</span>
-                </label>
-              </div>
-            </div>
+    <div class="form-group">
+      <label class="form-label">Selected Outputs</label>
+      <div class="checkbox-group">
+        <label class="checkbox-option">
+          <input type="checkbox" id="settings-output-chl-hu" />
+          <span>Chlorophyll-a (Hu Color Index)</span>
+        </label>
+        <label class="checkbox-option">
+          <input type="checkbox" id="settings-output-chl-ocx" />
+          <span>Chlorophyll-a (OCx Band Ratio)</span>
+        </label>
+        <label class="checkbox-option">
+          <input type="checkbox" id="settings-output-chl-hu-ocx" />
+          <span>Chlorophyll-a (Blended Hu+OCx)</span>
+        </label>
+        <label class="checkbox-option">
+          <input type="checkbox" id="settings-output-chl-gitelson" />
+          <span>Chlorophyll-a (Gitelson)</span>
+        </label>
+        <label class="checkbox-option">
+          <input type="checkbox" id="settings-output-tsm" />
+          <span>Total Suspended Matter (TSM)</span>
+        </label>
+        <label class="checkbox-option">
+          <input type="checkbox" id="settings-output-mosaics" />
+          <span>Mosaics</span>
+        </label>
+      </div>
+    </div>
 
-            <div class="form-actions">
-              <button class="btn btn-secondary" onclick="navigate('home')">
-                Cancel
-              </button>
-              <button
-                class="btn btn-primary"
-                onclick="showProjectOptionsDialog()"
-              >
-                Apply Changes
-              </button>
-            </div>
-          </div>
-        </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="navigate('home')">
+        Cancel
+      </button>
+      <button class="btn btn-primary" onclick="applySettingsChanges()">
+        Apply Changes
+      </button>
+    </div>
+  </div>
+</div>
 
         <!-- PROJECT OPTIONS DIALOG -->
         <div
@@ -714,6 +708,7 @@
             }
         }, 100);
     }
+
 }
 
      
