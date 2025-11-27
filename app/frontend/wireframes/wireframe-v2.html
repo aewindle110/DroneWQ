@@ -304,21 +304,26 @@
           </div>
 
           <!-- Overview now has an empty container -->
-          <div id="overview" class="tab-content active">
-            <div id="overviewCards" class="charts-grid"></div>
-          </div>
+        <div id="overview" class="tab-content active">
+            <div style="margin-bottom: 30px;">
+                <h4 style="margin-bottom: 10px;">Processing Results Overview</h4>
+                <p style="color: #7F8C8D; font-size: 14px;">
+                View radiometry spectra and water quality analysis results.
+                </p>
+            </div>
 
-            <div id="images" class="tab-content">
-        <div style="margin-bottom: 20px;">
-            <h4 style="margin-bottom: 10px;">Lt Thumbnail Images</h4>
-            <p style="color: #7F8C8D; font-size: 14px;">
-            Click on any image to view full size. 
-            </p>
-        </div>
-        <div class="images-grid">
-            <!-- Images will be loaded here -->
-        </div>
-        </div>
+            <!-- Radiometry Section -->
+            <div class="overview-section">
+                <h5 class="section-title">📊 Radiometry Spectra</h5>
+                <div class="overview-grid" id="radiometryCards"></div>
+            </div>
+
+            <!-- Water Quality Section -->
+            <div class="overview-section">
+                <h5 class="section-title">🌊 Water Quality Analysis</h5>
+                <div class="overview-grid" id="waterQualityCards"></div>
+            </div>
+            </div>
 
             <div id="trajectory" class="tab-content">
         <div class="trajectory-data">

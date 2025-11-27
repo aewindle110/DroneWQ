@@ -209,7 +209,7 @@ console.log("Settings saved, project ID:", newProject.id);
     if (data.success) {
       // Charts ready
       if (typeof buildOverviewFromFolder === 'function') {
-        buildOverviewFromFolder();
+        buildOverviewFromFolder(folderPath, wqAlgs);
       }
       navigate('results');
     } else {
