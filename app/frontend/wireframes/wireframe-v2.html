@@ -9,6 +9,7 @@
   <body>
     <div class="desktop-frame">
       <div class="main-container">
+
         <!-- HOME -->
         <div id="home" class="screen active">
           <div class="content-header">
@@ -324,6 +325,16 @@
                 <div class="overview-grid" id="waterQualityCards"></div>
             </div>
             </div>
+
+            <!-- IMAGES TAB -->
+        <div id="images" class="tab-content">
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px;">Lt Thumbnail Images</h4>
+            </div>
+              <div class="images-grid">
+                <p style="padding: 40px; text-align: center; color: #7F8C8D;">Loading images...</p>
+            </div>
+        </div>
 
             <div id="trajectory" class="tab-content">
         <div class="trajectory-data">
@@ -726,6 +737,7 @@
         });
         menu.classList.toggle("show");
       }
+
       function switchTab(e, tab) {
         document
           .querySelectorAll(".tab-content")
