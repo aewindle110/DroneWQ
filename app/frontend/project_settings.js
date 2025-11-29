@@ -192,7 +192,7 @@ console.log("Settings saved, project ID:", newProject.id);
     const processRes = await fetch('http://localhost:8889/api/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folderPath: folderPath })
+      body: JSON.stringify({ projectId: newProject.id })
     });
     
     if (!processRes.ok) {
