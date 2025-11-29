@@ -12,7 +12,7 @@ from dronewq.utils.settings import settings
 logger = logging.getLogger(__name__)
 
 
-def _compute(filename, wq_alg, wq_dir):
+def _compute(filename, wq_algs, main_dir):
     algorithms = {
         "chl_hu": chl_hu,
         "chl_ocx": chl_ocx,
@@ -27,14 +27,17 @@ def _compute(filename, wq_alg, wq_dir):
             rrs = np.squeeze(src.read())
             profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
 
-            wq = algorithms[wq_alg](rrs)
+            for wq_alg in wq_algs:
+                wq_dir_name = "masked_" + wq_alg + "_imgs"
+                wq_dir = os.path.join(main_dir, wq_dir_name)
+                wq = algorithms[wq_alg](rrs)
 
-            with rasterio.open(
-                os.path.join(wq_dir, os.path.basename(filename)),
-                "w",
-                **profile,
-            ) as dst:
-                dst.write(wq, 1)
+                with rasterio.open(
+                    os.path.join(wq_dir, os.path.basename(filename)),
+                    "w",
+                    **profile,
+                ) as dst:
+                    dst.write(wq, 1)
         return True
     except Exception as e:
         logger.error(
@@ -48,7 +51,7 @@ def _compute(filename, wq_alg, wq_dir):
 
 def save_wq_imgs(
     rrs_dir,
-    wq_alg="chl_gitelson",
+    wq_algs=["chl_gitelson"],
     start=0,
     count=10000,
     num_workers=4,
@@ -73,11 +76,14 @@ def save_wq_imgs(
         raise LookupError("Please set the main_dir path.")
 
     main_dir = settings.main_dir
-    wq_dir_name = "masked_" + wq_alg + "_imgs"
-    dir_path = os.path.join(main_dir, wq_dir_name)
-    attribute_name = wq_alg + "_dir"
 
-    setattr(settings, attribute_name, dir_path)
+    for wq_alg in wq_algs:
+        attribute_name = wq_alg + "_dir"
+        wq_dir_name = "masked_" + wq_alg + "_imgs"
+        dir_path = os.path.join(main_dir, wq_dir_name)
+        setattr(settings, attribute_name, dir_path)
+        # make wq_dir directory
+        os.makedirs(os.path.join(main_dir, wq_dir_name), exist_ok=True)
 
     def _capture_path_to_int(path: str) -> int:
         return int(os.path.basename(path).split("_")[-1].split(".")[0])
@@ -87,14 +93,10 @@ def save_wq_imgs(
         key=_capture_path_to_int,
     )[start:count]
 
-    # make wq_dir directory
-    if not os.path.exists(os.path.join(main_dir, wq_dir_name)):
-        os.makedirs(os.path.join(main_dir, wq_dir_name))
-
     partial_compute = partial(
         _compute,
-        wq_alg=wq_alg,
-        wq_dir=dir_path,
+        wq_algs=wq_algs,
+        main_dir=main_dir,
     )
 
     if executor is not None:
@@ -105,8 +107,7 @@ def save_wq_imgs(
         ) as executor:
             results = list(executor.map(partial_compute, filenames))
     logger.info(
-        "WQ Stage (%s): Successfully processed: %d/%d captures",
-        wq_alg,
+        "WQ Stage: Successfully processed: %d/%d captures",
         sum(results),
         len(results),
     )
