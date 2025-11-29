@@ -1,8 +1,8 @@
 import json
+import sqlite3
 from pathlib import Path
 
-import sqlite3
-from flask import jsonify, Blueprint
+from flask import Blueprint, jsonify
 from flask import current_app as app
 
 bp = Blueprint("result", __name__)

@@ -1,15 +1,14 @@
 import sqlite3
 
-from flask import Flask
 from config import Config
+from flask import Flask
+from health import bp as health_bp
 from process import bp as process_bp
 from projects import bp as projects_bp
-from health import bp as health_bp
 from result import bp as result_bp
 
 
 def init_db(DB_PATH):
-    print(DB_PATH)
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
@@ -26,7 +25,7 @@ def init_db(DB_PATH):
         wq_algs TEXT,
         mosaic TEXT
     );
-    """
+    """,
     )
 
     conn.commit()

@@ -25,7 +25,7 @@ def process_raw_to_rrs(
     num_workers=4,
 ):
     """
-    This functions is the main processing script that processs raw
+    The main processing script that processs raw
     imagery to units of remote sensing reflectance (Rrs). Users can
     select which processing parameters to use to calculate Rrs.
 

@@ -1,7 +1,8 @@
 import os
 from collections import defaultdict
+from pathlib import Path
 
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,14 +10,17 @@ import pandas as pd
 import dronewq
 from dronewq.utils.settings import Settings
 
-matplotlib.use("Agg")  # non-interactive backend — no GUI windows will open
+mpl.use("Agg")  # non-interactive backend — no GUI windows will open
 
 
 class Pipeline:
-    def __init__(self, folder_path: str):
+    """Interface for the whole workflow."""
+
+    def __init__(self, settings: dict[str, str]) -> None:
         self.settings = Settings()
-        if os.path.exists(folder_path):
-            self.settings = self.settings.load(folder_path)
+        folder_path = settings["main_dir"]
+        if Path(folder_path).exists():
+            self.settings = self.settings.configure(**settings)
         else:
             msg = f"{folder_path} does not exist."
             raise LookupError(msg)
@@ -45,14 +49,15 @@ class Pipeline:
         df = img_metadata[["dirname", "Latitude", "Longitude"]].copy()
         df[["rrs_blue", "rrs_green", "rrs_red", "rrs_rededge", "rrs_nir"]] = medians
 
-        out_path = os.path.join(self.settings.main_dir, "median_rrs.csv")
+        out_path = Path(self.settings.main_dir) / "median_rrs.csv"
         df.to_csv(out_path, index=False)
 
     def flight_plan(self):
-        output_folder = os.path.join(self.settings.main_dir, "result")
-        os.makedirs(output_folder, exist_ok=True)
-        if not os.path.exists(self.settings.metadata):
-            raise FileNotFoundError("Metadata file not found.")
+        output_folder = Path(self.settings.main_dir) / "result"
+        Path(output_folder).mkdir(exist_ok=True)
+        if not Path(self.settings.metadata).exists():
+            msg = "Metadata file not found."
+            raise FileNotFoundError(msg)
 
         img_metadata = pd.read_csv(self.settings.metadata)
         fig, ax = plt.subplots(1, 3, figsize=(10, 3), layout="tight")
@@ -67,7 +72,7 @@ class Pipeline:
         ax[2].plot(list(range(len(img_metadata))), img_metadata["Yaw"])
         ax[2].set_ylabel("Yaw")
 
-        out_path = os.path.join(output_folder, "flight_plan.png")
+        out_path = output_folder / "flight_plan.png"
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False)
         plt.close(fig)
 
@@ -86,13 +91,10 @@ class Pipeline:
         )
 
     def wq_run(self):
-        csv_path = os.path.join(
-            self.settings.main_dir,
-            "median_rrs_and_wq.csv",
-        )
+        csv_path = Path(self.settings.main_dir) / "median_rrs_and_wq.csv"
 
-        if not os.path.exists(csv_path):
-            csv_path = os.path.join(self.settings.main_dir, "median_rrs.csv")
+        if not csv_path.exists():
+            csv_path = Path(self.settings.main_dir) / "median_rrs.csv"
 
         df = pd.read_csv(csv_path, index_col="filename")
         columns = df.columns.to_list()
@@ -115,10 +117,12 @@ class Pipeline:
                 rrs_imgs = dronewq.load_imgs(
                     img_dir=self.settings.masked_rrs_dir,
                 )
+                rrs_dir = self.settings.masked_rrs_dir
             else:
                 rrs_imgs = dronewq.load_imgs(
                     img_dir=self.settings.rrs_dir,
                 )
+                rrs_dir = self.settings.rrs_dir
 
             wq_results = defaultdict(list)
 
@@ -129,28 +133,29 @@ class Pipeline:
                     median = np.nanmedian(results_array, axis=(0, 1))
                     wq_results[wq_alg].append(median)
 
+            # HACK: This could be more efficiently done.
+            # For example, saving images in the loop above
+            dronewq.save_wq_imgs(rrs_dir=rrs_dir, wq_algs=wq_algs_to_compute)
+
             for wq_alg in wq_results:
                 results_array = np.array(wq_results[wq_alg])
                 df[wq_alg] = results_array
 
-        out_csv_path = os.path.join(
-            self.settings.main_dir,
-            "median_rrs_and_wq.csv",
-        )
+        out_csv_path = Path(self.settings.main_dir) / "median_rrs_and_wq.csv"
 
         df.to_csv(out_csv_path)
 
     def plot_wq(self, plot_args: dict[str, dict]):
-        output_folder = os.path.join(self.settings.main_dir, "result")
+        output_folder = Path(self.settings.main_dir) / "result"
 
-        COLORS = {
+        colors = {
             "chl_hu": "Greens",
             "chl_ocx": "Greens",
             "chl_hu_ocx": "Greens",
             "chl_gitelson": "Greens",
             "tsm_nechad": "YlOrRd",
         }
-        LABELS = {
+        labels = {
             "chl_hu": "Chlorophyll a (mg $m^{-3}$)",
             "chl_ocx": "Chlorophyll a (mg $m^{-3}$)",
             "chl_hu_ocx": "Chlorophyll a (mg $m^{-3}$)",
@@ -158,10 +163,7 @@ class Pipeline:
             "tsm_nechad": "TSM (mg/L)",
         }
 
-        csv_path = os.path.join(
-            self.settings.main_dir,
-            "median_rrs_and_wq.csv",
-        )
+        csv_path = Path(self.settings.main_dir) / "median_rrs_and_wq.csv"
 
         df = pd.read_csv(csv_path)
         for alg in plot_args:
@@ -172,14 +174,14 @@ class Pipeline:
                 df["Latitude"],
                 df["Longitude"],
                 c=df[alg],
-                cmap=COLORS[alg],
+                cmap=colors[alg],
                 vmin=vmin,
                 vmax=vmax,
             )
 
             cbar = fig.colorbar(g, ax=ax[0])
-            cbar.set_label(LABELS[alg], rotation=270, labelpad=12)
-            out_path = os.path.join(output_folder, alg + "_plot.png")
+            cbar.set_label(labels[alg], rotation=270, labelpad=12)
+            out_path = Path(output_folder) / alg + "_plot.png"
             fig.savefig(
                 out_path,
                 dpi=300,
@@ -195,8 +197,8 @@ class Pipeline:
         self.masked_rrs_plot(count=count)
 
     def rrs_plot(self, count: int = 25):
-        output_folder = os.path.join(self.settings.main_dir, "result")
-        os.makedirs(output_folder, exist_ok=True)
+        output_folder = Path(self.settings.main_dir) / "result"
+        output_folder.mkdir(exist_ok=True)
         rrs_imgs_gen = dronewq.load_imgs(
             img_dir=self.settings.rrs_dir,
             count=count,
