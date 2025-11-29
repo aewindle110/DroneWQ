@@ -167,7 +167,7 @@ function openImageModal(imageUrl, title) {
           &times;
         </button>
       </div>
-      <img src="${imageUrl}" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 4px;" />
+      <img src="${imageUrl}" style="max-width: 100%; max-height: 50vh; object-fit: contain; border-radius: 4px;" />
     </div>
   `;
   
@@ -177,7 +177,6 @@ function openImageModal(imageUrl, title) {
     if (e.target === modal) modal.remove();
   });
 }
-
 
 window.openImageModal = openImageModal;
 
