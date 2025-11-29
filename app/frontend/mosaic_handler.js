@@ -31,13 +31,25 @@ function loadMosaicImage(folderPath) {
     
     const url = pathToFileURL(mosaicPath).href;
     mosaicContainer.innerHTML = `
-        <img 
+      <img 
         src="${url}" 
         alt="Mosaic" 
         id="mosaicImage"
-        style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block; margin: 0 auto;" 
-        />
+        tabindex="0"
+        role="button"
+        style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block; margin: 0 auto; cursor: pointer;" 
+      />
     `;
+    
+    // Add keyboard support
+    const img = mosaicContainer.querySelector('img');
+    img.addEventListener('click', () => openImageModal(url, 'Mosaic'));
+    img.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openImageModal(url, 'Mosaic');
+      }
+    });
     
   } catch (err) {
     console.error('Error loading mosaic:', err);

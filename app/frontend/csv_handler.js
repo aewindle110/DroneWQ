@@ -182,10 +182,19 @@ function viewCSVDetails(filePath, title) {
     
     document.body.appendChild(modal);
     
-    // Close on background click
+  // Close on background click
     modal.addEventListener('click', (e) => {
       if (e.target === modal) modal.remove();
     });
+    
+    // ✅ ADD THIS: Close on Escape key
+    const escapeHandler = (e) => {
+      if (e.key === 'Escape') {
+        modal.remove();
+        document.removeEventListener('keydown', escapeHandler);
+      }
+    };
+    document.addEventListener('keydown', escapeHandler);
     
   } catch (err) {
     alert('Error loading CSV: ' + err.message);

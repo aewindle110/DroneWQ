@@ -89,10 +89,10 @@ function renderProjects(projectsToRender) {
             </td>
             <td>${project.dateCreated}</td>
             <td style="text-align: center;">
-                <span class="three-dots" onclick="toggleMenu(event)">⋮
+                <span class="three-dots" onclick="toggleMenu(event)" tabindex="0" role="button" aria-label="Project actions" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleMenu(event)}">⋮
                     <div class="actions-menu">
-                        <div class="menu-item" onclick="event.stopPropagation(); findProjectInFolder(${project.id})">Find in Folder</div>
-                        <div class="menu-item" onclick="event.stopPropagation(); showDeleteModal(${project.id})">Delete</div>
+                        <div class="menu-item" onclick="event.stopPropagation(); findProjectInFolder(${project.id})" tabindex="0" role="button" onkeydown="if(event.key==='Enter'){event.stopPropagation();findProjectInFolder(${project.id})}">Find in Folder</div>
+                        <div class="menu-item" onclick="event.stopPropagation(); showDeleteModal(${project.id})" tabindex="0" role="button" onkeydown="if(event.key==='Enter'){event.stopPropagation();showDeleteModal(${project.id})}">Delete</div>
                     </div>
                 </span>
             </td>
@@ -119,22 +119,6 @@ function setupSearchListener() {
 
 // Store project ID to delete
 let projectToDelete = null;
-
-// Show delete confirmation modal
-function showDeleteModal(projectId) {
-  const project = projects.find(p => p.id === projectId);
-  if (!project) return;
-  
-  projectToDelete = projectId;
-  document.getElementById('deleteProjectName').textContent = project.name;
-  document.getElementById('deleteProjectModal').style.display = 'flex';
-}
-
-// Close delete modal
-function closeDeleteModal() {
-  projectToDelete = null;
-  document.getElementById('deleteProjectModal').style.display = 'none';
-}
 
 // Confirm and delete project
 async function confirmDeleteProject() {
@@ -372,6 +356,59 @@ function viewProjectResults(projectId) {
   
   // Navigate to results
   window.navigate('results');  // Use window.navigate
+}
+
+// keyboard navigation for actions menu
+document.addEventListener('keydown', function(e) {
+  const activeMenu = document.querySelector('.actions-menu.show');
+  if (!activeMenu) return;
+  
+  const menuItems = activeMenu.querySelectorAll('.menu-item');
+  const currentFocus = document.activeElement;
+  const currentIndex = Array.from(menuItems).indexOf(currentFocus);
+  
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const nextIndex = currentIndex < menuItems.length - 1 ? currentIndex + 1 : 0;
+    menuItems[nextIndex].focus();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const prevIndex = currentIndex > 0 ? currentIndex - 1 : menuItems.length - 1;
+    menuItems[prevIndex].focus();
+  } else if (e.key === 'Escape') {
+    activeMenu.classList.remove('show');
+    document.querySelector('.three-dots').focus();
+  }
+});
+
+function showDeleteModal(projectId) {
+  const project = projects.find(p => p.id === projectId);  
+  if (!project) return;
+
+  projectToDelete = projectId;
+  document.getElementById('deleteProjectName').textContent = project.name;
+  const modal = document.getElementById('deleteProjectModal');
+  modal.style.display = 'flex';
+  
+  // Focus the Cancel button when modal opens
+  setTimeout(() => {
+    const cancelBtn = modal.querySelector('.btn-secondary');
+    if (cancelBtn) cancelBtn.focus();
+  }, 100);
+  
+  // Add Escape key handler
+  const escapeHandler = (e) => {
+    if (e.key === 'Escape') {
+      closeDeleteModal();
+      document.removeEventListener('keydown', escapeHandler);
+    }
+  };
+  document.addEventListener('keydown', escapeHandler);
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteProjectModal').style.display = 'none';
+  projectToDelete = null;
 }
 
 

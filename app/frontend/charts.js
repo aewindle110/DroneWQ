@@ -118,6 +118,9 @@ function buildOverviewFromFolder(folderPath, selectedWQAlgs) {
         alt="${title}" 
         class="card-image"
         onclick="openImageModal('${url}', '${title}')"
+        tabindex="0"
+        role="button"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openImageModal('${url}','${title}')}"
       />
       <div class="card-content">
         <div class="card-title">${title}</div>
@@ -164,7 +167,7 @@ function openImageModal(imageUrl, title) {
           &times;
         </button>
       </div>
-      <img src="${imageUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px;" />
+      <img src="${imageUrl}" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 4px;" />
     </div>
   `;
   
@@ -174,6 +177,7 @@ function openImageModal(imageUrl, title) {
     if (e.target === modal) modal.remove();
   });
 }
+
 
 window.openImageModal = openImageModal;
 

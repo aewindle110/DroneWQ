@@ -47,25 +47,63 @@ function loadImages(folderPath) {
     // Clear container
     imagesContainer.innerHTML = '';
     
-    // Load ALL images at once
-    imageFiles.forEach((filename) => {
+    // Variables for arrow key navigation
+    let currentFocusIndex = 0;
+    const imageBoxes = [];
+    
+    // Load ALL images with keyboard support
+    imageFiles.forEach((filename, index) => {
       const imagePath = path.join(imagesDir, filename);
       const url = pathToFileURL(imagePath).href;
       
       const imageBox = document.createElement('div');
       imageBox.className = 'image-box';
+      imageBox.tabIndex = index === 0 ? 0 : -1; // Only first is tabbable
+      imageBox.dataset.index = index;
       
       imageBox.innerHTML = `
         <img 
           src="${url}" 
           alt="${filename}"
           class="image-thumbnail"
-          onclick="openImageModal('${url}', '${filename}')"
         />
         <div class="image-filename">${filename}</div>
       `;
       
+      imageBox.addEventListener('click', () => openImageModal(url, filename));
+      imageBox.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openImageModal(url, filename);
+        }
+      });
+      
       imagesContainer.appendChild(imageBox);
+      imageBoxes.push(imageBox);
+    });
+    
+    // Arrow key navigation
+    imagesContainer.addEventListener('keydown', (e) => {
+      const cols = 6; // 6 images per row
+      
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        
+        let newIndex = currentFocusIndex;
+        
+        if (e.key === 'ArrowRight') newIndex++;
+        if (e.key === 'ArrowLeft') newIndex--;
+        if (e.key === 'ArrowDown') newIndex += cols;
+        if (e.key === 'ArrowUp') newIndex -= cols;
+        
+        // Bounds check
+        if (newIndex >= 0 && newIndex < imageBoxes.length) {
+          imageBoxes[currentFocusIndex].tabIndex = -1;
+          currentFocusIndex = newIndex;
+          imageBoxes[currentFocusIndex].tabIndex = 0;
+          imageBoxes[currentFocusIndex].focus();
+        }
+      }
     });
     
     // Add count display

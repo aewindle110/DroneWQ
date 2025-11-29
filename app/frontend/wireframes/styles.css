@@ -87,7 +87,7 @@ body {
   cursor: pointer;
 }
 .btn-primary {
-  background: #3498db;
+   background: #2980B9;
   color: white;
 }
 .btn-secondary {
@@ -113,9 +113,9 @@ body {
   border-bottom: 1px solid #dee2e6;
 }
 .data-source {
-  color: #7f8c8d;
+   color: #5D6D7E;
   font-family: "Courier New", monospace;
-  font-size: 13px;
+  font-size: 15px;
   cursor: help;
   position: relative;
   display: inline-block;
@@ -155,7 +155,7 @@ body {
   opacity: 1;
 }
 .project-link {
-  color: #3498db;
+  color: #2471A3;
   text-decoration: none;
   font-weight: 500;
 }
@@ -167,10 +167,23 @@ body {
   padding: 5px 10px;
   user-select: none;
 }
+
 .three-dots:hover {
   background: #f8f9fa;
   border-radius: 4px;
 }
+
+.three-dots:focus {
+  outline: 2px solid #3498DB !important;
+  outline-offset: 2px !important;
+  background: #F8F9FA;
+  border-radius: 4px;
+}
+
+td:has(.three-dots:focus) {
+  outline: none !important;
+}
+
 .actions-menu {
   display: none;
   position: absolute;
@@ -367,12 +380,13 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #3498db;
+  color: #2471A3;
   cursor: pointer;
   margin-bottom: 20px;
   font-weight: 500;
 }
 .back-arrow:hover {
+  color: #1F618D;  
   text-decoration: underline;
 }
 
@@ -530,4 +544,62 @@ body {
   font-size: 13px;
   color: #7F8C8D;
   line-height: 1.5;
+}
+
+.back-arrow {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.menu-item:focus {
+  background: #F0F0F0;
+  outline: none;
+}
+
+/* Results page tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #DEE2E6;
+  margin-bottom: 30px;
+  background: #FFFFFF;
+}
+
+.tab {
+  padding: 16px 28px;
+  border: none;
+  background: #F8F9FA;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #495057;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+  bottom: -2px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.tab:hover {
+  color: #212529;
+  background: #E9ECEF;
+}
+
+.tab.active {
+  color: #2C3E50;
+  background: #FFFFFF;
+  border-bottom-color: #2980B9;
+  font-weight: 600;
+}
+
+.tab:focus {
+  outline: 3px solid #3498DB;
+  outline-offset: -3px;
+  z-index: 1;
 }

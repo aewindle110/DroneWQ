@@ -7,13 +7,13 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="desktop-frame">
-      <div class="main-container">
+   <div class="desktop-frame">
+    <main class="main-container">
 
         <!-- HOME -->
         <div id="home" class="screen active">
           <div class="content-header">
-            <div class="content-title">Projects Dashboard</div>
+            <h1 class="content-title">Projects Dashboard</h1>
           </div>
           <div class="toolbar">
             <input
@@ -280,12 +280,12 @@
         <!-- RESULTS -->
         <div id="results" class="screen">
           <div class="content-header">
-            <div class="content-title">Results</div>
+            <h1 class="content-title">Results</h1>
           </div>
 
-          <div class="back-arrow" onclick="navigate('home', 'results')">
+          <button class="back-arrow" onclick="navigate('home', 'results')">
             ← Back to Projects
-          </div>
+          </button>
 
           <div class="results-bar">
             <h3 id="resultsProjectName">Loading...</h3>
@@ -293,15 +293,15 @@
           </div>
 
           <div class="tabs">
-            <div class="tab active" onclick="switchTab(this, 'overview')">
+            <button class="tab active" onclick="switchTab(this, 'overview')">
               Overview
-            </div>
-            <div class="tab" onclick="switchTab(this, 'images')">Images</div>
-            <div class="tab" onclick="switchTab(this, 'trajectory')">
+            </button>
+            <button class="tab" onclick="switchTab(this, 'images')">Images</button>
+            <button class="tab" onclick="switchTab(this, 'trajectory')">
               Flight Trajectory
-            </div>
-            <div class="tab" onclick="switchTab(this, 'csvdata')">CSV Data</div>
-            <div class="tab" onclick="switchTab(this, 'mosaic')">Mosaic</div>
+            </button>
+            <button class="tab" onclick="switchTab(this, 'csvdata')">CSV Data</button>
+            <button class="tab" onclick="switchTab(this, 'mosaic')">Mosaic</button>
           </div>
 
           <!-- Overview now has an empty container -->
@@ -595,7 +595,7 @@
             </div>
           </div>
         </div>
-      </div>
+    </main>
     </div>
 
     <script>
@@ -960,9 +960,10 @@
         justify-content: flex-end;
       "
     >
-      <button
+     <button
         class="btn btn-secondary"
         onclick="closeDeleteModal()"
+        type="button"
       >
         Cancel
       </button>
@@ -970,6 +971,7 @@
         class="btn"
         style="background: #e74c3c; color: white;"
         onclick="confirmDeleteProject()"
+        type="button"
       >
         Delete Project
       </button>

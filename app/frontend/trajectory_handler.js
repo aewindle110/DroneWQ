@@ -114,8 +114,24 @@ function loadFlightPlanImage(folderPath) {
     
     const url = pathToFileURL(imagePath).href;
     imageContainer.innerHTML = `
-      <img src="${url}" alt="Flight Plan" style="width: 100%; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+      <img 
+        src="${url}" 
+        alt="Flight Plan" 
+        tabindex="0"
+        role="button"
+        style="width: 100%; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer;" 
+      />
     `;
+    
+    // Add keyboard support
+    const img = imageContainer.querySelector('img');
+    img.addEventListener('click', () => openImageModal(url, 'Flight Plan'));
+    img.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openImageModal(url, 'Flight Plan');
+      }
+    });
     
   } catch (err) {
     console.error('Error loading flight plan image:', err);
