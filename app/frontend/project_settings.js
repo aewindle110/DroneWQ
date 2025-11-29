@@ -131,7 +131,7 @@ async function submitProcessing() {
   const irr = (document.getElementById('irradianceSelect') || {}).value || "";
   const mask = (document.getElementById('maskingSelect') || {}).value || "";
   
-  // Double-check validation (shouldn't be needed, but just in case)
+  // Double-check validation
   if (!glint || glint === '') {
     alert('Please select a Sky Glint Removal Method');
     navigate('method');
@@ -142,6 +142,19 @@ async function submitProcessing() {
     alert('Please select an Irradiance Normalization Method');
     navigate('method');
     return;
+  }
+  
+  // Collect masking parameters
+  let maskingParams = null;
+  if (mask === 'value_threshold') {
+    maskingParams = {
+      nir_threshold: parseFloat(document.getElementById('nirThreshold').value),
+      green_threshold: parseFloat(document.getElementById('greenThreshold').value)
+    };
+  } else if (mask === 'std_threshold') {
+    maskingParams = {
+      mask_std_factor: parseFloat(document.getElementById('maskStdFactor').value)
+    };
   }
   
   // Collect all selected output keys
@@ -159,18 +172,19 @@ async function submitProcessing() {
     edMethod: irr,
     maskMethod: mask,
     wqAlgs: wqAlgs,
-    mosaic: mosaic
+    mosaic: mosaic,
+    maskingParams: maskingParams
   };
   
-  // Save outputs to sessionStorage so charts.js can use them
+  // Save outputs to sessionStorage
   sessionStorage.setItem('selectedWQAlgs', JSON.stringify(wqAlgs));
   sessionStorage.setItem('mosaic', JSON.stringify(mosaic));
   
-  // Show the loading screen right away
+  // Show loading screen
   navigate('loading');
   
   try {
-    // First, save the settings
+    // Save settings
     const settingsRes = await fetch('http://localhost:8889/api/projects/new', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -198,18 +212,15 @@ async function submitProcessing() {
       return;
     }
     
-    // Wait until backend confirms completion
     const data = await processRes.json();
     console.log("Processing complete:", data);
     
     if (data.success) {
-      // Charts ready
       if (typeof buildOverviewFromFolder === 'function') {
         buildOverviewFromFolder(folderPath, wqAlgs);
       }
       navigate('results');
     } else {
-      // Charts not ready
       alert('Processing failed');
       navigate('outputs');
     }

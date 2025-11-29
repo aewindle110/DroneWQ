@@ -150,17 +150,37 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="maskingSelect"
-                >Pixel Masking (Optional)</label
-              >
-              <select id="maskingSelect" class="form-select">
-                <option value="">None</option>
-                <option value="value_threshold">Value Threshold</option>
-                <option value="std_threshold">
-                  Standard Deviation Threshold
-                </option>
-              </select>
-            </div>
+  <label class="form-label" for="maskingSelect">Pixel Masking (Optional)</label>
+  <select id="maskingSelect" class="form-select">
+    <option value="">None</option>
+    <option value="value_threshold">Value Threshold</option>
+    <option value="std_threshold">Standard Deviation Threshold</option>
+  </select>
+</div>
+
+    <!-- Conditional inputs for value_threshold -->
+    <div id="valueThresholdInputs" style="display: none; margin-left: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; margin-top: 10px;">
+      <div class="form-group">
+        <label class="form-label" for="nirThreshold">NIR Threshold</label>
+        <input type="number" id="nirThreshold" class="form-select" step="0.001" value="0.01" />
+        <small style="color: #7F8C8D; font-size: 12px;">Default: 0.01</small>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="greenThreshold">Green Threshold</label>
+        <input type="number" id="greenThreshold" class="form-select" step="0.001" value="0.005" />
+        <small style="color: #7F8C8D; font-size: 12px;">Default: 0.005</small>
+      </div>
+    </div>
+
+    <!-- Conditional inputs for std_threshold -->
+    <div id="stdThresholdInputs" style="display: none; margin-left: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; margin-top: 10px;">
+      <div class="form-group">
+        <label class="form-label" for="maskStdFactor">Mask Standard Deviation Factor</label>
+        <input type="number" id="maskStdFactor" class="form-select" step="0.1" value="1" />
+        <small style="color: #7F8C8D; font-size: 12px;">Default: 1</small>
+      </div>
+    </div>
 
             <div class="form-actions">
               <button class="btn btn-secondary" onclick="navigate('upload')">
@@ -599,6 +619,23 @@
     </div>
 
     <script>
+    
+    // Show/hide masking parameter inputs based on selection
+  document.getElementById('maskingSelect').addEventListener('change', function() {
+    const valueThresholdInputs = document.getElementById('valueThresholdInputs');
+    const stdThresholdInputs = document.getElementById('stdThresholdInputs');
+    
+    // Hide all first
+    valueThresholdInputs.style.display = 'none';
+    stdThresholdInputs.style.display = 'none';
+    
+    // Show relevant inputs
+    if (this.value === 'value_threshold') {
+      valueThresholdInputs.style.display = 'block';
+    } else if (this.value === 'std_threshold') {
+      stdThresholdInputs.style.display = 'block';
+    }
+  });
 
     function navigate(screen, fromScreen) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
