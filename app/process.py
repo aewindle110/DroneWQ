@@ -1,57 +1,20 @@
-import json
-import sqlite3
-from pathlib import Path
-
 # from description_generator import generate_plot_descriptions
-from flask import Blueprint, jsonify, request
-from flask import current_app as app
+from flask import Blueprint, jsonify
+from models.model_project import Project
 from pipeline import Pipeline
 
 bp = Blueprint("process", __name__)
 
 
-def __get_project(project_id: int):
-    with sqlite3.connect(
-        app.config["DATABASE_PATH"],
-    ) as conn:
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
-
-        project = c.execute(
-            """
-            SELECT id, name, folder_path, lw_method, ed_method, mask_method, wq_algs, created_at
-            FROM projects
-            WHERE id=?
-            """,
-            (project_id,),
-        ).fetchone()
-
-    if project is None:
-        return jsonify({"error": "Project not found"}), 404
-
-    # Convert rows → JSON
-    return {
-        "id": project["id"],
-        "name": project["name"],
-        "main_dir": project["folder_path"],
-        "data_source": Path(project["folder_path"]).name,
-        "lw_method": project["lw_method"],
-        "ed_method": project["ed_method"],
-        "mask_method": project["mask_method"],
-        "wq_algs": json.loads(project["wq_algs"]) if project["wq_algs"] else [],
-        "created_at": project["created_at"],
-    }
-
-
-@bp.route("/api/process_new", methods=["POST"])
-def process_new():
-    data = request.get_json(silent=True) or request.args
-    project_id = data.get("projectId")
-
-    settings = __get_project(project_id)
+@bp.route("/api/process/new/<int:project_id>")
+def process_new(project_id: int):
+    try:
+        settings = Project.get_project(project_id)
+    except LookupError as e:
+        return jsonify({str(e): f"Project {project_id} not found"})
 
     try:
-        pipeline = Pipeline(settings)
+        pipeline = Pipeline(settings.to_dict())
 
         # pipeline.water_metadata()
         # pipeline.flight_plan()
@@ -59,6 +22,7 @@ def process_new():
         # pipeline.plot_essentials()
         # pipeline.point_samples()
         # pipeline.wq_run()
+        # TODO: add mosaic
 
         # After all plots are generated, generate descriptions
         # result_folder = os.path.join(folder_path, "result")
@@ -72,3 +36,19 @@ def process_new():
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/api/process/updated/<int:project_id>")
+def process_updated(project_id: int):
+    try:
+        settings = Project.get_project(project_id)
+        plot_args = {}
+        for wq_alg in settings.wq_algs:
+            plot_args[wq_alg] = {"vmin": 10, "vmax": 12}
+
+        pipeline = Pipeline(settings.to_dict())
+        pipeline.wq_run()
+        pipeline.plot_wq(plot_args)
+        # TODO: add mosaic
+    except LookupError as e:
+        return jsonify({str(e): f"Project {project_id} not found"})

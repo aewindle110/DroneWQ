@@ -32,17 +32,25 @@ class Pipeline:
         )
 
     def point_samples(self):
-        masked_rrs_imgs = dronewq.load_imgs(
-            img_dir=self.settings.masked_rrs_dir,
-        )
-        img_metadata = dronewq.load_metadata(
-            img_dir=self.settings.masked_rrs_dir,
-        )
+        if self.settings.mask_method:
+            rrs_imgs = dronewq.load_imgs(
+                img_dir=self.settings.masked_rrs_dir,
+            )
+            img_metadata = dronewq.load_metadata(
+                img_dir=self.settings.masked_rrs_dir,
+            )
+        else:
+            rrs_imgs = dronewq.load_imgs(
+                img_dir=self.settings.rrs_dir,
+            )
+            img_metadata = dronewq.load_metadata(
+                img_dir=self.settings.rrs_dir,
+            )
 
         # Compute per-image median for first 5 bands (shape -> (n_images, 5))
         # We take median across spatial dims (H, W)
         medians = []
-        for img in masked_rrs_imgs:
+        for img in rrs_imgs:
             medians.append(np.nanmedian(img[:5, :, :], axis=(1, 2)))
 
         # Build dataframe safely and assign median band values
@@ -113,7 +121,7 @@ class Pipeline:
         ]
 
         if wq_algs_to_compute:
-            if self.settings.masked_rrs_dir:
+            if self.settings.mask_method:
                 rrs_imgs = dronewq.load_imgs(
                     img_dir=self.settings.masked_rrs_dir,
                 )
@@ -194,7 +202,8 @@ class Pipeline:
         self.rrs_plot(count=count)
         self.lt_plot(count=count)
         self.ed_plot(count=count)
-        self.masked_rrs_plot(count=count)
+        if self.settings.mask_method:
+            self.masked_rrs_plot(count=count)
 
     def rrs_plot(self, count: int = 25):
         output_folder = Path(self.settings.main_dir) / "result"

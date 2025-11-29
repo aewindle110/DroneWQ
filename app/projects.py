@@ -1,14 +1,13 @@
 # Everything about managing Projects
+import json
 import os
+import sqlite3
 import tempfile
 from datetime import datetime
-import json
 from pathlib import Path
 
 from flask import Blueprint, jsonify, request
 from flask import current_app as app
-import sqlite3
-
 
 bp = Blueprint("projects", __name__)
 
@@ -42,7 +41,7 @@ def get_all_projects():
                 "mask_method": p["mask_method"],
                 "wq_algs": json.loads(p["wq_algs"]) if p["wq_algs"] else [],
                 "created_at": p["created_at"],
-            }
+            },
         )
 
     return jsonify(result)
@@ -200,9 +199,43 @@ def new_project():
                     "mask_method": mask_method,
                     "wq_algs": wq_algs,
                     "mosaic": mosaic,
-                }
+                },
             ),
             200,
         )
+    except Exception as e:
+        return jsonify({"Error while saving settings.": str(e)}), 500
+
+
+@bp.route("/api/projects/update", methods=["POST"])
+def update_project():
+    args = request.get_json(silent=True) or request.args
+    project_id = args.get("projectId")
+    wq_algs = args.get("wqAlgs")
+    mosaic = args.get("mosaic")
+
+    try:
+        # update project into DB
+        with sqlite3.connect(app.config["DATABASE_PATH"]) as conn:
+            c = conn.cursor()
+
+            c.execute(
+                """
+                UPDATE projects 
+                SET wq_algs = ?, mosaic = ?
+                WHERE id = ?
+            """,
+                (
+                    json.dumps(wq_algs) if wq_algs else None,
+                    mosaic,
+                    project_id,
+                ),
+            )
+
+            project_id = c.lastrowid
+            conn.commit()
+
+        return jsonify({"Success": True}), 200
+
     except Exception as e:
         return jsonify({"Error while saving settings.": str(e)}), 500
