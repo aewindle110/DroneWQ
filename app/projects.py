@@ -22,7 +22,7 @@ def get_all_projects():
 
         projects = c.execute(
             """
-            SELECT id, name, folder_path, lw_method, ed_method, mask_method, wq_algs, created_at
+            SELECT id, name, folder_path, lw_method, ed_method, mask_method, mask_args, wq_algs, created_at
             FROM projects
             """,
         ).fetchall()
@@ -39,6 +39,7 @@ def get_all_projects():
                 "lw_method": p["lw_method"],
                 "ed_method": p["ed_method"],
                 "mask_method": p["mask_method"],
+                "masking_params": json.loads(p["mask_args"]) if p["mask_args"] else {},
                 "wq_algs": json.loads(p["wq_algs"]) if p["wq_algs"] else [],
                 "created_at": p["created_at"],
             },
@@ -144,6 +145,7 @@ def new_project():
     lw_method = str(args.get("lwMethod"))
     ed_method = str(args.get("edMethod"))
     mask_method = str(args.get("maskMethod"))
+    mask_args = args.get("maskingParams")
     wq_algs = args.get("wqAlgs")
     mosaic = args.get("mosaic")
 
@@ -168,8 +170,8 @@ def new_project():
             c.execute(
                 """
                 INSERT INTO projects 
-                    (name, folder_path, created_at, lw_method, ed_method, mask_method, wq_algs, mosaic)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    (name, folder_path, created_at, lw_method, ed_method, mask_method, mask_args, wq_algs, mosaic)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     project_name,
@@ -178,6 +180,7 @@ def new_project():
                     lw_method,
                     ed_method,
                     mask_method,
+                    json.dumps(mask_args) if mask_args else None,
                     json.dumps(wq_algs) if wq_algs else None,
                     mosaic,
                 ),
@@ -197,6 +200,7 @@ def new_project():
                     "lw_method": lw_method,
                     "ed_method": ed_method,
                     "mask_method": mask_method,
+                    "masking_params": mask_args,
                     "wq_algs": wq_algs,
                     "mosaic": mosaic,
                 },

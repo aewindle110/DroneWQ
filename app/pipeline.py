@@ -85,12 +85,17 @@ class Pipeline:
         plt.close(fig)
 
     def run(self):
+        nir_threshold = self.settings.mask_args.get("nir_threshold", 0.01)
+        green_threshold = self.settings.mask_args.get("green_threshold", 0.005)
+        mask_std_factor = self.settings.mask_args.get("mask_std_factor", 1)
         dronewq.process_raw_to_rrs(
             output_csv_path=self.settings.main_dir,
             lw_method=self.settings.lw_method,
             ed_method=self.settings.ed_method,
             pixel_masking_method=self.settings.mask_method,
-            nir_threshold=0.02,
+            nir_threshold=nir_threshold,
+            green_threshold=green_threshold,
+            mask_std_factor=mask_std_factor,
             random_n=10,
             # NOTE: Should probably ask this from user
             clean_intermediates=False,
@@ -104,7 +109,7 @@ class Pipeline:
         if not csv_path.exists():
             csv_path = Path(self.settings.main_dir) / "median_rrs.csv"
 
-        df = pd.read_csv(csv_path, index_col="filename")
+        df = pd.read_csv(csv_path)
         columns = df.columns.to_list()
 
         algs = {
@@ -178,7 +183,7 @@ class Pipeline:
             vmin = plot_args[alg]["vmin"]
             vmax = plot_args[alg]["vmax"]
             fig, ax = plt.subplots(1, 1, figsize=(4, 3), layout="tight")
-            g = ax[0].scatter(
+            g = ax.scatter(
                 df["Latitude"],
                 df["Longitude"],
                 c=df[alg],
@@ -187,9 +192,9 @@ class Pipeline:
                 vmax=vmax,
             )
 
-            cbar = fig.colorbar(g, ax=ax[0])
+            cbar = fig.colorbar(g, ax=ax)
             cbar.set_label(labels[alg], rotation=270, labelpad=12)
-            out_path = Path(output_folder) / alg + "_plot.png"
+            out_path = output_folder / (alg + "_plot.png")
             fig.savefig(
                 out_path,
                 dpi=300,

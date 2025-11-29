@@ -22,6 +22,7 @@ def init_db(DB_PATH):
         lw_method TEXT NOT NULL,
         ed_method TEXT NOT NULL,
         mask_method TEXT,
+        mask_args TEXT,
         wq_algs TEXT,
         mosaic TEXT
     );

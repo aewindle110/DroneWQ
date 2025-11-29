@@ -203,7 +203,7 @@ async function submitProcessing() {
     console.log("Settings saved, project ID:", newProject.id);
 
     // Now trigger the actual processing
-    const processRes = await fetch('http://localhost:8889/api/process/new/${newProject.id}');
+    const processRes = await fetch(`http://localhost:8889/api/process/new/${newProject.id}`);
     
     if (!processRes.ok) {
       const txt = await processRes.text();

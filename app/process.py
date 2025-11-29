@@ -14,6 +14,9 @@ def process_new(project_id: int):
         return jsonify({str(e): f"Project {project_id} not found"})
 
     try:
+        plot_args = {}
+        for wq_alg in settings.wq_algs:
+            plot_args[wq_alg] = {"vmin": 10, "vmax": 12}
         pipeline = Pipeline(settings.to_dict())
 
         # pipeline.water_metadata()
@@ -21,7 +24,8 @@ def process_new(project_id: int):
         # pipeline.run()
         # pipeline.plot_essentials()
         # pipeline.point_samples()
-        # pipeline.wq_run()
+        pipeline.wq_run()
+        pipeline.plot_wq(plot_args)
         # TODO: add mosaic
 
         # After all plots are generated, generate descriptions
@@ -35,7 +39,8 @@ def process_new(project_id: int):
 
         return jsonify({"success": True}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(e)
+        raise e
 
 
 @bp.route("/api/process/updated/<int:project_id>")
