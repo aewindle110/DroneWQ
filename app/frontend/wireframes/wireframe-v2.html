@@ -205,6 +205,24 @@
                 Select Outputs
               </div>
             </div>
+
+             <!-- Number of images input -->
+              <div class="form-group" style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid #E8ECF1;">
+                <label class="form-label" for="rrsImageCount">Number of Images for Radiometry Plots</label>
+                <input 
+                  type="number" 
+                  id="rrsImageCount" 
+                  class="form-select" 
+                  min="1" 
+                  value="25"
+                  style="max-width: 200px;"
+                />
+                <small style="color: #7F8C8D; font-size: 12px; display: block; margin-top: 5px;">
+                  Default: 25. You need atleast 25 images for analysis.
+                </small>
+              </div>
+
+
             <div class="checkbox-group">
               <label class="checkbox-option">
                 <input type="checkbox" class="outputChk" data-key="chl_hu" />

@@ -164,6 +164,9 @@ async function submitProcessing() {
   // Split into wqAlg vs mosaic
   const wqAlgs = selected.filter(key => key !== 'mosaics');
   const mosaic = selected.includes('mosaics');
+
+//  Get the number of images for RRS plots
+const rrsImageCount = parseInt(document.getElementById('rrsImageCount').value) || 25;
   
   const payload = {
     project_name: projectName,
@@ -173,7 +176,8 @@ async function submitProcessing() {
     maskMethod: mask,
     wqAlgs: wqAlgs,
     mosaic: mosaic,
-    maskingParams: maskingParams
+    maskingParams: maskingParams,
+    rrsImageCount: rrsImageCount 
   };
   
   // Save outputs to sessionStorage
