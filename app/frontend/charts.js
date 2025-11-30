@@ -15,7 +15,7 @@ function initializeCharts() {
  * Build the Overview cards from images the backend writes into the project's main folder.
  * We show only the cards that make sense based on selected outputs.
  */
-function buildOverviewFromFolder(folderPath, selectedWQAlgs) {
+function buildOverviewFromFolder(folderPath, selectedWQAlgs, cacheBust) {
   console.log('DEBUG buildOverviewFromFolder called with:', folderPath, selectedWQAlgs);
 
   if (!folderPath) {
@@ -53,7 +53,10 @@ function buildOverviewFromFolder(folderPath, selectedWQAlgs) {
     
     console.log(`✅ Found file: ${fileName}, adding card`);
 
-    const url = pathToFileURL(fullPath).href;
+  // Append an optional cache-busting query param when requested so updated
+  // images are fetched by the browser instead of using a cached copy.
+  const urlBase = pathToFileURL(fullPath).href;
+  const url = cacheBust ? `${urlBase}?t=${cacheBust}` : urlBase;
     
     // Get accessibility description if available
     const accessibleDesc = accessibilityDescriptions[plotKey] || null;
@@ -204,7 +207,9 @@ if (selectedSet.size > 0 && !document.getElementById('updateChartsBtn')) {
   // Add click handler
   const btn = document.getElementById('updateChartsBtn');
   if (btn) {
-    btn.addEventListener('click', updateWQCharts);
+    // Do NOT call updateWQCharts here (that would execute it immediately).
+    // Pass a function so the handler runs only when the button is clicked.
+    btn.addEventListener('click', () => updateWQCharts(selectedWQAlgs));
   }
 }
 
@@ -294,9 +299,8 @@ function buildFlightTrajectory() {
   }
 }
 
-async function updateWQCharts() {
+async function updateWQCharts(selectedWQAlgs) {
   const projectId = sessionStorage.getItem('currentProjectId');
-  const selectedWQAlgs = JSON.parse(sessionStorage.getItem('selectedWQAlgs') || '[]');
   
   // Collect all vmin/vmax values in the format backend expects
   const wqRanges = {};
@@ -341,9 +345,16 @@ async function updateWQCharts() {
       return;
     }
     
-    // Reload the page to show updated charts
-    alert('Charts updated successfully!');
-    location.reload();
+    // Rebuild only the overview cards (with cache-bust) so the updated
+    // water-quality plots are displayed without a full page reload.
+    const folderPath = sessionStorage.getItem('projectFolder');
+    if (folderPath) {
+      // Use a timestamp to force browsers to re-fetch the updated images
+      buildOverviewFromFolder(folderPath, selectedWQAlgs, Date.now());
+    } else {
+      // Fallback: if we don't know the folder, do a full reload
+      location.reload();
+    }
     
   } catch (error) {
     console.error('Error updating charts:', error);

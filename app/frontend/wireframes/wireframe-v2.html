@@ -977,8 +977,19 @@
       // Initialize all functionality when page loads
       document.addEventListener("DOMContentLoaded", function () {
         setupDashboardOnce();
-        initializeDashboard();
-        initializeCharts(); // Then initialize charts with settings
+
+        // If a project is currently open (we saved its ID in sessionStorage),
+        // restore the Results screen on refresh instead of returning to the
+        // dashboard. This preserves the user's context in Electron.
+        const currentProjectId = sessionStorage.getItem('currentProjectId');
+        if (currentProjectId) {
+          // Navigate to results — the navigate('results') handler will
+          // fetch the project and initialize charts, images, CSVs, etc.
+          navigate('results');
+        } else {
+          // No project open: initialize the dashboard as normal
+          initializeDashboard();
+        }
       });
     </script>
 
