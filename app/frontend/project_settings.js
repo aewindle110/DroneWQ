@@ -235,5 +235,95 @@ const rrs_count = parseInt(document.getElementById('rrsImageCount').value) || 25
   }
 }
 
+async function applySettingsChanges() {
+  const projectId = sessionStorage.getItem('currentProjectId');
+  if (!projectId) {
+    alert('No project selected for updating.');
+    return;
+  }
+
+  // Collect WQ outputs from the Settings checkboxes
+  const wqAlgs = [];
+  const mosaic = document.getElementById('settings-output-mosaics').checked;
+
+  if (document.getElementById('settings-output-chl-hu').checked) {
+    wqAlgs.push('chl_hu');
+  }
+  if (document.getElementById('settings-output-chl-ocx').checked) {
+    wqAlgs.push('chl_ocx');
+  }
+  if (document.getElementById('settings-output-chl-hu-ocx').checked) {
+    wqAlgs.push('chl_hu_ocx');
+  }
+  if (document.getElementById('settings-output-chl-gitelson').checked) {
+    wqAlgs.push('chl_gitelson');
+  }
+  if (document.getElementById('settings-output-tsm').checked) {
+    wqAlgs.push('tsm_nechad');
+  }
+
+  const payload = {
+    projectId: parseInt(projectId, 10),
+    wqAlgs: wqAlgs,
+    mosaic: mosaic
+  };
+
+  try {
+    // 1) Update project settings in DB
+    const settingsRes = await fetch('http://localhost:8889/api/projects/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!settingsRes.ok) {
+      const txt = await settingsRes.text();
+      alert(`Backend error updating settings (${settingsRes.status}): ${txt || 'Failed'}`);
+      return;
+    }
+
+    // 2) Re-run WQ-only processing with updated algs
+    const processRes = await fetch(`http://localhost:8889/api/process/updated/${projectId}`);
+    if (!processRes.ok) {
+      const txt = await processRes.text();
+      alert(`Settings updated, but reprocessing failed (${processRes.status}): ${txt || 'Failed'}`);
+      return;
+    }
+
+    alert('Project settings updated! Water quality plots will be refreshed next time you view Results.');
+
+    // Optional: jump straight to results
+    // window.navigate('results');
+
+  } catch (err) {
+    console.error('Error applying settings changes:', err);
+    alert('Error applying settings changes: ' + err.message);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const maskingSelect = document.getElementById("maskingSelect");
+  if (!maskingSelect) return;
+
+  maskingSelect.addEventListener("change", function () {
+    const valueThresholdInputs = document.getElementById('valueThresholdInputs');
+    const stdThresholdInputs = document.getElementById('stdThresholdInputs');
+
+    valueThresholdInputs.style.display = 'none';
+    stdThresholdInputs.style.display = 'none';
+
+    if (this.value === 'value_threshold') {
+      valueThresholdInputs.style.display = 'block';
+    } else if (this.value === 'std_threshold') {
+      stdThresholdInputs.style.display = 'block';
+    }
+  });
+});
+
+
+// Make it available globally (since HTML calls it)
+window.applySettingsChanges = applySettingsChanges;
+
+
 window.initializeProjectSettings = initializeProjectSettings;
 window.clearProjectData = clearProjectData;

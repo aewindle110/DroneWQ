@@ -24,10 +24,10 @@ def process_new(project_id: int):
         # pipeline.water_metadata()
         # pipeline.flight_plan()
         # pipeline.run()
-        pipeline.plot_essentials(settings.rrs_count)
+        # pipeline.plot_essentials(settings.rrs_count)
         # pipeline.point_samples()
-        pipeline.wq_run()
-        pipeline.plot_wq(plot_args)
+        # pipeline.wq_run()
+        # pipeline.plot_wq(plot_args)
         # TODO: add mosaic
 
         # After all plots are generated, generate descriptions
