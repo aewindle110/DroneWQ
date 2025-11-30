@@ -325,7 +325,7 @@ async function updateWQCharts() {
   // Add projectId to the payload
   const payload = {
     projectId: parseInt(projectId),
-    ...wqRanges
+    plotParams: wqRanges
   };
 
   try {

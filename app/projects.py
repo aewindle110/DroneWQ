@@ -142,6 +142,7 @@ def new_project():
     args = request.get_json(silent=True) or request.args
     project_name = args.get("project_name")
     folder_path = args.get("folderPath")
+    rrs_count = args.get("rrs_count")
     lw_method = str(args.get("lwMethod"))
     ed_method = str(args.get("edMethod"))
     mask_method = str(args.get("maskMethod"))
@@ -170,13 +171,14 @@ def new_project():
             c.execute(
                 """
                 INSERT INTO projects 
-                    (name, folder_path, created_at, lw_method, ed_method, mask_method, mask_args, wq_algs, mosaic)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (name, folder_path, created_at, rrs_count, lw_method, ed_method, mask_method, mask_args, wq_algs, mosaic)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     project_name,
                     folder_path,
                     created_at,
+                    rrs_count,
                     lw_method,
                     ed_method,
                     mask_method,

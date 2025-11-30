@@ -12,6 +12,7 @@ class Project:
         name,
         folder_path,
         created_at,
+        rrs_count,
         lw_method,
         ed_method,
         mask_method,
@@ -25,6 +26,7 @@ class Project:
         self.main_dir = folder_path
         self.data_source = Path(folder_path).name
         self.created_at = created_at
+        self.rrs_count = rrs_count
         self.lw_method = lw_method
         self.ed_method = ed_method
         self.mask_method = mask_method
@@ -42,7 +44,7 @@ class Project:
 
             project = c.execute(
                 """
-                SELECT id, name, folder_path, lw_method, ed_method, mask_method, mask_args, wq_algs, created_at, mosaic
+                SELECT id, name, folder_path, rrs_count, lw_method, ed_method, mask_method, mask_args, wq_algs, created_at, mosaic
                 FROM projects
                 WHERE id=?
                 """,

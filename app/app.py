@@ -19,6 +19,7 @@ def init_db(DB_PATH):
         name TEXT NOT NULL,
         folder_path TEXT NOT NULL,
         created_at TEXT NOT NULL,
+        rrs_count INTEGER,
         lw_method TEXT NOT NULL,
         ed_method TEXT NOT NULL,
         mask_method TEXT,

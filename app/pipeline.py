@@ -204,9 +204,12 @@ class Pipeline:
             plt.close(fig)
 
     def plot_essentials(self, count: int = 25):
+        metadata = dronewq.load_metadata(self.settings.rrs_dir)
+        count = min(count, len(metadata))
+
         self.rrs_plot(count=count)
         self.lt_plot(count=count)
-        self.ed_plot(count=count)
+        self.ed_plot()
         if self.settings.mask_method:
             self.masked_rrs_plot(count=count)
 
@@ -292,7 +295,7 @@ class Pipeline:
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False)
         plt.close(fig)
 
-    def ed_plot(self, count: int = 25):
+    def ed_plot(self):
         output_folder = os.path.join(self.settings.main_dir, "result")
         os.makedirs(output_folder, exist_ok=True)
 
