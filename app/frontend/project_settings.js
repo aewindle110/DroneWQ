@@ -166,7 +166,7 @@ async function submitProcessing() {
   const mosaic = selected.includes('mosaics');
 
 //  Get the number of images for RRS plots
-const rrsImageCount = parseInt(document.getElementById('rrsImageCount').value) || 25;
+const rrs_count = parseInt(document.getElementById('rrsImageCount').value) || 25;
   
   const payload = {
     project_name: projectName,
@@ -177,7 +177,7 @@ const rrsImageCount = parseInt(document.getElementById('rrsImageCount').value) |
     wqAlgs: wqAlgs,
     mosaic: mosaic,
     maskingParams: maskingParams,
-    rrsImageCount: rrsImageCount 
+    rrs_count: rrs_count
   };
   
   // Save outputs to sessionStorage
