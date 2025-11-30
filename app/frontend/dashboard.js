@@ -91,8 +91,29 @@ function renderProjects(projectsToRender) {
             <td style="text-align: center;">
                 <span class="three-dots" onclick="toggleMenu(event)" tabindex="0" role="button" aria-label="Project actions" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleMenu(event)}">⋮
                     <div class="actions-menu">
-                        <div class="menu-item" onclick="event.stopPropagation(); findProjectInFolder(${project.id})" tabindex="0" role="button" onkeydown="if(event.key==='Enter'){event.stopPropagation();findProjectInFolder(${project.id})}">Find in Folder</div>
-                        <div class="menu-item" onclick="event.stopPropagation(); showDeleteModal(${project.id})" tabindex="0" role="button" onkeydown="if(event.key==='Enter'){event.stopPropagation();showDeleteModal(${project.id})}">Delete</div>
+
+                       <div class="menu-item"
+                   onclick="event.stopPropagation(); openProjectSettingsFromDashboard(${project.id})">
+                      Project Settings
+                  </div>
+
+
+                        <div class="menu-item"
+                            onclick="event.stopPropagation(); findProjectInFolder(${project.id})"
+                            tabindex="0"
+                            role="button"
+                            onkeydown="if(event.key==='Enter'){event.stopPropagation();findProjectInFolder(${project.id})}">
+                            Find in Folder
+                        </div>
+
+                        <div class="menu-item"
+                            onclick="event.stopPropagation(); showDeleteModal(${project.id})"
+                            tabindex="0"
+                            role="button"
+                            onkeydown="if(event.key==='Enter'){event.stopPropagation();showDeleteModal(${project.id})}">
+                            Delete
+                        </div>
+
                     </div>
                 </span>
             </td>

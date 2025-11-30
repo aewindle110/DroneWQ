@@ -194,29 +194,77 @@ function closeProjectOptionsDialog() {
   document.getElementById("projectOptionsDialog").style.display = "none";
 }
 
-function applyProjectChanges() {
-  const selectedOption = document.querySelector(
-    'input[name="projectOption"]:checked'
-  ).value;
 
-  if (typeof applySettingsChanges === "function") {
-    applySettingsChanges();
+async function applySettingsChanges() {
+  console.log("[Settings] Collecting changes...");
+
+  const projectId = sessionStorage.getItem("currentProjectId");
+  if (!projectId) {
+    alert("No project selected.");
+    return;
   }
 
-  if (selectedOption === "new") {
-    const newName = document.getElementById("newProjectName").value.trim();
-    if (!newName) {
-      alert("Please enter a project name");
+  const renameField = document.getElementById("settingsProjectRename");
+  const rrsField = document.getElementById("settingsRrsCount");
+
+  const name = renameField ? renameField.value.trim() : "";
+  const rrs_count = rrsField ? parseInt(rrsField.value) : 25;
+
+  if (!name) {
+    alert("Please enter a project name before applying changes.");
+    return;
+  }
+
+  const outputIds = {
+    "chl_hu": "settings-output-chl-hu",
+    "chl_ocx": "settings-output-chl-ocx",
+    "chl_hu_ocx": "settings-output-chl-hu-ocx",
+    "chl_gitelson": "settings-output-chl-gitelson",
+    "tsm_nechad": "settings-output-tsm",
+    "mosaics": "settings-output-mosaics"
+  };
+
+  const wq_algs = [];
+  Object.entries(outputIds).forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el && el.checked) wq_algs.push(key);
+  });
+
+  const payload = {
+    projectId: projectId,
+    name: name,
+    rrs_count,
+    wq_algs
+  };
+
+  console.log("[Settings] Sending payload:", payload);
+
+  try {
+    const res = await fetch(`http://localhost:8889/api/projects/update`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      console.error("Update error:", await res.text());
+      alert("Failed to update project.");
       return;
     }
-    console.log("Creating new project:", newName);
-  } else {
-    console.log("Updating existing project");
-  }
 
-  closeProjectOptionsDialog();
-  navigate("loading");
+    alert("Project updated successfully!");
+    navigate("home");
+    initializeDashboard();
+
+  } catch (err) {
+    console.error("Update request failed:", err);
+    alert("Failed to update project. See console for details.");
+  }
 }
+
+
+
+
 
 
 /****************************************************
@@ -306,6 +354,141 @@ function saveMosaicPosition() {
   toggleMosaicEditMode();
 }
 
+/****************************************************
+ * OPEN PROJECT SETTINGS (loads screen + saves ID)
+ ****************************************************/
+async function openProjectSettings() {
+  console.log("[Settings] Opening project settings");
+
+  const projectId = sessionStorage.getItem("currentProjectId");
+  console.log("ID:", projectId);
+
+  try {
+    const res = await fetch(`http://localhost:8889/api/projects/${projectId}`);
+    if (!res.ok) throw new Error("Failed to fetch project");
+
+    const project = await res.json();
+    console.log("[Settings] Loaded project data:", project);
+
+    // Fill name + info
+    document.getElementById("settingsProjectName").textContent = project.name;
+    document.getElementById("settingsProjectInfo").textContent =
+      `${project.created_at} | Data Source: ${project.data_source} | Sky Glint: ${project.lw_method} | Irradiance: ${project.ed_method} | Masking: ${project.mask_method || "None"}`;
+
+    // Pre-fill rename
+    const renameField = document.getElementById("settingsProjectRename");
+    if (renameField) renameField.value = project.name;
+
+    // Pre-fill rrs_count
+    const rrsField = document.getElementById("settingsRrsCount");
+    if (rrsField) rrsField.value = project.rrs_count || 25;
+
+    // Pre-check outputs if present
+    const outputMap = {
+      "chl_hu": "settings-output-chl-hu",
+      "chl_ocx": "settings-output-chl-ocx",
+      "chl_hu_ocx": "settings-output-chl-hu-ocx",
+      "chl_gitelson": "settings-output-chl-gitelson",
+      "tsm_nechad": "settings-output-tsm",
+      "mosaics": "settings-output-mosaics"
+    };
+
+    (project.wq_algs || []).forEach(key => {
+      const id = outputMap[key];
+      const checkbox = document.getElementById(id);
+      if (checkbox) checkbox.checked = true;
+    });
+
+    navigate("settings");
+  } catch (err) {
+    console.error("[Settings] Failed to load project:", err);
+  }
+}
+
+function openProjectSettingsFromDashboard(projectId) {
+  if (!projectId) {
+    console.error("[Settings] No project ID provided!");
+    return;
+  }
+
+  console.log("[Settings] Opening from dashboard, ID:", projectId);
+
+  sessionStorage.setItem("currentProjectId", projectId);
+
+  openProjectSettings();   // now it loads correctly
+}
+
+window.openProjectSettingsFromDashboard = openProjectSettingsFromDashboard;
+
+
+/****************************************************
+ * LOAD PROJECT INTO SETTINGS SCREEN
+ ****************************************************/
+async function loadSettingsScreen(projectId) {
+  try {
+    const res = await fetch(`http://localhost:8889/api/projects/${projectId}`);
+    if (!res.ok) throw new Error("Failed to fetch project");
+
+    const project = await res.json();
+
+    // 1. Update headers
+    const nameEl = document.getElementById("settingsProjectName");
+    const infoEl = document.getElementById("settingsProjectInfo");
+    const renameInput = document.getElementById("settingsProjectNameInput");
+
+    if (nameEl) nameEl.textContent = project.name;
+    if (renameInput) renameInput.value = project.name;
+
+    const dateCreated = new Date(project.created_at).toLocaleDateString(
+      "en-US",
+      { month: "2-digit", day: "2-digit", year: "numeric" }
+    );
+
+    if (infoEl) {
+      infoEl.textContent =
+        `${dateCreated} | Data Source: ${project.data_source} | ` +
+        `Sky Glint: ${project.lw_method} | ` +
+        `Irradiance: ${project.ed_method} | ` +
+        `Masking: ${project.mask_method || "None"}`;
+    }
+
+    // 2. Populate dropdowns
+    const glintSel = document.getElementById("settingsGlintSelect");
+    const irrSel = document.getElementById("settingsIrradianceSelect");
+    const maskSel = document.getElementById("settingsMaskingSelect");
+
+    if (glintSel && project.lw_method) glintSel.value = project.lw_method;
+    if (irrSel && project.ed_method) irrSel.value = project.ed_method;
+    if (maskSel) maskSel.value = project.mask_method || "";
+
+    // 3. Populate output checkboxes
+    const wq = project.wq_algs || [];
+
+    document.getElementById("settings-output-chl-hu").checked =
+      wq.includes("chl_hu");
+    document.getElementById("settings-output-chl-ocx").checked =
+      wq.includes("chl_ocx");
+    document.getElementById("settings-output-chl-hu-ocx").checked =
+      wq.includes("chl_hu_ocx");
+    document.getElementById("settings-output-chl-gitelson").checked =
+      wq.includes("chl_gitelson");
+    document.getElementById("settings-output-tsm").checked =
+      wq.includes("tsm_nechad");
+
+    // Mosaic toggle
+    document.getElementById("settings-output-mosaics").checked =
+      project.mosaic === 1 || project.mosaic === true;
+
+    console.log("[Settings] Loaded project data:", project);
+
+  } catch (err) {
+    console.error("[Settings] Failed to load project:", err);
+    alert("Could not load project settings. See console for details.");
+  }
+}
+
+
+
 
 /****************************************************
  * PAGE LOAD INITIALIZATION
@@ -321,3 +504,8 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeDashboard();
   }
 });
+
+window.openProjectSettings = openProjectSettings;
+window.loadSettingsScreen = loadSettingsScreen;
+
+

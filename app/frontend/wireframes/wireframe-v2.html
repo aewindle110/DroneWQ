@@ -409,232 +409,99 @@
         </div>
         </div>
 
+    </div>
+
 
         <!-- SETTINGS -->
-<div id="settings" class="screen">
-  <div class="content-header">
-    <div class="content-title">Project Settings</div>
-  </div>
+        <div id="settings" class="screen">
+          <div class="content-header">
+            <div class="content-title">Project Settings</div>
+          </div>
 
-  <div class="back-arrow" onclick="navigate('home')">
-    ← Back to Home Page
-  </div>
+          <div class="back-arrow" onclick="navigate('home')">
+            ← Back to Home Page
+          </div>
 
-  <div style="margin-bottom: 30px">
-    <h3 id="settingsProjectName" style="font-size: 22px; margin-bottom: 8px">Loading...</h3>
-    <p id="settingsProjectInfo" style="color: #7f8c8d">
-      Loading project info...
-    </p>
-  </div>
-
-  <div class="form-panel">
-    <h4 style="margin-bottom: 20px">Change Project Settings</h4>
-
-    <div class="form-group">
-      <label class="form-label">Sky Glint Removal Method</label>
-      <select id="settingsGlintSelect" class="form-select">
-        <option value="">Select method...</option>
-        <option value="mobley_rho">Mobley Rho Method</option>
-        <option value="blackpixel">Black Pixel Method</option>
-        <option value="hedley">Hedley Method</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Irradiance Normalization Method</label>
-      <select id="settingsIrradianceSelect" class="form-select">
-        <option value="">Select method...</option>
-        <option value="panel_ed">Panel Ed</option>
-        <option value="dls_ed">DLS Ed</option>
-        <option value="dls_and_panel_ed">DLS corrected by panel</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Pixel Masking (Optional)</label>
-      <select id="settingsMaskingSelect" class="form-select">
-        <option value="">None</option>
-        <option value="value_threshold">Value Threshold</option>
-        <option value="std_threshold">Standard Deviation Threshold</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Selected Outputs</label>
-      <div class="checkbox-group">
-        <label class="checkbox-option">
-          <input type="checkbox" id="settings-output-chl-hu" />
-          <span>Chlorophyll-a (Hu Color Index)</span>
-        </label>
-        <label class="checkbox-option">
-          <input type="checkbox" id="settings-output-chl-ocx" />
-          <span>Chlorophyll-a (OCx Band Ratio)</span>
-        </label>
-        <label class="checkbox-option">
-          <input type="checkbox" id="settings-output-chl-hu-ocx" />
-          <span>Chlorophyll-a (Blended Hu+OCx)</span>
-        </label>
-        <label class="checkbox-option">
-          <input type="checkbox" id="settings-output-chl-gitelson" />
-          <span>Chlorophyll-a (Gitelson)</span>
-        </label>
-        <label class="checkbox-option">
-          <input type="checkbox" id="settings-output-tsm" />
-          <span>Total Suspended Matter (TSM)</span>
-        </label>
-        <label class="checkbox-option">
-          <input type="checkbox" id="settings-output-mosaics" />
-          <span>Mosaics</span>
-        </label>
-      </div>
-    </div>
-
-    <div class="form-actions">
-      <button class="btn btn-secondary" onclick="navigate('home')">
-        Cancel
-      </button>
-      <button class="btn btn-primary" onclick="applySettingsChanges()">
-        Apply Changes
-      </button>
-    </div>
-  </div>
-</div>
-
-        <!-- PROJECT OPTIONS DIALOG -->
-        <div
-          id="projectOptionsDialog"
-          style="
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-          "
-        >
-          <div
-            style="
-              background: white;
-              padding: 30px;
-              border-radius: 8px;
-              max-width: 500px;
-              box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            "
-          >
-            <h3 style="margin-bottom: 20px; color: #2c3e50">
-              Apply Settings Changes
-            </h3>
-            <p style="margin-bottom: 25px; color: #7f8c8d">
-              How would you like to apply these changes?
+          <div style="margin-bottom: 30px">
+            <h3 id="settingsProjectName" style="font-size: 22px; margin-bottom: 8px">Loading...</h3>
+            <p id="settingsProjectInfo" style="color: #7f8c8d">
+              Loading project info...
             </p>
+          </div>
 
-            <div style="margin-bottom: 15px">
-              <label
-                style="
-                  display: block;
-                  padding: 15px;
-                  border: 2px solid #dee2e6;
-                  border-radius: 4px;
-                  cursor: pointer;
-                  margin-bottom: 10px;
-                "
-              >
-                <input
-                  type="radio"
-                  name="projectOption"
-                  value="update"
-                  checked
-                  style="margin-right: 10px"
-                />
-                <strong>Update Existing Project</strong>
-                <div
-                  style="
-                    font-size: 13px;
-                    color: #7f8c8d;
-                    margin-top: 5px;
-                    margin-left: 24px;
-                  "
-                >
-                  Reprocess and overwrite current results
-                </div>
-              </label>
+          <div class="form-panel">
+            <h4 style="margin-bottom: 20px">Change Project Settings</h4>
 
-              <label
-                style="
-                  display: block;
-                  padding: 15px;
-                  border: 2px solid #dee2e6;
-                  border-radius: 4px;
-                  cursor: pointer;
-                "
-              >
-                <input
-                  type="radio"
-                  name="projectOption"
-                  value="new"
-                  style="margin-right: 10px"
-                />
-                <strong>Process as New Project</strong>
-                <div
-                  style="
-                    font-size: 13px;
-                    color: #7f8c8d;
-                    margin-top: 5px;
-                    margin-left: 24px;
-                  "
-                >
-                  Create a copy with a new name
-                </div>
-              </label>
+          
+          <!-- RENAME PROJECT -->
+          <div class="form-group">
+            <label class="form-label">Rename Project</label>
+            <input 
+              type="text" 
+              id="settingsProjectRename" 
+              class="form-select" 
+              placeholder="Enter new project name..."
+            />
+          </div>
+
+          <!-- RRS IMAGE COUNT -->
+          <div class="form-group">
+            <label class="form-label">Number of Images for Radiometry Plots</label>
+            <input 
+              type="number" 
+              id="settingsRrsCount" 
+              class="form-select" 
+              min="1" 
+              style="max-width: 200px;"
+            />
+            <small style="color: #7F8C8D; font-size: 12px;">
+              Default: 25. You need at least 25 images for radiometry analysis.
+            </small>
+          </div>
+
+
+           <!-- SELECTED OUTPUTS -->
+
+            <div class="form-group">
+              <label class="form-label">Selected Outputs</label>
+              <div class="checkbox-group">
+                <label class="checkbox-option">
+                  <input type="checkbox" id="settings-output-chl-hu" />
+                  <span>Chlorophyll-a (Hu Color Index)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" id="settings-output-chl-ocx" />
+                  <span>Chlorophyll-a (OCx Band Ratio)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" id="settings-output-chl-hu-ocx" />
+                  <span>Chlorophyll-a (Blended Hu+OCx)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" id="settings-output-chl-gitelson" />
+                  <span>Chlorophyll-a (Gitelson)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" id="settings-output-tsm" />
+                  <span>Total Suspended Matter (TSM)</span>
+                </label>
+              </div>
             </div>
 
-            <div
-              id="newProjectNameField"
-              style="display: none; margin-bottom: 20px"
-            >
-              <label
-                style="display: block; margin-bottom: 8px; font-weight: 500"
-                >New Project Name</label
-              >
-              <input
-                type="text"
-                id="newProjectName"
-                placeholder="Enter new project name..."
-                style="
-                  width: 100%;
-                  padding: 10px;
-                  border: 1px solid #ced4da;
-                  border-radius: 4px;
-                "
-              />
-            </div>
-
-            <div
-              style="
-                display: flex;
-                gap: 10px;
-                justify-content: flex-end;
-                margin-top: 25px;
-              "
-            >
-              <button
-                class="btn btn-secondary"
-                onclick="closeProjectOptionsDialog()"
-              >
+            <div class="form-actions">
+              <button class="btn btn-secondary" onclick="navigate('home')">
                 Cancel
               </button>
-              <button class="btn btn-primary" onclick="applyProjectChanges()">
-                Apply
+              <button class="btn btn-primary" onclick="applySettingsChanges()">
+                Apply Changes
               </button>
             </div>
           </div>
         </div>
-    </main>
-    </div>
+
+</main>
+
+  </div>
 
 
     <script src="../dashboard.js"></script>
