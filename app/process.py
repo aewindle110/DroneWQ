@@ -24,7 +24,7 @@ def process_new(project_id: int):
         # pipeline.water_metadata()
         # pipeline.flight_plan()
         # pipeline.run()
-        # pipeline.plot_essentials(settings.rrs_count)
+        # pipeline.plot_essentials()
         # pipeline.point_samples()
         # pipeline.wq_run()
         # pipeline.plot_wq(plot_args)
@@ -54,9 +54,11 @@ def process_updated(project_id: int):
             plot_args[wq_alg] = {"vmin": 10, "vmax": 12}
 
         pipeline = Pipeline(settings.to_dict())
+        pipeline.plot_essentials()
         pipeline.wq_run()
         pipeline.plot_wq(plot_args)
         # TODO: add mosaic
+        return jsonify({"Success": True}), 200
     except LookupError as e:
         return jsonify({str(e): f"Project {project_id} not found"})
 

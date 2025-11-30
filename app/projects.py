@@ -217,8 +217,9 @@ def new_project():
 def update_project():
     args = request.get_json(silent=True) or request.args
     project_id = args.get("projectId")
-    wq_algs = args.get("wqAlgs")
-    mosaic = args.get("mosaic")
+    project_name = args.get("name")
+    rrs_count = args.get("rrs_count")
+    wq_algs = args.get("wq_algs")
 
     try:
         # update project into DB
@@ -228,17 +229,16 @@ def update_project():
             c.execute(
                 """
                 UPDATE projects 
-                SET wq_algs = ?, mosaic = ?
+                SET name = ?, rrs_count = ?, wq_algs = ?
                 WHERE id = ?
             """,
                 (
+                    project_name,
+                    rrs_count,
                     json.dumps(wq_algs) if wq_algs else None,
-                    mosaic,
                     project_id,
                 ),
             )
-
-            project_id = c.lastrowid
             conn.commit()
 
         return jsonify({"Success": True}), 200

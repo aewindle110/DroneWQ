@@ -203,7 +203,8 @@ class Pipeline:
             )
             plt.close(fig)
 
-    def plot_essentials(self, count: int = 25):
+    def plot_essentials(self):
+        count = self.settings.rrs_count
         metadata = dronewq.load_metadata(self.settings.rrs_dir)
         count = min(count, len(metadata))
 
