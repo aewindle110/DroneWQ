@@ -252,9 +252,18 @@ async function applySettingsChanges() {
       return;
     }
 
-    alert("Project updated successfully!");
-    navigate("home");
-    initializeDashboard();
+    console.log("[Settings] Project updated. Now reprocessing…");
+
+    const processRes = await fetch(`http://localhost:8889/api/process/updated/${projectId}`);
+
+    if (!processRes.ok) {
+      console.error("Process error:", await processRes.text());
+      alert("Project updated but reprocessing failed.");
+      return;
+    }
+
+    alert("Project updated and reprocessed successfully!");
+    navigate("results");
 
   } catch (err) {
     console.error("Update request failed:", err);
