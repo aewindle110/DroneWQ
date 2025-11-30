@@ -16,12 +16,16 @@ function initializeCharts() {
  * We show only the cards that make sense based on selected outputs.
  */
 function buildOverviewFromFolder(folderPath, selectedWQAlgs) {
+  console.log('DEBUG buildOverviewFromFolder called with:', folderPath, selectedWQAlgs);
+
   if (!folderPath) {
     console.warn('No project folder provided');
     return;
   }
   
   const resultDir = path.join(folderPath, 'result');
+  console.log('DEBUG resultDir:', resultDir);
+  console.log('DEBUG resultDir exists?', fs.existsSync(resultDir));
 
   // Load accessibility descriptions
   let accessibilityDescriptions = {};
@@ -34,6 +38,85 @@ function buildOverviewFromFolder(folderPath, selectedWQAlgs) {
     } catch (err) {
       console.warn('Failed to load accessibility descriptions:', err);
     }
+  }
+
+  // Helper function to create a card if file exists
+  function addCard(title, fileName, blurb, container, plotKey) {
+    const fullPath = path.join(resultDir, fileName);
+    
+    console.log(`DEBUG checking file: ${fileName}, path: ${fullPath}`);
+
+    if (!fs.existsSync(fullPath)) {
+      console.log(`File not found: ${fullPath}`);
+      return;
+    }
+    
+    console.log(`✅ Found file: ${fileName}, adding card`);
+
+    const url = pathToFileURL(fullPath).href;
+    
+    // Get accessibility description if available
+    const accessibleDesc = accessibilityDescriptions[plotKey] || null;
+    
+    // Check if this is a WQ plot (needs vmin/vmax inputs)
+    const isWQPlot = plotKey.includes('chl_') || plotKey.includes('tsm_');
+    const algKey = plotKey.replace('_plot', ''); // e.g., 'chl_hu_plot' → 'chl_hu'
+    
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    card.innerHTML = `
+      <img 
+        src="${url}" 
+        alt="${title}" 
+        class="card-image"
+        onclick="openImageModal('${url}', '${title}')"
+        tabindex="0"
+        role="button"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openImageModal('${url}','${title}')}"
+      />
+      <div class="card-content">
+        <div class="card-title">${title}</div>
+        <div class="card-description">${blurb}</div>
+        ${accessibleDesc ? `
+          <details style="margin-top: 12px;">
+            <summary style="cursor: pointer; color: #3498DB; font-size: 13px; font-weight: 500; user-select: none;">
+               View generated description of the graph
+            </summary>
+            <p style="font-size: 12px; color: #555; margin-top: 8px; padding: 12px; background: #F8F9FA; border-radius: 4px; line-height: 1.6;">
+              ${accessibleDesc}
+            </p>
+          </details>
+        ` : ''}
+        
+        ${isWQPlot ? `
+          <div style="display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #E8ECF1;">
+            <div style="flex: 1;">
+              <label style="font-size: 12px; color: #7F8C8D; display: block; margin-bottom: 5px;">Min Value</label>
+              <input 
+                type="number" 
+                id="${algKey}_vmin_result" 
+                class="wq-range-input"
+                step="0.1" 
+                placeholder="Auto"
+                style="width: 100%; padding: 8px; border: 1px solid #CED4DA; border-radius: 4px; font-size: 13px;"
+              />
+            </div>
+            <div style="flex: 1;">
+              <label style="font-size: 12px; color: #7F8C8D; display: block; margin-bottom: 5px;">Max Value</label>
+              <input 
+                type="number" 
+                id="${algKey}_vmax_result" 
+                class="wq-range-input"
+                step="0.1" 
+                placeholder="Auto"
+                style="width: 100%; padding: 8px; border: 1px solid #CED4DA; border-radius: 4px; font-size: 13px;"
+              />
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+    container.appendChild(card);
   }
 
   // Always included radiometry plots
@@ -56,6 +139,9 @@ function buildOverviewFromFolder(folderPath, selectedWQAlgs) {
   const radiometryContainer = document.getElementById('radiometryCards');
   const waterQualityContainer = document.getElementById('waterQualityCards');
   
+  console.log('DEBUG radiometryContainer:', radiometryContainer);
+  console.log('DEBUG waterQualityContainer:', waterQualityContainer);
+
   if (!radiometryContainer || !waterQualityContainer) {
     console.error('Overview containers not found');
     return;
@@ -95,51 +181,35 @@ function buildOverviewFromFolder(folderPath, selectedWQAlgs) {
     `;
   }
 
+// Add Update Charts button only if there are WQ plots selected
+console.log('DEBUG selectedSet.size:', selectedSet.size);
+console.log('DEBUG selectedSet:', selectedSet);
 
-  // Helper: create a card if file exists
-  function addCard(title, fileName, blurb, container, plotKey) {
-    const fullPath = path.join(resultDir, fileName);
-    
-    if (!fs.existsSync(fullPath)) {
-      console.log(`File not found: ${fullPath}`);
-      return;
-    }
-
-    const url = pathToFileURL(fullPath).href;
-    
-    // Get accessibility description if available
-    const accessibleDesc = accessibilityDescriptions[plotKey] || null;
-    
-    const card = document.createElement('div');
-    card.className = 'result-card';
-    card.innerHTML = `
-      <img 
-        src="${url}" 
-        alt="${title}" 
-        class="card-image"
-        onclick="openImageModal('${url}', '${title}')"
-        tabindex="0"
-        role="button"
-        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openImageModal('${url}','${title}')}"
-      />
-      <div class="card-content">
-        <div class="card-title">${title}</div>
-        <div class="card-description">${blurb}</div>
-        ${accessibleDesc ? `
-          <details style="margin-top: 12px;">
-            <summary style="cursor: pointer; color: #3498DB; font-size: 13px; font-weight: 500; user-select: none;">
-               View generated description of the graph
-            </summary>
-            <p style="font-size: 12px; color: #555; margin-top: 8px; padding: 12px; background: #F8F9FA; border-radius: 4px; line-height: 1.6;">
-              ${accessibleDesc}
-            </p>
-          </details>
-        ` : ''}
-      </div>
-    `;
-    container.appendChild(card);
+// Add Update Charts button only if there are WQ plots selected
+if (selectedSet.size > 0 && !document.getElementById('updateChartsBtn')) {
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.cssText = 'text-align: center; margin-top: 10px;';
+  buttonContainer.innerHTML = `
+    <button 
+      id="updateChartsBtn" 
+      class="btn btn-primary"
+      style="padding: 10px 20px; font-size: 14px;"    >
+      Update Charts
+    </button>
+  `;
+  
+  // Insert right after the waterQualityContainer
+  waterQualityContainer.insertAdjacentElement('afterend', buttonContainer);
+  
+  // Add click handler
+  const btn = document.getElementById('updateChartsBtn');
+  if (btn) {
+    btn.addEventListener('click', updateWQCharts);
   }
 }
+
+}
+
 
 // Add modal function for viewing full-size images
 function openImageModal(imageUrl, title) {
@@ -167,7 +237,7 @@ function openImageModal(imageUrl, title) {
           &times;
         </button>
       </div>
-      <img src="${imageUrl}" style="max-width: 100%; max-height: 50vh; object-fit: contain; border-radius: 4px;" />
+      <img src="${imageUrl}" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 4px;" />
     </div>
   `;
   
@@ -191,7 +261,6 @@ function buildFlightTrajectory() {
   }
 
   const resultDir = path.join(folderPath, 'result');
-
   const flightPlanPath = path.join(resultDir, 'flight_plan.png');
 
   if (!fs.existsSync(flightPlanPath)) {
@@ -225,6 +294,62 @@ function buildFlightTrajectory() {
   }
 }
 
+async function updateWQCharts() {
+  const projectId = sessionStorage.getItem('currentProjectId');
+  const selectedWQAlgs = JSON.parse(sessionStorage.getItem('selectedWQAlgs') || '[]');
+  
+  // Collect all vmin/vmax values in the format backend expects
+  const wqRanges = {};
+  selectedWQAlgs.forEach(alg => {
+    const vminInput = document.getElementById(`${alg}_vmin_result`);
+    const vmaxInput = document.getElementById(`${alg}_vmax_result`);
+    
+    const vmin = vminInput && vminInput.value ? parseFloat(vminInput.value) : null;
+    const vmax = vmaxInput && vmaxInput.value ? parseFloat(vmaxInput.value) : null;
+    
+    // Only include if user entered values
+    if (vmin !== null || vmax !== null) {
+      wqRanges[alg] = {
+        vmin: vmin,
+        vmax: vmax
+      };
+    }
+  });
+  
+  // Check if user entered any values
+  if (Object.keys(wqRanges).length === 0) {
+    alert('Please enter min/max values for at least one chart');
+    return;
+  }
+
+  // Add projectId to the payload
+  const payload = {
+    projectId: parseInt(projectId),
+    ...wqRanges
+  };
+
+  try {
+    const response = await fetch('http://localhost:8889/api/plot/wq', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      alert('Failed to update charts: ' + errorText);
+      return;
+    }
+    
+    // Reload the page to show updated charts
+    alert('Charts updated successfully!');
+    location.reload();
+    
+  } catch (error) {
+    console.error('Error updating charts:', error);
+    alert('Error updating charts: ' + error.message);
+  }
+}
 
 window.initializeCharts = initializeCharts;
 window.buildOverviewFromFolder = buildOverviewFromFolder;

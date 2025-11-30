@@ -731,6 +731,15 @@
             buildOverviewFromFolder(project.folder_path, project.wq_algs || []);
             console.log('[Results] Charts built');
             }
+
+            // Build charts with folder path and selected WQ algs
+              if (typeof buildOverviewFromFolder === 'function') {
+                console.log('DEBUG folder_path:', project.folder_path);
+                console.log('DEBUG wq_algs:', project.wq_algs);
+                buildOverviewFromFolder(project.folder_path, project.wq_algs || []);
+                console.log('[Results] Charts built');
+              }
+
             // Load CSV data 
             if (typeof loadCSVData === 'function') {
                 loadCSVData(project.folder_path);
