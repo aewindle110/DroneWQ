@@ -1,3 +1,4 @@
+# Everything related to computing and plotting results
 # from description_generator import generate_plot_descriptions
 from flask import Blueprint, jsonify
 from models.model_project import Project
@@ -24,8 +25,8 @@ def process_new(project_id: int):
         # pipeline.run()
         # pipeline.plot_essentials()
         # pipeline.point_samples()
-        pipeline.wq_run()
-        pipeline.plot_wq(plot_args)
+        # pipeline.wq_run()
+        # pipeline.plot_wq(plot_args)
         # TODO: add mosaic
 
         # After all plots are generated, generate descriptions
@@ -57,3 +58,11 @@ def process_updated(project_id: int):
         # TODO: add mosaic
     except LookupError as e:
         return jsonify({str(e): f"Project {project_id} not found"})
+
+
+# @bp.route("/api/process/mosaic", methods=["POST"])
+# def draw_mosaic():
+#     args = request.get_json(silent=True) or request.args
+
+
+# @bp.route("/api/plot/wq", methods=["POST"])

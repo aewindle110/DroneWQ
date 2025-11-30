@@ -361,3 +361,11 @@ class Pipeline:
         out_path = os.path.join(output_folder, "masked_rrs_plot.png")
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False)
         plt.close(fig)
+
+    def georeference(self, wq_alg):
+        metadata_path = Path(self.settings.main_dir) / "metadata.csv"
+        wq_dir = Path(self.settings.main_dir) / ("masked_" + wq_alg + "_imgs")
+        output_dir = Path(self.settings.main_dir) / (
+            "georeferenced_masked_" + wq_alg + "_imgs"
+        )
+        metadata = pd.read_csv(metadata_path)
