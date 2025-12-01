@@ -1,5 +1,4 @@
 # Everything related to computing and plotting results
-# from description_generator import generate_plot_descriptions
 from flask import Blueprint, jsonify, request
 from models.model_project import Project
 from pipeline import Pipeline
@@ -29,15 +28,6 @@ def process_new(project_id: int):
         # pipeline.wq_run()
         # pipeline.plot_wq(plot_args)
         # TODO: add mosaic
-
-        # After all plots are generated, generate descriptions
-        # result_folder = os.path.join(folder_path, "result")
-        try:
-            print("Generating accessibility descriptions...")
-            # generate_plot_descriptions(result_folder, Config.GEMINI_API_KEY)
-        except Exception as e:
-            print(f"Failed to generate accessibility descriptions: {e}")
-            # Don't fail the whole process if descriptions fail
 
         return jsonify({"success": True}), 200
     except Exception as e:
