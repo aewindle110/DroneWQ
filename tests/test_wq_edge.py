@@ -46,3 +46,4 @@ def test_wq_algs_values_array_homogeneous():
         arr = np.array(values)
         assert arr.shape == (2, 10, 10)
         assert arr.dtype.kind in {"f", "d"}
+
