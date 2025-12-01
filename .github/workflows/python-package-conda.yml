@@ -15,16 +15,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+    - uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: '3.10'
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
-        conda create -y -n dronewq python=3.10 gdal
+        python-version: 3.10 # Specify Python version if needed
+        channels: conda-forge,defaults # Specify channels, conda-forge first
 
+    - name: Install dependencies from environment.yml
+      run: |
+        conda create -y -n dronewq python=3.10 gdal conda-forge::zbar conda-forge::exiftool
+        
     - name: Install conda deps
       run: conda run -n dronewq pip install -e .
 
