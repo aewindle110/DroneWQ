@@ -27,7 +27,6 @@ def process_new(project_id: int):
         # pipeline.point_samples()
         # pipeline.wq_run()
         # pipeline.plot_wq(plot_args)
-        # TODO: add mosaic
 
         return jsonify({"success": True}), 200
     except Exception as e:
@@ -47,15 +46,20 @@ def process_updated(project_id: int):
         pipeline.plot_essentials()
         pipeline.wq_run()
         pipeline.plot_wq(plot_args)
-        # TODO: add mosaic
         return jsonify({"Success": True}), 200
     except LookupError as e:
         return jsonify({str(e): f"Project {project_id} not found"})
 
 
-# @bp.route("/api/process/mosaic", methods=["POST"])
-# def draw_mosaic():
-#     args = request.get_json(silent=True) or request.args
+@bp.route("/api/process/mosaic", methods=["POST"])
+def draw_mosaic():
+    args = request.get_json(silent=True) or request.args
+    wq_alg = args.get("wqAlg")
+    even_yaw = args.get("evenYaw")
+    odd_yaw = args.get("oddYaw")
+    pitch = args.get("pitch")
+    roll = args.get("roll")
+    method = args.get("method")
 
 
 @bp.route("/api/plot/wq", methods=["POST"])
