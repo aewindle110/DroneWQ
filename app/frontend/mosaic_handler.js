@@ -9,7 +9,7 @@ function renderMosaicCards() {
 
   const resultDir = path.join(projectFolder, 'result');
   const container = document.getElementById("mosaicCards");
-  
+
   if (!container) return;
 
   // Check if result directory exists
@@ -27,11 +27,11 @@ function renderMosaicCards() {
 
   // Look for mosaic files in the result directory
   const files = fs.readdirSync(resultDir);
-  
+
   files.forEach(file => {
     if (file.includes('_mosaic') && file.endsWith('.png')) {
       const fullPath = path.join(resultDir, file);
-      
+
       // Determine title based on filename
       let title = 'Mosaic';
       if (file.includes('downsampled')) {
@@ -41,7 +41,7 @@ function renderMosaicCards() {
       } else if (!file.includes('downsampled')) {
         title = 'Mosaic (Original Resolution)';
       }
-      
+
       items.push({
         title: title,
         file: fullPath
@@ -60,6 +60,7 @@ function renderMosaicCards() {
   }
 
   container.innerHTML = items.map(item => {
+    console.log(item.title, item.file)
     const url = pathToFileURL(item.file).href;
 
     return `
@@ -92,9 +93,10 @@ async function processMosaic() {
   }
 
   const wqAlg = checked[0].getAttribute("data-key");
+  console.log(wqAlg)
 
   const evenYaw = parseNumericDefault("mosaicYawEven", 0);
-  const oddYaw  = parseNumericDefault("mosaicYawOdd", 0);
+  const oddYaw = parseNumericDefault("mosaicYawOdd", 0);
   const altitude = parseRequiredNumeric("mosaicAltitude");
   const pitch = parseNumericDefault("mosaicPitch", 0);
   const roll = parseNumericDefault("mosaicRoll", 0);
@@ -143,9 +145,9 @@ async function processMosaic() {
 
     document.getElementById("mosaicSettingsPanel").style.display = "none";
     document.getElementById("mosaicSettingsToggle").style.display = "inline-block";
-    
+
     alert('Mosaic generated successfully!');
-    
+
   } catch (error) {
     console.error('[MOSAIC] Error:', error);
     alert('Error processing mosaic: ' + error.message);
@@ -176,7 +178,7 @@ function parseRequiredNumeric(id) {
 function showMosaicSettingsPanel(show) {
   const panel = document.getElementById("mosaicSettingsPanel");
   const toggle = document.getElementById("mosaicSettingsToggle");
-  
+
   if (show) {
     panel.style.display = "block";
     toggle.style.display = "none";
