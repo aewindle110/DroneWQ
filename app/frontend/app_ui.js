@@ -127,6 +127,12 @@ function navigate(screen, fromScreen) {
           console.log("[Results] Trajectory data loaded");
         }
 
+        // Initialize mosaic cards
+            if (typeof renderMosaicCards === 'function') {
+            renderMosaicCards();
+            console.log('[Results] Mosaic cards loaded');
+            }
+
 
       } catch (err) {
         console.error("Failed to load project:", err);
