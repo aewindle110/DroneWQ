@@ -353,13 +353,13 @@
 
             <!-- Radiometry Section -->
             <div class="overview-section">
-                <h5 class="section-title">📊 Radiometry Spectra</h5>
+                <h5 class="section-title">Radiometry Spectra</h5>
                 <div class="overview-grid" id="radiometryCards"></div>
             </div>
 
             <!-- Water Quality Section -->
             <div class="overview-section">
-                <h5 class="section-title">🌊 Water Quality Analysis</h5>
+                <h5 class="section-title">Water Quality Analysis</h5>
                 <div class="overview-grid" id="waterQualityCards"></div>
             </div>
             </div>
@@ -502,6 +502,38 @@
                 <small style="color:#7F8C8D; font-size: 12px;">Default 0°.</small>
               </div>
             </div>
+
+                <!-- METHOD + DOWNSAMPLE -->
+              <div class="form-group" style="margin-top: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+                <div>
+                  <label class="form-label" for="mosaicMethodSelect">Method for overlapping captures</label>
+                  <select id="mosaicMethodSelect" class="form-select">
+                    <option value="mean" selected>Mean (default)</option>
+                    <option value="first">First</option>
+                    <option value="min">Min</option>
+                    <option value="max">Max</option>
+                  </select>
+                  <small style="color:#7F8C8D; font-size: 12px;">
+                    How to combine pixels when multiple captures coincide at the same location.
+                  </small>
+                </div>
+
+                <div>
+                  <label class="form-label" for="mosaicDownsampleFactor">Downsample factor</label>
+                  <input
+                    type="number"
+                    id="mosaicDownsampleFactor"
+                    class="form-select"
+                    step="0.1"
+                    min="1"
+                    value="1"
+                  />
+                  <small style="color:#7F8C8D; font-size: 12px;">
+                    1 = no downsampling, 2 = reduce resolution by 2×, etc.
+                  </small>
+                </div>
+              </div>
+
 
             <div class="form-actions" style="margin-top: 20px;">
               <button

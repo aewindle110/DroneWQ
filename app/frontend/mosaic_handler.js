@@ -1,64 +1,132 @@
 // frontend/mosaic_handler.js
 
-function loadMosaicImage(folderPath) {
-  const mosaicContainer = document.getElementById('mosaicContainer');
-  if (!mosaicContainer) return;
-  
-  try {
-    // Check for different possible file extensions
-    const possibleFiles = ['mosaic.png', 'mosaic.jpg', 'mosaic.jpeg', 'mosaic.tif', 'mosaic.tiff'];
-    let mosaicPath = null;
-    
-    const resultDir = path.join(folderPath, 'result');
-    
-    for (const filename of possibleFiles) {
-      const testPath = path.join(resultDir, filename);
-      if (fs.existsSync(testPath)) {
-        mosaicPath = testPath;
-        break;
-      }
-    }
-    
-    if (!mosaicPath) {
-      mosaicContainer.innerHTML = `
-        <div style="padding: 60px; text-align: center; color: #7F8C8D;">
-          <p style="font-size: 18px; margin-bottom: 10px;">No mosaic available</p>
-          <p style="font-size: 14px;">Mosaic will be generated if selected during processing.</p>
-        </div>
-      `;
-      return;
-    }
-    
-    const url = pathToFileURL(mosaicPath).href;
-    mosaicContainer.innerHTML = `
-      <img 
-        src="${url}" 
-        alt="Mosaic" 
-        id="mosaicImage"
-        tabindex="0"
-        role="button"
-        style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block; margin: 0 auto; cursor: pointer;" 
-      />
-    `;
-    
-    // Add keyboard support
-    const img = mosaicContainer.querySelector('img');
-    img.addEventListener('click', () => openImageModal(url, 'Mosaic'));
-    img.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        openImageModal(url, 'Mosaic');
-      }
-    });
-    
-  } catch (err) {
-    console.error('Error loading mosaic:', err);
-    mosaicContainer.innerHTML = `
-      <div style="padding: 60px; text-align: center; color: #e74c3c;">
-        <p>Error loading mosaic image</p>
+// Build mosaic cards
+function renderMosaicCards(folderPath, mosaics) {
+  const container = document.getElementById("mosaicResultsGrid");
+  if (!container) return;
+
+  if (!mosaics || mosaics.length === 0) {
+    container.innerHTML = `
+      <p style="padding: 40px; text-align:center; color:#7F8C8D;">
+        No mosaic results yet. Process mosaics using the controls above.
+      </p>`;
+    return;
+  }
+
+  container.innerHTML = mosaics.map(m => {
+    const filePath = path.join(folderPath, "result", m.file);
+    const url = pathToFileURL(filePath).href;
+
+    return `
+      <div class="overview-card" style="cursor:pointer;" onclick="openImageModal('${url}', 'Mosaic – ${m.alg}')">
+        <div class="card-title">Mosaic – ${m.alg}</div>
+        <img src="${url}" style="width:100%; border-radius:4px; margin-top:10px;">
       </div>
     `;
-  }
+  }).join("");
 }
 
-window.loadMosaicImage = loadMosaicImage;
+
+// PROCESS MOSAIC
+async function processMosaic() {
+  const projectId = sessionStorage.getItem("currentProjectId");
+  if (!projectId) {
+    alert("No project selected.");
+    return;
+  }
+
+  //Collect algorithm checkboxes
+  const algCheckboxes = document.querySelectorAll(".mosaic-alg-chk");
+  const wq_algs = [];
+  algCheckboxes.forEach(cb => {
+    if (cb.checked) {
+      const alg = cb.getAttribute("data-key");
+      if (alg) wq_algs.push(alg);
+    }
+  });
+
+  if (wq_algs.length === 0) {
+    alert("Please select at least one water quality algorithm.");
+    return;
+  }
+
+  // Collect sensor + flight inputs
+  const yaw_even = parseNumeric("mosaicYawEven");
+  const yaw_odd = parseNumeric("mosaicYawOdd");
+  const altitude = parseRequiredNumeric("mosaicAltitude");
+  const pitch = parseNumericDefault("mosaicPitch", 0);
+  const roll = parseNumericDefault("mosaicRoll", 0);
+
+  //  method + downsample
+  const method = document.getElementById("mosaicMethodSelect")?.value || "mean";
+
+  const downsampleInput = document.getElementById("mosaicDownsampleFactor")?.value;
+  let downsample = parseFloat(downsampleInput);
+  if (isNaN(downsample) || downsample < 1) downsample = 1;
+
+  if (altitude === null) {
+    alert("Altitude is required.");
+    return;
+  }
+
+  const payload = {
+    projectId: Number(projectId),
+    name: null,
+    rrs_count: null,
+    wq_algs,
+    yaw_even,
+    yaw_odd,
+    altitude,
+    pitch,
+    roll,
+    method,
+    downsample
+  };
+
+  console.log("[MOSAIC] Sending payload:", payload);
+
+  const res = await fetch("http://localhost:8889/api/process/mosaic", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    console.error(await res.text());
+    alert("Mosaic processing failed. See console.");
+    return;
+  }
+
+  const data = await res.json();
+  console.log("[MOSAIC] Backend response:", data);
+
+  renderMosaicCards(data.folder_path, data.mosaics);
+}
+
+
+// Helpers to parse numbers
+function parseNumeric(id) {
+  const el = document.getElementById(id);
+  if (!el || el.value.trim() === "") return null;
+  const num = parseFloat(el.value);
+  return isNaN(num) ? null : num;
+}
+
+function parseNumericDefault(id, def) {
+  const el = document.getElementById(id);
+  if (!el || el.value.trim() === "") return def;
+  const num = parseFloat(el.value);
+  return isNaN(num) ? def : num;
+}
+
+function parseRequiredNumeric(id) {
+  const el = document.getElementById(id);
+  if (!el || el.value.trim() === "") return null;
+  const num = parseFloat(el.value);
+  return isNaN(num) ? null : num;
+}
+
+
+// Expose globally
+window.processMosaic = processMosaic;
+window.renderMosaicCards = renderMosaicCards;
