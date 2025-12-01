@@ -25,7 +25,7 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
         conda create -y -n dronewq python=3.10 gdal
 
-    - name: Install deps
+    - name: Install conda deps
       run: conda run -n dronewq pip install -e .
 
     - name: Install hatch
