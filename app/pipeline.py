@@ -2,10 +2,13 @@ import os
 from collections import defaultdict
 from pathlib import Path
 
+import contextily as cx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from cartopy.crs import Mercator
+from rasterio.enums import Resampling
 
 import dronewq
 from dronewq.utils.settings import Settings
@@ -366,10 +369,97 @@ class Pipeline:
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False)
         plt.close(fig)
 
-    def georeference(self, wq_alg):
-        metadata_path = Path(self.settings.main_dir) / "metadata.csv"
-        wq_dir = Path(self.settings.main_dir) / ("masked_" + wq_alg + "_imgs")
-        output_dir = Path(self.settings.main_dir) / (
-            "georeferenced_masked_" + wq_alg + "_imgs"
-        )
+    def georeference(
+        self,
+        wq_alg: str,
+        even_yaw: int,
+        odd_yaw: int,
+        altitute: float,
+        pitch,
+        roll,
+        method: str = "mean",
+    ):
+        main_dir = Path(self.settings.main_dir)
+        metadata_path = main_dir / "metadata.csv"
+        wq_dir = main_dir / ("masked_" + wq_alg + "_imgs")
+        georef_wq_dir = main_dir / "georeferenced_masked_" + wq_alg + "_imgs"
+        result_dir = main_dir / "results"
+
+        avail_methods = [
+            "mean",
+            "first",
+            "min",
+            "max",
+        ]
+
+        if method not in avail_methods:
+            method = "mean"
+
         metadata = pd.read_csv(metadata_path)
+        threshold = np.median(metadata.Yaw)
+
+        flight_lines = dronewq.compute_flight_lines(metadata.Yaw, altitute, pitch, roll)
+        for line in flight_lines:
+            line.update(yaw=even_yaw if line["yaw"] < threshold else odd_yaw)
+
+        dronewq.georeference(metadata, wq_dir, georef_wq_dir, flight_lines)
+
+        output_name = method + "_mosaic_" + wq_alg
+        self.mosaic_path = dronewq.mosaic(
+            georef_wq_dir,
+            result_dir,
+            output_name=output_name,
+            method=method,
+            band_names=None,
+        )
+
+        fig, ax = plt.subplots(
+            nrows=1,
+            ncols=1,
+            figsize=(12, 6),
+            subplot_kw=dict(projection=Mercator()),
+        )
+        ax_0, mappable_0 = dronewq.plot_georeferenced_data(
+            ax=ax,
+            filename=self.mosaic_path,
+            vmin=0,
+            vmax=20,
+            cmap="Greens",
+            norm=None,
+            basemap=cx.providers.Esri.WorldImagery,
+        )
+        ax_0.set_title("Hu OCX Chl")
+        plt.colorbar(mappable_0, label="Chlorophyll a (mg $m^{-3}$)")
+
+        out_path = result_dir / (output_name + ".png")
+        fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False)
+        plt.close(fig)
+
+    def downsample(self, factor: float = 1):
+        main_dir = Path(self.settings.main_dir)
+        result_dir = main_dir / "results"
+        output_path = dronewq.downsample(
+            self.mosaic_path,
+            result_dir,
+            scale_x=factor,
+            scale_y=factor,
+            method=Resampling.nearest,
+        )
+
+        fig, ax = plt.subplots(
+            nrows=1,
+            ncols=1,
+            figsize=(12, 6),
+            subplot_kw=dict(projection=Mercator()),
+        )
+        ax_0, mappable_0 = dronewq.plot_georeferenced_data(
+            ax=ax,
+            filename=output_path,
+            vmin=5,
+            vmax=15,
+            cmap="Greens",
+            norm=None,
+            basemap=cx.providers.Esri.WorldImagery,
+        )
+        ax_0.set_title("Hu OCX Chl Downsampled")
+        plt.colorbar(mappable_0, label="Chlorophyll a (mg $m^{-3}$)")
