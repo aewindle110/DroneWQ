@@ -25,7 +25,7 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install conda dependencies
       run: |
-        conda install gdal zbar exiftool -y -c conda-forge
+        conda install gdal conda-forge::zbar conda-forge::exiftool
     - name: Install dronewq
       run: |
         pip install -e .
