@@ -399,15 +399,145 @@
         </div>
         </div>
 
-            <div id="mosaic" class="tab-content">
-        <div style="margin-bottom: 20px;">
-            <h4 style="margin-bottom: 10px;">Georeferenced Mosaic</h4>
+       <div id="mosaic" class="tab-content">
+          <div style="margin-bottom: 20px;">
+            <h4 style="margin-bottom: 10px;">Mosaics</h4>
+            <p style="color:#7F8C8D; font-size: 14px;">
+              Generate georeferenced mosaics from selected water quality algorithms.
+            </p>
+          </div>
+
+          <!-- SETTINGS PANEL -->
+          <div id="mosaicSettingsPanel" class="form-panel" style="margin-bottom: 25px;">
+            <h5 style="margin-bottom: 15px;">Mosaic Settings</h5>
+
+            <!-- WQ ALG SELECTION -->
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label class="form-label">Which water quality algorithms should a mosaic be generated from?</label>
+              <div class="checkbox-group">
+                <label class="checkbox-option">
+                  <input type="checkbox" class="mosaic-alg-chk" data-key="chl_hu" />
+                  <span>Chlorophyll-a (Hu Color Index)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="mosaic-alg-chk" data-key="chl_ocx" />
+                  <span>Chlorophyll-a (OCx Band Ratio)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="mosaic-alg-chk" data-key="chl_hu_ocx" />
+                  <span>Chlorophyll-a (Blended Hu+OCx)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="mosaic-alg-chk" data-key="chl_gitelson" />
+                  <span>Chlorophyll-a (Gitelson)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="mosaic-alg-chk" data-key="tsm_nechad" />
+                  <span>Total Suspended Matter (TSM)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- EXTRA PARAMETERS -->
+            <div class="form-group" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+              <div>
+                <label class="form-label" for="mosaicYawEven">Even yaw angle (°)</label>
+                <input
+                  type="number"
+                  id="mosaicYawEven"
+                  class="form-select"
+                  min="0"
+                  max="360"
+                  placeholder="Optional"
+                />
+                <small style="color:#7F8C8D; font-size: 12px;">0–360, leave blank if unknown.</small>
+              </div>
+
+              <div>
+                <label class="form-label" for="mosaicYawOdd">Odd yaw angle (°)</label>
+                <input
+                  type="number"
+                  id="mosaicYawOdd"
+                  class="form-select"
+                  min="0"
+                  max="360"
+                  placeholder="Optional"
+                />
+                <small style="color:#7F8C8D; font-size: 12px;">0–360, leave blank if unknown.</small>
+              </div>
+
+              <div>
+                <label class="form-label" for="mosaicAltitude">Altitude (m)</label>
+                <input
+                  type="number"
+                  id="mosaicAltitude"
+                  class="form-select"
+                  step="0.1"
+                  placeholder="e.g. 50"
+                />
+                <small style="color:#7F8C8D; font-size: 12px;">Flight altitude above water (required).</small>
+              </div>
+
+              <div>
+                <label class="form-label" for="mosaicPitch">Pitch (°)</label>
+                <input
+                  type="number"
+                  id="mosaicPitch"
+                  class="form-select"
+                  value="0"
+                  step="0.1"
+                />
+                <small style="color:#7F8C8D; font-size: 12px;">Default 0°.</small>
+              </div>
+
+              <div>
+                <label class="form-label" for="mosaicRoll">Roll (°)</label>
+                <input
+                  type="number"
+                  id="mosaicRoll"
+                  class="form-select"
+                  value="0"
+                  step="0.1"
+                />
+                <small style="color:#7F8C8D; font-size: 12px;">Default 0°.</small>
+              </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 20px;">
+              <button
+                class="btn btn-primary"
+                type="button"
+                onclick="processMosaic()"
+              >
+                Process Mosaic
+              </button>
+            </div>
+          </div>
+
+          <!-- RE-SHOW SETTINGS BUTTON (hidden until first process) -->
+          <div style="margin-bottom: 15px;">
+            <button
+              id="mosaicSettingsToggle"
+              class="btn btn-secondary"
+              type="button"
+              style="display: none;"
+              onclick="showMosaicSettingsPanel(true)"
+            >
+              Mosaic Settings
+            </button>
+          </div>
+
+          <!-- MOSAIC CARDS -->
+          <div class="overview-section">
+            <h5 class="section-title">Generated Mosaics</h5>
+            <div id="mosaicCards" class="overview-grid">
+              <p style="padding: 40px; text-align: center; color: #7F8C8D;">
+                No mosaics generated yet. Adjust settings and click <strong>Process Mosaic</strong>.
+              </p>
+            </div>
+          </div>
         </div>
-        
-        <div id="mosaicContainer">
-            <p style="padding: 40px; text-align: center; color: #7F8C8D;">Loading mosaic...</p>
-        </div>
-        </div>
+
 
     </div>
 

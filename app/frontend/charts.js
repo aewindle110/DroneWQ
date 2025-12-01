@@ -58,9 +58,7 @@ function buildOverviewFromFolder(folderPath, selectedWQAlgs, cacheBust) {
   const urlBase = pathToFileURL(fullPath).href;
   const url = cacheBust ? `${urlBase}?t=${cacheBust}` : urlBase;
     
-    // Get accessibility description if available
-    const accessibleDesc = accessibilityDescriptions[plotKey] || null;
-    
+  
     // Check if this is a WQ plot (needs vmin/vmax inputs)
     const isWQPlot = plotKey.includes('chl_') || plotKey.includes('tsm_');
     const algKey = plotKey.replace('_plot', ''); // e.g., 'chl_hu_plot' → 'chl_hu'
@@ -68,28 +66,19 @@ function buildOverviewFromFolder(folderPath, selectedWQAlgs, cacheBust) {
     const card = document.createElement('div');
     card.className = 'result-card';
     card.innerHTML = `
-      <img 
-        src="${url}" 
-        alt="${title}" 
-        class="card-image"
-        onclick="openImageModal('${url}', '${title}')"
-        tabindex="0"
-        role="button"
-        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openImageModal('${url}','${title}')}"
-      />
-      <div class="card-content">
-        <div class="card-title">${title}</div>
-        <div class="card-description">${blurb}</div>
-        ${accessibleDesc ? `
-          <details style="margin-top: 12px;">
-            <summary style="cursor: pointer; color: #3498DB; font-size: 13px; font-weight: 500; user-select: none;">
-               View generated description of the graph
-            </summary>
-            <p style="font-size: 12px; color: #555; margin-top: 8px; padding: 12px; background: #F8F9FA; border-radius: 4px; line-height: 1.6;">
-              ${accessibleDesc}
-            </p>
-          </details>
-        ` : ''}
+  <img 
+    src="${url}" 
+    alt="${title}" 
+    class="card-image"
+    onclick="openImageModal('${url}', '${title}')"
+    tabindex="0"
+    role="button"
+    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openImageModal('${url}','${title}')}"
+  />
+
+  <div class="card-content">
+    <div class="card-title">${title}</div>
+    <div class="card-description">${blurb}</div>
         
         ${isWQPlot ? `
           <div style="display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #E8ECF1;">
