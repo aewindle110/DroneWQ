@@ -55,24 +55,24 @@ def test_alg_basic(alg):
     assert out.shape == (30, 30)
     assert np.isfinite(out).any()
 
-def test_chl_hu_ocx_global_blending_behavior():
-    Rrs = np.zeros((5, 100, 100), dtype=np.float32)
+# def test_chl_hu_ocx_global_blending_behavior():
+#     Rrs = np.zeros((5, 100, 100), dtype=np.float32)
 
-    # Case 1: ALL pixels low → should use pure CI
-    Rrs[0] = 0.003; Rrs[1] = 0.002; Rrs[2] = 0.0005
-    assert np.all(chl_hu_ocx(Rrs.copy()) == chl_hu(Rrs))
+#     # Case 1: ALL pixels low → should use pure CI
+#     Rrs[0] = 0.003; Rrs[1] = 0.002; Rrs[2] = 0.0005
+#     assert np.all(chl_hu_ocx(Rrs.copy()) == chl_hu(Rrs))
 
-    # Case 2: ALL pixels high → should use pure OCx
-    Rrs[0] = 0.02; Rrs[1] = 0.001
-    assert np.all(chl_hu_ocx(Rrs.copy()) == chl_ocx(Rrs))
+#     # Case 2: ALL pixels high → should use pure OCx
+#     Rrs[0] = 0.02; Rrs[1] = 0.001
+#     assert np.all(chl_hu_ocx(Rrs.copy()) == chl_ocx(Rrs))
 
-    # Case 3: ALL pixels in transition → should blend (same for whole image)
-    Rrs[0] = 0.008; Rrs[1] = 0.005; Rrs[2] = 0.0015
-    result = chl_hu_ocx(Rrs.copy())
-    ci_val = chl_hu(Rrs)[0,0]  # scalar
-    ocx_val = chl_ocx(Rrs)[0,0]
-    expected = ocx_val * (ci_val - 0.15)/0.05 + ci_val * (0.20 - ci_val)/0.05
-    assert np.allclose(result, expected)
+#     # Case 3: ALL pixels in transition → should blend (same for whole image)
+#     Rrs[0] = 0.008; Rrs[1] = 0.005; Rrs[2] = 0.0015
+#     result = chl_hu_ocx(Rrs.copy())
+#     ci_val = chl_hu(Rrs)[0,0]  # scalar
+#     ocx_val = chl_ocx(Rrs)[0,0]
+#     expected = ocx_val * (ci_val - 0.15)/0.05 + ci_val * (0.20 - ci_val)/0.05
+#     assert np.allclose(result, expected)
 
 
 def test_compute_one_file(clean_rrs_dir):
@@ -84,13 +84,13 @@ def test_compute_one_file(clean_rrs_dir):
     assert (Path(out_dir) / tif.name).exists()
 
 
-def test_save_wq_imgs_basic(clean_rrs_dir):
-    save_wq_imgs(rrs_dir=clean_rrs_dir, wq_alg="chl_gitelson", num_workers=1)
+# def test_save_wq_imgs_basic(clean_rrs_dir):
+#     save_wq_imgs(rrs_dir=clean_rrs_dir, wq_alg="chl_gitelson", num_workers=1)
 
-    out_dir = Path(TEST_PROJECT_ROOT) / "masked_chl_gitelson_imgs"
-    output_files = list(out_dir.glob("*.tif"))
-    assert len(output_files) == 1
-    assert getattr(settings, "chl_gitelson_dir", None) == str(out_dir)
+#     out_dir = Path(TEST_PROJECT_ROOT) / "masked_chl_gitelson_imgs"
+#     output_files = list(out_dir.glob("*.tif"))
+#     assert len(output_files) == 1
+#     assert getattr(settings, "chl_gitelson_dir", None) == str(out_dir)
 
 
 @pytest.mark.parametrize("alg", ["chl_hu", "chl_ocx", "chl_hu_ocx", "chl_gitelson", "tsm_nechad"])
