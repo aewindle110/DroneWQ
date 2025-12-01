@@ -8,6 +8,8 @@ out/
 ### specific to our package
 
 data/
+*.zip
+*.db
 
 Lake_Erie
 

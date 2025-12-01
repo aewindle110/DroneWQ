@@ -15,74 +15,234 @@ function initializeCharts() {
  * Build the Overview cards from images the backend writes into the project's main folder.
  * We show only the cards that make sense based on selected outputs.
  */
-function buildOverviewFromFolder() {
-  const folderPath = sessionStorage.getItem('projectFolder');
+function buildOverviewFromFolder(folderPath, selectedWQAlgs, cacheBust) {
+  console.log('DEBUG buildOverviewFromFolder called with:', folderPath, selectedWQAlgs);
+
   if (!folderPath) {
-    console.warn('No project folder set in sessionStorage');
+    console.warn('No project folder provided');
     return;
   }
+  
+  const resultDir = path.join(folderPath, 'result');
+  console.log('DEBUG resultDir:', resultDir);
+  console.log('DEBUG resultDir exists?', fs.existsSync(resultDir));
 
-  const resultDir = path.join(projectFolder, 'result');
-  const outputs = JSON.parse(sessionStorage.getItem('selectedOutputs') || '[]');
-
-  // Conditional cards mapped to outputs
-  const byOutput = [
-    { out: 'reflectance',   title: 'Rrs Plot',        file: 'rrs_plot.png',         blurb: 'Remote sensing reflectance across key wavelengths.' },
-    { out: 'reflectance',   title: 'Masked Rrs Plot', file: 'masked_rrs_plot.png',  blurb: 'Reflectance after pixel masking.' },
-    { out: 'tsm',           title: 'Lt Plot',         file: 'lt_plot.png',          blurb: 'Top-of-water radiance.' },
-    { out: 'panel_ed',      title: 'Ed Plot',         file: 'ed_plot.png',          blurb: 'Downwelling irradiance summary.' },
-  ];
-
-  const container = document.getElementById('overviewCards');
-  if (!container) {
-    console.error('overviewCards container not found');
-    return;
+  // Load accessibility descriptions
+  let accessibilityDescriptions = {};
+  const descriptionsPath = path.join(resultDir, 'plot_descriptions.json');
+  if (fs.existsSync(descriptionsPath)) {
+    try {
+      const data = fs.readFileSync(descriptionsPath, 'utf8');
+      accessibilityDescriptions = JSON.parse(data);
+      console.log('Loaded accessibility descriptions');
+    } catch (err) {
+      console.warn('Failed to load accessibility descriptions:', err);
+    }
   }
-  container.innerHTML = ''; // clear
 
-  // Helper: create a card if file exists
-  function addCardIfExists(title, fileName, blurb) {
-    const fullPath = path.join(folderPath, fileName);
+  // Helper function to create a card if file exists
+  function addCard(title, fileName, blurb, container, plotKey) {
+    const fullPath = path.join(resultDir, fileName);
     
-    // Check if file exists
+    console.log(`DEBUG checking file: ${fileName}, path: ${fullPath}`);
+
     if (!fs.existsSync(fullPath)) {
       console.log(`File not found: ${fullPath}`);
       return;
     }
+    
+    console.log(`✅ Found file: ${fileName}, adding card`);
 
-    const url = pathToFileURL(fullPath).href;
+  // Append an optional cache-busting query param when requested so updated
+  // images are fetched by the browser instead of using a cached copy.
+  const urlBase = pathToFileURL(fullPath).href;
+  const url = cacheBust ? `${urlBase}?t=${cacheBust}` : urlBase;
+    
+  
+    // Check if this is a WQ plot (needs vmin/vmax inputs)
+    const isWQPlot = plotKey.includes('chl_') || plotKey.includes('tsm_');
+    const algKey = plotKey.replace('_plot', ''); // e.g., 'chl_hu_plot' → 'chl_hu'
+    
     const card = document.createElement('div');
-    card.className = 'chart-container';
+    card.className = 'result-card';
     card.innerHTML = `
-      <h4 style="color: #2C3E50; font-size: 18px; margin-bottom: 10px; font-weight: 600;">${title}</h4>
-      <img src="${url}" alt="${title}" style="width: 100%; border-radius: 4px; margin: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-      <div class="chart-blurb" style="color: #7F8C8D; font-size: 14px; line-height: 1.5;">${blurb}</div>
+  <img 
+    src="${url}" 
+    alt="${title}" 
+    class="card-image"
+    onclick="openImageModal('${url}', '${title}')"
+    tabindex="0"
+    role="button"
+    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openImageModal('${url}','${title}')}"
+  />
+
+  <div class="card-content">
+    <div class="card-title">${title}</div>
+    <div class="card-description">${blurb}</div>
+        
+        ${isWQPlot ? `
+          <div style="display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #E8ECF1;">
+            <div style="flex: 1;">
+              <label style="font-size: 12px; color: #7F8C8D; display: block; margin-bottom: 5px;">Min Value</label>
+              <input 
+                type="number" 
+                id="${algKey}_vmin_result" 
+                class="wq-range-input"
+                step="0.1" 
+                placeholder="Auto"
+                style="width: 100%; padding: 8px; border: 1px solid #CED4DA; border-radius: 4px; font-size: 13px;"
+              />
+            </div>
+            <div style="flex: 1;">
+              <label style="font-size: 12px; color: #7F8C8D; display: block; margin-bottom: 5px;">Max Value</label>
+              <input 
+                type="number" 
+                id="${algKey}_vmax_result" 
+                class="wq-range-input"
+                step="0.1" 
+                placeholder="Auto"
+                style="width: 100%; padding: 8px; border: 1px solid #CED4DA; border-radius: 4px; font-size: 13px;"
+              />
+            </div>
+          </div>
+        ` : ''}
+      </div>
     `;
     container.appendChild(card);
   }
 
-  // Always add these if present
-  for (const a of always) addCardIfExists(a.title, a.file, a.blurb);
+  // Always included radiometry plots
+  const radiometry = [
+    { key: 'rrs_plot', title: 'Radiometry Spectra Plot', file: 'rrs_plot.png', blurb: 'Remote sensing reflectance (Rrs) from image captures that have not been masked for sun glint and image artifacts.' },
+    { key: 'masked_rrs_plot', title: 'Radiometry Spectra Masked Plot', file: 'masked_rrs_plot.png', blurb: 'Rrs from images that have been masked for sun glint and artifacts. Bold black line shows the mean spectrum across all images.' },
+    { key: 'lt_plot', title: 'Lt Plot', file: 'lt_plot.png', blurb: 'Total radiance (Lt) spectra from the image captures.' },
+    { key: 'ed_plot', title: 'Ed Plot', file: 'ed_plot.png', blurb: 'Downwelling irradiance (Ed) from the image captures.' },
+  ];
 
-  // Decide which conditional plots to show
-  const outSet = new Set(outputs || []);
-  for (const item of byOutput) {
-    if (outSet.has(item.out)) {
-      addCardIfExists(item.title, item.file, item.blurb);
-    }
+  // Water quality plots (conditional)
+  const waterQuality = [
+    { key: 'chl_hu_plot', out: 'chl_hu', title: 'Chlorophyll-a (Hu Color Index)', file: 'chl_hu_plot.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration (mg/m³).' },
+    { key: 'chl_ocx_plot', out: 'chl_ocx', title: 'Chlorophyll-a (OCx Band Ratio)', file: 'chl_ocx_plot.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration (mg/m³).' },
+    { key: 'chl_hu_ocx_plot', out: 'chl_hu_ocx', title: 'Chlorophyll-a (Blended Hu+OCx)', file: 'chl_hu_ocx_plot.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration (mg/m³).' },
+    { key: 'chl_gitelson_plot', out: 'chl_gitelson', title: 'Chlorophyll-a (Gitelson)', file: 'chl_gitelson_plot.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration (mg/m³).' },
+    { key: 'tsm_nechad_plot', out: 'tsm_nechad', title: 'Total Suspended Matter (TSM)', file: 'tsm_nechad_plot.png', blurb: 'Coordinate locations of individual image captures colored by total suspended matter (TSM, mg/L).' },
+  ];
+
+  const radiometryContainer = document.getElementById('radiometryCards');
+  const waterQualityContainer = document.getElementById('waterQualityCards');
+  
+  console.log('DEBUG radiometryContainer:', radiometryContainer);
+  console.log('DEBUG waterQualityContainer:', waterQualityContainer);
+
+  if (!radiometryContainer || !waterQualityContainer) {
+    console.error('Overview containers not found');
+    return;
   }
 
-  // Fallback: if nothing rendered, show a friendly message
-  if (!container.children.length) {
-    const msg = document.createElement('div');
-    msg.className = 'chart-blurb';
-    msg.style.padding = '40px';
-    msg.style.textAlign = 'center';
-    msg.style.color = '#7F8C8D';
-    msg.textContent = 'No result images found yet. The backend may still be processing, or check your output selection.';
-    container.appendChild(msg);
+  radiometryContainer.innerHTML = '';
+  waterQualityContainer.innerHTML = '';
+
+  // Add all radiometry plots
+  radiometry.forEach(item => {
+    addCard(item.title, item.file, item.blurb, radiometryContainer, item.key);
+  });
+
+  // Add selected water quality plots
+  const selectedSet = new Set(selectedWQAlgs || []);
+  waterQuality.forEach(item => {
+    if (selectedSet.has(item.out)) {
+      addCard(item.title, item.file, item.blurb, waterQualityContainer, item.key);
+    }
+  });
+
+  // Show message if no WQ plots
+  if (waterQualityContainer.children.length === 0) {
+    waterQualityContainer.innerHTML = `
+      <div style="padding: 40px; text-align: center; color: #7F8C8D; border: 1px dashed #DEE2E6; border-radius: 8px;">
+        <p>No water quality analyses selected for this project.</p>
+      </div>
+    `;
+  }
+
+  // Show message if no radiometry plots
+  if (radiometryContainer.children.length === 0) {
+    radiometryContainer.innerHTML = `
+      <div style="padding: 40px; text-align: center; color: #7F8C8D; border: 1px dashed #DEE2E6; border-radius: 8px;">
+        <p>Processing results will appear here.</p>
+      </div>
+    `;
+  }
+
+// Add Update Charts button only if there are WQ plots selected
+console.log('DEBUG selectedSet.size:', selectedSet.size);
+console.log('DEBUG selectedSet:', selectedSet);
+
+// Add Update Charts button only if there are WQ plots selected
+if (selectedSet.size > 0 && !document.getElementById('updateChartsBtn')) {
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.cssText = 'text-align: center; margin-top: 10px;';
+  buttonContainer.innerHTML = `
+    <button 
+      id="updateChartsBtn" 
+      class="btn btn-primary"
+      style="padding: 10px 20px; font-size: 14px;"    >
+      Update Charts
+    </button>
+  `;
+  
+  // Insert right after the waterQualityContainer
+  waterQualityContainer.insertAdjacentElement('afterend', buttonContainer);
+  
+  // Add click handler
+  const btn = document.getElementById('updateChartsBtn');
+  if (btn) {
+    // Do NOT call updateWQCharts here (that would execute it immediately).
+    // Pass a function so the handler runs only when the button is clicked.
+    btn.addEventListener('click', () => updateWQCharts(selectedWQAlgs));
   }
 }
+
+}
+
+
+// Add modal function for viewing full-size images
+function openImageModal(imageUrl, title) {
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+  `;
+  
+  modal.innerHTML = `
+    <div style="position: relative; max-width: 90%; max-height: 90%; display: flex; flex-direction: column; align-items: center;">
+      <div style="position: absolute; top: -40px; right: 0; display: flex; gap: 15px; align-items: center;">
+        <span style="color: white; font-size: 14px;">${title}</span>
+        <button onclick="this.closest('div').parentElement.parentElement.remove()" 
+                style="background: white; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 24px; cursor: pointer; color: #333;">
+          &times;
+        </button>
+      </div>
+      <img src="${imageUrl}" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 4px;" />
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+}
+
+window.openImageModal = openImageModal;
 
 /**
  * Load the flight plan image into the trajectory tab
@@ -94,7 +254,7 @@ function buildFlightTrajectory() {
     return;
   }
 
-  const resultDir = path.join(projectFolder, 'result');
+  const resultDir = path.join(folderPath, 'result');
   const flightPlanPath = path.join(resultDir, 'flight_plan.png');
 
   if (!fs.existsSync(flightPlanPath)) {
@@ -107,20 +267,6 @@ function buildFlightTrajectory() {
     console.error('trajectory tab not found');
     return;
   }
-const url = pathToFileURL(flightPlanPath).href;
-  let img = trajectoryTab.querySelector('img');
-  if (!img) {
-    img = document.createElement('img');
-    img.style.width = '100%';
-    img.style.borderRadius = '4px';
-    img.style.marginTop = '20px';
-    trajectoryTab.appendChild(img);
-  }
-  img.src = url;
-  img.alt = 'Flight Plan';
-  console.log('Flight plan loaded from', flightPlanPath);
-}
-    
 
   // Find the existing img tag in trajectory tab and replace its src
   const existingImg = trajectoryTab.querySelector('img');
@@ -142,6 +288,68 @@ const url = pathToFileURL(flightPlanPath).href;
   }
 }
 
+async function updateWQCharts(selectedWQAlgs) {
+  const projectId = sessionStorage.getItem('currentProjectId');
+  
+  // Collect all vmin/vmax values in the format backend expects
+  const wqRanges = {};
+  selectedWQAlgs.forEach(alg => {
+    const vminInput = document.getElementById(`${alg}_vmin_result`);
+    const vmaxInput = document.getElementById(`${alg}_vmax_result`);
+    
+    const vmin = vminInput && vminInput.value ? parseFloat(vminInput.value) : null;
+    const vmax = vmaxInput && vmaxInput.value ? parseFloat(vmaxInput.value) : null;
+    
+    // Only include if user entered values
+    if (vmin !== null || vmax !== null) {
+      wqRanges[alg] = {
+        vmin: vmin,
+        vmax: vmax
+      };
+    }
+  });
+  
+  // Check if user entered any values
+  if (Object.keys(wqRanges).length === 0) {
+    alert('Please enter min/max values for at least one chart');
+    return;
+  }
+
+  // Add projectId to the payload
+  const payload = {
+    projectId: parseInt(projectId),
+    plotParams: wqRanges
+  };
+
+  try {
+    const response = await fetch('http://localhost:8889/api/plot/wq', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      alert('Failed to update charts: ' + errorText);
+      return;
+    }
+    
+    // Rebuild only the overview cards (with cache-bust) so the updated
+    // water-quality plots are displayed without a full page reload.
+    const folderPath = sessionStorage.getItem('projectFolder');
+    if (folderPath) {
+      // Use a timestamp to force browsers to re-fetch the updated images
+      buildOverviewFromFolder(folderPath, selectedWQAlgs, Date.now());
+    } else {
+      // Fallback: if we don't know the folder, do a full reload
+      location.reload();
+    }
+    
+  } catch (error) {
+    console.error('Error updating charts:', error);
+    alert('Error updating charts: ' + error.message);
+  }
+}
 
 window.initializeCharts = initializeCharts;
 window.buildOverviewFromFolder = buildOverviewFromFolder;

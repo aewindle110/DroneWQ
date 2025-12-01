@@ -127,6 +127,7 @@ class Settings:
             )
             main_thread_config["warp_img_dir"] = os.path.join(main_dir, "align_img")
             main_thread_config["metadata"] = os.path.join(main_dir, "metadata.csv")
+        return self
 
 
 settings = Settings()

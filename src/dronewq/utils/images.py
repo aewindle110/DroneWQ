@@ -79,6 +79,7 @@ def load_metadata(
 
     df = pd.read_csv(csv_path)
     df = df.set_index("filename")
+    count = min(count, len(df))
     # df['UTC-Time'] = pd.to_datetime(df['UTC-Time'])
     # cut off if necessary
     df = (
