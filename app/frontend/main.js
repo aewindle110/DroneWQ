@@ -24,7 +24,7 @@ function startFlask() {
   // Start: python3 -m flask run --port 8889
   flaskProcess = spawn(
     pythonCmd(),
-    ["-m", "flask", "run", "--port", "8889"],
+    ["-m", "flask", "run", "--port", "8889", "--debug"],
     {
       cwd: backendDir,
       env,

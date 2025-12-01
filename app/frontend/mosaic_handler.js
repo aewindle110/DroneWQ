@@ -1,20 +1,20 @@
 // frontend/mosaic_handler.js
 
-function renderMosaicCards(folderPath, downsamplePath) {
+function renderMosaicCards(folderPath, downsamplePath, downsampleFactor) {
   const container = document.getElementById("mosaicCards");
   if (!container) return;
 
   container.innerHTML = "";
 
-  const items = []; 
+  const items = [];
 
   //Always include the original 
 
-  if(folderPath){
+  if (folderPath) {
     items.push({
-      ttle: "Mosaic (Original Resolution)", 
+      ttle: "Mosaic (Original Resolution)",
       file: folderPath
-    }); 
+    });
   }
 
   // Only include downsampled version if downsample > 1
@@ -27,6 +27,7 @@ function renderMosaicCards(folderPath, downsamplePath) {
 
 
   container.innerHTML = items.map(item => {
+    console.log(item.title, item.file)
     const url = pathToFileURL(item.file).href;
 
     return `
@@ -62,10 +63,11 @@ async function processMosaic() {
   }
 
   const wqAlg = checked[0].getAttribute("data-key");
+  console.log(wqAlg)
 
   // ---- Collect fields ----
   const evenYaw = parseNumeric("mosaicYawEven");
-  const oddYaw  = parseNumeric("mosaicYawOdd");
+  const oddYaw = parseNumeric("mosaicYawOdd");
   const altitude = parseRequiredNumeric("mosaicAltitude");
   const pitch = parseNumericDefault("mosaicPitch", 0);
   const roll = parseNumericDefault("mosaicRoll", 0);

@@ -56,9 +56,9 @@ def process_updated(project_id: int):
 def draw_mosaic():
     args = request.get_json(silent=True) or request.args
     project_id = args.get("projectId")
-    wq_alg = args.get("wq_alg")
-    even_yaw = args.get("yaw_even")
-    odd_yaw = args.get("yaw_odd")
+    wq_alg = args.get("wqAlg")
+    even_yaw = args.get("evenYaw")
+    odd_yaw = args.get("oddYaw")
     altitude = args.get("altitude")
     pitch = args.get("pitch")
     roll = args.get("roll")
@@ -81,14 +81,15 @@ def draw_mosaic():
             roll,
             method,
         )
+        downsample_path = None
 
         if downsample_factor > 1:
             downsample_path = pipeline.downsample(downsample_factor)
         return (
             jsonify(
                 {
-                    "folder_path": output_path,
-                    "downsample_path": downsample_path,
+                    "folder_path": str(output_path),
+                    "downsample_path": str(downsample_path),
                 }
             ),
             200,
