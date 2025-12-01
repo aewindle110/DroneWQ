@@ -1,17 +1,13 @@
 // frontend/mosaic_handler.js
 
-const path = require('path');
-const { pathToFileURL } = require('url');
-const fs = require('fs');
-
-function renderMosaicCards(folderPath, downsamplePath) {
-  const folderPath = sessionStorage.getItem('projectFolder');
-   if (!folderPath) {
+function renderMosaicCards() {
+  const projectFolder = sessionStorage.getItem('projectFolder');
+  if (!projectFolder) {
     console.warn('No project folder provided');
     return;
   }
 
-  const resultDir = path.join(folderPath, 'result');
+  const resultDir = path.join(projectFolder, 'result');
   const container = document.getElementById("mosaicCards");
   
   if (!container) return;
@@ -33,7 +29,7 @@ function renderMosaicCards(folderPath, downsamplePath) {
   const files = fs.readdirSync(resultDir);
   
   files.forEach(file => {
-    if (file.includes('_mosaic') && file.endsWith('.png')) {
+    if (file.includes('_mosaic') && file.endsWith('.tif')) {
       const fullPath = path.join(resultDir, file);
       
       // Determine title based on filename
@@ -76,7 +72,7 @@ function renderMosaicCards(folderPath, downsamplePath) {
   }).join("");
 }
 
-// PROCESS MOSAIC 
+// PROCESS MOSAIC
 async function processMosaic() {
   const projectId = sessionStorage.getItem("currentProjectId");
   if (!projectId) {
@@ -84,7 +80,6 @@ async function processMosaic() {
     return;
   }
 
-  // ---- SELECT ONLY ONE WQ ALGORITHM ----
   const checked = [...document.querySelectorAll(".mosaic-alg-chk")].filter(cb => cb.checked);
 
   if (checked.length === 0) {
@@ -98,9 +93,8 @@ async function processMosaic() {
 
   const wqAlg = checked[0].getAttribute("data-key");
 
-  // ---- Collect fields ----
-  const evenYaw = parseNumeric("mosaicYawEven");
-  const oddYaw  = parseNumeric("mosaicYawOdd");
+  const evenYaw = parseNumericDefault("mosaicYawEven", 0);
+  const oddYaw  = parseNumericDefault("mosaicYawOdd", 0);
   const altitude = parseRequiredNumeric("mosaicAltitude");
   const pitch = parseNumericDefault("mosaicPitch", 0);
   const roll = parseNumericDefault("mosaicRoll", 0);
@@ -114,7 +108,6 @@ async function processMosaic() {
     return;
   }
 
-  // ---- Build payload to match backend ----
   const payload = {
     projectId: Number(projectId),
     wqAlg,
@@ -146,10 +139,8 @@ async function processMosaic() {
     const data = await res.json();
     console.log("[MOSAIC] Backend response:", data);
 
-    // Refresh the mosaic cards by scanning the folder
     renderMosaicCards();
 
-    // hide settings panel and show "Mosaic Settings" button
     document.getElementById("mosaicSettingsPanel").style.display = "none";
     document.getElementById("mosaicSettingsToggle").style.display = "inline-block";
     
@@ -161,7 +152,6 @@ async function processMosaic() {
   }
 }
 
-// helpers
 function parseNumeric(id) {
   const el = document.getElementById(id);
   if (!el || !el.value.trim()) return null;
@@ -183,7 +173,6 @@ function parseRequiredNumeric(id) {
   return isNaN(num) ? null : num;
 }
 
-// Show/hide settings panel
 function showMosaicSettingsPanel(show) {
   const panel = document.getElementById("mosaicSettingsPanel");
   const toggle = document.getElementById("mosaicSettingsToggle");
