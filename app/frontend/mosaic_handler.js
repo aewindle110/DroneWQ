@@ -2,7 +2,7 @@
 
 // Build mosaic cards
 function renderMosaicCards(folderPath, mosaics) {
-  const container = document.getElementById("mosaicResultsGrid");
+  const container = document.getElementById("mosaicCards");
   if (!container) return;
 
   if (!mosaics || mosaics.length === 0) {
@@ -14,17 +14,24 @@ function renderMosaicCards(folderPath, mosaics) {
   }
 
   container.innerHTML = mosaics.map(m => {
-    const filePath = path.join(folderPath, "result", m.file);
+
+    // Build filename from method + mosaic + alg
+    const filename = `${m.method}_mosaic_${m.alg}.png`;
+
+    const filePath = path.join(folderPath, "result", filename);
     const url = pathToFileURL(filePath).href;
 
     return `
-      <div class="overview-card" style="cursor:pointer;" onclick="openImageModal('${url}', 'Mosaic – ${m.alg}')">
+      <div class="overview-card" style="cursor:pointer;"
+           onclick="openImageModal('${url}', 'Mosaic – ${m.alg}')">
+
         <div class="card-title">Mosaic – ${m.alg}</div>
         <img src="${url}" style="width:100%; border-radius:4px; margin-top:10px;">
       </div>
     `;
   }).join("");
 }
+
 
 
 // PROCESS MOSAIC
