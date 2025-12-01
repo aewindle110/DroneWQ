@@ -127,10 +127,6 @@ function navigate(screen, fromScreen) {
           console.log("[Results] Trajectory data loaded");
         }
 
-        if (typeof loadMosaicImage === "function") {
-          loadMosaicImage(project.folder_path);
-          console.log("[Results] Mosaic loaded");
-        }
 
       } catch (err) {
         console.error("Failed to load project:", err);
