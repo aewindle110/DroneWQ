@@ -20,13 +20,13 @@ def process_new(project_id: int):
         pipeline = Pipeline(settings.to_dict())
 
         # Different stages of processing
-        # pipeline.water_metadata()
-        # pipeline.flight_plan()
-        # pipeline.run()
-        # pipeline.plot_essentials()
-        # pipeline.point_samples()
-        # pipeline.wq_run()
-        # pipeline.plot_wq(plot_args)
+        pipeline.water_metadata()
+        pipeline.flight_plan()
+        pipeline.run()
+        pipeline.plot_essentials()
+        pipeline.point_samples()
+        pipeline.wq_run()
+        pipeline.plot_wq(plot_args)
 
         return jsonify({"success": True}), 200
     except Exception as e:
@@ -51,15 +51,50 @@ def process_updated(project_id: int):
         return jsonify({str(e): f"Project {project_id} not found"})
 
 
+# TODO: Check if inputs are correct
 @bp.route("/api/process/mosaic", methods=["POST"])
 def draw_mosaic():
     args = request.get_json(silent=True) or request.args
-    wq_alg = args.get("wqAlg")
-    even_yaw = args.get("evenYaw")
-    odd_yaw = args.get("oddYaw")
+    project_id = args.get("projectId")
+    wq_alg = args.get("wq_alg")
+    even_yaw = args.get("yaw_even")
+    odd_yaw = args.get("yaw_odd")
+    altitude = args.get("altitude")
     pitch = args.get("pitch")
     roll = args.get("roll")
     method = args.get("method")
+    downsample_factor = args.get("downsample")
+
+    try:
+        settings = Project.get_project(project_id)
+    except LookupError as e:
+        return jsonify({str(e): f"Project {project_id} not found"})
+
+    try:
+        pipeline = Pipeline(settings.to_dict())
+        output_path = pipeline.draw_mosaic(
+            wq_alg,
+            even_yaw,
+            odd_yaw,
+            altitude,
+            pitch,
+            roll,
+            method,
+        )
+
+        if downsample_factor > 1:
+            downsample_path = pipeline.downsample(downsample_factor)
+        return (
+            jsonify(
+                {
+                    "folder_path": output_path,
+                    "downsample_path": downsample_path,
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        return jsonify({"Mosaicking error": str(e)}), 500
 
 
 @bp.route("/api/plot/wq", methods=["POST"])

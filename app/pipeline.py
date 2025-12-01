@@ -369,7 +369,7 @@ class Pipeline:
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False)
         plt.close(fig)
 
-    def georeference(
+    def draw_mosaic(
         self,
         wq_alg: str,
         even_yaw: int,
@@ -382,8 +382,8 @@ class Pipeline:
         main_dir = Path(self.settings.main_dir)
         metadata_path = main_dir / "metadata.csv"
         wq_dir = main_dir / ("masked_" + wq_alg + "_imgs")
-        georef_wq_dir = main_dir / "georeferenced_masked_" + wq_alg + "_imgs"
-        result_dir = main_dir / "results"
+        georef_wq_dir = main_dir / ("georeferenced_masked_" + wq_alg + "_imgs")
+        result_dir = main_dir / "result"
 
         avail_methods = [
             "mean",
@@ -428,16 +428,17 @@ class Pipeline:
             norm=None,
             basemap=cx.providers.Esri.WorldImagery,
         )
-        ax_0.set_title("Hu OCX Chl")
+        ax_0.set_title(wq_alg)
         plt.colorbar(mappable_0, label="Chlorophyll a (mg $m^{-3}$)")
 
         out_path = result_dir / (output_name + ".png")
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False)
         plt.close(fig)
+        return out_path
 
-    def downsample(self, factor: float = 1):
+    def downsample(self, wq_alg: str, factor: float = 1):
         main_dir = Path(self.settings.main_dir)
-        result_dir = main_dir / "results"
+        result_dir = main_dir / "result"
         output_path = dronewq.downsample(
             self.mosaic_path,
             result_dir,
@@ -461,5 +462,7 @@ class Pipeline:
             norm=None,
             basemap=cx.providers.Esri.WorldImagery,
         )
-        ax_0.set_title("Hu OCX Chl Downsampled")
+        ax_0.set_title(wq_alg + " Downsampled")
         plt.colorbar(mappable_0, label="Chlorophyll a (mg $m^{-3}$)")
+
+        return output_path

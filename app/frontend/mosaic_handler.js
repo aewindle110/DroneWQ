@@ -35,20 +35,33 @@ async function processMosaic() {
     return;
   }
 
-  //Collect algorithm checkboxes
   const algCheckboxes = document.querySelectorAll(".mosaic-alg-chk");
-  const wq_algs = [];
+
+  // Enforce single choice
+  algCheckboxes.forEach(cb => {
+    cb.addEventListener("change", function() {
+      if (this.checked) {
+        algCheckboxes.forEach(otherCb => {
+          if (otherCb !== this) otherCb.checked = false;
+        });
+      }
+    });
+  });
+
+  // Get selected algorithm as a single variable
+  let wq_alg = null;
   algCheckboxes.forEach(cb => {
     if (cb.checked) {
       const alg = cb.getAttribute("data-key");
-      if (alg) wq_algs.push(alg);
+      if (alg) wq_alg = alg;
     }
   });
 
-  if (wq_algs.length === 0) {
-    alert("Please select at least one water quality algorithm.");
+  if (!wq_alg) {
+    alert("Please select a water quality algorithm.");
     return;
   }
+
 
   // Collect sensor + flight inputs
   const yaw_even = parseNumeric("mosaicYawEven");
@@ -71,9 +84,7 @@ async function processMosaic() {
 
   const payload = {
     projectId: Number(projectId),
-    name: null,
-    rrs_count: null,
-    wq_algs,
+    wq_alg,
     yaw_even,
     yaw_odd,
     altitude,
