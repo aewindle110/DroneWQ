@@ -87,9 +87,11 @@ body {
   cursor: pointer;
 }
 .btn-primary {
-   background: #2980B9;
-  color: white;
+  background-color: #1F6FEB !important; /* accessible cobalt blue */
+  color: #FFFFFF !important;             /* pure white text */
+  border: 1px solid #0B4DB8 !important;  /* darker blue border */
 }
+
 .btn-secondary {
   background: #ecf0f1;
   color: #2c3e50;
