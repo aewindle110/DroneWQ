@@ -1,4 +1,3 @@
-# tests/test_wq_calc.py
 import os
 import shutil
 from concurrent.futures import ProcessPoolExecutor

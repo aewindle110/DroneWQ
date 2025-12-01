@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 
-class TestHedleySimple(unittest.TestCase):
+class TestHedley(unittest.TestCase):
     
     def setUp(self):
         """Setup common test data."""

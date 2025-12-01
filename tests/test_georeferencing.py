@@ -1,4 +1,3 @@
-# tests/test_georeference.py
 import unittest
 import tempfile
 import shutil
@@ -7,9 +6,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# ----------------------------------------------------------------------
-# 1. Paths – everything relative to this file (exactly like threshold_masking)
-# ----------------------------------------------------------------------
 THIS_DIR = Path(__file__).parent.resolve()                    # tests/
 TEST_SET_DIR = THIS_DIR / "test_set"
 METADATA_FILE = TEST_SET_DIR / "metadata.csv"
@@ -20,9 +16,6 @@ if OUTPUT_DIR.exists():
     shutil.rmtree(OUTPUT_DIR)
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# ----------------------------------------------------------------------
-# 2. Temporarily override settings (same pattern you already use)
-# ----------------------------------------------------------------------
 from dronewq.utils import settings as drone_settings
 
 _original_settings = drone_settings.settings
@@ -35,15 +28,9 @@ class TestSettings:
 
 drone_settings.settings = TestSettings()
 
-# ----------------------------------------------------------------------
-# 3. Import the functions we want to test
-# ----------------------------------------------------------------------
 from dronewq.core.georeference import georeference, compute_flight_lines
 
 
-# ----------------------------------------------------------------------
-# 4. Pure unit tests for compute_flight_lines (unchanged, fast, no files)
-# ----------------------------------------------------------------------
 class TestComputeFlightLines(unittest.TestCase):
     """Test suite for compute_flight_lines function"""
     def test_compute_flight_lines_simple(self):
@@ -69,13 +56,7 @@ class TestComputeFlightLines(unittest.TestCase):
             self.assertIn('alt', line)
             self.assertGreater(line['end'], line['start'])
 
-    # (All your other compute_flight_lines tests remain exactly as you wrote them)
-    # I kept them all — just omitted here for brevity. Copy-paste your full list.
 
-
-# ----------------------------------------------------------------------
-# 5. Real-data integration tests for georeference
-# ----------------------------------------------------------------------
 @unittest.skipUnless(METADATA_FILE.exists(), "test_set/metadata.csv not found")
 class TestGeoreferenceWithRealData(unittest.TestCase):
     """Test suite for georeference function using real test_set data"""
@@ -176,10 +157,6 @@ class TestGeoreferenceWithRealData(unittest.TestCase):
         self.assertTrue(Path(nested).exists())
         self.assertGreater(len(list(Path(nested).glob("*.tif"))), 0)
 
-
-# ----------------------------------------------------------------------
-# 6. Real-data tests for compute_flight_lines
-# ----------------------------------------------------------------------
 @unittest.skipUnless(METADATA_FILE.exists(), "test_set/metadata.csv not found")
 class TestComputeFlightLinesWithRealData(unittest.TestCase):
 
@@ -199,14 +176,6 @@ class TestComputeFlightLinesWithRealData(unittest.TestCase):
             result = compute_flight_lines(self.yaw, self.altitude, 0, 0, threshold=threshold)
             self.assertIsInstance(result, list)
 
-
-# ----------------------------------------------------------------------
-# 7. Cleanup after everything
-# ----------------------------------------------------------------------
 def tearDownModule():
     shutil.rmtree(OUTPUT_DIR)
     drone_settings.settings = _original_settings  # restore original settings
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
