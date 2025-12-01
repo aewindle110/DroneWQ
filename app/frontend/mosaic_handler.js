@@ -29,7 +29,7 @@ function renderMosaicCards() {
   const files = fs.readdirSync(resultDir);
   
   files.forEach(file => {
-    if (file.includes('_mosaic') && file.endsWith('.tif')) {
+    if (file.includes('_mosaic') && file.endsWith('.png')) {
       const fullPath = path.join(resultDir, file);
       
       // Determine title based on filename
