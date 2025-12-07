@@ -12,3 +12,7 @@
 
 ### Known Issues
 - Issue 1: Only works on Micasense cameras
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

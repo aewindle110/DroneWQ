@@ -13,3 +13,7 @@ This document tracks planned features, improvements, and fixes for DroneWQ
 - Mosaicking?
 - Lazy loading for images
 - Loading states/messages while waiting for backend to load
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
