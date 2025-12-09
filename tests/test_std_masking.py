@@ -146,59 +146,36 @@ class TestComputeFunctionNew:
             assert new_profile["count"] == 5  # stacked to exactly 5 bands
 
         shutil.rmtree(output_dir, ignore_errors=True)
+def test_std_masking():
+    """Test the std_masking function end-to-end"""
+    rrs_files = glob.glob(os.path.join(settings.rrs_dir, "*.tif"))
+    assert len(rrs_files) > 0, "Need at least one Rrs file for testing"
 
+    filepath = rrs_files[0]
+    output_dir = settings.masked_rrs_dir
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-# # ----------------------------------------------------------------------
-# # Tests for the public std_masking function
-# # ----------------------------------------------------------------------
-# class TestStdMaskingFunction:
-#     """Test cases for the full std_masking pipeline"""
+    std_masking(
+        num_images=1,
+        mask_std_factor=1,
+    )
 
-#     def test_std_masking_runs_and_creates_files(self):
-#         """End-to-end test: runs std_masking and checks output files exist"""
-#         output_dir = settings.masked_rrs_dir
-#         if output_dir.exists():
-#             shutil.rmtree(output_dir)
+    output_file = os.path.join(output_dir, os.path.basename(filepath))
+    assert os.path.exists(output_file), "Output masked file should be created"
 
-#         results = std_masking(
-#             num_images=5,
-#             mask_std_factor=1,
-#             num_workers=1,        # keep deterministic in tests
-#         )
+    with rasterio.open(filepath) as src_orig:
+        original_data = src_orig.read()
 
-#         assert isinstance(results, list)
-#         assert len(results) == len(glob.glob(os.path.join(settings.rrs_dir, "*.tif")))
+    with rasterio.open(output_file) as src_masked:
+        masked_data = src_masked.read()
 
-#         masked_files = glob.glob(os.path.join(output_dir, "*.tif"))
-#         assert len(masked_files) > 0, "Masked output files should be created"
+        assert masked_data.shape[0] == 5, "Masked data should have 5 bands"
 
-#     # def test_std_masking_with_zero_std_does_not_crash(self):
-#     #     """Edge case: if std=0 (all NIR identical), should still work"""
-#     #     # Force a situation where NIR is constant across sampled images
-#     #     # (not easy without mocking, but at least ensure it doesn't divide-by-zero)
-#     #     results = std_masking(
-#     #         num_images=3,
-#     #         mask_std_factor=0,   # very aggressive masking
-#     #         num_workers=1,
-#     #     )
-#     #     assert results is not None
+        # Check that NaN mask is consistent across bands
+        ref_nan = np.isnan(masked_data[0])
+        for b in range(1, masked_data.shape[0]):
+            assert np.array_equal(ref_nan, np.isnan(masked_data[b])), (
+                f"NaN pattern mismatch between band 0 and band {b}"
+            )
 
-#     # def test_std_masking_respects_num_workers_and_executor(self, monkeypatch):
-#     #     """Test that custom executor is used when provided"""
-#     #     call_count = 0
-
-#     #     class DummyExecutor:
-#     #         def __enter__(self): return self
-#     #         def __exit__(self, *args): pass
-#     #         def map(self, func, iterable):
-#     #             nonlocal call_count
-#     #             call_count += 1
-#     #             return map(func, iterable)
-
-#     #     results = std_masking(
-#     #         num_images=3,
-#     #         mask_std_factor=1,
-#     #         num_workers=4,
-#     #         executor=DummyExecutor(),
-#     #     )
-#     #     assert call_count == 1  # executor.map was used
+    shutil.rmtree(output_dir, ignore_errors=True)

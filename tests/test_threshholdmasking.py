@@ -155,3 +155,19 @@ class TestComputeFunction:
         assert masked_profile["dtype"] == original_profile["dtype"]
 
         shutil.rmtree(output_dir, ignore_errors=True)
+
+def test_threshold_masking_defaults():
+    """Test threshold_masking function with default parameters"""
+    from dronewq.masks.threshold_masking import threshold_masking
+
+    output_dir = settings.masked_rrs_dir
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    threshold_masking()
+
+    rrs_files = glob.glob(os.path.join(settings.rrs_dir, "*.tif"))
+    for filepath in rrs_files:
+        output_file = os.path.join(output_dir, os.path.basename(filepath))
+        assert os.path.exists(output_file), f"Output file {output_file} should be created"
+
+    shutil.rmtree(output_dir, ignore_errors=True)
