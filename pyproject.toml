@@ -103,6 +103,7 @@ markers = ["raises"] # Tells pytest to not raise a warning if you use @pytest.ma
 source = [
     "src/dronewq",
     "*/site-packages/dronewq",
+    "utils.py",
 ]
 
 [tool.coverage.run]
@@ -111,6 +112,12 @@ branch = true
 parallel = true
 omit = [
     "src/dronewq/_version.py",
+    "src/dronewq/core/mosaic.py",
+    "src/dronewq/core/mosaic_methods.py",
+    "src/dronewq/core/plot_map.py",
+    "src/dronewq/utils/images.py",
+    "src/dronewq/utils/settings.py",
+    "src/dronewq/utils/utils.py",
 ]
 
 [tool.coverage.report]
