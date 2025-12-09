@@ -13,6 +13,8 @@ This document tracks planned features, improvements, and fixes for DroneWQ
 - Mosaicking?
 - Lazy loading for images
 - Loading states/messages while waiting for backend to load
+- Optimization on execution time
+- Extensive Windows support
 
 ## License
 
