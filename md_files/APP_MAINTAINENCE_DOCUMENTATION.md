@@ -77,50 +77,97 @@ DroneWQ follows a modular pipeline architecture:
 
 ```
 DroneWQ/
+├── ABOUT.md
+├── Dockerfile
+├── environment.yml
+├── LICENSE
+├── pyproject.toml
+├── README.md
+├── md_files/
+│   ├── APP_MAINTENCE_DOCUMENTATION.md
+│   ├── BACKLOG.md
+│   ├── paper.bib
+│   ├── paper.md
+│   ├── RELEASE_NOTES.md
+│   └── USER_DOCUMENTATION.md
+├── app/
+│   ├── app.py
+│   ├── config.py
+│   ├── health.py
+│   ├── pipeline.py
+│   ├── process.py
+│   ├── projects.py
+│   ├── result.py
+│   └── frontend/
+│       ├── app_ui.js
+│       ├── charts.js
+│       ├── csv_handler.js
+│       ├── dashboard.js
+│       ├── image_handler.js
+│       ├── main.js
+│       ├── mosaic_handler.js
+│       ├── package.json
+│       ├── project_settings.js
+│       ├── trajectory_handler.js
+│       ├── upload.js
+│       └── wireframes/
+│           ├── styles.css
+│           ├── wireframe-v1.html
+│           └── wireframe-v2.html
 ├── src/
-│   └── dronewq/
-│       ├── __init__.py
-│       ├── core/
-│       │   ├── raw_to_rss.py      # Main processing pipeline
-│       │   ├── wq_calc.py          # Water quality algorithms
-│       │   ├── georeference.py     # Georeferencing functions
-│       │   ├── mosaic.py           # Orthomosaic creation
-│       │   └── plot_map.py         # Visualization utilities
-│       ├── lw_methods/
-│       │   ├── mobley_rho.py       # Mobley rho method
-│       │   ├── hedley.py           # Hedley/Hochberg method
-│       │   └── blackpixel.py       # Black pixel method
-│       ├── ed_methods/
-│       │   ├── dls_ed.py           # DLS-based irradiance
-│       │   └── panel_ed.py         # Panel-based irradiance
-│       ├── masks/
-│       │   ├── threshold_masking.py
-│       │   └── std_masking.py
-│       └── utils/
-│           ├── settings.py         # Configuration management
-│           ├── images.py           # Image utilities
-│           └── metadata.py         # Metadata extraction
+│   ├── dronewq/
+│   │   ├── __init__.py
+│   │   ├── _version.py
+│   │   ├── core/
+│   │   │   ├── raw_to_rss.py
+│   │   │   ├── wq_calc.py
+│   │   │   ├── georeference.py
+│   │   │   ├── geometry.py
+│   │   │   ├── mosaic.py
+│   │   │   ├── mosaic_methods.py
+│   │   │   └── plot_map.py
+│   │   ├── lw_methods/     # mobley_rho, hedley, blackpixel
+│   │   ├── ed_methods/     # dls_ed, panel_ed
+│   │   ├── masks/          # threshold_masking, std_masking
+│   │   └── utils/          # settings, images, metadata
+│   └── micasense/
+│       ├── capture.py
+│       ├── dls.py
+│       ├── image.py
+│       ├── imageset.py
+│       ├── imageutils.py
+│       ├── metadata.py
+│       ├── panel.py
+│       ├── plotutils.py
+│       └── utils.py
+├── models/
+│   └── model_project.py
 ├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── conftest.py
+│   ├── test_geometry.py
+│   ├── test_georeferencing.py
+│   ├── test_legacy_geometry.py
+│   ├── test_legacy_to_pipeline.py
+│   ├── test_legacy_wqcalc.py
+│   ├── test_lw_blackpixel.py
+│   ├── test_lw_hedly.py
+│   ├── test_mobley_rho.py
+│   ├── test_std_masking.py
+│   ├── test_threshholdmasking.py
+│   ├── test_utils_high_priority.py
+│   ├── test_whole_pipeline.py
+│   ├── test_wq_edge.py
+│   ├── test_wqcalc.py
+│   └── test_set/           # sample test data and folders
+│       └── (sample data folders)
 ├── docs/
 │   ├── source/
-│   └── build/
-├── examples/
-│   └── primary_demo.ipynb
+│   └── pre_built_html/
 ├── figs/
 │   ├── DroneWQ.png
 │   └── chl_mosaic.png
 ├── docker/
 │   └── Dockerfile
-├── setup.py
-├── pyproject.toml
 ├── requirements.txt
-├── environment.yml             # Conda environment
-├── README.md
-├── CHANGELOG.md
-├── LICENSE
 └── SECURITY.md
 ```
 
@@ -271,7 +318,7 @@ hatch build
 # upload the built package using twine
 twine upload dist/* # or your version name
 ```
-It will then prompt for username, which you enter __token__.
+It will then prompt for username, which you enter `__token__`.
 As for the password, you will use the PyPi token(please reach out to us if you don't have a token)
 
 ---
