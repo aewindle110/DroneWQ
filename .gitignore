@@ -10,8 +10,10 @@ out/
 data/
 *.zip
 *.db
+test_set/
+python/
 
-Lake_Erie
+Lake_Erie/
 
 ### from github
 
