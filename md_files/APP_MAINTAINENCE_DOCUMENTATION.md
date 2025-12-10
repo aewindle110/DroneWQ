@@ -3,7 +3,7 @@
 **Package:** dronewq  
 **PyPI:** https://pypi.org/project/dronewq/  
 **Repository:** https://github.com/aewindle110/DroneWQ  
-**Current Version:** 0.1.1
+**Current Version:** 0.1.0
 **Last Updated:** December 2024  
 **Maintainer:** Anna Windle  
 **DOI:** https://doi.org/10.5281/zenodo.14018788
@@ -167,14 +167,13 @@ DroneWQ/
 │   └── chl_mosaic.png
 ├── docker/
 │   └── Dockerfile
-├── requirements.txt
-└── SECURITY.md
+└──  requirements.txt
 ```
 
 ### Important Files
 
 **setup.py / pyproject.toml**  
-Build configuration specifying Python 3.8-3.12 support and dependencies
+Build configuration specifying Python 3.8 - 3.12 support and dependencies
 
 **requirements.txt**  
 Production dependencies including GDAL, numpy, pandas, matplotlib
@@ -194,7 +193,7 @@ Example notebook demonstrating complete workflow with Lake Erie dataset
 
 ### Prerequisites
 
-- **Python**: 3.8 to 3.12
+- **Python**: 3.8 - 3.12
 - **Git**: For version control
 - **System Libraries**:
   - GDAL (geospatial library)
@@ -318,8 +317,7 @@ hatch build
 # upload the built package using twine
 twine upload dist/* # or your version name
 ```
-It will then prompt for username, which you enter `__token__`.
-As for the password, you will use the PyPi token(please reach out to us if you don't have a token)
+Afterwards, input your PyPi token(please reach out to us if you don't have a token)
 
 ---
 
