@@ -9,21 +9,22 @@ import rasterio
 
 from dronewq.utils.settings import settings
 
-TEST_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".test_project"))
+TEST_PROJECT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), ".test_project")
+)
 os.makedirs(TEST_PROJECT_ROOT, exist_ok=True)
-settings.main_dir = TEST_PROJECT_ROOT # Configure main_dir for tests
+settings.main_dir = TEST_PROJECT_ROOT  # Configure main_dir for tests
 
 
 from dronewq.core.wq_calc import (
-    save_wq_imgs,
-    _compute,
-    chl_hu,
-    chl_ocx,
-    chl_hu_ocx,
+    __compute,
     chl_gitelson,
+    chl_hu,
+    chl_hu_ocx,
+    chl_ocx,
+    save_wq_imgs,
     tsm_nechad,
 )
-
 
 REAL_RRS_DIR = str(Path(__file__).parent / "test_set" / "rrs_imgs")
 
@@ -54,6 +55,7 @@ def test_alg_basic(alg):
     assert out.shape == (30, 30)
     assert np.isfinite(out).any()
 
+
 # def test_chl_hu_ocx_global_blending_behavior():
 #     Rrs = np.zeros((5, 100, 100), dtype=np.float32)
 
@@ -79,7 +81,7 @@ def test_compute_one_file(clean_rrs_dir):
     out_dir = os.path.join(TEST_PROJECT_ROOT, "masked_test")
     os.makedirs(out_dir, exist_ok=True)
 
-    assert _compute(str(tif), "chl_gitelson", out_dir) is True
+    assert __compute(str(tif), "chl_gitelson", out_dir) is True
     assert (Path(out_dir) / tif.name).exists()
 
 
@@ -92,7 +94,9 @@ def test_compute_one_file(clean_rrs_dir):
 #     assert getattr(settings, "chl_gitelson_dir", None) == str(out_dir)
 
 
-@pytest.mark.parametrize("alg", ["chl_hu", "chl_ocx", "chl_hu_ocx", "chl_gitelson", "tsm_nechad"])
+@pytest.mark.parametrize(
+    "alg", ["chl_hu", "chl_ocx", "chl_hu_ocx", "chl_gitelson", "tsm_nechad"]
+)
 def test_save_wq_imgs_all_algorithms(clean_rrs_dir, alg):
     save_wq_imgs(rrs_dir=clean_rrs_dir, wq_alg=alg, num_workers=1)
     out_dir = Path(TEST_PROJECT_ROOT) / f"masked_{alg}_imgs"
@@ -106,3 +110,4 @@ def test_save_wq_imgs_external_executor(clean_rrs_dir):
 
     out_dir = Path(TEST_PROJECT_ROOT) / "masked_tsm_nechad_imgs"
     assert len(list(out_dir.glob("*.tif"))) >= 1
+

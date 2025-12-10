@@ -1,4 +1,8 @@
-# Everything about managing Projects
+"""
+Created by Temuulen
+Everything about managing Projects
+"""
+
 import json
 import os
 import sqlite3
@@ -6,8 +10,9 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint
 from flask import current_app as app
+from flask import jsonify, request
 
 bp = Blueprint("projects", __name__)
 

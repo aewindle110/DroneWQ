@@ -1,4 +1,8 @@
-# Everything related to computing and plotting results
+"""
+Created by Temuulen
+Everything related to computing and plotting results
+"""
+
 from flask import Blueprint, jsonify, request
 from models.model_project import Project
 from pipeline import Pipeline

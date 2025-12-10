@@ -1,3 +1,10 @@
+"""
+Removed a lot of unnecessary inputs. Could remove
+`output_csv_path` too.
+
+Refactored by: Temuulen
+"""
+
 import concurrent.futures
 import logging
 import os
@@ -37,25 +44,30 @@ def process_raw_to_rrs(
             Default is mobley_rho_method().
 
         random_n: The amount of random images to calculate ambient
-            NIR level. Default is 10. Only need if lw_method = 'hedley_method'
+            NIR level.
+            Only needed if lw_method = 'hedley_method'
+            Default is 10.
 
         pixel_masking_method: Method to mask pixels. Options are
-            'value_threshold', 'std_threshold', or None. Default is None.
+            'value_threshold', 'std_threshold', or None.
+            Default is None.
 
         mask_std_factor: A factor to multiply to the standard
-            deviation of NIR values. Default is 1.
-            Only need if pixel_masking_method = 'std_threshold'
+            deviation of NIR values.
+            Only needed if pixel_masking_method = 'std_threshold'
+            Default is 1.
 
         nir_threshold: An Rrs(NIR) value where pixels above this
             will be masked. These are usually pixels of specular
             sun glint or land features.
-            Only need if pixel_masking_method = 'value_threshold'.
+            Only needed if pixel_masking_method = 'value_threshold'.
             Default is 0.01.
 
         green_threshold: A Rrs(green) value where pixels below this
-            will be masked. Default is 0.005. These are usually pixels
+            will be masked. These are usually pixels
             of vegetation shadowing.
-            Only need if pixel_masking_method = 'value_threshold'.
+            Only needed if pixel_masking_method = 'value_threshold'.
+            Default is 0.005.
 
         ed_method: Method used to calculate downwelling irradiance (Ed).
             Default is dls_ed().
@@ -73,9 +85,7 @@ def process_raw_to_rrs(
     Returns
         New Rrs tifs (masked or unmasked) with units of sr^-1.
     """
-    ############################
-    #### setup the workspace ###
-    ############################
+    # Setup the workspace
 
     if settings.main_dir is None:
         msg = "Please set the main_dir path."
@@ -90,7 +100,7 @@ def process_raw_to_rrs(
     masked_rrs_dir = settings.masked_rrs_dir
     warp_img_dir = settings.warp_img_dir
 
-    # make all these directories if they don't already exist
+    # Make all these directories if they don't already exist
     all_dirs = [lt_dir, lw_dir, rrs_dir]
     for directory in all_dirs:
         Path(directory).mkdir(parents=True, exist_ok=True)
@@ -99,7 +109,13 @@ def process_raw_to_rrs(
         Path(masked_rrs_dir).mkdir(parents=True, exist_ok=True)
 
     files = os.listdir(raw_water_img_dir)  # your directory path
-    num_bands = imageset.ImageSet.from_directory(warp_img_dir).captures[0].num_bands
+    num_bands = (
+        imageset.ImageSet.from_directory(
+            warp_img_dir,
+        )
+        .captures[0]
+        .num_bands
+    )
 
     logger.info(
         "Processing a total of %d images or %d captures.",
@@ -128,10 +144,7 @@ def process_raw_to_rrs(
             num_workers=num_workers,
         )
 
-    ##################################
-    ### correct for surface reflected light ###
-    ##################################
-
+    # use a common process pool for the methods
     with concurrent.futures.ProcessPoolExecutor(
         max_workers=num_workers,
     ) as Executor:
@@ -156,9 +169,7 @@ def process_raw_to_rrs(
             logger.info("Not doing any Lw calculation.")
             lw_dir = lt_dir
 
-        #####################################
-        ### normalize Lw by Ed to get Rrs ###
-        #####################################
+        # normalize Lw by Ed to get Rrs
 
         if ed_method == "panel_ed":
             logger.info("Normalizing by panel irradiance (Lw/Ed -> Rrs).")
@@ -190,15 +201,12 @@ def process_raw_to_rrs(
             return False
 
         logger.info(
-            "All data has been saved as Rrs using the %s to\
-            calculate Lw and normalized by %s irradiance.",
+            "All data has been saved as Rrs using the %s to calculate Lw and normalized by %s irradiance.",
             str(lw_method),
             str(ed_method),
         )
 
-        ########################################
-        ### mask pixels in the imagery (from glint, vegetation, shadows) ###
-        ########################################
+        # mask pixels in the imagery (from glint, vegetation, shadows)
         if pixel_masking_method == "value_threshold":
             logger.info("Masking pixels using NIR and green Rrs thresholds")
             dronewq.threshold_masking(
@@ -215,14 +223,12 @@ def process_raw_to_rrs(
                 executor=Executor,
             )
 
-        # if we don't do the glint correction then just change the pointer to the lt_dir
+        # if we don't do the glint correction then just change
+        # the pointer to the lt_dir
         else:
             logger.info("Not masking pixels.")
 
-    ################################################
-    ### finalize and add point output ###
-    ################################################
-
+    # finalize and add point output
     if clean_intermediates:
         dirs_to_delete = [lt_dir, sky_lt_dir, lw_dir]
         for d in dirs_to_delete:

@@ -1,3 +1,5 @@
+"""Refactored by Temuulen"""
+
 import concurrent.futures
 import glob
 import logging
@@ -13,13 +15,49 @@ from dronewq.utils.settings import settings
 logger = logging.getLogger(__name__)
 
 
-def _compute(
+def __compute(
     filepath,
     masked_rrs_dir,
     rrs_nir_mean,
     rrs_nir_std,
     mask_std_factor,
 ):
+    """
+    Process a single Rrs file to mask sun glint pixels based on NIR threshold.
+
+    Worker function that reads a remote sensing reflectance (Rrs) raster file,
+    identifies pixels likely contaminated by sun glint using NIR values exceeding
+    a statistical threshold, masks these pixels across all bands by setting them
+    to NaN, and writes the masked result to a new file.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the input Rrs raster file.
+    masked_rrs_dir : str
+        Directory path where the masked output file will be saved.
+    rrs_nir_mean : float
+        Mean NIR reflectance value calculated from a subset of images,
+        representing typical glint-free conditions.
+    rrs_nir_std : float
+        Standard deviation of NIR reflectance values from a subset of images.
+    mask_std_factor : float
+        Multiplier for standard deviation to determine the masking threshold.
+        Lower values result in more aggressive masking.
+
+    Notes
+    -----
+    Pixels are masked where: Rrs(NIR) > rrs_nir_mean + rrs_nir_std * mask_std_factor
+
+    The masking is applied to all 5 bands based on the NIR (band 5) threshold.
+    Masked pixels are set to NaN across all bands.
+    Output files maintain the same basename as input files.
+
+    Raises
+    ------
+    Exception
+        If file processing fails for any reason (logged as warning and re-raised).
+    """
     im = filepath
     try:
         with rasterio.open(im, "r") as rrs_src:
@@ -56,28 +94,69 @@ def _compute(
         raise
 
 
-def std_masking(num_images=10, mask_std_factor=1, num_workers=4, executor=None):
+def std_masking(
+    num_images=10,
+    mask_std_factor=1,
+    num_workers=4,
+    executor=None,
+):
     """
-    This function masks pixels based on a user supplied value in
-    an effort to remove instances of specular sun glint. The mean
-    and standard deviation of NIR values from the first N images
-    is calculated and any pixels containing an
-    NIR value > mean + std*mask_std_factor is masked across all bands.
-    The lower the mask_std_factor, the more pixels will be masked.
+    Mask sun glint pixels using statistical threshold based on NIR values.
+
+    This function identifies and masks pixels contaminated by specular sun glint
+    by applying a statistical threshold to near-infrared (NIR) reflectance values.
+    The mean and standard deviation of NIR values are calculated from a random
+    subset of images, and any pixel with NIR reflectance exceeding
+    mean + std * mask_std_factor is masked across all bands. This approach assumes
+    that glint-contaminated pixels have elevated NIR reflectance compared to
+    glint-free water.
 
     Parameters
-        num_images: Number of images in the dataset to calculate
-            the mean and std of NIR. Default is 10.
-
-        mask_std_factor: A factor to multiply to the standard deviation
-            of NIR values. Default is 1.
-
-        num_workers: Number of parallelizing done on different cores.
-            Depends on hardware.
+    ----------
+    num_images : int, optional
+        Number of images to randomly sample for calculating NIR statistics
+        (mean and standard deviation). More images provide more robust statistics
+        but increase computation time. Default is 10.
+    mask_std_factor : float, optional
+        Multiplier for the standard deviation to set the masking threshold.
+        Lower values result in more aggressive masking (more pixels masked).
+        Higher values are more conservative (fewer pixels masked). Typical
+        values range from 0.5 to 2.0. Default is 1.
+    num_workers : int, optional
+        Number of parallel worker processes for file processing. Should be
+        tuned based on available CPU cores. Default is 4.
+    executor : concurrent.futures.Executor, optional
+        Pre-configured executor for parallel processing. If None, a new
+        ProcessPoolExecutor will be created. Default is None.
 
     Returns
-        New masked .tifs
+    -------
+    None
 
+    Raises
+    ------
+    LookupError
+        If main_dir is not set in settings.
+
+    Notes
+    -----
+    The function produces masked Rrs GeoTIFF files in settings.masked_rrs_dir where
+    glint-contaminated pixels are set to NaN across all bands.
+
+    The masking threshold is calculated as:
+        threshold = mean(Rrs_NIR) + std(Rrs_NIR) * mask_std_factor
+
+    Pixels where Rrs(NIR) > threshold are masked in all 5 bands.
+
+    The method assumes:
+    - Sun glint causes elevated NIR reflectance
+    - The sampled images are representative of the dataset
+    - NIR values follow an approximately normal distribution for glint-free pixels
+
+    Recommended mask_std_factor values:
+    - 0.5-1.0: Aggressive masking for highly glint-contaminated data
+    - 1.0-1.5: Moderate masking for typical conditions
+    - 1.5-2.0: Conservative masking to preserve more pixels
     """
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
@@ -111,7 +190,7 @@ def std_masking(num_images=10, mask_std_factor=1, num_workers=4, executor=None):
     filepaths = glob.glob(rrs_dir + "/*.tif")
 
     partial_compute = partial(
-        _compute,
+        __compute,
         masked_rrs_dir=masked_rrs_dir,
         rrs_nir_mean=rrs_nir_mean,
         rrs_nir_std=rrs_nir_std,
@@ -130,4 +209,3 @@ def std_masking(num_images=10, mask_std_factor=1, num_workers=4, executor=None):
         "Masking Stage (std): Successfully processed: %d captures",
         len(results),
     )
-    return results

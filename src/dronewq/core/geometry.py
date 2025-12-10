@@ -1,12 +1,23 @@
+"""
+Not much is changed from the original code
+Refactored docstrings: Temuulen
+"""
 import numpy as np
+
 
 class Paralelogram2D:
     """
-    This class represents a paralelogram
-    It receives a list of points and sets the pairs of lines
+    Represents a 2D parallelogram defined by four corner points.
+
+    The class assumes the points are ordered consecutively around
+    the shape. It automatically determines the line segments and
+    opposite-line pairs.
 
     Parameters
-        points (List[Tuple[float, float]]): list of corner points that determinate a paralelogram
+    ----------
+    points : np.ndarray (shape: (4, 2))
+        Array of the four corner points of the parallelogram,
+        ordered clockwise or counter-clockwise.
     """
 
     def __init__(self, points):
@@ -16,61 +27,84 @@ class Paralelogram2D:
 
     def get_line_center(self, index):
         """
-        This functions returns the center of a specific line of the paralelogram
+        Compute the midpoint of one of the parallelogram's edges.
 
         Parameters
-            index (int): line index
+        ----------
+        index : int
+            Index of the line segment in ``self.lines``.
 
         Returns
-            np.ndarray: center
+        -------
+        np.ndarray (shape: (2,))
+            The midpoint of the selected line.
         """
         return sum(self.points[self.lines[index]]) / 2
 
     def get_offset_to_lines(self, index, point):
         """
-        This functions returns a Vector that represents what should be direction of point for being in the specified line
+        Compute a vector pointing from a point toward the center
+        of a specific edge.
 
         Parameters
-            index (int): line index
+        ----------
+        index : int
+            Line index.
 
-            point (np.ndarray): point
+        point : np.ndarray (shape: (2,))
+            The reference point.
 
         Returns
-            np.ndarray: direction vector
+        -------
+        np.ndarray (shape: (2,))
+            Direction vector pointing toward the line's midpoint.
         """
         return self.get_line_center(index) - point
 
     def get_center(self):
         """
-        This function returns the center of the paralelogram
+        Compute the centroid of the parallelogram.
 
-        Returns:
-            np.ndarray: center
+        Returns
+        -------
+        np.ndarray (shape: (2,))
+            The center point of the parallelogram.
         """
         return get_center(self.points)
 
     def move_line_from_offset(self, index, offset):
         """
-        This function moves a specific line given an offset vector
+        Translate a line segment by a given offset vector.
+        This moves the two points belonging to the line.
 
         Parameters
-            index (int): line index
+        ----------
+        index : int
+            Line index.
 
-            offset (np.ndarray): offset vector
+        offset : np.ndarray (shape: (2,))
+            Offset vector applied to the line’s two endpoints.
         """
         self.points[self.lines[index]] += offset
 
     def are_on_right_side_of_line(self, index, points):
         """
-        This function checks if a list of points is on the right side of a specific line
+        Check whether a list of points lies on the right side
+        of the specified line segment.
 
         Parameters
-            index (int): line index
+        ----------
+        index : int
+            Line index.
 
-            points (np.ndarray): a list of points
+        points : np.ndarray (shape: (N, 2))
+            Points to test.
 
         Returns
-            bool: whether the list is on the right side or not
+        -------
+        bool
+            True if all points lie on the right side of the line,
+            otherwise False.
         """
         return all(
             [
@@ -82,19 +116,24 @@ class Paralelogram2D:
 
 def is_on_right_side(x, y, xy0, xy1):
     """
-    Given a point and 2 points defining a rect, check if the point is on the right side or not.
+    Determine whether a point lies on the right side of a directed line.
+
+    The line is interpreted as directed from ``xy0`` to ``xy1``.
+    “Right side” is computed using the standard 2D line equation.
 
     Parameters
-        x (float): value in the x-axis of the point
+    ----------
+    x, y : float
+        Coordinates of the point to test.
 
-        y (float): value in the y-axis of the point
-
-        xy0 (Tuple[float, float]): point 0 of the rect
-
-        xy1 (Tuple[float, float]): point 1 of the rect
+    xy0, xy1 : Tuple[float, float]
+        Two points defining the directed line segment.
 
     Returns
-        bool: is on right side or not
+    -------
+    bool
+        True if the point is on the right side of the line,
+        otherwise False.
     """
     x0, y0 = xy0
     x1, y1 = xy1
@@ -106,17 +145,24 @@ def is_on_right_side(x, y, xy0, xy1):
 
 def is_point_within_vertices(x, y, vertices):
     """
-    This fuction checks if a point is within the given vertices
+    Check whether a point lies inside or on the boundary of a polygon.
+
+    The polygon is defined by a list of vertices in order. The method
+    checks whether the point lies consistently on the same side
+    (all left or all right) of every polygon edge.
 
     Parameters
-        x (float): value in the width axis for the point
+    ----------
+    x, y : float
+        Coordinates of the point to test.
 
-        y (float): value in the height axis for the point
-
-        vertices (List[Tuple[float, float]]): bounding vertices
+    vertices : List[Tuple[float, float]]
+        Ordered list of polygon vertices.
 
     Returns
-        bool: whether the point is within the vertices or not
+    -------
+    bool
+        True if the point is inside or on the polygon boundary.
     """
     num_vert = len(vertices)
     is_right = [
@@ -130,16 +176,20 @@ def is_point_within_vertices(x, y, vertices):
 
 def are_points_within_vertices(vertices, points):
     """
-    Given a list of vertices and a list of points,
-    generate every rect determined by the vertices
-    and check if the points are within the polygon or not.
+    Check whether multiple points all lie inside a polygon.
 
     Parameters
-        vertices (List[Tuple[float, float]]): List of vertices defining a polygon
-        points (List[Tuple[float, float]]): List of points to study is they are within the polygon or not
+    ----------
+    vertices : List[Tuple[float, float]]
+        Ordered polygon vertices.
+
+    points : List[Tuple[float, float]] or np.ndarray
+        Points to test.
 
     Returns
-        bool: the given points are within the given vertices or not
+    -------
+    bool
+        True if every point is inside or on the polygon boundary.
     """
     all_points_in_merge = True
 
@@ -155,29 +205,34 @@ def are_points_within_vertices(vertices, points):
 
 def euclidean_distance(p1, p2):
     """
-    Euclidean distance between two points
+    Compute the 2D Euclidean distance between two points.
 
     Parameters
-        p1 (Tuple[float, float]): 2D point 1
-
-        p2 (Tuple[float, float]): 2D point 2
+    ----------
+    p1, p2 : Tuple[float, float]
+        Input points.
 
     Returns
-        float: euclidean distance between two points
+    -------
+    float
+        Euclidean distance.
     """
     return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
 def get_center(points):
     """
-    This function receives a list of points and returns
-    the point at the center of all points
+    Compute the centroid (mean point) of a list of 2D points.
 
     Parameters
-        points (np.ndarray): a list of points
+    ----------
+    points : np.ndarray (shape: (N, 2))
+        Array of points.
 
     Returns
-        np.ndarray: center of all points
+    -------
+    np.ndarray (shape: (2,))
+        The centroid of the points.
     """
     x = points[:, 0]
     y = points[:, 1]

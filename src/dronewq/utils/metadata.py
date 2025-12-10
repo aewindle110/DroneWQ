@@ -1,9 +1,12 @@
+"""Refactored by: Temuulen"""
+
 import math
 import os
 
 import pandas as pd
 
 from micasense.imageset import ImageSet
+
 
 def write_metadata_csv(img_dir, csv_output_path):
     """
@@ -17,7 +20,9 @@ def write_metadata_csv(img_dir, csv_output_path):
         A string path to the generated .csv file
     """
     if not os.path.exists(img_dir):
-        raise FileNotFoundError(f"Image directory {img_dir} does not exist.") #pragma: no cover
+        raise FileNotFoundError(
+            f"Image directory {img_dir} does not exist."
+        )  # pragma: no cover
 
     img_set = ImageSet.from_directory(img_dir)
 

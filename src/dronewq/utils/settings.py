@@ -1,3 +1,8 @@
+"""
+Created by: Temuulen
+Took inspo from the DSPY package's settings
+"""
+
 import copy
 import logging
 import os
@@ -7,7 +12,7 @@ from pathlib import Path
 from dronewq.utils.utils import dotdict
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARN,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 
@@ -28,12 +33,11 @@ DEFAULT_CONFIG = dotdict(
 main_thread_config = copy.deepcopy(DEFAULT_CONFIG)
 
 
-# Written by Temuulen
-# Took inspo from the DSPY package's settings
 class Settings:
     """
     A singleton class for the whole workflow.
-    If `main_dir` is given other dependent directories are automatically populated.
+    If `main_dir` is given other dependent
+    directories are automatically populated.
     """
 
     _instance = None

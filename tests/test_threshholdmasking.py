@@ -1,5 +1,5 @@
-import os
 import glob
+import os
 import shutil
 from pathlib import Path
 
@@ -8,7 +8,7 @@ import pytest
 import rasterio
 
 from dronewq import settings
-from dronewq.masks.threshold_masking import _compute
+from dronewq.masks.threshold_masking import __compute
 
 test_path = Path(__file__).absolute().parent
 test_path = test_path.joinpath("test_set")
@@ -32,7 +32,7 @@ class TestComputeFunction:
         output_dir = settings.masked_rrs_dir
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-        result = _compute(
+        result = __compute(
             filepath=filepath,
             nir_threshold=0.01,
             green_threshold=0.005,
@@ -59,7 +59,7 @@ class TestComputeFunction:
         with rasterio.open(filepath, "r") as src:
             original_data = src.read()
 
-        _compute(
+        __compute(
             filepath=filepath,
             nir_threshold=nir_threshold,
             green_threshold=green_threshold,
@@ -75,14 +75,16 @@ class TestComputeFunction:
         nir_band = masked_data[4, :, :]
         valid_nir = nir_band[~np.isnan(nir_band)]
         if len(valid_nir) > 0:
-            assert np.all(valid_nir <= nir_threshold), \
-                "All valid NIR values should be <= threshold"
+            assert np.all(
+                valid_nir <= nir_threshold
+            ), "All valid NIR values should be <= threshold"
 
         green_band = masked_data[1, :, :]
         valid_green = green_band[~np.isnan(green_band)]
         if len(valid_green) > 0:
-            assert np.all(valid_green >= green_threshold), \
-                "All valid green values should be >= threshold"
+            assert np.all(
+                valid_green >= green_threshold
+            ), "All valid green values should be >= threshold"
 
         shutil.rmtree(output_dir, ignore_errors=True)
 
@@ -93,7 +95,7 @@ class TestComputeFunction:
         output_dir = settings.masked_rrs_dir
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-        _compute(
+        __compute(
             filepath=filepath,
             nir_threshold=0.01,
             green_threshold=0.005,
@@ -108,8 +110,9 @@ class TestComputeFunction:
 
         for band_idx in range(1, masked_data.shape[0]):
             nan_mask_current = np.isnan(masked_data[band_idx, :, :])
-            assert np.array_equal(nan_mask_band0, nan_mask_current), \
-                f"NaN pattern should be consistent (band 0 vs band {band_idx})"
+            assert np.array_equal(
+                nan_mask_band0, nan_mask_current
+            ), f"NaN pattern should be consistent (band 0 vs band {band_idx})"
 
         shutil.rmtree(output_dir, ignore_errors=True)
 
@@ -119,7 +122,7 @@ class TestComputeFunction:
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
         with pytest.raises(Exception):
-            _compute(
+            __compute(
                 filepath="/nonexistent/path/to/file.tif",
                 nir_threshold=0.01,
                 green_threshold=0.005,
@@ -138,7 +141,7 @@ class TestComputeFunction:
         with rasterio.open(filepath, "r") as src:
             original_profile = src.profile.copy()
 
-        _compute(
+        __compute(
             filepath=filepath,
             nir_threshold=0.01,
             green_threshold=0.005,
@@ -156,6 +159,7 @@ class TestComputeFunction:
 
         shutil.rmtree(output_dir, ignore_errors=True)
 
+
 def test_threshold_masking_defaults():
     """Test threshold_masking function with default parameters"""
     from dronewq.masks.threshold_masking import threshold_masking
@@ -168,6 +172,9 @@ def test_threshold_masking_defaults():
     rrs_files = glob.glob(os.path.join(settings.rrs_dir, "*.tif"))
     for filepath in rrs_files:
         output_file = os.path.join(output_dir, os.path.basename(filepath))
-        assert os.path.exists(output_file), f"Output file {output_file} should be created"
+        assert os.path.exists(
+            output_file
+        ), f"Output file {output_file} should be created"
 
     shutil.rmtree(output_dir, ignore_errors=True)
+

@@ -1,4 +1,10 @@
+"""
+Created by Temuulen
+Simple dict class used for settings
+"""
+
 import copy
+
 
 class dotdict(dict):
     def __getattr__(self, key):

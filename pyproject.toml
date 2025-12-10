@@ -244,15 +244,17 @@ dependencies = [
     "pydata_sphinx_theme ~=0.16",
     "myst-parser ~=4.0",
     "Sphinx ~=8.0",
-    "sphinx-autobuild ==2024.10.3"
+    "sphinx-autobuild ==2024.10.3",
+    "nbsphinx",
+    "sphinx-rtd-theme",
 ]
 
 # This table contains the scripts that you can use to build and serve your docs
 # hatch run docs:build will build your documentation
 # hatch run docs:serve will serve them 'live' on your computer locally
 [tool.hatch.envs.docs.scripts]
-build = ["sphinx-apidoc -o docs/api src/dronewq", "sphinx-build {args:-W -b html docs docs/_build}"]
-serve = ["sphinx-apidoc -o docs/api src/dronewq", "sphinx-autobuild docs --watch src/dronewq {args:-b html docs/_build/serve}"]
+build = ["sphinx-apidoc -o readthedocs/api src/dronewq", "sphinx-build {args:-W -b html readthedocs/ readthedocs/_build}"]
+serve = ["sphinx-apidoc -o readthedocs/api src/dronewq", "sphinx-autobuild readthedocs/ --watch src/dronewq {args:-b html readthedocs/_build/serve}"]
 #--------------- Format & style your code ---------------#
 
 [tool.hatch.envs.style]

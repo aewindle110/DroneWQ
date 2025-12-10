@@ -1,3 +1,5 @@
+"""Refactored by: Temuulen"""
+
 import concurrent.futures
 import glob
 import logging
@@ -13,8 +15,38 @@ from micasense import imageset
 logger = logging.getLogger(__name__)
 
 
-def _compute(filepath, ed_data, rrs_dir):
-    """Worker function that processes a single file."""
+def __compute(filepath, ed_data, rrs_dir):
+    """
+    Process a single Lw file to compute remote sensing reflectance.
+
+    Worker function that reads a water-leaving radiance (Lw) raster file,
+    divides each band by the corresponding downwelling irradiance (Ed) value,
+    and writes the resulting remote sensing reflectance (Rrs) to a new file.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the input Lw raster file.
+    ed_data : array-like
+        Downwelling irradiance values indexed from 1-5 for each band.
+    rrs_dir : str
+        Directory path where the output Rrs file will be saved.
+
+    Returns
+    -------
+    bool
+        True if processing succeeded.
+
+    Raises
+    ------
+    Exception
+        If file processing fails for any reason (logged as warning).
+
+    Notes
+    -----
+    The function processes 5 bands, computing Rrs = Lw / Ed for each band.
+    Output files maintain the same basename as input files.
+    """
     try:
         with rasterio.open(filepath, "r") as Lw_src:
             profile = Lw_src.profile
@@ -44,31 +76,58 @@ def _compute(filepath, ed_data, rrs_dir):
         raise
 
 
-def dls_ed(output_csv_path, dls_corr=False, num_workers=4, executor=None):
+def dls_ed(
+    output_csv_path: str,
+    dls_corr: bool = False,
+    num_workers: int = 4,
+    executor=None,
+) -> str:
     """
-    This function calculates remote sensing reflectance (Rrs)
-    by dividing downwelling irradiance (Ed) from the water
-    leaving radiance (Lw) .tifs. Ed is derived from the
-    downwelling light sensor (DLS), which is collected at
-    every image capture. This method does not perform well
-    when light is variable such as partly cloudy days.
+    Calculate remote sensing reflectance using downwelling light sensor data.
 
-    It is recommended to use in overcast, completely cloudy
-    conditions. A DLS correction can be optionally applied to
-    tie together DLS and panel Ed measurements. In this case,
-    a compensation factor derived from the calibration
-    reflectance panel is applied to DLS Ed measurements.
-    The default is False.
+    This function computes remote sensing reflectance (Rrs) by dividing
+    water-leaving radiance (Lw) by downwelling irradiance (Ed) derived from
+    the downwelling light sensor (DLS). The DLS collects Ed measurements at
+    every image capture. Optionally applies a correction factor derived from
+    calibration panel measurements to compensate for DLS variability.
 
     Parameters
-        dls_corr: Option to apply compensation factor from
-            calibration reflectance panel to DLS Ed measurements.
-            Default is False.
-        num_workers: Number of parallel processes. Depends on hardware.
+    ----------
+    output_csv_path : str
+        Directory path where Ed CSV files will be saved.
+    dls_corr : bool, optional
+        Whether to apply compensation factor from calibration reflectance
+        panel to DLS Ed measurements. Default is False.
+    num_workers : int, optional
+        Number of parallel worker processes for file processing. Should be
+        tuned based on available CPU cores. Default is 4.
+    executor : concurrent.futures.Executor, optional
+        Pre-configured executor for parallel processing. If None, a new
+        ProcessPoolExecutor will be created. Default is None.
 
     Returns
-        New Rrs .tifs with units of sr^-1
-        New .csv file with average Ed measurements (mW/m2/nm) calculated from DLS measurements
+    -------
+    None
+
+    Raises
+    ------
+    LookupError
+        If required directory paths (main_dir, rrs_dir) are not set in settings.
+
+    Notes
+    -----
+    This method performs best in overcast or completely cloudy conditions where
+    light is relatively stable. Performance degrades under variable lighting
+    such as partly cloudy conditions.
+
+    The function produces two types of outputs:
+    - Rrs GeoTIFF files with units of sr^-1 in the rrs_dir
+    - CSV file(s) containing average Ed measurements in mW/m^2/nm
+
+    When dls_corr=True, outputs 'dls_corr_ed.csv'; otherwise outputs 'dls_ed.csv'.
+
+    The function processes 5 spectral bands centered at approximately:
+    475nm, 560nm, 668nm, 717nm, and 842nm.
     """
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
@@ -181,7 +240,7 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4, executor=None):
         futures = {}
         for idx, filepath in enumerate(filepaths):
             future = executor.submit(
-                _compute,
+                __compute,
                 filepath,
                 ed_data_final[idx],
                 rrs_dir,
@@ -210,4 +269,3 @@ def dls_ed(output_csv_path, dls_corr=False, num_workers=4, executor=None):
         sum(results),
         len(results),
     )
-    return results

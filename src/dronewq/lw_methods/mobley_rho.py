@@ -1,3 +1,5 @@
+"""Refactored by: Temuulen"""
+
 import concurrent.futures
 import glob
 import logging
@@ -13,8 +15,42 @@ from dronewq.utils.settings import settings
 logger = logging.getLogger(__name__)
 
 
-def _compute(filepath, rho, lsky_median, lw_dir):
-    """Worker function that processes a single file."""
+def __compute(filepath, rho, lsky_median, lw_dir):
+    """
+    Process a single Lt file to compute water-leaving radiance using Mobley rho method.
+
+    Worker function that reads a total radiance (Lt) raster file, removes surface-
+    reflected sky radiance using a constant rho value, and writes the resulting
+    water-leaving radiance (Lw) to a new file. The method applies the equation
+    Lw = Lt - rho * Lsky for each band.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the input Lt raster file.
+    rho : float
+        Effective sea-surface reflectance of a wave facet. Typically 0.028 based
+        on Mobley (1999) recommendations for wind speeds < 5 m/s.
+    lsky_median : array-like
+        Median sky radiance values for 5 bands, indexed from 0-4.
+    lw_dir : str
+        Directory path where the output Lw file will be saved.
+
+    Returns
+    -------
+    bool
+        True if processing succeeded.
+
+    Raises
+    ------
+    Exception
+        If file processing fails for any reason (logged as warning and re-raised).
+
+    Notes
+    -----
+    The function processes 5 bands, computing Lw = Lt - rho * Lsky for each band.
+    Output files maintain the same basename as input files.
+    """
     try:
         with rasterio.open(filepath, "r") as Lt_src:
             profile = Lt_src.profile
@@ -46,20 +82,67 @@ def _compute(filepath, rho, lsky_median, lw_dir):
 
 def mobley_rho(rho=0.028, executor=None, num_workers=4):
     """
-    This function calculates water leaving radiance (Lw)
-    by multiplying a single (or small set of) sky radiance (Lsky)
-    images by a single rho value. The default is rho = 0.028,
-    which is based off recommendations described in Mobley, 1999.
-    This approach should only be used if sky conditions are not
-    changing substantially during the flight and winds are less than 5 m/s.
+    Calculate water-leaving radiance using Mobley's constant rho method.
+
+    This function computes water-leaving radiance (Lw) by removing surface-reflected
+    sky radiance from total radiance measurements using a constant effective surface
+    reflectance factor (rho). Sky radiance (Lsky) is calculated from a median of sky
+    images and multiplied by rho to estimate the surface-reflected component, which
+    is then subtracted from total radiance: Lw = Lt - rho * Lsky.
 
     Parameters
-        rho: The effective sea-surface reflectance of a wave facet. Default is 0.028
-        executor: Worker pool executor
-        num_workers: Number of parallel processes. Depends on hardware.
+    ----------
+    rho : float, optional
+        Effective sea-surface reflectance of a wave facet. The default value of
+        0.028 is based on Mobley (1999) recommendations for typical conditions.
+        Default is 0.028.
+    executor : concurrent.futures.Executor, optional
+        Pre-configured executor for parallel processing. If None, a new
+        ProcessPoolExecutor will be created. Default is None.
+    num_workers : int, optional
+        Number of parallel worker processes for file processing. Should be
+        tuned based on available CPU cores. Default is 4.
 
     Returns
-        New Lw .tifs with units of W/sr/nm
+    -------
+    None
+
+    Raises
+    ------
+    LookupError
+        If main_dir or lw_dir are not set in settings.
+
+    Warnings
+    --------
+    This method should only be used when:
+    - Sky conditions are relatively stable during the flight
+    - Wind speeds are less than 5 m/s
+    - Sea surface roughness is relatively uniform
+
+    Variable sky conditions or higher wind speeds may require spatially or temporally
+    varying rho values for accurate results.
+
+    Notes
+    -----
+    The function produces Lw GeoTIFF files with units of W/sr/nm in settings.lw_dir.
+
+    Sky radiance is computed from the first 10 sky images in settings.sky_lt_dir,
+    taking the median across all images for each band. This median Lsky assumes
+    relatively stable sky conditions throughout the data collection period.
+
+    The rho value of 0.028 corresponds to moderately rough sea surfaces under typical
+    viewing and illumination geometries. This value may need adjustment for:
+    - Very calm waters (lower rho, ~0.02)
+    - Rough seas or high winds (higher rho, ~0.05)
+    - Off-nadir viewing angles
+    - Different solar zenith angles
+
+    The function processes 5 spectral bands across all input images.
+
+    References
+    ----------
+    Mobley, C. D. (1999). Estimation of the remote-sensing reflectance from
+    above-surface measurements. Applied Optics, 38(7), 7442-7455.
     """
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
@@ -90,7 +173,7 @@ def mobley_rho(rho=0.028, executor=None, num_workers=4):
 
     if executor is not None:
         partial_compute = partial(
-            _compute,
+            __compute,
             rho=rho,
             lsky_median=lsky_median,
             lw_dir=lw_dir,
@@ -108,7 +191,7 @@ def mobley_rho(rho=0.028, executor=None, num_workers=4):
             futures = {}
             for filepath in filepaths:
                 future = executor.submit(
-                    _compute,
+                    __compute,
                     filepath,
                     rho,
                     lsky_median,
@@ -139,4 +222,3 @@ def mobley_rho(rho=0.028, executor=None, num_workers=4):
             sum(results),
             len(results),
         )
-    return results

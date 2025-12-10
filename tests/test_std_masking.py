@@ -1,6 +1,6 @@
 # tests/test_std_masking.py
-import os
 import glob
+import os
 import shutil
 from pathlib import Path
 
@@ -9,8 +9,7 @@ import pytest
 import rasterio
 
 from dronewq import settings
-from dronewq.masks.std_masking import _compute, std_masking
-
+from dronewq.masks.std_masking import __compute, std_masking
 
 # ----------------------------------------------------------------------
 # Test data setup
@@ -42,7 +41,7 @@ class TestComputeFunctionNew:
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
         # Dummy statistics – just need something realistic
-        _compute(
+        __compute(
             filepath=filepath,
             masked_rrs_dir=output_dir,
             rrs_nir_mean=0.005,
@@ -67,7 +66,7 @@ class TestComputeFunctionNew:
         factor = 2.0
         threshold = mean_nir + std_nir * factor
 
-        _compute(
+        __compute(
             filepath=filepath,
             masked_rrs_dir=output_dir,
             rrs_nir_mean=mean_nir,
@@ -81,9 +80,9 @@ class TestComputeFunctionNew:
 
             valid_nir = nir_band[~np.isnan(nir_band)]
             if valid_nir.size > 0:
-                assert np.all(valid_nir <= threshold + 1e-6), (
-                    "All remaining NIR values must be <= calculated threshold"
-                )
+                assert np.all(
+                    valid_nir <= threshold + 1e-6
+                ), "All remaining NIR values must be <= calculated threshold"
 
         shutil.rmtree(output_dir, ignore_errors=True)
 
@@ -94,7 +93,7 @@ class TestComputeFunctionNew:
         output_dir = settings.masked_rrs_dir
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-        _compute(
+        __compute(
             filepath=filepath,
             masked_rrs_dir=output_dir,
             rrs_nir_mean=0.005,
@@ -110,9 +109,9 @@ class TestComputeFunctionNew:
             ref_nan = np.isnan(data[0])
 
             for b in range(1, data.shape[0]):
-                assert np.array_equal(ref_nan, np.isnan(data[b])), (
-                    f"NaN pattern mismatch between band 0 and band {b}"
-                )
+                assert np.array_equal(
+                    ref_nan, np.isnan(data[b])
+                ), f"NaN pattern mismatch between band 0 and band {b}"
 
         shutil.rmtree(output_dir, ignore_errors=True)
 
@@ -126,7 +125,7 @@ class TestComputeFunctionNew:
         with rasterio.open(filepath) as src:
             original_profile = src.profile.copy()
 
-        _compute(
+        __compute(
             filepath=filepath,
             masked_rrs_dir=output_dir,
             rrs_nir_mean=0.005,
@@ -146,6 +145,8 @@ class TestComputeFunctionNew:
             assert new_profile["count"] == 5  # stacked to exactly 5 bands
 
         shutil.rmtree(output_dir, ignore_errors=True)
+
+
 def test_std_masking():
     """Test the std_masking function end-to-end"""
     rrs_files = glob.glob(os.path.join(settings.rrs_dir, "*.tif"))
@@ -174,8 +175,9 @@ def test_std_masking():
         # Check that NaN mask is consistent across bands
         ref_nan = np.isnan(masked_data[0])
         for b in range(1, masked_data.shape[0]):
-            assert np.array_equal(ref_nan, np.isnan(masked_data[b])), (
-                f"NaN pattern mismatch between band 0 and band {b}"
-            )
+            assert np.array_equal(
+                ref_nan, np.isnan(masked_data[b])
+            ), f"NaN pattern mismatch between band 0 and band {b}"
 
     shutil.rmtree(output_dir, ignore_errors=True)
+

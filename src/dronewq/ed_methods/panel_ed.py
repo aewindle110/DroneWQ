@@ -1,3 +1,5 @@
+"""Refactored by: Temuulen"""
+
 import concurrent.futures
 import glob
 import logging
@@ -14,7 +16,27 @@ from micasense import imageset
 logger = logging.getLogger(__name__)
 
 
-def _compute(filepath, ed):
+def __compute(filepath, ed):
+    """
+    Process a single Lw file to compute remote sensing reflectance using panel Ed.
+
+    Worker function that reads a water-leaving radiance (Lw) raster file,
+    divides each band by the corresponding panel-derived downwelling irradiance
+    (Ed) value, and writes the resulting remote sensing reflectance (Rrs) to a
+    new file.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the input Lw raster file.
+    ed : array-like
+        Panel-derived downwelling irradiance values for 5 bands, indexed from 0-4.
+
+    Notes
+    -----
+    The function processes 5 bands, computing Rrs = Lw / Ed for each band.
+    Output files are saved to settings.rrs_dir with the same basename as input files.
+    """
     im = filepath
     rrs_dir = settings.rrs_dir
     with rasterio.open(im, "r") as Lw_src:
@@ -44,27 +66,52 @@ def _compute(filepath, ed):
 
 def panel_ed(output_csv_path, num_workers=4, executor=None):
     """
-    This function calculates remote sensing reflectance (Rrs)
-    by dividing downwelling irradiance (Ed) from the water
-    leaving radiance (Lw) .tifs. Ed is calculated from the
-    calibrated reflectance panel. This method does not perform
-    well when light is variable such as partly cloudy days.
-    It is recommended to use in the case of a clear, sunny day.
+    Calculate remote sensing reflectance using calibrated reflectance panel.
+
+    This function computes remote sensing reflectance (Rrs) by dividing
+    water-leaving radiance (Lw) by downwelling irradiance (Ed) calculated
+    from a calibrated reflectance panel. The panel is imaged during data
+    collection to provide a reference for Ed measurements. This method
+    performs best under clear, sunny conditions with stable lighting.
 
     Parameters
-        lw_dir: A string containing the directory filepath of lw images
-
-        rrs_dir: A string containing the directory filepath of new rrs images
-
-        output_csv_path: A string containing the filepath to save Ed
-            measurements (mW/m2/nm) calculated from the panel
+    ----------
+    output_csv_path : str
+        Directory path where the panel Ed CSV file will be saved.
+    num_workers : int, optional
+        Number of parallel worker processes for file processing. Should be
+        tuned based on available CPU cores. Default is 4.
+    executor : concurrent.futures.Executor, optional
+        Pre-configured executor for parallel processing. If None, a new
+        ProcessPoolExecutor will be created. Default is None.
 
     Returns
-        New Rrs .tifs with units of sr^-1
+    -------
+    None
 
-        New .csv file with average Ed measurements (mW/m2/nm) calculated
-            from image cpatures of the calibrated reflectance panel
+    Raises
+    ------
+    LookupError
+        If main_dir is not set in settings.
 
+    Notes
+    -----
+    This method does not perform well under variable lighting conditions such
+    as partly cloudy days. It is recommended for use on clear, sunny days with
+    stable illumination.
+
+    The function produces two types of outputs:
+    - Rrs GeoTIFF files with units of sr^-1 in settings.rrs_dir
+    - CSV file 'panel_ed.csv' containing average Ed measurements in mW/m^2/nm
+      calculated from calibrated reflectance panel captures
+
+    The function processes 5 spectral bands centered at approximately:
+    475nm, 560nm, 668nm, 717nm, and 842nm. Note that bands 4 and 5 (717nm and
+    842nm) are swapped during processing to correct band ordering.
+
+    The panel_irradiance() method automatically finds the panel albedo and
+    uses it to calculate Ed, otherwise raises an error if the panel cannot
+    be detected.
     """
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
@@ -107,7 +154,7 @@ def panel_ed(output_csv_path, num_workers=4, executor=None):
     )
     ed_data.to_csv(os.path.join(output_csv_path, "panel_ed.csv"))
 
-    partial_compute = partial(_compute, ed=ed)
+    partial_compute = partial(__compute, ed=ed)
 
     if executor is not None:
         results = list(executor.map(partial_compute, filepaths))
@@ -121,4 +168,3 @@ def panel_ed(output_csv_path, num_workers=4, executor=None):
         "Lw Stage (Hedley): Successfully processed: %d captures",
         len(results),
     )
-    return results

@@ -1,13 +1,18 @@
+"""
+Not much is changed from the original code
+Only separated the methods from the main
+part of the code.
+Please check line 107 again. It seems unnecessary?
+Refactored by: Temuulen
+"""
+
 import numpy as np
 import rasterio
 from rasterio.transform import Affine
 from tqdm import tqdm
 
-from .geometry import (
-    Paralelogram2D,
-    euclidean_distance,
-    get_center,
-)
+from .geometry import Paralelogram2D, euclidean_distance, get_center
+
 
 def __latlon_to_index(dst, src):
     """
@@ -16,11 +21,13 @@ def __latlon_to_index(dst, src):
     to move the source data to the destination data.
 
     Parameters
+    ----------
         dst (_type_): Destination dataset
 
         src (DatasetReader): Source dataset
 
     Returns
+    -------
         ndarray: List of latitudes and longitudes
     """
     cols, rows = np.meshgrid(np.arange(src.width), np.arange(src.height))
@@ -38,12 +45,15 @@ def __latlon_to_index(dst, src):
 
 def __get_raster_corners(raster_path):
     """
-    Given a raster path, return a list of its corners based on its transformation matrix.
+    Given a raster path, return a list of its corners based on its
+    transformation matrix.
 
     Parameters
+    ----------
         raster_path (str): path of the raster to be processed
 
     Returns
+    -------
         List[Tuple[float, float]]: List with the 4 corners of the raster
     """
     with rasterio.open(raster_path) as raster:
@@ -58,9 +68,11 @@ def __get_raster_corners(raster_path):
 
 def __get_raster_corners_by_params(transform, width, height):
     """
-    Given a transformation matrix, a width and a height, return a list of corners based on the given transformation matrix.
+    Given a transformation matrix, a width and a height,
+    return a list of corners based on the given transformation matrix.
 
     Parameters
+    ----------
         transform (Affine): transformation matrix
 
         width (int): transformation width
@@ -68,6 +80,7 @@ def __get_raster_corners_by_params(transform, width, height):
         height (int): transformation height
 
     Returns
+    -------
         List[Tuple[float, float]]: List with the 4 corners of the raster
     """
     return [
@@ -78,15 +91,20 @@ def __get_raster_corners_by_params(transform, width, height):
 
 def __get_merge_transform(raster_paths, max_iterations=10000):
     """
-    This function returns a transform matrix that contains of the specified rasters
+    This function returns a transform matrix that contains
+    of the specified rasters
 
     Parameters
+    ----------
         raster_paths (set): raster paths to merge
 
-        max_iterations (int, optional): additional merge parameters. Default is 2000
+        max_iterations (int, optional): additional merge parameters.
+            Default is 2000
 
     Returns
-        Tuple[int, int, Affine]: width, height and transformation matrix of the merge
+    -------
+        Tuple[int, int, Affine]: width, height and transformation
+            matrix of the merge
     """
     with rasterio.open(raster_paths[0]) as src:
         original_transform = src.transform
@@ -167,9 +185,11 @@ def __mean(
     band_index=None,
 ):
     """
-    Merge method that calculates the mean value in those positions where more than one raster write its values.
+    Merge method that calculates the mean value in those
+    positions where more than one raster write its values.
 
     Parameters
+    ----------
         dst (_type_): destination raster
 
         raster_paths (List[str]): raster paths to merge
@@ -180,11 +200,14 @@ def __mean(
 
         height (int): height of the merge raster
 
-        dtype (dtype, optional): dtype of the merge raster. Defaults to np.float32.
+        dtype (dtype, optional): dtype of the merge raster.
+            Defaults to np.float32.
 
-        band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
+        band_index (int | None, optional): if not None we only merge the
+            specified band. Defaults to None.
 
     Returns
+    -------
         ndarray: resulting merge
     """
     final_data = np.zeros(shape=(n_bands, height, width), dtype=dtype)
@@ -220,9 +243,11 @@ def __first(
     band_index=None,
 ):
     """
-    Merge method that keeps the first value in write those positions where more than one raster write its values.
+    Merge method that keeps the first value in write those positions
+    where more than one raster write its values.
 
     Parameters
+    ----------
         dst (_type_): destination raster
 
         raster_paths (List[str]): raster paths to merge
@@ -233,11 +258,14 @@ def __first(
 
         height (int): height of the merge raster
 
-        dtype (dtype, optional): dtype of the merge raster. Defaults to np.float32.
+        dtype (dtype, optional): dtype of the merge raster.
+            Defaults to np.float32.
 
-        band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
+        band_index (int | None, optional): if not None we only merge
+            the specified band. Defaults to None.
 
     Returns
+    -------
         ndarray: resulting merge
     """
     final_data = np.empty(shape=(n_bands, height, width), dtype=dtype)
@@ -258,11 +286,20 @@ def __first(
     return final_data
 
 
-def __max(dst, raster_paths, n_bands, width, height, dtype=np.float32, band_index=None):
+def __max(
+    dst,
+    raster_paths,
+    n_bands,
+    width,
+    height,
+    dtype=np.float32,
+    band_index=None,
+):
     """
     Merge method that calculates the max value in those positions where more than one raster write its values.
 
     Parameters
+    ----------
         dst (_type_): destination raster
 
         raster_paths (List[str]): raster paths to merge
@@ -278,6 +315,7 @@ def __max(dst, raster_paths, n_bands, width, height, dtype=np.float32, band_inde
         band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
 
     Returns
+    -------
         ndarray: resulting merge
     """
     final_data = np.empty(shape=(n_bands, height, width), dtype=dtype)
@@ -304,6 +342,7 @@ def __min(dst, raster_paths, n_bands, width, height, dtype=np.float32, band_inde
     Merge method that calculates the min value in those positions where more than one raster write its values.
 
     Parameters
+    ----------
         dst (_type_): destination raster
 
         raster_paths (List[str]): raster paths to merge
@@ -319,6 +358,7 @@ def __min(dst, raster_paths, n_bands, width, height, dtype=np.float32, band_inde
         band_index (int | None, optional): if not None we only merge the specified band. Defaults to None.
 
     Returns
+    -------
         ndarray: resulting merge
     """
     final_data = np.empty(shape=(n_bands, height, width), dtype=dtype)

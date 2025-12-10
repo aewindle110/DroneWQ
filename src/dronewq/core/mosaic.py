@@ -1,3 +1,10 @@
+"""
+Not much is changed from the original code
+Only separated the methods from the main
+part of the code.
+Refactored by: Temuulen
+"""
+
 import os
 
 import numpy as np
@@ -6,13 +13,7 @@ import rasterio.transform
 from rasterio.enums import Resampling
 from rasterio.transform import Affine
 
-from .mosaic_methods import (
-    __first,
-    __get_merge_transform,
-    __max,
-    __mean,
-    __min,
-)
+from .mosaic_methods import __first, __get_merge_transform, __max, __mean, __min
 
 
 # Geometry functions
@@ -25,23 +26,51 @@ def mosaic(
     band_names=None,
 ):
     """
-    This function moasics all the given rasters into a single raster file
+    Mosaic multiple raster files into a single GeoTIFF.
+
+    This function reads all raster files in `input_dir` and merges them into
+    one mosaic using the specified merging method. If `band_names` is provided,
+    the mosaicked result is written as multiple single-band files—one file per
+    band—named using the provided band names. Otherwise, a single multi-band
+    raster is written.
 
     Parameters
-        input_dir: a string containing the directory filepath of images to be mosaicked
+    ----------
+    input_dir : str
+        Path to a directory containing the input rasters to mosaic.
 
-        output_dir: a string containing the directory filepath to save the output
+    output_dir : str
+        Path to the directory where the output raster(s) will be saved.
+        The directory is created if it does not exist.
 
-        output_name: a string of the output name of mosaicked .tif
+    output_name : str
+        Base filename (without extension) for the mosaicked output.
 
-        method: Method to be used when multiple captures coincide at same location. Options: 'mean', 'first', 'min', 'max'. Defaults to 'mean'.
+    method : {"mean", "first", "min", "max"}, optional
+        Method used to combine overlapping pixels when multiple rasters
+        cover the same area. Default is `"mean"`.
 
-        dtype: dtype of the mosaicked raster. Defaults to np.float32.
+    dtype : numpy.dtype, optional
+        Data type of the output raster. Defaults to `np.float32`.
 
-        band_names: List of band names. If it is not None, it writes one file for each band instead of one file with all the bands. Defaults to None.
+    band_names : list[str] or None, optional
+        If provided, one output file will be created per band, using the given
+        band names (e.g., `["red", "green", "blue"]`).
+        The number of entries must match the number of bands in the input
+        rasters.
 
     Returns
-        Mosaicked .tif file
+    -------
+    str
+        The filepath of the generated mosaic (or the first band file if
+        `band_names` is provided).
+
+    Notes
+    -----
+    - This function assumes all rasters share the same coordinate reference
+      system (CRS).
+    - When multiple input files are found, the output extent is computed to
+      cover all rasters.
     """
 
     def listdir_fullpath(d):
@@ -106,23 +135,45 @@ def downsample(
     method=Resampling.average,
 ):
     """
-    This function performs a downsampling to reduce the spatial resolution of
-    the final mosaic. The downsampled raster is written to output_dir.
+    Downsample a raster by reducing its spatial resolution.
+
+    This function reads the input raster and resizes it by the specified
+    factors (`scale_x`, `scale_y`) using the given resampling method.
+    The resulting downsampled raster is saved to `output_dir`.
 
     Parameters
-        input_dir: A string containing input directory filepath
+    ----------
+    input_tif : str
+        Path to the input GeoTIFF to downsample.
 
-        output_dir: A string containing output directory filepath
+    output_dir : str
+        Directory where the downsampled raster will be saved.
+        The directory is created if it does not exist.
 
-        scale_x: proportion by which the width of each file will be resized
+    scale_x : int
+        Horizontal downsampling factor.
+        For example, `scale_x=2` halves the raster width.
 
-        scale_y: proportion by which the height of each file will be resized
+    scale_y : int
+        Vertical downsampling factor.
+        For example, `scale_y=2` halves the raster height.
 
-        method: the resampling method to perform.
-            Defaults to Resampling.average
-            Please see `https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling`
-            for other resampling methods.
+    method : rasterio.enums.Resampling, optional
+        The resampling algorithm to apply (e.g., `Resampling.average`,
+        `Resampling.nearest`, `Resampling.bilinear`).
+        Default is `Resampling.average`.
+
+    Returns
+    -------
+    str
+        The filepath of the generated downsampled raster.
+
+    Notes
+    -----
+    - The affine transform is automatically scaled to match the new resolution.
+    - For a full list of resampling methods, see Rasterio's documentation.
     """
+
     os.makedirs(output_dir, exist_ok=True)
 
     raster_name = os.path.basename(input_tif)
@@ -159,6 +210,3 @@ def downsample(
         with rasterio.open(out_name, "w", **dst_kwargs) as dst:
             dst.write(data)
     return out_name
-
-
-# END Mosaicking

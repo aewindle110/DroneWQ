@@ -1,3 +1,5 @@
+"""Created by Temuulen"""
+
 import sqlite3
 
 from config import Config

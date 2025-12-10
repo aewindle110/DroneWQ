@@ -23,14 +23,62 @@ def load_imgs(
     random=False,
 ):
     """
-    This function loads all images in a directory as a multidimensional numpy array.
+    Load images from a directory as numpy arrays with metadata filtering.
+
+    This function reads raster images from a specified directory and returns them
+    as an iterator of numpy arrays. Images can be filtered and selected based on
+    metadata criteria including count, starting position, altitude threshold, and
+    random sampling. The function leverages metadata stored in a CSV file to
+    efficiently select and load images.
 
     Parameters
-        img_dir: A string containing the directory filepath of images to be retrieved
+    ----------
+    img_dir : str
+        Directory path containing the images to be loaded. The directory or its
+        parent must contain a 'metadata.csv' file with image information.
+    count : int, optional
+        Maximum number of images to load. If count exceeds the number of available
+        images after filtering, all available images are loaded. Default is 10000.
+    start : int, optional
+        Index of the first image to load when loading sequentially (random=False).
+        Zero-based indexing. Default is 0.
+    altitude_cutoff : float, optional
+        Minimum altitude threshold in meters. Images captured below this altitude
+        are excluded. Default is 0 (no altitude filtering).
+    random : bool, optional
+        If True, randomly samples 'count' images from the available set. If False,
+        loads images sequentially starting from 'start' index. Default is False.
 
-    Returns
-        An iterator over numpy arrays of all image captures in a directory
+    Yields
+    ------
+    numpy.ndarray
+        3D numpy array for each image with shape (bands, height, width), where
+        bands is the number of spectral bands in the raster image.
 
+    Notes
+    -----
+    The function expects a 'metadata.csv' file containing at least the following columns:
+    - 'filename': Name of the image file (used as index)
+    - 'Altitude': Altitude at which the image was captured
+
+    Images are loaded using rasterio, which supports various raster formats including
+    GeoTIFF. The function uses lazy loading via a generator pattern to minimize
+    memory usage when processing large datasets.
+
+    The metadata CSV location is determined by:
+    - If 'sky' is in img_dir: looks for metadata.csv in img_dir
+    - Otherwise: looks for metadata.csv in the parent directory of img_dir
+
+    Examples
+    --------
+    >>> # Load first 10 images from directory
+    >>> imgs = load_imgs('/path/to/images', count=10)
+    >>> for img in imgs:
+    ...     print(img.shape)
+
+    >>> # Load first 10 images without iterating
+    >>> imgs = load_imgs('/path/to/images', count=10)
+    >>> imgs = list(imgs)
     """
     df = load_metadata(
         img_dir,
@@ -55,20 +103,81 @@ def load_metadata(
     random=False,
 ):
     """
-    This function returns a pandas dataframe of captures and associated metadata with the options of how many to list and what number of image to start on.
+    Load and filter image metadata from a CSV file.
+
+    This function reads image metadata from a CSV file and returns a filtered
+    pandas DataFrame based on specified criteria including image count, starting
+    position, altitude threshold, and random sampling. The metadata is used to
+    efficiently select images for loading without reading the actual image files.
 
     Parameters
-        img_dir: A string containing the directory filepath of images to be retrieved
-
-        count: The amount of images to load. Default is 10000
-
-        start: The image to start loading from. Default is 0 (first image the .csv).
-
-        random: A boolean to load random images. Default is False
+    ----------
+    img_dir : str
+        Directory path containing the images. The directory or its parent must
+        contain a 'metadata.csv' file with image information.
+    count : int, optional
+        Maximum number of images to include in the returned DataFrame. If count
+        exceeds the number of available images, all available images are included.
+        Default is 10000.
+    start : int, optional
+        Index of the first image to include when selecting sequentially (random=False).
+        Zero-based indexing. Default is 0.
+    altitude_cutoff : float, optional
+        Minimum altitude threshold in meters. Images captured below this altitude
+        are excluded from the DataFrame. Applied after count/start filtering.
+        Default is 0 (no altitude filtering).
+    random : bool, optional
+        If True, randomly samples 'count' images from the available metadata.
+        If False, selects images sequentially starting from 'start' index.
+        Default is False.
 
     Returns
-        Pandas dataframe of image metadata
+    -------
+    pandas.DataFrame
+        DataFrame containing metadata for selected images, with 'filename' as
+        the index. Only includes images meeting the altitude_cutoff criterion.
 
+    Notes
+    -----
+    The function expects a 'metadata.csv' file with at least the following columns:
+    - 'filename': Name of the image file (becomes DataFrame index)
+    - 'Altitude': Altitude at which the image was captured (in meters)
+
+    Additional columns may include:
+    - 'UTC-Time': Timestamp of image capture
+    - 'Latitude', 'Longitude': Geographic coordinates
+    - Other sensor-specific metadata
+
+    The metadata CSV location is determined by:
+    - If 'sky' appears in img_dir path: looks for metadata.csv in img_dir
+    - Otherwise: looks for metadata.csv in the parent directory of img_dir
+
+    This logic accommodates directory structures where sky images may have
+    separate metadata from water/ground images.
+
+    The filtering order is:
+    1. Load full metadata CSV
+    2. Set filename as index
+    3. Apply count and start (or random sampling)
+    4. Apply altitude_cutoff filter
+
+    Examples
+    --------
+    >>> # Load metadata for first 50 images
+    >>> df = load_metadata('/path/to/images', count=50)
+    >>> print(df.columns)
+
+    >>> # Load metadata for random sample with altitude filter
+    >>> df = load_metadata('/path/to/images', count=100, altitude_cutoff=15, random=True)
+    >>> print(f"Selected {len(df)} images above 15m altitude")
+
+    >>> # Load metadata starting from image 20
+    >>> df = load_metadata('/path/to/images', count=30, start=20)
+    >>> filenames = df.index.tolist()
+
+    >>> # Get all available metadata with altitude filter
+    >>> df = load_metadata('/path/to/images', altitude_cutoff=10)
+    >>> print(f"Mean altitude: {df['Altitude'].mean():.2f}m")
     """
     if "sky" in img_dir:
         base = img_dir
@@ -102,23 +211,48 @@ def get_warp_matrix(
     max_alignment_iterations=50,
 ):
     """
-    This function uses the MicaSense imageutils.align_capture() function to determine an alignment (warp) matrix of a single capture that can be applied to all images. From MicaSense: "For best alignment results it's recommended to select a capture which has features which visible in all bands. Man-made objects such as cars, roads, and buildings tend to work very well, while captures of only repeating crop rows tend to work poorly. Remember, once a good transformation has been found for flight, it can be generally be applied across all of the images." Ref: https://github.com/micasense/imageprocessing/blob/master/Alignment.ipynb
+    This function uses the MicaSense imageutils.align_capture()
+    function to determine an alignment (warp) matrix of a single
+    capture that can be applied to all images.
+
+    From MicaSense: "For best alignment results it's recommended
+    to select a capture which has features which visible in all bands.
+    Man-made objects such as cars, roads, and buildings tend to work
+    very well, while captures of only repeating crop rows tend to
+    work poorly. Remember, once a good transformation has been found
+    for flight, it can be generally be applied across all of the images."
+
 
     Parameters
-        img_capture: A capture is a set of images taken by one MicaSense camera which share the same unique capture identifier (capture_id). These images share the same filename prefix, such as IMG_0000_*.tif. It is defined by running ImageSet.from_directory().captures.
+    ----------
+        img_capture:
+            A capture is a set of images taken by one MicaSense camera
+            which share the same unique capture identifier (capture_id).
+            These images share the same filename prefix, such as
+            IMG_0000_*.tif. It is defined by running
+            ImageSet.from_directory().captures.
 
         match_index: Index of the band. Default is 0.
 
-        warp_mode: MOTION_HOMOGRAPHY or MOTION_AFFINE. For Altum images only use MOTION_HOMOGRAPHY
+        warp_mode: MOTION_HOMOGRAPHY or MOTION_AFFINE.
+            For Altum images only use MOTION_HOMOGRAPHY
 
-        pyramid_levels: Default is 1. For images with RigRelatives, setting this to 0 or 1 may improve alignment
+        pyramid_levels:
+            Default is 1. For images with RigRelatives,
+            setting this to 0 or 1 may improve alignment
 
-        max_alignment_iterations: The maximum number of solver iterations.
+        max_alignment_iterations:
+            The maximum number of solver iterations.
 
     Returns
+    -------
         A numpy.ndarray of the warp matrix from a single image capture.
+
+    Reference
+    ---------
+    https://github.com/micasense/imageprocessing/blob/master/Alignment.ipynb
     """
-    print(
+    logger.info(
         "Aligning images. Depending on settings this can take from a few seconds to many minutes",
     )
     # Can potentially increase max_iterations for better results, but longer runtimes
@@ -138,7 +272,7 @@ def save(
     warp_matrices,
     generateThumbnails=True,
 ):
-    """Save a single capture with proper error handling."""
+    """Save a single capture."""
     try:
         capture.dls_irradiance = None
         capture.compute_undistorted_radiance()
@@ -157,7 +291,7 @@ def save(
         return True
     except Exception as e:
         # Log the error with capture information
-        print(f"Failed to save {capture.fullOutputPath}: {e}")
+        logger.warn(f"Failed to save {capture.fullOutputPath}: {e}")
         raise  # Re-raise with full traceback
 
 
@@ -168,7 +302,7 @@ def save_images(
     warp_img_capture,
     generateThumbnails=True,
     overwrite_lt_lw=False,
-    num_workers=4,  # None uses default based on CPU count
+    num_workers=4,
 ):
     """Process captures in parallel using threading."""
     # Create output directories
@@ -259,18 +393,115 @@ def process_micasense_images(
     num_workers=4,
 ):
     """
-    This function is wrapper function for the save_images() function to read in an image directory and produce new .tifs with units of radiance (W/sr/nm).
+    Process MicaSense multispectral images to calibrated radiance units.
+
+    This function is a wrapper for save_images() that reads raw MicaSense image
+    captures from a directory, applies radiometric calibration and band alignment,
+    and produces georeferenced TIFF files with radiance units (W/sr/nm). It handles
+    both water surface imagery and sky reference imagery, automatically organizing
+    outputs into appropriate directories and generating metadata files.
 
     Parameters
-        warp_img_dir: a string containing the filepath of the capture to use to create the warp matrix
-
-        overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False
-
-        sky: Option to run raw sky captures to collected Lsky. If True, the save_images() is run on raw .tif files and saves new .tifs in sky_lt directories. If False, save_images() is run on raw .tif files and saves new .tifs in lt directories.
+    ----------
+    warp_img_dir : str, optional
+        Directory path containing a representative capture to use for computing
+        the band alignment (warp) matrix. If None, uses the first capture from
+        the input directory. Should contain a scene with distinct features visible
+        in all bands. Default is None.
+    overwrite_lt_lw : bool, optional
+        If True, overwrites previously processed Lt (total radiance) and Lw
+        (water-leaving radiance) files. If False, skips processing for existing
+        files. Default is False.
+    sky : bool, optional
+        Processing mode flag:
+        - True: Process sky reference images from raw_sky_dir, save to sky_lt_dir
+        - False: Process water surface images from raw_water_dir, save to lt_dir
+        Default is False.
+    generateThumbnails : bool, optional
+        If True, generates RGB thumbnail JPEG images for quick visualization of
+        each processed capture. Thumbnails are saved to separate thumbnail
+        directories. Default is True.
+    num_workers : int, optional
+        Number of parallel worker processes for image processing. Higher values
+        speed up processing but require more memory and CPU cores. Should be
+        tuned based on available hardware. Default is 4.
 
     Returns
-        New .tif files for each capture in image directory with units of radiance (W/sr/nm) and optional new RGB thumbnail .jpg files for each capture.
+    -------
+    str
+        Output directory path where processed radiance TIFF files were saved.
+        Either settings.sky_lt_dir or settings.lt_dir depending on sky parameter.
 
+    Raises
+    ------
+    LookupError
+        If settings.main_dir is not configured.
+
+    Notes
+    -----
+    The function performs the following workflow:
+    1. Loads raw MicaSense images from the appropriate directory
+    2. Computes or loads band alignment (warp) matrices
+    3. Applies radiometric calibration to convert DN to radiance (W/sr/nm)
+    4. Aligns all bands to a reference band using warp matrices
+    5. Saves calibrated, aligned images as GeoTIFF files
+    6. Optionally generates RGB thumbnails for visualization
+    7. Writes metadata CSV file containing capture information
+
+    Directory structure:
+    - Water images: raw_water_dir → lt_dir + lt_thumbnails/
+    - Sky images: raw_sky_dir → sky_lt_dir + sky_lt_thumbnails/
+
+    The warp matrix computed from warp_img_dir (or first capture) is applied to
+    all captures in the flight, as the relative positions of camera sensors
+    remain fixed. For best results, choose a warp_img_dir capture containing:
+    - Man-made features (buildings, roads, vehicles)
+    - High contrast in all spectral bands
+    - Avoid repetitive patterns (crop rows)
+
+    Processing outputs:
+    - Calibrated radiance GeoTIFF files (W/sr/nm) with 5 bands
+    - Optional RGB thumbnail JPEGs for quick review
+    - metadata.csv containing capture times, GPS coordinates, altitude, etc.
+
+    Memory usage scales with image resolution and num_workers. For large datasets
+    (>1000 captures), consider processing in batches or reducing num_workers if
+    memory is limited.
+
+    Examples
+    --------
+    >>> # Process water surface images with default settings
+    >>> output_dir = process_micasense_images()
+    >>> print(f"Water images saved to: {output_dir}")
+
+    >>> # Process sky reference images
+    >>> sky_output = process_micasense_images(sky=True, generateThumbnails=False)
+
+    >>> # Use specific capture for alignment with parallel processing
+    >>> output_dir = process_micasense_images(
+    ...     warp_img_dir='/path/to/representative/capture',
+    ...     num_workers=8,
+    ...     overwrite_lt_lw=True
+    ... )
+
+    >>> # Fast processing without thumbnails, using first capture for alignment
+    >>> output_dir = process_micasense_images(
+    ...     generateThumbnails=False,
+    ...     num_workers=12
+    ... )
+
+    >>> # Reprocess with different alignment, overwriting previous results
+    >>> output_dir = process_micasense_images(
+    ...     warp_img_dir='/path/to/better/capture',
+    ...     overwrite_lt_lw=True,
+    ...     num_workers=6
+    ... )
+
+    See Also
+    --------
+    save_images : Underlying function that performs the actual processing
+    get_warp_matrix : Computes band alignment matrices
+    write_metadata_csv : Generates metadata CSV file
     """
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
@@ -287,7 +518,8 @@ def process_micasense_images(
     else:
         warp_img_capture = img_set.captures[0]
 
-    # just have the sky images go into a different dir and the water imgs go into a default 'lt_imgs' dir
+    # just have the sky images go into a different dir and
+    # the water imgs go into a default 'lt_imgs' dir
     if sky:
         output_path = settings.sky_lt_dir
         thumbnail_path = os.path.join(settings.main_dir, "sky_lt_thumbnails")

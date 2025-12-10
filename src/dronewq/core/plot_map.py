@@ -1,3 +1,9 @@
+"""
+In plot_georeferenced_data, there used to be a depreciated
+code for transforms.
+
+Refactored by: Temuulen
+"""
 
 import contextily as cx
 import matplotlib.pyplot as plt
@@ -9,6 +15,7 @@ from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
 from matplotlib.image import AxesImage
 from pyproj import Transformer
 from xyzservices import Bunch
+
 
 def plot_basemap(
     ax: plt.Axes,
