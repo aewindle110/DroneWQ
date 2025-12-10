@@ -9,11 +9,7 @@ function renderMosaicCards() {
 
   const resultDir = path.join(projectFolder, 'result');
   const container = document.getElementById("mosaicCards");
-<<<<<<< HEAD
-
-=======
   
->>>>>>> fix-mosaic-persistence
   if (!container) return;
 
   // Check if result directory exists
@@ -29,32 +25,6 @@ function renderMosaicCards() {
 
   const items = [];
 
-<<<<<<< HEAD
-  // Look for mosaic files in the result directory
-  const files = fs.readdirSync(resultDir);
-
-  files.forEach(file => {
-    if (file.includes('_mosaic') && file.endsWith('.png')) {
-      const fullPath = path.join(resultDir, file);
-
-      // Determine title based on filename
-      let title = 'Mosaic';
-      if (file.includes('downsampled')) {
-        const match = file.match(/downsampled_(\d+)/);
-        const factor = match ? match[1] : '?';
-        title = `Mosaic (Downsampled × ${factor})`;
-      } else if (!file.includes('downsampled')) {
-        title = 'Mosaic (Original Resolution)';
-      }
-
-      items.push({
-        title: title,
-        file: fullPath
-      });
-    }
-  });
-
-=======
   // Scan the result directory for mosaic PNG files
   const files = fs.readdirSync(resultDir);
   
@@ -87,7 +57,6 @@ function renderMosaicCards() {
     }
   });
 
->>>>>>> fix-mosaic-persistence
   // Render cards
   if (items.length === 0) {
     container.innerHTML = `
@@ -178,31 +147,20 @@ async function processMosaic() {
     const data = await res.json();
     console.log("[MOSAIC] Backend response:", data);
 
-<<<<<<< HEAD
-=======
     // Refresh cards to show newly generated mosaic
->>>>>>> fix-mosaic-persistence
     renderMosaicCards();
 
     document.getElementById("mosaicSettingsPanel").style.display = "none";
     document.getElementById("mosaicSettingsToggle").style.display = "inline-block";
-<<<<<<< HEAD
-
-    alert('Mosaic generated successfully!');
-
-=======
     
     alert('Mosaic generated successfully!');
     
->>>>>>> fix-mosaic-persistence
   } catch (error) {
     console.error('[MOSAIC] Error:', error);
     alert('Error processing mosaic: ' + error.message);
   }
 }
 
-<<<<<<< HEAD
-=======
 function showMosaicSettingsPanel(show) {
   const panel = document.getElementById("mosaicSettingsPanel");
   const toggle = document.getElementById("mosaicSettingsToggle");
@@ -217,7 +175,6 @@ function showMosaicSettingsPanel(show) {
 }
 
 // helpers
->>>>>>> fix-mosaic-persistence
 function parseNumeric(id) {
   const el = document.getElementById(id);
   if (!el || !el.value.trim()) return null;
@@ -239,23 +196,6 @@ function parseRequiredNumeric(id) {
   return isNaN(num) ? null : num;
 }
 
-function showMosaicSettingsPanel(show) {
-  const panel = document.getElementById("mosaicSettingsPanel");
-  const toggle = document.getElementById("mosaicSettingsToggle");
-
-  if (show) {
-    panel.style.display = "block";
-    toggle.style.display = "none";
-  } else {
-    panel.style.display = "none";
-    toggle.style.display = "inline-block";
-  }
-}
-
 window.processMosaic = processMosaic;
 window.renderMosaicCards = renderMosaicCards;
-<<<<<<< HEAD
 window.showMosaicSettingsPanel = showMosaicSettingsPanel;
-=======
-window.showMosaicSettingsPanel = showMosaicSettingsPanel;
->>>>>>> fix-mosaic-persistence

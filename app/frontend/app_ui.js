@@ -123,18 +123,10 @@ function navigate(screen, fromScreen) {
           console.log("[Results] Trajectory data loaded");
         }
 
-<<<<<<< HEAD
-        // Initialize mosaic cards
-            if (typeof renderMosaicCards === 'function') {
-            renderMosaicCards();
-            console.log('[Results] Mosaic cards loaded');
-            }
-=======
         if (typeof renderMosaicCards === "function") {
             renderMosaicCards();
             console.log("[Results] Mosaic cards loaded");
         }       
->>>>>>> fix-mosaic-persistence
 
 
       } catch (err) {
