@@ -271,7 +271,7 @@ hatch build
 # upload the built package using twine
 twine upload dist/* # or your version name
 ```
-It will then prompt for username, which you enter __token__.
+It will then prompt for username, which you enter `__token__`.
 As for the password, you will use the PyPi token(please reach out to us if you don't have a token)
 
 ---
