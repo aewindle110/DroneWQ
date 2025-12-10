@@ -13,7 +13,7 @@ requires = ["hatchling", "hatch-vcs"]
 [project]
 name = "dronewq"
 # You can chose to use dynamic versioning with hatch or static where you add it manually.
-version = "0.1.5"
+version = "0.1.0"
 description = """DroneWQ is a Python package that can be used to analyze multispectral
 data collected from a drone to derive ocean color radiometry and water quality properties.
 These scripts are specific for the MicaSense RedEdge and Altum cameras."""
