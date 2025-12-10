@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 # Needs access to
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -7,8 +7,9 @@ if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
 import numpy as np
 from numpy.testing import assert_allclose
+
 import dronewq
-import utils
+import dronewq.legacy.utils as utils
 
 algs_dronewq = [
     dronewq.chl_hu,
@@ -148,4 +149,3 @@ def test_tsm_nechad():
     out_dronewq = dronewq.tsm_nechad(Rrs_stacked)
 
     assert_allclose(out_utils, out_dronewq, rtol=1e-10)
-

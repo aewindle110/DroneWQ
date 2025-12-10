@@ -9,22 +9,22 @@ let flaskProcess;
 
 /* ---------- Flask child process helpers ---------- */
 function pythonCmd() {
-  if (process.env.PYTHON_BIN) return process.env.PYTHON_BIN;
-  return process.platform === "win32" ? "python" : "python3";
+  const python_dir = path.join(process.resourcesPath, "python", "bin", "python3.10");
+  return python_dir
 }
 
 function startFlask() {
-  const backendDir = path.join(__dirname, ".."); // adjust if needed
+  const backendDir = path.join(process.resourcesPath, "backend"); // adjust if needed
 
   const env = { ...process.env };
 
   // Ensure FLASK_APP is set so `flask run` knows what to run
-  // env.FLASK_APP = "app.py";
+  env.FLASK_APP = "app.py";
 
   // Start: python3 -m flask run --port 8889
   flaskProcess = spawn(
     pythonCmd(),
-    ["-m", "flask", "run", "--port", "8889", "--debug"],
+    ["-m", "flask", "run", "--port", "8889"],
     {
       cwd: backendDir,
       env,

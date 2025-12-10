@@ -1,19 +1,21 @@
-import sys
 import os
+import sys
 
 # Needs access to utils module
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
 
-import dronewq
-import numpy as np
-import pandas as pd
 import glob
 from pathlib import Path
-from dronewq import settings
+
+import numpy as np
+import pandas as pd
 from numpy.testing import assert_allclose
-import utils
+
+import dronewq
+import dronewq.legacy.utils as utils
+from dronewq import settings
 
 test_path = Path(__file__).absolute().parent
 test_path = test_path.joinpath("test_set")
@@ -36,7 +38,7 @@ def test_Lt():
             0.27674899,
         ]
     )
-    
+
     # Test dronewq
     lt_imgs_dronewq = dronewq.load_imgs(settings.lt_dir)
     results_dronewq = []
@@ -46,7 +48,7 @@ def test_Lt():
     results_dronewq = np.array(results_dronewq)
     results_dronewq = np.squeeze(results_dronewq)
     assert_allclose(actual, results_dronewq, rtol=1e-2)
-    
+
     # Test utils (uses load_images instead of load_imgs)
     lt_img_list = sorted(glob.glob(os.path.join(settings.lt_dir, "*.tif")))
     lt_imgs_utils = utils.load_images(lt_img_list)
@@ -70,7 +72,7 @@ def test_Lw():
             0.02420409,
         ]
     )
-    
+
     # Test dronewq
     lw_imgs_dronewq = dronewq.load_imgs(settings.lw_dir)
     results_dronewq = []
@@ -80,7 +82,7 @@ def test_Lw():
     results_dronewq = np.array(results_dronewq)
     results_dronewq = np.squeeze(results_dronewq)
     assert_allclose(actual, results_dronewq, rtol=1e-2)
-    
+
     # Test utils
     lw_img_list = sorted(glob.glob(os.path.join(settings.lw_dir, "*.tif")))
     lw_imgs_utils = utils.load_images(lw_img_list)
@@ -104,7 +106,7 @@ def test_Rrs():
             3.4010543e-05,
         ]
     )
-    
+
     # Test dronewq
     rrs_imgs_dronewq = dronewq.load_imgs(settings.rrs_dir)
     results_dronewq = []
@@ -114,7 +116,7 @@ def test_Rrs():
     results_dronewq = np.array(results_dronewq)
     results_dronewq = np.squeeze(results_dronewq)
     assert_allclose(actual, results_dronewq, rtol=1e-2)
-    
+
     # Test utils
     rrs_img_list = sorted(glob.glob(os.path.join(settings.rrs_dir, "*.tif")))
     rrs_imgs_utils = utils.load_images(rrs_img_list)
@@ -149,7 +151,7 @@ def test_Ed():
 
 def test_chl_hu_ocx():
     actual = 1.0326097
-    
+
     # Test dronewq
     rrs_imgs_dronewq = dronewq.load_imgs(settings.rrs_dir)
     results_dronewq = []
@@ -159,7 +161,7 @@ def test_chl_hu_ocx():
     results_dronewq = np.array(results_dronewq)
     results_dronewq = np.squeeze(results_dronewq)
     assert_allclose(actual, results_dronewq, rtol=1e-2)
-    
+
     # Test utils
     # utils.chl_hu_ocx takes (Rrsblue, Rrsgreen, Rrsred) as separate arguments
     rrs_img_list = sorted(glob.glob(os.path.join(settings.rrs_dir, "*.tif")))
@@ -177,7 +179,7 @@ def test_chl_hu_ocx():
 
 def test_tsm_nechad():
     actual = 1.6712015
-    
+
     # Test dronewq
     rrs_imgs_dronewq = dronewq.load_imgs(settings.rrs_dir)
     results_dronewq = []
@@ -187,7 +189,7 @@ def test_tsm_nechad():
     results_dronewq = np.array(results_dronewq)
     results_dronewq = np.squeeze(results_dronewq)
     assert_allclose(actual, results_dronewq, rtol=1e-2)
-    
+
     # Test utils
     # utils.tsm_nechad takes Rrsred as argument
     rrs_img_list = sorted(glob.glob(os.path.join(settings.rrs_dir, "*.tif")))
@@ -207,7 +209,7 @@ def test_chl_hu():
     """Test utils.chl_hu algorithm"""
     rrs_img_list = sorted(glob.glob(os.path.join(settings.rrs_dir, "*.tif")))
     rrs_imgs = utils.load_images(rrs_img_list)
-    
+
     for rrs_img in rrs_imgs:
         # Band indices: 0=blue, 1=green, 2=red
         result = utils.chl_hu(rrs_img[0, :, :], rrs_img[1, :, :], rrs_img[2, :, :])
@@ -220,7 +222,7 @@ def test_chl_ocx():
     """Test utils.chl_ocx algorithm"""
     rrs_img_list = sorted(glob.glob(os.path.join(settings.rrs_dir, "*.tif")))
     rrs_imgs = utils.load_images(rrs_img_list)
-    
+
     for rrs_img in rrs_imgs:
         # Band indices: 0=blue, 1=green
         result = utils.chl_ocx(rrs_img[0, :, :], rrs_img[1, :, :])
@@ -233,7 +235,7 @@ def test_chl_gitelson():
     """Test utils.chl_gitelson algorithm"""
     rrs_img_list = sorted(glob.glob(os.path.join(settings.rrs_dir, "*.tif")))
     rrs_imgs = utils.load_images(rrs_img_list)
-    
+
     for rrs_img in rrs_imgs:
         # Band indices: 2=red, 3=red_edge
         result = utils.chl_gitelson(rrs_img[2, :, :], rrs_img[3, :, :])
@@ -244,4 +246,6 @@ def test_chl_gitelson():
 
 if __name__ == "__main__":
     import pytest
+
     pytest.main([__file__, "-v"])
+

@@ -5,7 +5,7 @@ import os
 
 import pandas as pd
 
-from micasense.imageset import ImageSet
+from ..micasense.imageset import ImageSet
 
 
 def write_metadata_csv(img_dir, csv_output_path):

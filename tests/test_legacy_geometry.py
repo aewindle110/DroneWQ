@@ -1,21 +1,26 @@
-import sys
 import os
-# Needs access to 
+import sys
+
+# Needs access to
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
 
 import unittest
+
 import numpy as np
+
+import dronewq.legacy.utils as utils
+from dronewq.core.geometry import Paralelogram2D as DronewqParalelogram2D
 from dronewq.core.geometry import (
-    Paralelogram2D as DronewqParalelogram2D,
     are_points_within_vertices as dronewq_are_points_within_vertices,
-    euclidean_distance as dronewq_euclidean_distance,
-    get_center as dronewq_get_center,
-    is_on_right_side as dronewq_is_on_right_side,
+)
+from dronewq.core.geometry import euclidean_distance as dronewq_euclidean_distance
+from dronewq.core.geometry import get_center as dronewq_get_center
+from dronewq.core.geometry import is_on_right_side as dronewq_is_on_right_side
+from dronewq.core.geometry import (
     is_point_within_vertices as dronewq_is_point_within_vertices,
 )
-import utils
 
 
 class TestIsOnRightSide(unittest.TestCase):
@@ -47,7 +52,7 @@ class TestIsOnRightSide(unittest.TestCase):
         result_dronewq = dronewq_is_on_right_side(1, 0, (0, 0), (1, 1))
         self.assertEqual(result_utils, result_dronewq)
         self.assertTrue(result_utils)
-        
+
         result_utils = utils.is_on_right_side(0, 1, (0, 0), (1, 1))
         result_dronewq = dronewq_is_on_right_side(0, 1, (0, 0), (1, 1))
         self.assertEqual(result_utils, result_dronewq)
@@ -91,7 +96,7 @@ class TestIsPointWithinVertices(unittest.TestCase):
         result_dronewq = dronewq_is_point_within_vertices(0.5, 0.3, vertices)
         self.assertEqual(result_utils, result_dronewq)
         self.assertTrue(result_utils)
-        
+
         result_utils = utils.is_point_within_vertices(0, 1, vertices)
         result_dronewq = dronewq_is_point_within_vertices(0, 1, vertices)
         self.assertEqual(result_utils, result_dronewq)
@@ -258,8 +263,12 @@ class TestParalelogram2D(unittest.TestCase):
         """Test initialization of Paralelogram2D"""
         self.assertEqual(len(self.parallelogram_utils.points), 4)
         self.assertEqual(len(self.parallelogram_dronewq.points), 4)
-        self.assertEqual(self.parallelogram_utils.lines, [[0, 1], [1, 2], [2, 3], [3, 0]])
-        self.assertEqual(self.parallelogram_dronewq.lines, [[0, 1], [1, 2], [2, 3], [3, 0]])
+        self.assertEqual(
+            self.parallelogram_utils.lines, [[0, 1], [1, 2], [2, 3], [3, 0]]
+        )
+        self.assertEqual(
+            self.parallelogram_dronewq.lines, [[0, 1], [1, 2], [2, 3], [3, 0]]
+        )
         self.assertEqual(self.parallelogram_utils.pairs, [[0, 2], [1, 3]])
         self.assertEqual(self.parallelogram_dronewq.pairs, [[0, 2], [1, 3]])
 
@@ -310,11 +319,11 @@ class TestParalelogram2D(unittest.TestCase):
         points_dronewq = self.points.copy()
         para_utils = utils.Paralelogram2D(points_utils)
         para_dronewq = DronewqParalelogram2D(points_dronewq)
-        
+
         offset = np.array([1, 1])
         para_utils.move_line_from_offset(0, offset)
         para_dronewq.move_line_from_offset(0, offset)
-        
+
         np.testing.assert_array_almost_equal(para_utils.points, para_dronewq.points)
 
     def test_move_line_from_offset_negative(self):
@@ -323,11 +332,11 @@ class TestParalelogram2D(unittest.TestCase):
         points_dronewq = self.points.copy()
         para_utils = utils.Paralelogram2D(points_utils)
         para_dronewq = DronewqParalelogram2D(points_dronewq)
-        
+
         offset = np.array([-2, -3])
         para_utils.move_line_from_offset(3, offset)
         para_dronewq.move_line_from_offset(3, offset)
-        
+
         np.testing.assert_array_almost_equal(para_utils.points, para_dronewq.points)
 
     def test_are_on_right_side_of_line_true(self):
@@ -357,10 +366,12 @@ class TestParalelogram2D(unittest.TestCase):
     def test_are_on_right_side_of_line_empty_list(self):
         """Test are_on_right_side_of_line with empty point list"""
         result_utils = self.parallelogram_utils.are_on_right_side_of_line(
-            0, np.array([]).reshape(0, 2),
+            0,
+            np.array([]).reshape(0, 2),
         )
         result_dronewq = self.parallelogram_dronewq.are_on_right_side_of_line(
-            0, np.array([]).reshape(0, 2),
+            0,
+            np.array([]).reshape(0, 2),
         )
         self.assertEqual(result_utils, result_dronewq)
         self.assertTrue(result_utils)  # all() of empty list is True
@@ -374,10 +385,10 @@ class TestParalelogram2DEdgeCases(unittest.TestCase):
         points = np.array([[0.5, 0.5], [2.5, 0.5], [3.5, 1.5], [1.5, 1.5]])
         para_utils = utils.Paralelogram2D(points.copy())
         para_dronewq = DronewqParalelogram2D(points.copy())
-        
+
         center_utils = para_utils.get_center()
         center_dronewq = para_dronewq.get_center()
-        
+
         np.testing.assert_array_almost_equal(center_utils, center_dronewq)
         self.assertIsInstance(center_utils, np.ndarray)
 
@@ -386,10 +397,10 @@ class TestParalelogram2DEdgeCases(unittest.TestCase):
         points = np.array([[-2, -2], [0, -2], [1, -1], [-1, -1]])
         para_utils = utils.Paralelogram2D(points.copy())
         para_dronewq = DronewqParalelogram2D(points.copy())
-        
+
         center_utils = para_utils.get_center()
         center_dronewq = para_dronewq.get_center()
-        
+
         np.testing.assert_array_almost_equal(center_utils, center_dronewq)
         self.assertIsInstance(center_utils, np.ndarray)
 
@@ -398,13 +409,14 @@ class TestParalelogram2DEdgeCases(unittest.TestCase):
         points = np.array([[0, 0], [1, 0], [2, 0], [3, 0]])
         para_utils = utils.Paralelogram2D(points.copy())
         para_dronewq = DronewqParalelogram2D(points.copy())
-        
+
         center_utils = para_utils.get_center()
         center_dronewq = para_dronewq.get_center()
-        
+
         np.testing.assert_array_almost_equal(center_utils, center_dronewq)
         self.assertIsInstance(center_utils, np.ndarray)
 
 
 if __name__ == "__main__":
     unittest.main()
+

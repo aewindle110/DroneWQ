@@ -9,7 +9,7 @@ import pandas as pd
 import rasterio
 
 import dronewq
-import micasense
+import dronewq.micasense as micasense
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)

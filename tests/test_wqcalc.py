@@ -5,15 +5,11 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import rasterio
-
-from dronewq.utils.settings import settings
 
 TEST_PROJECT_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(__file__), ".test_project")
 )
 os.makedirs(TEST_PROJECT_ROOT, exist_ok=True)
-settings.main_dir = TEST_PROJECT_ROOT  # Configure main_dir for tests
 
 
 from dronewq.core.wq_calc import (
@@ -98,7 +94,7 @@ def test_compute_one_file(clean_rrs_dir):
     "alg", ["chl_hu", "chl_ocx", "chl_hu_ocx", "chl_gitelson", "tsm_nechad"]
 )
 def test_save_wq_imgs_all_algorithms(clean_rrs_dir, alg):
-    save_wq_imgs(rrs_dir=clean_rrs_dir, wq_alg=alg, num_workers=1)
+    save_wq_imgs(rrs_dir=clean_rrs_dir, wq_algs=[alg], num_workers=1)
     out_dir = Path(TEST_PROJECT_ROOT) / f"masked_{alg}_imgs"
     assert out_dir.exists()
     assert any(f.suffix == ".tif" for f in out_dir.iterdir())
@@ -106,8 +102,7 @@ def test_save_wq_imgs_all_algorithms(clean_rrs_dir, alg):
 
 def test_save_wq_imgs_external_executor(clean_rrs_dir):
     with ProcessPoolExecutor(max_workers=2) as exec:
-        save_wq_imgs(rrs_dir=clean_rrs_dir, wq_alg="tsm_nechad", executor=exec)
+        save_wq_imgs(rrs_dir=clean_rrs_dir, wq_algs=["tsm_nechad"], executor=exec)
 
     out_dir = Path(TEST_PROJECT_ROOT) / "masked_tsm_nechad_imgs"
     assert len(list(out_dir.glob("*.tif"))) >= 1
-

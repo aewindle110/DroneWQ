@@ -31,7 +31,8 @@ import os
 import cv2
 import numpy as np
 
-from micasense import dls, metadata, plotutils
+from . import dls, metadata, plotutils
+
 
 # helper function to convert euler angles to a rotation matrix
 def rotations_degrees_to_rotation_matrix(rotation_degrees):
@@ -73,7 +74,7 @@ class Image:
         ):
             raise ValueError(
                 "Library requires images taken with RedEdge-(3/M/MX) camera firmware v2.1.0 or later. "
-                 "Upgrade your camera firmware to at least version 2.1.0 to use this library with RedEdge-(3/M/MX) cameras.",
+                "Upgrade your camera firmware to at least version 2.1.0 to use this library with RedEdge-(3/M/MX) cameras.",
             )
 
         self.utc_time = self.meta.utc_time()
@@ -160,7 +161,10 @@ class Image:
                 self.solar_elevation,
                 self.solar_azimuth,
             ) = dls.compute_sun_angle(
-                self.location, (0, 0, 0), self.utc_time, self.dls_orientation_vector,
+                self.location,
+                (0, 0, 0),
+                self.utc_time,
+                self.dls_orientation_vector,
             )
             self.angular_correction = dls.fresnel(self.sun_sensor_angle)
             self.horizontal_irradiance = 0
@@ -208,7 +212,10 @@ class Image:
         for cases where the camera system did not do it correctly
         """
         _, _, _, self.solar_elevation, self.solar_azimuth = dls.compute_sun_angle(
-            self.location, (0, 0, 0), self.utc_time, np.array([0, 0, -1]),
+            self.location,
+            (0, 0, 0),
+            self.utc_time,
+            np.array([0, 0, -1]),
         )
         return self.horizontal_irradiance_from_direct_scattered()
 
@@ -456,7 +463,10 @@ class Image:
         self.__undistorted_source = image
 
         new_cam_mat, _ = cv2.getOptimalNewCameraMatrix(
-            self.cv2_camera_matrix(), self.cv2_distortion_coeff(), self.size(), 1,
+            self.cv2_camera_matrix(),
+            self.cv2_distortion_coeff(),
+            self.size(),
+            1,
         )
         map1, map2 = cv2.initUndistortRectifyMap(
             self.cv2_camera_matrix(),
@@ -481,7 +491,9 @@ class Image:
         if title is None:
             title = f"{self.band_name} Band {self.band_index} Intensity (DN*sec)"
         return plotutils.plotwithcolorbar(
-            self.intensity(), title=title, figsize=figsize,
+            self.intensity(),
+            title=title,
+            figsize=figsize,
         )
 
     def plot_radiance(self, title=None, figsize=None):
@@ -495,7 +507,9 @@ class Image:
         if title is None:
             title = f"{self.band_name} Band {self.band_index} Vignette"
         return plotutils.plotwithcolorbar(
-            self.plottable_vignette(), title=title, figsize=figsize,
+            self.plottable_vignette(),
+            title=title,
+            figsize=figsize,
         )
 
     def plot_undistorted_radiance(self, title=None, figsize=None):
@@ -503,7 +517,9 @@ class Image:
         if title is None:
             title = f"{self.band_name} Band {self.band_index} Undistorted Radiance"
         return plotutils.plotwithcolorbar(
-            self.undistorted(self.radiance()), title=title, figsize=figsize,
+            self.undistorted(self.radiance()),
+            title=title,
+            figsize=figsize,
         )
 
     def plot_all(self, figsize=(13, 10)):
@@ -515,8 +531,7 @@ class Image:
         ]
         plot_types = ["Raw", "Vignette", "Radiance", "Undistorted Radiance"]
         titles = [
-            f"{self.band_name!s} Band {self.band_index!s} {tpe}"
-            for tpe in plot_types
+            f"{self.band_name!s} Band {self.band_index!s} {tpe}" for tpe in plot_types
         ]
         plotutils.subplotwithcolorbar(2, 2, plots, titles, figsize=figsize)
 
@@ -535,10 +550,16 @@ class Image:
         A[0:3, 3] = T
         A[3, 3] = 1.0
         C, _ = cv2.getOptimalNewCameraMatrix(
-            self.cv2_camera_matrix(), self.cv2_distortion_coeff(), self.size(), 1,
+            self.cv2_camera_matrix(),
+            self.cv2_distortion_coeff(),
+            self.size(),
+            1,
         )
         Cr, _ = cv2.getOptimalNewCameraMatrix(
-            ref.cv2_camera_matrix(), ref.cv2_distortion_coeff(), ref.size(), 1,
+            ref.cv2_camera_matrix(),
+            ref.cv2_distortion_coeff(),
+            ref.size(),
+            1,
         )
         CC = np.zeros((4, 4))
         CC[0:3, 0:3] = C

@@ -1,7 +1,7 @@
-import sys
 import os
+import sys
 
-# Needs access to 
+# Needs access to
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
@@ -9,7 +9,7 @@ if repo_root not in sys.path:
 import numpy as np
 from numpy.testing import assert_allclose
 
-import utils
+import dronewq.legacy.utils as utils
 
 
 def test_chl_hu_basic():
@@ -45,7 +45,8 @@ def test_chl_ocx_basic():
 
     out = utils.chl_ocx(Rrsblue, Rrsgreen)
     assert_allclose(out, expected)
-    
+
+
 def test_chl_hu_ocx_prefers_ocx_for_equal_bands():
     # when all bands equal, CI = 0 -> ChlCI = 10**ci1 (~0.322) and OCX = 10**a0 (~1.58)
     val = np.array([[0.01]])
@@ -113,14 +114,18 @@ def test_compute_lines_and_compute_flight_lines():
     altitude = 100.0
     pitch = 0.5
     roll = 0.1
-    flight_lines = utils.compute_flight_lines(captures_yaw, altitude, pitch, roll, threshold=10)
+    flight_lines = utils.compute_flight_lines(
+        captures_yaw, altitude, pitch, roll, threshold=10
+    )
 
     # should produce two flight lines
     assert isinstance(flight_lines, list)
     assert len(flight_lines) >= 2
     # each entry should have required keys
     for f in flight_lines:
-        assert set(['start', 'end', 'yaw', 'pitch', 'roll', 'alt']).issubset(set(f.keys()))
+        assert set(["start", "end", "yaw", "pitch", "roll", "alt"]).issubset(
+            set(f.keys())
+        )
 
 
 def test_paralelogram2d_methods():
@@ -146,4 +151,6 @@ def test_paralelogram2d_methods():
 
     # are_on_right_side_of_line for a point known to be on right side of line 0
     test_points = np.array([[2.1, 0.5]])
-    assert p.are_on_right_side_of_line(1, test_points) or isinstance(p.are_on_right_side_of_line(1, test_points), bool)
+    assert p.are_on_right_side_of_line(1, test_points) or isinstance(
+        p.are_on_right_side_of_line(1, test_points), bool
+    )

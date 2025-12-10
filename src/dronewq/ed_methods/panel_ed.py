@@ -11,7 +11,8 @@ import pandas as pd
 import rasterio
 
 from dronewq.utils.settings import settings
-from micasense import imageset
+
+from ..micasense import imageset
 
 logger = logging.getLogger(__name__)
 

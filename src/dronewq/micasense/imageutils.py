@@ -30,6 +30,7 @@ from skimage.filters import gaussian, rank
 from skimage.morphology import disk
 from skimage.util import img_as_ubyte
 
+
 def normalize(im, min=None, max=None):
     width, height = im.shape
     norm = np.zeros((width, height), dtype=np.float32)
@@ -122,7 +123,8 @@ def align(pair):
     else:
         # warp_matrix = np.array([[1,0,0],[0,1,0]], dtype=np.float32)
         warp_matrix = np.array(
-            [[1, 0, translations[1]], [0, 1, translations[0]]], dtype=np.float32,
+            [[1, 0, translations[1]], [0, 1, translations[0]]],
+            dtype=np.float32,
         )
 
     w = pair["ref_image"].shape[1]
@@ -159,14 +161,22 @@ def align(pair):
             gray1_pyr.insert(
                 0,
                 cv2.resize(
-                    gray1_pyr[0], None, fx=1 / 2, fy=1 / 2, interpolation=cv2.INTER_AREA,
+                    gray1_pyr[0],
+                    None,
+                    fx=1 / 2,
+                    fy=1 / 2,
+                    interpolation=cv2.INTER_AREA,
                 ),
             )
             gray2_pyr[0] = gaussian(normalize(gray2_pyr[0]))
             gray2_pyr.insert(
                 0,
                 cv2.resize(
-                    gray2_pyr[0], None, fx=1 / 2, fy=1 / 2, interpolation=cv2.INTER_AREA,
+                    gray2_pyr[0],
+                    None,
+                    fx=1 / 2,
+                    fy=1 / 2,
+                    interpolation=cv2.INTER_AREA,
                 ),
             )
 
@@ -182,13 +192,15 @@ def align(pair):
             grad2 = gradient(gray2_pyr[level])
 
             if show_debug_images:
-                from micasense import plotutils
+                from . import plotutils
 
                 plotutils.plotwithcolorbar(
-                    gray1_pyr[level], f"ref level {level}",
+                    gray1_pyr[level],
+                    f"ref level {level}",
                 )
                 plotutils.plotwithcolorbar(
-                    gray2_pyr[level], f"match level {level}",
+                    gray2_pyr[level],
+                    f"match level {level}",
                 )
                 plotutils.plotwithcolorbar(grad1, f"ref grad level {level}")
                 plotutils.plotwithcolorbar(grad2, f"match grad level {level}")
@@ -206,7 +218,11 @@ def align(pair):
                 )
             except TypeError:
                 cc, warp_matrix = cv2.findTransformECC(
-                    grad1, grad2, warp_matrix, warp_mode, criteria,
+                    grad1,
+                    grad2,
+                    warp_matrix,
+                    warp_mode,
+                    criteria,
                 )
 
             if show_debug_images:
@@ -219,11 +235,13 @@ def align(pair):
             ):  # scale up only the offset by a factor of 2 for the next (larger image) pyramid level
                 if warp_mode == cv2.MOTION_HOMOGRAPHY:
                     warp_matrix = warp_matrix * np.array(
-                        [[1, 1, 2], [1, 1, 2], [0.5, 0.5, 1]], dtype=np.float32,
+                        [[1, 1, 2], [1, 1, 2], [0.5, 0.5, 1]],
+                        dtype=np.float32,
                     )
                 else:
                     warp_matrix = warp_matrix * np.array(
-                        [[1, 1, 2], [1, 1, 2]], dtype=np.float32,
+                        [[1, 1, 2], [1, 1, 2]],
+                        dtype=np.float32,
                     )
 
     return {
@@ -287,7 +305,8 @@ def align_capture(
                     "match_image": img.undistorted(img.radiance()).astype("float32"),
                     "translations": translations,
                     "warp_matrix_init": np.array(
-                        warp_matrices_init[i], dtype=np.float32,
+                        warp_matrices_init[i],
+                        dtype=np.float32,
                     ),
                     "debug": debug,
                     "pyramid_levels": pyramid_levels,
@@ -422,13 +441,19 @@ def find_crop_bounds(capture, registration_transforms, warp_mode=cv2.MOTION_HOMO
     bounds = [
         get_inner_rect(s, a, d, c, warp_mode=warp_mode)[0]
         for s, a, d, c in zip(
-            image_sizes, registration_transforms, lens_distortions, camera_matrices,
+            image_sizes,
+            registration_transforms,
+            lens_distortions,
+            camera_matrices,
         )
     ]
     edges = [
         get_inner_rect(s, a, d, c, warp_mode=warp_mode)[1]
         for s, a, d, c in zip(
-            image_sizes, registration_transforms, lens_distortions, camera_matrices,
+            image_sizes,
+            registration_transforms,
+            lens_distortions,
+            camera_matrices,
         )
     ]
     combined_bounds = get_combined_bounds(bounds, image_sizes[0])
@@ -552,14 +577,18 @@ def map_points(
     # extra dimension makes opencv happy
     pts = np.array([pts], dtype=np.float32)
     new_cam_mat, _ = cv2.getOptimalNewCameraMatrix(
-        camera_matrix, distortion_coeffs, image_size, 1,
+        camera_matrix,
+        distortion_coeffs,
+        image_size,
+        1,
     )
     new_pts = cv2.undistortPoints(pts, camera_matrix, distortion_coeffs, P=new_cam_mat)
     if warp_mode == cv2.MOTION_AFFINE:
         new_pts = cv2.transform(new_pts, cv2.invertAffineTransform(warpMatrix))
     if warp_mode == cv2.MOTION_HOMOGRAPHY:
         new_pts = cv2.perspectiveTransform(
-            new_pts, np.linalg.inv(warpMatrix).astype(np.float32),
+            new_pts,
+            np.linalg.inv(warpMatrix).astype(np.float32),
         )
     # apparently the output order has changed in 4.1.1 (possibly earlier from 3.4.3)
     if cv2.__version__ <= "3.4.4":

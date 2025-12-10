@@ -35,7 +35,7 @@ from pprint import pprint
 import exiftool
 from tqdm import tqdm
 
-from micasense import capture, image
+from . import capture, image
 
 warnings.simplefilter(action="once")
 
@@ -46,7 +46,11 @@ def image_from_file(filename):
 
 
 def parallel_process(
-    function, iterable, parameters, progress_callback=None, use_tqdm=False,
+    function,
+    iterable,
+    parameters,
+    progress_callback=None,
+    use_tqdm=False,
 ):
     """
     Multiprocessing Pool handler.
@@ -72,7 +76,9 @@ def parallel_process(
 
             # Receive Future objects as they complete. Print out the progress as tasks complete
             for _ in tqdm(
-                iterable=as_completed(futures), desc="Processing ImageSet", **kwargs,
+                iterable=as_completed(futures),
+                desc="Processing ImageSet",
+                **kwargs,
             ):
                 pass
         elif progress_callback is not None:
@@ -104,13 +110,15 @@ def save_capture(params, cap):
 
         if params["output_stack_dir"]:
             output_stack_file_path = os.path.join(
-                params["output_stack_dir"], cap.uuid + ".tif",
+                params["output_stack_dir"],
+                cap.uuid + ".tif",
             )
             if params["overwrite"] or not os.path.exists(output_stack_file_path):
                 cap.save_capture_as_stack(output_stack_file_path)
         if params["output_rgb_dir"]:
             output_rgb_file_path = os.path.join(
-                params["output_rgb_dir"], cap.uuid + ".jpg",
+                params["output_rgb_dir"],
+                cap.uuid + ".jpg",
             )
             if params["overwrite"] or not os.path.exists(output_rgb_file_path):
                 cap.save_capture_as_rgb(output_rgb_file_path)
@@ -131,7 +139,11 @@ class ImageSet:
 
     @classmethod
     def from_directory(
-        cls, directory, progress_callback=None, use_tqdm=False, exiftool_path=None,
+        cls,
+        directory,
+        progress_callback=None,
+        use_tqdm=False,
+        exiftool_path=None,
     ):
         """
         Create an ImageSet recursively from the files in a directory.
@@ -316,7 +328,9 @@ class ImageSet:
                 "leave": True,
             }
             for cap in tqdm(
-                iterable=self.captures, desc="Processing ImageSet", **kwargs,
+                iterable=self.captures,
+                desc="Processing ImageSet",
+                **kwargs,
             ):
                 save_capture(params, cap)
         else:

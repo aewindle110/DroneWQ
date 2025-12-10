@@ -13,7 +13,7 @@ requires = ["hatchling", "hatch-vcs"]
 [project]
 name = "dronewq"
 # You can chose to use dynamic versioning with hatch or static where you add it manually.
-version = "0.1.1"
+version = "0.1.5"
 description = """DroneWQ is a Python package that can be used to analyze multispectral
 data collected from a drone to derive ocean color radiometry and water quality properties.
 These scripts are specific for the MicaSense RedEdge and Altum cameras."""
@@ -82,7 +82,14 @@ dev = [
 # https://www.pyopensci.org/python-package-guide/package-structure-code/python-package-distribution-files-sdist-wheel.html
 [tool.hatch.build]
 only-packages = true
+exclude = [
+  "/app",
+]
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/app",
+]
 # This tells Hatch to build the package from the src/me directory.
 # Read more about src layouts here: https://www.pyopensci.org/python-package-guide/package-structure-code/python-package-structure.html
 [tool.hatch.build.targets.wheel]

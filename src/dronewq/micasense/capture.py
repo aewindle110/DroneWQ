@@ -33,7 +33,8 @@ import cv2
 import imageio
 import numpy as np
 
-from micasense import image, imageutils, plotutils
+from . import image, imageutils, plotutils
+
 
 class Capture:
     """
@@ -153,7 +154,12 @@ class Capture:
         )
 
     def __plot(
-        self, images, num_cols=2, plot_type=None, color_bar=True, fig_size=(14, 14),
+        self,
+        images,
+        num_cols=2,
+        plot_type=None,
+        color_bar=True,
+        fig_size=(14, 14),
     ):
         """
         Plot the Images from the Capture.
@@ -171,16 +177,22 @@ class Capture:
                 "{} Band {} {}".format(
                     str(img.band_name),
                     str(img.band_index),
-                    plot_type
-                    if img.band_name.upper() != "LWIR"
-                    else "Brightness Temperature",
+                    (
+                        plot_type
+                        if img.band_name.upper() != "LWIR"
+                        else "Brightness Temperature"
+                    ),
                 )
                 for img in self.images
             ]
         num_rows = int(math.ceil(float(len(self.images)) / float(num_cols)))
         if color_bar:
             return plotutils.subplotwithcolorbar(
-                num_rows, num_cols, images, titles, fig_size,
+                num_rows,
+                num_cols,
+                images,
+                titles,
+                fig_size,
             )
         return plotutils.subplot(num_rows, num_cols, images, titles, fig_size)
 
@@ -307,7 +319,9 @@ class Capture:
             [img.reflectance(force_recompute=force_recompute) for img in self.images]
 
     def compute_undistorted_reflectance(
-        self, irradiance_list=None, force_recompute=True,
+        self,
+        irradiance_list=None,
+        force_recompute=True,
     ):
         """
         Compute undistorted image reflectance from irradiance list.
@@ -318,7 +332,8 @@ class Capture:
         if irradiance_list is not None:
             [
                 img.undistorted_reflectance(
-                    irradiance_list[i], force_recompute=force_recompute,
+                    irradiance_list[i],
+                    force_recompute=force_recompute,
                 )
                 for i, img in enumerate(self.images)
             ]
@@ -428,7 +443,8 @@ class Capture:
         return irradiance_list
 
     def panel_reflectance(
-        self, panel_refl_by_band=None,
+        self,
+        panel_refl_by_band=None,
     ):  # FIXME: panel_refl_by_band parameter isn't used?
         """Return a list of mean panel reflectance values."""
         if self.panels is None:
@@ -453,7 +469,7 @@ class Capture:
 
     def detect_panels(self):
         """Detect reflectance panels in the Capture, and return a count."""
-        from micasense.panel import Panel
+        from .panel import Panel
 
         if self.panels is not None and self.detected_panel_count == len(self.images):
             return self.detected_panel_count
@@ -478,7 +494,9 @@ class Capture:
             if not self.panels_in_all_expected_images():
                 raise OSError("Panels not detected in all images.")
         self.__plot(
-            [p.plot_image() for p in self.panels], plot_type="Panels", color_bar=False,
+            [p.plot_image() for p in self.panels],
+            plot_type="Panels",
+            color_bar=False,
         )
 
     def set_external_rig_relatives(self, external_rig_relatives):
@@ -541,7 +559,9 @@ class Capture:
         if warp_matrices == None:
             warp_matrices = self.get_warp_matrices()
         cropped_dimensions, _ = imageutils.find_crop_bounds(
-            self, warp_matrices, warp_mode=motion_type,
+            self,
+            warp_matrices,
+            warp_mode=motion_type,
         )
         self.__aligned_capture = imageutils.aligned_capture(
             self,
@@ -565,7 +585,10 @@ class Capture:
         return self.__aligned_capture.shape
 
     def save_capture_as_stack(
-        self, out_file_name, sort_by_wavelength=False, photometric="MINISBLACK",
+        self,
+        out_file_name,
+        sort_by_wavelength=False,
+        photometric="MINISBLACK",
     ):
         """
         Output the Images in the Capture object as GTiff image stack.
@@ -573,10 +596,8 @@ class Capture:
         :param sort_by_wavelength: boolean
         :param photometric: str GDAL argument for GTiff color matching
         """
-        from osgeo.gdal import (
-            GDT_Float32,
-            GetDriverByName,
-        )  # PGedits I also changed this
+        from osgeo.gdal import GDT_Float32  # PGedits I also changed this
+        from osgeo.gdal import GetDriverByName
 
         if self.__aligned_capture is None:
             raise RuntimeError(
@@ -669,10 +690,12 @@ class Capture:
 
         # modify these percentiles to adjust contrast. for many images, 0.5 and 99.5 are good values
         im_min = np.percentile(
-            self.__aligned_capture[:, :, rgb_band_indices].flatten(), hist_min_percent,
+            self.__aligned_capture[:, :, rgb_band_indices].flatten(),
+            hist_min_percent,
         )
         im_max = np.percentile(
-            self.__aligned_capture[:, :, rgb_band_indices].flatten(), hist_max_percent,
+            self.__aligned_capture[:, :, rgb_band_indices].flatten(),
+            hist_max_percent,
         )
 
         for i in rgb_band_indices:
@@ -680,7 +703,9 @@ class Capture:
             # maintain the "white balance" of the calibrated image
             if white_balance == "norm":
                 im_display[:, :, i] = imageutils.normalize(
-                    self.__aligned_capture[:, :, i], im_min, im_max,
+                    self.__aligned_capture[:, :, i],
+                    im_min,
+                    im_max,
                 )
             else:
                 im_display[:, :, i] = imageutils.normalize(
@@ -752,14 +777,18 @@ class Capture:
         # for rgb true color, we usually want to use the same min and max scaling across the 3 bands to
         # maintain the "white balance" of the calibrated image
         im_min = np.percentile(
-            self.__aligned_capture[:, :, rgb_band_indices].flatten(), hist_min_percent,
+            self.__aligned_capture[:, :, rgb_band_indices].flatten(),
+            hist_min_percent,
         )  # modify these percentiles to adjust contrast
         im_max = np.percentile(
-            self.__aligned_capture[:, :, rgb_band_indices].flatten(), hist_max_percent,
+            self.__aligned_capture[:, :, rgb_band_indices].flatten(),
+            hist_max_percent,
         )  # for many images, 0.5 and 99.5 are good values
         for dst_band, src_band in enumerate(rgb_band_indices):
             im_display[:, :, dst_band] = imageutils.normalize(
-                self.__aligned_capture[:, :, src_band], im_min, im_max,
+                self.__aligned_capture[:, :, src_band],
+                im_min,
+                im_max,
             )
 
         # Compute a histogram

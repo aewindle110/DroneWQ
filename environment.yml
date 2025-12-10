@@ -5,6 +5,8 @@ dependencies:
   - python=3.10
   - numpy<=1.26 # for compatibility with micasense
   - gdal
+  - exiftool
+  - zbar
   - rasterio
   - geopandas
   - geopy
@@ -23,6 +25,7 @@ dependencies:
   - tqdm
   - pysolar
   - mapboxgl
+  - flask
   - pip:
       - cameratransform==1.2
       - pyzbar==0.1.9
