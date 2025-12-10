@@ -1,6 +1,4 @@
-/****************************************************
- * MASKING INPUT LOGIC
- ****************************************************/
+//MASKING INPUT LOGIC
 document.addEventListener("DOMContentLoaded", function () {
   const maskingSelect = document.getElementById("maskingSelect");
   if (maskingSelect) {
@@ -22,9 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-/****************************************************
- * NAVIGATION
- ****************************************************/
+//Navigation 
 function navigate(screen, fromScreen) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(screen).classList.add("active");
@@ -127,11 +123,18 @@ function navigate(screen, fromScreen) {
           console.log("[Results] Trajectory data loaded");
         }
 
+<<<<<<< HEAD
         // Initialize mosaic cards
             if (typeof renderMosaicCards === 'function') {
             renderMosaicCards();
             console.log('[Results] Mosaic cards loaded');
             }
+=======
+        if (typeof renderMosaicCards === "function") {
+            renderMosaicCards();
+            console.log("[Results] Mosaic cards loaded");
+        }       
+>>>>>>> fix-mosaic-persistence
 
 
       } catch (err) {
@@ -172,9 +175,8 @@ document.addEventListener("click", function () {
 });
 
 
-/****************************************************
- * PROJECT OPTIONS DIALOG
- ****************************************************/
+
+ //PROJECT OPTIONS DIALOG
 function showProjectOptionsDialog() {
   document.getElementById("projectOptionsDialog").style.display = "flex";
 
@@ -273,14 +275,7 @@ async function applySettingsChanges() {
   }
 }
 
-
-
-
-
-
-/****************************************************
- * MOSAIC TOOLS (unchanged)
- ****************************************************/
+//MOSAIC TOOLS 
 let mosaicEditMode = false;
 let currentRotation = 0;
 let isDragging = false;
@@ -365,9 +360,7 @@ function saveMosaicPosition() {
   toggleMosaicEditMode();
 }
 
-/****************************************************
- * OPEN PROJECT SETTINGS (loads screen + saves ID)
- ****************************************************/
+// OPEN PROJECT SETTINGS (loads screen + saves ID)
 async function openProjectSettings() {
   console.log("[Settings] Opening project settings");
 
@@ -432,9 +425,9 @@ function openProjectSettingsFromDashboard(projectId) {
 window.openProjectSettingsFromDashboard = openProjectSettingsFromDashboard;
 
 
-/****************************************************
- * LOAD PROJECT INTO SETTINGS SCREEN
- ****************************************************/
+
+ //LOAD PROJECT INTO SETTINGS SCREEN
+
 async function loadSettingsScreen(projectId) {
   try {
     const res = await fetch(`http://localhost:8889/api/projects/${projectId}`);
@@ -501,9 +494,8 @@ async function loadSettingsScreen(projectId) {
 
 
 
-/****************************************************
- * PAGE LOAD INITIALIZATION
- ****************************************************/
+//PAGE LOAD INITIALIZATION
+
 document.addEventListener("DOMContentLoaded", function () {
   setupDashboardOnce();
 
