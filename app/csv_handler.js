@@ -1,4 +1,4 @@
-/**
+/*
  * csv_handler.js
  * Author: Nidhi Khiantani
  * Description: Displays CSV data files as interactive tables with modal views

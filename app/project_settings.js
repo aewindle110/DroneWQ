@@ -1,4 +1,4 @@
-/**
+/*
  * project_settings.js
  * Author: Nidhi Khiantani
  * Description: Collects processing parameters and manages project configuration settings

@@ -1,4 +1,4 @@
-/**
+/*
  * trajectory_handler.js
  * Author: Nidhi Khiantani
  * Description: Displays flight metadata summary and trajectory visualization plot

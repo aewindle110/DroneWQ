@@ -1,4 +1,4 @@
-/**
+/*
  * main.js
  * Description: Electron main process that manages application lifecycle and spawns Flask backend
  */

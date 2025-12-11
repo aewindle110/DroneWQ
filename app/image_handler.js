@@ -1,4 +1,4 @@
-/**
+/*
  * image_handler.js
  * Author: Nidhi Khiantani
  * Description: Image gallery that displays all thumbnail images with keyboard navigation support

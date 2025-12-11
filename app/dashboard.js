@@ -1,4 +1,4 @@
-/**
+/*
  * dashboard.js
  * Author: Nidhi Khiantani
  * Description: Project dashboard that displays, manages, and handles operations on all user projects

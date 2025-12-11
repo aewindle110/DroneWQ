@@ -1,4 +1,4 @@
-/**
+/*
  * mosaic_handler.js
  * Author: Nidhi Khiantani
  * Description: Interface for creating and displaying georeferenced water quality mosaics

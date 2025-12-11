@@ -1,4 +1,4 @@
-/**
+/*
  * charts.js
  * Author: Nidhi Khiantani
  * Description: Loads and displays radiometry and water quality plots from backend processing results

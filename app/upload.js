@@ -1,4 +1,4 @@
-/**
+/*
  * upload.js
  * Author: Nidhi Khiantani
  * Description: Handles project name input and data folder selection with backend validation

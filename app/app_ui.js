@@ -1,4 +1,4 @@
-/**
+/*
  * app_ui.js
  * Author: Nidhi Khiantani
  * Description: Main navigation controller that manages screen transitions and coordinates between different modules
