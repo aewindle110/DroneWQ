@@ -1,8 +1,6 @@
-/*
- * csv_handler.js
- * Author: Nidhi Khiantani
- * Description: Displays CSV data files as interactive tables with modal views
- */
+//csv_handler.js
+//Author: Nidhi Khiantani
+//Description: Displays CSV data files as interactive tables with modal views
 
 // Parse CSV file into array of objects
 function parseCSV(csvText) {
