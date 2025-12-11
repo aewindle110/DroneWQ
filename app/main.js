@@ -113,8 +113,41 @@ function createWindow() {
     {
       label: 'Help',
       submenu: [
-        { label: 'Documentation', click: () => console.log('Open docs') },
-        { label: 'About', click: () => console.log('About DroneWQ') },
+        { 
+          label: 'Documentation', 
+          click: () => console.log('Open docs') 
+        },
+        { 
+          label: 'About DroneWQ', 
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: 'About DroneWQ',
+              message: 'DroneWQ',
+              detail: `Version: 0.1.1
+
+Developed by:
+• Temuulen Enkhtamir
+• Kurtis Kwan
+• Nidhi Khiantani
+
+Clients and Researchers:
+• Anna Windle
+• Patrick Gray
+• David Johnston
+
+Supported by:
+• Professor Robert Duvall
+• Graduate TA Zanwen Fu
+• Duke University
+
+DroneWQ is a drone-based water quality analysis platform for remote sensing and environmental monitoring.
+
+© 2025 Duke University`,
+              buttons: ['OK']
+            });
+          }
+        },
       ],
     },
   ];
@@ -124,7 +157,6 @@ function createWindow() {
 
   mainWindow.on('closed', () => { mainWindow = null; });
 }
-
 //IPC 
 ipcMain.handle('select-folder', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
