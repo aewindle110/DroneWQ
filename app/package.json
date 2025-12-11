@@ -1,0 +1,39 @@
+{
+  "name": "DroneWQ",
+  "version": "0.1.1",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "app:dir": "electron-builder --dir",
+    "app:dist": "electron-builder"
+  },
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "devDependencies": {
+    "electron": "^39.2.4",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+  "mac": {
+    "category": "Research",
+    "sign": false
+    },
+  "extraResources": [
+    {
+      "from": "python",
+      "to": "python",
+      "filter": [
+        "**/*"
+      ]
+    },
+    {
+      "from": "backend",
+      "to": "backend",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ]
+  }
+}

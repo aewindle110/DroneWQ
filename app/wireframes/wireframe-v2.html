@@ -1,0 +1,748 @@
+<!-- wireframe_v2.html, Author: Nidhi Khiantani-->
+
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drone Data Processing Platform</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+   <div class="desktop-frame">
+    <main class="main-container">
+
+        <!-- HOME -->
+        <div id="home" class="screen active">
+          <div class="content-header">
+            <h1 class="content-title">Projects Dashboard</h1>
+          </div>
+          <div class="toolbar">
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search projects..."
+            />
+            <button class="btn btn-primary" onclick="navigate('project-name')">
+
+              + New Project
+            </button>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Project Name</th>
+                <th>Method</th>
+                <th>Data Source</th>
+                <th>Date Created</th>
+                <th style="text-align: center">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- PROJECT NAME SCREEN -->
+        <div id="project-name" class="screen">
+          <div class="content-header">
+            <div class="content-title">New Project</div>
+          </div>
+          
+          <div class="form-panel" style="max-width: 600px; margin: 80px auto;">
+            <div class="form-header">
+              <div style="font-size: 20px; font-weight: 600">
+                Name Your Project
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <input 
+                type="text" 
+                id="projectNameInput" 
+                class="form-select" 
+                placeholder="Enter project name..."
+                style="font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 16px;"
+              />
+            </div>
+            
+            <div class="form-actions">
+              <button class="btn btn-secondary" onclick="navigate('home')">
+                Cancel
+              </button>
+              <button id="projectNameNextBtn" class="btn btn-primary" onclick="proceedToUpload()" disabled>
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- UPLOAD SCREEN -->
+        <div id="upload" class="screen">
+          <div class="content-header">
+            <div class="content-title">Upload Data</div>
+          </div>
+          
+          <div style="max-width: 800px; margin: 0 auto;">
+            <!-- Show selected project name -->
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 30px; border-left: 4px solid #3498db;">
+              <strong>Project Name:</strong> <span id="displayProjectName" style="color: #2c3e50;"></span>
+            </div>
+
+            <div class="upload-zone">
+              <div style="font-size: 48px; margin-bottom: 20px">📁</div>
+              <div style="font-weight: 500; margin-bottom: 10px;">Select your data folder with the standard structure</div>
+              <div style="color: #7f8c8d; font-size: 13px; margin-top: 10px">
+                Required: panel/, raw_sky_imgs/, raw_water_imgs/, align_img/
+              </div>
+              <div id="selectedFolderDisplay" style="margin-top: 15px; color: #27ae60; font-weight: 500; display: none;">
+                ✓ Folder selected: <span id="selectedFolderPath"></span>
+              </div>
+              <button id="uploadFolderBtn" class="btn btn-primary" type="button" style="margin-top: 15px;">
+                Select Folder
+              </button>
+            </div>
+            
+            <div class="form-actions">
+              <button class="btn btn-secondary" onclick="navigate('project-name')">
+                Back
+              </button>
+              <button id="uploadNextBtn" class="btn btn-primary" onclick="proceedToMethod()" disabled>
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- METHOD -->
+        <div id="method" class="screen">
+          <div class="content-header">
+            <div class="content-title">Method Selection</div>
+          </div>
+          <div class="form-panel">
+            <div class="form-header">
+              <div class="step-indicator">1</div>
+              <div style="font-size: 20px; font-weight: 600">
+                Select Processing Methods
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="glintSelect"
+                >Sky Glint Removal Method</label
+              >
+              <select id="glintSelect" class="form-select">
+                <option value="" selected disabled>Select method...</option>
+                <option value="mobley_rho">Mobley Rho Method</option>
+                <option value="blackpixel">Black Pixel Method</option>
+                <option value="hedley">Hedley Method</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="irradianceSelect"
+                >Irradiance Normalization Method</label
+              >
+              <select id="irradianceSelect" class="form-select">
+                <option value="" selected disabled>Select method...</option>
+                <option value="panel_ed">Panel Ed</option>
+                <option value="dls_ed">DLS Ed</option>
+                <option value="dls_and_panel_ed">DLS corrected by panel</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+  <label class="form-label" for="maskingSelect">Pixel Masking (Optional)</label>
+  <select id="maskingSelect" class="form-select">
+    <option value="">None</option>
+    <option value="value_threshold">Value Threshold</option>
+    <option value="std_threshold">Standard Deviation Threshold</option>
+  </select>
+</div>
+
+    <!-- Conditional inputs for value_threshold -->
+    <div id="valueThresholdInputs" style="display: none; margin-left: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; margin-top: 10px;">
+      <div class="form-group">
+        <label class="form-label" for="nirThreshold">NIR Threshold</label>
+        <input type="number" id="nirThreshold" class="form-select" step="0.001" value="0.01" />
+        <small style="color: #7F8C8D; font-size: 12px;">Default: 0.01</small>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="greenThreshold">Green Threshold</label>
+        <input type="number" id="greenThreshold" class="form-select" step="0.001" value="0.005" />
+        <small style="color: #7F8C8D; font-size: 12px;">Default: 0.005</small>
+      </div>
+    </div>
+
+    <!-- Conditional inputs for std_threshold -->
+    <div id="stdThresholdInputs" style="display: none; margin-left: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; margin-top: 10px;">
+      <div class="form-group">
+        <label class="form-label" for="maskStdFactor">Mask Standard Deviation Factor</label>
+        <input type="number" id="maskStdFactor" class="form-select" step="0.1" value="1" />
+        <small style="color: #7F8C8D; font-size: 12px;">Default: 1</small>
+      </div>
+    </div>
+
+            <div class="form-actions">
+              <button class="btn btn-secondary" onclick="navigate('upload')">
+                Back
+              </button>
+            <button id="methodNextBtn" class="btn btn-primary">
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- OUTPUTS -->
+        <div id="outputs" class="screen">
+          <div class="content-header">
+            <div class="content-title">Output Selection</div>
+          </div>
+          <div class="form-panel">
+            <div class="form-header">
+              <div class="step-indicator">2</div>
+              <div style="font-size: 20px; font-weight: 600">
+                Select Outputs
+              </div>
+            </div>
+
+             <!-- Number of images input -->
+              <div class="form-group" style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid #E8ECF1;">
+                <label class="form-label" for="rrsImageCount">Number of Images for Radiometry Plots</label>
+                <input 
+                  type="number" 
+                  id="rrsImageCount" 
+                  class="form-select" 
+                  min="1" 
+                  value="25"
+                  style="max-width: 200px;"
+                />
+                <small style="color: #7F8C8D; font-size: 12px; display: block; margin-top: 5px;">
+                  Default: 25. You need atleast 25 images for analysis.
+                </small>
+              </div>
+
+              <!-- Select All checkbox -->
+              <div class="form-group" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #E8ECF1;">
+                <label class="checkbox-option" style="font-weight: 600;">
+                  <input type="checkbox" id="selectAllOutputs" />
+                  <span>Select All Water Quality Outputs</span>
+                </label>
+              </div>
+
+            <div class="checkbox-group">
+              <label class="checkbox-option">
+                <input type="checkbox" class="outputChk" data-key="chl_hu" />
+                <span>Chlorophyll-a (Hu Color Index)</span>
+              </label>
+              <label class="checkbox-option">
+                <input type="checkbox" class="outputChk" data-key="chl_ocx" />
+                <span>Chlorophyll-a (OCx Band Ratio)</span>
+              </label>
+              <label class="checkbox-option">
+                <input
+                  type="checkbox"
+                  class="outputChk"
+                  data-key="chl_hu_ocx"
+                />
+                <span>Chlorophyll-a (Blended Hu+OCx)</span>
+              </label>
+              <label class="checkbox-option">
+                <input
+                  type="checkbox"
+                  class="outputChk"
+                  data-key="chl_gitelson"
+                />
+                <span>Chlorophyll-a (Gitelson)</span>
+              </label>
+              <label class="checkbox-option">
+                <input
+                  type="checkbox"
+                  class="outputChk"
+                  data-key="tsm_nechad"
+                />
+                <span>Total Suspended Matter (TSM)</span>
+              </label>
+    
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-secondary" onclick="navigate('method')">
+                Back
+              </button>
+              <button id="processBtn" class="btn btn-primary" type="button">
+                Process
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOADING -->
+        <div id="loading" class="screen">
+          <div class="content-header">
+            <div class="content-title">Processing Your Data</div>
+          </div>
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-height: 400px;
+            "
+          >
+            <div class="spinner"></div>
+            <p
+              style="
+                text-align: center;
+                color: #2c3e50;
+                font-size: 18px;
+                margin-top: 20px;
+                font-weight: 500;
+              "
+            >
+              Processing data...
+            </p>
+            <p
+              style="
+                text-align: center;
+                color: #7f8c8d;
+                font-size: 14px;
+                max-width: 500px;
+                margin-top: 10px;
+                line-height: 1.6;
+              "
+            >
+              Your drone data is being processed. This may take a few moments
+              depending on the size of your dataset and selected processing
+              methods.
+            </p>
+          </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div id="results" class="screen">
+          <div class="content-header">
+            <h1 class="content-title">Results</h1>
+          </div>
+
+          <button class="back-arrow" onclick="navigate('home', 'results')">
+            ← Back to Projects
+          </button>
+
+          <div class="results-bar">
+            <h3 id="resultsProjectName">Loading...</h3>
+            <p id="resultsProjectSettings">Loading project settings...</p>
+          </div>
+
+          <div class="tabs">
+            <button class="tab active" onclick="switchTab(this, 'overview')">
+              Overview
+            </button>
+            <button class="tab" onclick="switchTab(this, 'images')">Images</button>
+            <button class="tab" onclick="switchTab(this, 'trajectory')">
+              Flight Trajectory
+            </button>
+            <button class="tab" onclick="switchTab(this, 'csvdata')">CSV Data</button>
+            <button class="tab" onclick="switchTab(this, 'mosaic')">Mosaic</button>
+          </div>
+
+          <!-- Overview now has an empty container -->
+        <div id="overview" class="tab-content active">
+            <div style="margin-bottom: 30px;">
+                <h4 style="margin-bottom: 10px;">Processing Results Overview</h4>
+                <p style="color: #7F8C8D; font-size: 14px;">
+                View radiometry spectra and water quality analysis results.
+                </p>
+            </div>
+
+            <!-- Radiometry Section -->
+            <div class="overview-section">
+                <h5 class="section-title">Radiometry Spectra</h5>
+                <div class="overview-grid" id="radiometryCards"></div>
+            </div>
+
+            <!-- Water Quality Section -->
+            <div class="overview-section">
+                <h5 class="section-title">Water Quality Analysis</h5>
+                <div class="overview-grid" id="waterQualityCards"></div>
+            </div>
+            </div>
+
+            <!-- IMAGES TAB -->
+        <div id="images" class="tab-content">
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px;">Lt Thumbnail Images</h4>
+            </div>
+              <div class="images-grid">
+                <p style="padding: 40px; text-align: center; color: #7F8C8D;">Loading images...</p>
+            </div>
+        </div>
+
+            <div id="trajectory" class="tab-content">
+        <div class="trajectory-data">
+            <h4 style="margin-bottom: 15px">Flight Data Summary</h4>
+            <div id="flightDataSummary">
+            <p style="color: #7F8C8D;">Loading flight data...</p>
+            </div>
+        </div>
+        <div id="flightPlanImage" style="margin-top: 20px;">
+            <p style="color: #7F8C8D;">Loading flight plan...</p>
+        </div>
+        </div>
+
+          <div id="csvdata" class="tab-content">
+        <div style="margin-bottom: 30px;">
+            <h4 style="margin-bottom: 15px;">Available Data Files</h4>
+            <p style="color: #7F8C8D; margin-bottom: 20px;">
+            View and download CSV data files for each plot.
+            </p>
+        </div>
+        
+        <div id="csvDataContainer">
+            <!-- CSV tables will be inserted here by JavaScript -->
+        </div>
+        </div>
+
+       <div id="mosaic" class="tab-content">
+          <div style="margin-bottom: 20px;">
+            <h4 style="margin-bottom: 10px;">Mosaics</h4>
+            <p style="color:#7F8C8D; font-size: 14px;">
+              Generate georeferenced mosaics from selected water quality algorithms.
+            </p>
+          </div>
+
+          <!-- SETTINGS PANEL -->
+          <div id="mosaicSettingsPanel" class="form-panel" style="margin-bottom: 25px;">
+            <h5 style="margin-bottom: 15px;">Mosaic Settings</h5>
+
+            <!-- WQ ALG SELECTION -->
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label class="form-label">Which water quality algorithms should a mosaic be generated from?</label>
+              <div class="checkbox-group">
+                <label class="checkbox-option">
+                  <input type="checkbox" class="mosaic-alg-chk" data-key="chl_hu" />
+                  <span>Chlorophyll-a (Hu Color Index)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="mosaic-alg-chk" data-key="chl_ocx" />
+                  <span>Chlorophyll-a (OCx Band Ratio)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="mosaic-alg-chk" data-key="chl_hu_ocx" />
+                  <span>Chlorophyll-a (Blended Hu+OCx)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="mosaic-alg-chk" data-key="chl_gitelson" />
+                  <span>Chlorophyll-a (Gitelson)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="mosaic-alg-chk" data-key="tsm_nechad" />
+                  <span>Total Suspended Matter (TSM)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- EXTRA PARAMETERS -->
+            <div class="form-group" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+              <div>
+                <label class="form-label" for="mosaicYawEven">Even yaw angle (°)</label>
+                <input
+                  type="number"
+                  id="mosaicYawEven"
+                  class="form-select"
+                  min="0"
+                  max="360"
+                  placeholder="Optional"
+                />
+                <small style="color:#7F8C8D; font-size: 12px;">0–360, leave blank if unknown.</small>
+              </div>
+
+              <div>
+                <label class="form-label" for="mosaicYawOdd">Odd yaw angle (°)</label>
+                <input
+                  type="number"
+                  id="mosaicYawOdd"
+                  class="form-select"
+                  min="0"
+                  max="360"
+                  placeholder="Optional"
+                />
+                <small style="color:#7F8C8D; font-size: 12px;">0–360, leave blank if unknown.</small>
+              </div>
+
+              <div>
+                <label class="form-label" for="mosaicAltitude">Altitude (m)</label>
+                <input
+                  type="number"
+                  id="mosaicAltitude"
+                  class="form-select"
+                  step="0.1"
+                  placeholder="e.g. 50"
+                />
+                <small style="color:#7F8C8D; font-size: 12px;">Flight altitude above water (required).</small>
+              </div>
+
+              <div>
+                <label class="form-label" for="mosaicPitch">Pitch (°)</label>
+                <input
+                  type="number"
+                  id="mosaicPitch"
+                  class="form-select"
+                  value="0"
+                  step="0.1"
+                />
+                <small style="color:#7F8C8D; font-size: 12px;">Default 0°.</small>
+              </div>
+
+              <div>
+                <label class="form-label" for="mosaicRoll">Roll (°)</label>
+                <input
+                  type="number"
+                  id="mosaicRoll"
+                  class="form-select"
+                  value="0"
+                  step="0.1"
+                />
+                <small style="color:#7F8C8D; font-size: 12px;">Default 0°.</small>
+              </div>
+            </div>
+
+                <!-- METHOD + DOWNSAMPLE -->
+              <div class="form-group" style="margin-top: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+                <div>
+                  <label class="form-label" for="mosaicMethodSelect">Method for overlapping captures</label>
+                  <select id="mosaicMethodSelect" class="form-select">
+                    <option value="mean" selected>Mean (default)</option>
+                    <option value="first">First</option>
+                    <option value="min">Min</option>
+                    <option value="max">Max</option>
+                  </select>
+                  <small style="color:#7F8C8D; font-size: 12px;">
+                    How to combine pixels when multiple captures coincide at the same location.
+                  </small>
+                </div>
+
+                <div>
+                  <label class="form-label" for="mosaicDownsampleFactor">Downsample factor</label>
+                  <input
+                    type="number"
+                    id="mosaicDownsampleFactor"
+                    class="form-select"
+                    step="0.1"
+                    min="1"
+                    value="1"
+                  />
+                  <small style="color:#7F8C8D; font-size: 12px;">
+                    1 = no downsampling, 2 = reduce resolution by 2×, etc.
+                  </small>
+                </div>
+              </div>
+
+
+            <div class="form-actions" style="margin-top: 20px;">
+              <button
+                class="btn btn-primary"
+                type="button"
+                onclick="processMosaic()"
+              >
+                Process Mosaic
+              </button>
+            </div>
+          </div>
+
+          <!-- RE-SHOW SETTINGS BUTTON (hidden until first process) -->
+          <div style="margin-bottom: 15px;">
+            <button
+              id="mosaicSettingsToggle"
+              class="btn btn-secondary"
+              type="button"
+              style="display: none;"
+              onclick="showMosaicSettingsPanel(true)"
+            >
+              Mosaic Settings
+            </button>
+          </div>
+
+          <!-- MOSAIC CARDS -->
+          <div class="overview-section">
+            <h5 class="section-title">Generated Mosaics</h5>
+            <div id="mosaicCards" class="overview-grid">
+              <p style="padding: 40px; text-align: center; color: #7F8C8D;">
+                No mosaics generated yet. Adjust settings and click <strong>Process Mosaic</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+
+    </div>
+
+
+        <!-- SETTINGS -->
+        <div id="settings" class="screen">
+          <div class="content-header">
+            <div class="content-title">Project Settings</div>
+          </div>
+
+          <div class="back-arrow" onclick="navigate('home')">
+            ← Back to Home Page
+          </div>
+
+          <div style="margin-bottom: 30px">
+            <h3 id="settingsProjectName" style="font-size: 22px; margin-bottom: 8px">Loading...</h3>
+            <p id="settingsProjectInfo" style="color: #7f8c8d">
+              Loading project info...
+            </p>
+          </div>
+
+          <div class="form-panel">
+            <h4 style="margin-bottom: 20px">Change Project Settings</h4>
+
+          
+          <!-- RENAME PROJECT -->
+          <div class="form-group">
+            <label class="form-label">Rename Project</label>
+            <input 
+              type="text" 
+              id="settingsProjectRename" 
+              class="form-select" 
+              placeholder="Enter new project name..."
+            />
+          </div>
+
+          <!-- RRS IMAGE COUNT -->
+          <div class="form-group">
+            <label class="form-label">Number of Images for Radiometry Plots</label>
+            <input 
+              type="number" 
+              id="settingsRrsCount" 
+              class="form-select" 
+              min="1" 
+              style="max-width: 200px;"
+            />
+            <small style="color: #7F8C8D; font-size: 12px;">
+              Default: 25. You need at least 25 images for radiometry analysis.
+            </small>
+          </div>
+
+
+           <!-- SELECTED OUTPUTS -->
+
+            <div class="form-group">
+              <label class="form-label">Selected Outputs</label>
+              <div class="checkbox-group">
+                <label class="checkbox-option">
+                  <input type="checkbox" id="settings-output-chl-hu" />
+                  <span>Chlorophyll-a (Hu Color Index)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" id="settings-output-chl-ocx" />
+                  <span>Chlorophyll-a (OCx Band Ratio)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" id="settings-output-chl-hu-ocx" />
+                  <span>Chlorophyll-a (Blended Hu+OCx)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" id="settings-output-chl-gitelson" />
+                  <span>Chlorophyll-a (Gitelson)</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" id="settings-output-tsm" />
+                  <span>Total Suspended Matter (TSM)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-secondary" onclick="navigate('home')">
+                Cancel
+              </button>
+              <button class="btn btn-primary" onclick="applySettingsChanges()">
+                Apply Changes
+              </button>
+            </div>
+          </div>
+        </div>
+
+</main>
+
+  </div>
+
+
+    <script src="../dashboard.js"></script>
+    <script src="../charts.js"></script>
+    <script src="../upload.js"></script>
+    <script src="../project_settings.js"></script>
+    <script src="../csv_handler.js"></script>
+    <script src="../image_handler.js"></script>
+    <script src="../trajectory_handler.js"></script>
+    <script src="../mosaic_handler.js"></script>
+    <script src="../app_ui.js"></script>
+
+
+   <!-- DELETE PROJECT MODAL -->
+<div
+  id="deleteProjectModal"
+  style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  "
+>
+  <div
+    style="
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    "
+  >
+    <h3 style="margin-bottom: 20px; color: #2c3e50">
+      Delete Project
+    </h3>
+    <p style="margin-bottom: 25px; color: #7f8c8d">
+      Are you sure you want to delete "<strong id="deleteProjectName"></strong>"?
+    </p>
+    <p style="margin-bottom: 25px; color: #e67e22; font-size: 14px;">
+      Note: This will only remove the project from the database. Your project files will remain in their original location.
+    </p>
+
+    <div
+      style="
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      "
+    >
+     <button
+        class="btn btn-secondary"
+        onclick="closeDeleteModal()"
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="btn"
+        style="background: #e74c3c; color: white;"
+        onclick="confirmDeleteProject()"
+        type="button"
+      >
+        Delete Project
+      </button>
+    </div>
+  </div>
+</div>
+  </body>
+</html>

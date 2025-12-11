@@ -5,33 +5,30 @@ dependencies:
   - python=3.10
   - numpy<=1.26 # for compatibility with micasense
   - gdal
+  - exiftool
+  - zbar
   - rasterio
   - geopandas
   - geopy
   - opencv
-  - jupyter
-  - jupyterlab
-  - matplotlib
+  - matplotlib==3.9.2
   - scikit-image
   - contextily
   - cmocean
   - imageio
-  - git
-  - git-lfs
   - pandas
   - nb_conda
-  - pytest
-  - pytest-xdist
   - cartopy
   - pip
   - requests
   - rioxarray
-  - packaging
   - tqdm
   - pysolar
   - mapboxgl
+  - flask
   - pip:
       - cameratransform==1.2
       - pyzbar==0.1.9
       - pyexiftool<=0.4.13
       - rawpy==0.21.0
+      - dronewq
