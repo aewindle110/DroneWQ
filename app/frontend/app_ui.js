@@ -77,6 +77,12 @@ function navigate(screen, fromScreen) {
         initializeProjectSettings();
         console.log("[Outputs] initialized");
       }
+
+    if (screenId === 'outputs') {
+      if (typeof setupSelectAllOutputs === 'function') {
+        setupSelectAllOutputs();
+      }
+    }
     }, 100);
   }
 

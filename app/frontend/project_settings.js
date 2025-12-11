@@ -13,6 +13,9 @@ function initializeProjectSettings() {
     processBtn.addEventListener('click', submitProcessing);
   }
   
+  // Setup Select All functionality
+  setupSelectAllOutputs();
+  
   // Only setup method validation once
   const currentScreen = document.querySelector('.screen.active');
   if (currentScreen && currentScreen.id === 'method' && !methodValidationSetup) {
@@ -322,6 +325,43 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+/**
+ * Setup Select All checkbox functionality for outputs
+ */
+function setupSelectAllOutputs() {
+  const selectAllCheckbox = document.getElementById('selectAllOutputs');
+  const outputCheckboxes = document.querySelectorAll('.outputChk');
+  
+  if (!selectAllCheckbox) return;
+  
+  // When Select All is clicked
+  selectAllCheckbox.addEventListener('change', function() {
+    outputCheckboxes.forEach(checkbox => {
+      checkbox.checked = this.checked;
+    });
+  });
+  
+  // When individual checkboxes are clicked, update Select All state
+  outputCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      // Check if all are selected
+      const allChecked = Array.from(outputCheckboxes).every(cb => cb.checked);
+      const someChecked = Array.from(outputCheckboxes).some(cb => cb.checked);
+      
+      if (allChecked) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+      } else if (someChecked) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true; // Shows a dash instead of checkmark
+      } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+      }
+    });
+  });
+}
 
 
 // Make it available globally (since HTML calls it)
