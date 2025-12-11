@@ -1,3 +1,5 @@
+# Author: Temuulen and Kurtis
+
 import numpy as np
 import unittest
 from dronewq.core.georeference import georeference, compute_flight_lines

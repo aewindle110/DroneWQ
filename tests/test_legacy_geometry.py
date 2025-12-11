@@ -1,3 +1,5 @@
+# Author: Kurtis
+
 import os
 import sys
 
