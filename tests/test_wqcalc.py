@@ -1,3 +1,4 @@
+# Author: Kurtis
 import os
 import shutil
 from concurrent.futures import ProcessPoolExecutor

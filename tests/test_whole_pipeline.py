@@ -1,3 +1,4 @@
+# Author: Temuulen
 import dronewq
 import numpy as np
 import pandas as pd
