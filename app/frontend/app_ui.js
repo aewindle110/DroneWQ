@@ -1,6 +1,10 @@
-/****************************************************
- * MASKING INPUT LOGIC
- ****************************************************/
+/**
+ * app_ui.js
+ * Author: Nidhi Khiantani
+ * Description: Main navigation controller that manages screen transitions and coordinates between different modules
+ */
+
+// Masking input Logic 
 document.addEventListener("DOMContentLoaded", function () {
   const maskingSelect = document.getElementById("maskingSelect");
   if (maskingSelect) {
@@ -22,9 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-/****************************************************
- * NAVIGATION
- ****************************************************/
+// Navigation
 function navigate(screen, fromScreen) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(screen).classList.add("active");
@@ -142,9 +144,7 @@ function navigate(screen, fromScreen) {
 }
 
 
-/****************************************************
- * MENU AND TABS
- ****************************************************/
+//Menu and Tabs 
 function toggleMenu(e) {
   e.stopPropagation();
   const menu = e.currentTarget.querySelector(".actions-menu");
@@ -172,9 +172,7 @@ document.addEventListener("click", function () {
 });
 
 
-/****************************************************
- * PROJECT OPTIONS DIALOG
- ****************************************************/
+//Project Options Dialog 
 function showProjectOptionsDialog() {
   document.getElementById("projectOptionsDialog").style.display = "flex";
 
@@ -273,14 +271,7 @@ async function applySettingsChanges() {
   }
 }
 
-
-
-
-
-
-/****************************************************
- * MOSAIC TOOLS (unchanged)
- ****************************************************/
+//Mosaic Tools 
 let mosaicEditMode = false;
 let currentRotation = 0;
 let isDragging = false;
@@ -365,9 +356,7 @@ function saveMosaicPosition() {
   toggleMosaicEditMode();
 }
 
-/****************************************************
- * OPEN PROJECT SETTINGS (loads screen + saves ID)
- ****************************************************/
+//Open Project Settings (loads screen + saves ID)
 async function openProjectSettings() {
   console.log("[Settings] Opening project settings");
 
@@ -432,9 +421,7 @@ function openProjectSettingsFromDashboard(projectId) {
 window.openProjectSettingsFromDashboard = openProjectSettingsFromDashboard;
 
 
-/****************************************************
- * LOAD PROJECT INTO SETTINGS SCREEN
- ****************************************************/
+//Load Project into settings screen 
 async function loadSettingsScreen(projectId) {
   try {
     const res = await fetch(`http://localhost:8889/api/projects/${projectId}`);
@@ -498,12 +485,7 @@ async function loadSettingsScreen(projectId) {
   }
 }
 
-
-
-
-/****************************************************
- * PAGE LOAD INITIALIZATION
- ****************************************************/
+//Page Load Initialization
 document.addEventListener("DOMContentLoaded", function () {
   setupDashboardOnce();
 

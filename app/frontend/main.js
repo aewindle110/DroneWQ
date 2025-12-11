@@ -1,4 +1,9 @@
-// frontend/main.js
+/**
+ * main.js
+ * Author: Nidhi Khiantani
+ * Description: Electron main process that manages application lifecycle and spawns Flask backend
+ */
+
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -7,7 +12,7 @@ const http = require('http');
 let mainWindow;
 let flaskProcess;
 
-/* ---------- Flask child process helpers ---------- */
+//Flask child process helpers 
 function pythonCmd() {
   const python_dir = path.join(process.resourcesPath, "python", "bin", "python3.10");
   return python_dir
@@ -62,7 +67,7 @@ function waitForBackend(timeoutMs = 15000, intervalMs = 300) {
   });
 }
 
-/* ---------- BrowserWindow & Menu ---------- */
+//Browser Window & Menu 
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -75,11 +80,11 @@ function createWindow() {
     },
   });
 
-  // Load your HTML
+  // Load HTML
   mainWindow.loadFile(path.join(__dirname, 'wireframes', 'wireframe-v2.html'));
   mainWindow.webContents.openDevTools();
 
-  // Menu (keep one)
+  // Menu 
   const menuTemplate = [
     {
       label: 'File',
@@ -121,7 +126,7 @@ function createWindow() {
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
-/* ---------- IPC (keep single definitions) ---------- */
+//IPC 
 ipcMain.handle('select-folder', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory'],
@@ -146,7 +151,7 @@ ipcMain.handle('select-files', async () => {
   return { success: false };
 });
 
-/* ---------- App lifecycle (single set) ---------- */
+//App lifecycle 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();

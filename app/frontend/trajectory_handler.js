@@ -1,4 +1,8 @@
-// frontend/trajectory_handler.js
+/**
+ * trajectory_handler.js
+ * Author: Nidhi Khiantani
+ * Description: Displays flight metadata summary and trajectory visualization plot
+ */
 
 function loadTrajectoryData(folderPath) {
   loadFlightData(folderPath);

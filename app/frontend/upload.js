@@ -1,4 +1,9 @@
-// frontend/upload.js
+/**
+ * upload.js
+ * Author: Nidhi Khiantani
+ * Description: Handles project name input and data folder selection with backend validation
+ */
+
 const { ipcRenderer } = require('electron');
 
 let selectedFolderPath = null;

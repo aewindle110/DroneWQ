@@ -1,4 +1,8 @@
-// frontend/project_settings.js
+/**
+ * project_settings.js
+ * Author: Nidhi Khiantani
+ * Description: Collects processing parameters and manages project configuration settings
+ */
 
 let methodValidationSetup = false; // Flag to prevent multiple setups
 
@@ -292,7 +296,6 @@ async function applySettingsChanges() {
 
     alert('Project settings updated! Water quality plots will be refreshed next time you view Results.');
 
-    // Optional: jump straight to results
     // window.navigate('results');
 
   } catch (err) {

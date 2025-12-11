@@ -1,4 +1,8 @@
-// frontend/mosaic_handler.js
+/**
+ * mosaic_handler.js
+ * Author: Nidhi Khiantani
+ * Description: Interface for creating and displaying georeferenced water quality mosaics
+ */
 
 function renderMosaicCards() {
   const projectFolder = sessionStorage.getItem('projectFolder');
@@ -73,7 +77,7 @@ function renderMosaicCards() {
   }).join("");
 }
 
-// PROCESS MOSAIC
+// Procces Mosaic 
 async function processMosaic() {
   const projectId = sessionStorage.getItem("currentProjectId");
   if (!projectId) {

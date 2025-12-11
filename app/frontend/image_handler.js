@@ -1,4 +1,8 @@
-// frontend/images_handler.js
+/**
+ * image_handler.js
+ * Author: Nidhi Khiantani
+ * Description: Image gallery that displays all thumbnail images with keyboard navigation support
+ */
 
 // Load and display ALL images from lt_thumbnails folder
 function loadImages(folderPath) {

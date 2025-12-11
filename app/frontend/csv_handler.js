@@ -1,5 +1,8 @@
-// frontend/csv_handler.js
-
+/**
+ * csv_handler.js
+ * Author: Nidhi Khiantani
+ * Description: Displays CSV data files as interactive tables with modal views
+ */
 
 // Parse CSV file into array of objects
 function parseCSV(csvText) {
@@ -65,7 +68,7 @@ function buildCSVCard(csvData, title, filePath) {
   `;
 }
 
-// Get file size in human-readable format
+// Get file size in a good format
 function getFileSize(filePath) {
   try {
     const stats = fs.statSync(filePath);
@@ -187,7 +190,7 @@ function viewCSVDetails(filePath, title) {
       if (e.target === modal) modal.remove();
     });
     
-    // ✅ ADD THIS: Close on Escape key
+    //Close on Escape key
     const escapeHandler = (e) => {
       if (e.key === 'Escape') {
         modal.remove();

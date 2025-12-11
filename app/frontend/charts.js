@@ -1,4 +1,9 @@
-// frontend/charts.js
+/**
+ * charts.js
+ * Author: Nidhi Khiantani
+ * Description: Loads and displays radiometry and water quality plots from backend processing results
+ */
+
 const path = require('path');
 const { pathToFileURL } = require('url');
 const fs = require('fs');
@@ -13,7 +18,7 @@ function initializeCharts() {
 
 /**
  * Build the Overview cards from images the backend writes into the project's main folder.
- * We show only the cards that make sense based on selected outputs.
+ * Show only the cards that are selected in outputs. 
  */
 function buildOverviewFromFolder(folderPath, selectedWQAlgs, cacheBust) {
   console.log('DEBUG buildOverviewFromFolder called with:', folderPath, selectedWQAlgs);
@@ -27,6 +32,7 @@ function buildOverviewFromFolder(folderPath, selectedWQAlgs, cacheBust) {
   console.log('DEBUG resultDir:', resultDir);
   console.log('DEBUG resultDir exists?', fs.existsSync(resultDir));
 
+  //NO LONGER IMPLEMENTED 
   // Load accessibility descriptions
   let accessibilityDescriptions = {};
   const descriptionsPath = path.join(resultDir, 'plot_descriptions.json');
@@ -51,10 +57,10 @@ function buildOverviewFromFolder(folderPath, selectedWQAlgs, cacheBust) {
       return;
     }
     
-    console.log(`✅ Found file: ${fileName}, adding card`);
+    console.log(` Found file: ${fileName}, adding card`);
 
   // Append an optional cache-busting query param when requested so updated
-  // images are fetched by the browser instead of using a cached copy.
+  // images are fetched by the browser instead of using a cached copy
   const urlBase = pathToFileURL(fullPath).href;
   const url = cacheBust ? `${urlBase}?t=${cacheBust}` : urlBase;
     
@@ -119,7 +125,7 @@ function buildOverviewFromFolder(folderPath, selectedWQAlgs, cacheBust) {
     { key: 'ed_plot', title: 'Ed Plot', file: 'ed_plot.png', blurb: 'Downwelling irradiance (Ed) from the image captures.' },
   ];
 
-  // Water quality plots (conditional)
+  // Water quality plots (conditional based on what user selects)
   const waterQuality = [
     { key: 'chl_hu_plot', out: 'chl_hu', title: 'Chlorophyll-a (Hu Color Index)', file: 'chl_hu_plot.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration (mg/m³).' },
     { key: 'chl_ocx_plot', out: 'chl_ocx', title: 'Chlorophyll-a (OCx Band Ratio)', file: 'chl_ocx_plot.png', blurb: 'Coordinate locations of individual image captures colored by chlorophyll a concentration (mg/m³).' },
@@ -244,9 +250,8 @@ function openImageModal(imageUrl, title) {
 
 window.openImageModal = openImageModal;
 
-/**
- * Load the flight plan image into the trajectory tab
- */
+//Load the flight plan image into the trajectory tab
+
 function buildFlightTrajectory() {
   const folderPath = sessionStorage.getItem('projectFolder');
   if (!folderPath) {
@@ -334,8 +339,7 @@ async function updateWQCharts(selectedWQAlgs) {
       return;
     }
     
-    // Rebuild only the overview cards (with cache-bust) so the updated
-    // water-quality plots are displayed without a full page reload.
+    // Rebuild only the overview cards (with cache-bust) so the updated water-quality plots are displayed without a full page reload.
     const folderPath = sessionStorage.getItem('projectFolder');
     if (folderPath) {
       // Use a timestamp to force browsers to re-fetch the updated images

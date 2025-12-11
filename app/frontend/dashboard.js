@@ -1,4 +1,8 @@
-// dashboard.js - Dashboard interactivity
+/**
+ * dashboard.js
+ * Author: Nidhi Khiantani
+ * Description: Project dashboard that displays, manages, and handles operations on all user projects
+ */
 
 // Store projects data - starts empty, users will add their own
 let projects = [];
