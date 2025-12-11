@@ -1,7 +1,7 @@
 # DroneWQ User Guide
 **Measuring Water Quality with Your Drone**
 
-**Version:** 0.1.1
+**Version:** 0.1.0
 **Last Updated:** December 2025 
 **Intended Audience:** Environmental scientists, citizen scientists, water quality monitors
 
