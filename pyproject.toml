@@ -87,6 +87,7 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.sdist]
+# Excluding the app directory from the final package build
 exclude = [
   "/app",
 ]

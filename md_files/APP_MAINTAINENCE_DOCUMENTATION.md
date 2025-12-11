@@ -78,96 +78,95 @@ DroneWQ follows a modular pipeline architecture:
 ```
 DroneWQ/
 ├── ABOUT.md
+├── app
+│   ├── app_ui.js
+│   ├── backend
+│   ├── charts.js
+│   ├── csv_handler.js
+│   ├── dashboard.js
+│   ├── dist
+│   ├── image_handler.js
+│   ├── main.js
+│   ├── mosaic_handler.js
+│   ├── node_modules
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── project_settings.js
+│   ├── projects.db
+│   ├── python
+│   ├── trajectory_handler.js
+│   ├── upload.js
+│   └── wireframes
 ├── Dockerfile
+├── docs
+│   ├── make.bat
+│   ├── Makefile
+│   ├── pre_built_html
+│   ├── requirements.txt
+│   └── source
 ├── environment.yml
+├── examples
+│   └── primary_demo.ipynb
+├── figs
+│   ├── automatic_flightlines_QGIS.png
+│   ├── chl_mosaic.png
+│   ├── DroneWQ.png
+│   ├── manual_flightlines_QGIS.png
+│   ├── OLCI_Rrs_Lake_Erie.png
+│   └── removal_Lsr_fig.jpg
+├── Lake_Erie
+│   ├── align_img
+│   ├── automatic_georeferenced_lt_thumbnails_subset
+│   ├── dls_ed.csv
+│   ├── georeferenced_masked_chl_hu_ocx
+│   ├── georeferenced_masked_chl_hu_ocx_imgs
+│   ├── lt_imgs
+│   ├── lt_thumbnails
+│   ├── lt_thumbnails_subset
+│   ├── lw_imgs
+│   ├── manual_georeferenced_lt_thumbnails_subset
+│   ├── masked_chl_gitelson_imgs
+│   ├── masked_chl_hu_imgs
+│   ├── masked_chl_hu_ocx_imgs
+│   ├── masked_chl_ocx_imgs
+│   ├── masked_rrs_imgs
+│   ├── masked_tsm_nechad_imgs
+│   ├── median_rrs_and_wq.csv
+│   ├── median_rrs.csv
+│   ├── metadata.csv
+│   ├── mosaic_chl_hu_ocx
+│   ├── panel
+│   ├── raw_water_imgs
+│   ├── result
+│   ├── rrs_hedley_subset
+│   └── rrs_imgs
 ├── LICENSE
+├── md_files
+│   ├── APP_MAINTAINENCE_DOCUMENTATION.md
+│   ├── BACKLOG.md
+│   ├── paper.bib
+│   ├── paper.md
+│   ├── RELEASE_NOTES.md
+│   ├── TECHNICAL_DOC_BACKEND.md
+│   ├── TECHNICAL_DOCUMENTATION_FRONTEND.md
+│   └── USER_DOCUMENTATION.md
 ├── pyproject.toml
 ├── README.md
-├── md_files/
-│   ├── APP_MAINTENCE_DOCUMENTATION.md
-│   ├── BACKLOG.md
-│   ├── paper.bib
-│   ├── paper.md
-│   ├── RELEASE_NOTES.md
-│   └── USER_DOCUMENTATION.md
-├── app/
-│   ├── app.py
-│   ├── config.py
-│   ├── health.py
-│   ├── pipeline.py
-│   ├── process.py
-│   ├── projects.py
-│   ├── result.py
-│   └── frontend/
-│       ├── app_ui.js
-│       ├── charts.js
-│       ├── csv_handler.js
-│       ├── dashboard.js
-│       ├── image_handler.js
-│       ├── main.js
-│       ├── mosaic_handler.js
-│       ├── package.json
-│       ├── project_settings.js
-│       ├── trajectory_handler.js
-│       ├── upload.js
-│       └── wireframes/
-│           ├── styles.css
-│           ├── wireframe-v1.html
-│           └── wireframe-v2.html
-├── src/
-│   ├── dronewq/
-│   │   ├── __init__.py
-│   │   ├── _version.py
-│   │   ├── core/
-│   │   │   ├── raw_to_rss.py
-│   │   │   ├── wq_calc.py
-│   │   │   ├── georeference.py
-│   │   │   ├── geometry.py
-│   │   │   ├── mosaic.py
-│   │   │   ├── mosaic_methods.py
-│   │   │   └── plot_map.py
-│   │   ├── lw_methods/     # mobley_rho, hedley, blackpixel
-│   │   ├── ed_methods/     # dls_ed, panel_ed
-│   │   ├── masks/          # threshold_masking, std_masking
-│   │   └── utils/          # settings, images, metadata
-│   └── micasense/
-│       ├── capture.py
-│       ├── dls.py
-│       ├── image.py
-│       ├── imageset.py
-│       ├── imageutils.py
-│       ├── metadata.py
-│       ├── panel.py
-│       ├── plotutils.py
-│       └── utils.py
-├── models/
-│   └── model_project.py
-├── tests/
-│   ├── test_geometry.py
-│   ├── test_georeferencing.py
-│   ├── test_legacy_geometry.py
-│   ├── test_legacy_to_pipeline.py
-│   ├── test_legacy_wqcalc.py
-│   ├── test_lw_blackpixel.py
-│   ├── test_lw_hedly.py
-│   ├── test_mobley_rho.py
-│   ├── test_std_masking.py
-│   ├── test_threshholdmasking.py
-│   ├── test_utils_high_priority.py
-│   ├── test_whole_pipeline.py
-│   ├── test_wq_edge.py
-│   ├── test_wqcalc.py
-│   └── test_set/           # sample test data and folders
-│       └── (sample data folders)
-├── docs/
-│   ├── source/
-│   └── pre_built_html/
-├── figs/
-│   ├── DroneWQ.png
-│   └── chl_mosaic.png
-├── docker/
-│   └── Dockerfile
-└──  requirements.txt
+├── src
+│   └── dronewq
+└── tests
+    ├── __init__.py
+    ├── __pycache__
+    ├── test_geometry.py
+    ├── test_georeferencing.py
+    ├── test_legacy_geometry.py
+    ├── test_legacy_to_pipeline.py
+    ├── test_legacy_wqcalc.py
+    ├── test_set
+    ├── test_utils_high_priority.py
+    ├── test_whole_pipeline.py
+    ├── test_wq_edge.py
+    └── test_wqcalc.py
 ```
 
 ### Important Files

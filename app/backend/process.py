@@ -24,13 +24,13 @@ def process_new(project_id: int):
         pipeline = Pipeline(settings.to_dict())
 
         # Different stages of processing
-        # pipeline.water_metadata()
-        # pipeline.flight_plan()
-        # pipeline.run()
-        # pipeline.plot_essentials()
-        # pipeline.point_samples()
-        # pipeline.wq_run()
-        # pipeline.plot_wq(plot_args)
+        pipeline.water_metadata()
+        pipeline.flight_plan()
+        pipeline.run()
+        pipeline.plot_essentials()
+        pipeline.point_samples()
+        pipeline.wq_run()
+        pipeline.plot_wq(plot_args)
 
         return jsonify({"success": True}), 200
     except Exception as e:
