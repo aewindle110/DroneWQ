@@ -31,7 +31,7 @@ The easiest way to install DroneWQ is using conda and pip:
 
 First, create your conda environment:
 ```bash
-conda create -n {your project name} python=3.10 exiftool gdal zbar -c conda-forge
+conda create -n {your project name} python=3.10 exiftool gdal zbar opencv -c conda-forge
 ```
 
 Then, activate your environemt:

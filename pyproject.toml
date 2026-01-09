@@ -42,7 +42,6 @@ dependencies = [
   "geopandas==1.0.1",
   "geopy==2.4.1",
   "matplotlib==3.9.2",
-  "opencv-python",
   "scikit-image",
   "contextily",
   "cmocean",
