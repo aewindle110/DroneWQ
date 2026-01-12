@@ -21,10 +21,26 @@ Windle, A.E. and Silsbe, G.M., 2021. Evaluation of unoccupied aircraft system (U
 
 ## Installation
 
+> [!IMPORTANT]
+> Our code requires a system level dependencies called `gdal`, `zbar`, `exiftool`, and `opencv`.
+> It is the most straightforward to install them through conda-forge.
+
 ### Install from PyPI (Recommended)
 
-The easiest way to install DroneWQ is using pip:
+The easiest way to install DroneWQ is using conda and pip:
 
+First, create your conda environment:
+```bash
+conda create -n {your project name} python=3.10 exiftool gdal zbar opencv -c conda-forge
+```
+
+Then, activate your environemt:
+
+```bash
+conda activate {your project name}
+```
+
+Finally, install dronewq:
 ```bash
 pip install dronewq
 ```
@@ -36,7 +52,9 @@ If you want to install from source:
 ```bash
 git clone https://github.com/aewindle110/DroneWQ.git
 cd DroneWQ
-pip install -e .
+conda create -n {your project name} python=3.10 exiftool gdal zbar opencv -c conda-forge
+conda activate {your project name}
+pip install .
 ```
 
 ### System Requirements
@@ -48,17 +66,19 @@ DroneWQ requires Python 3.8-3.12. Some dependencies may require additional syste
 - **ZBar**: Required for QR code reading from calibration panels
 
 
-
 On Ubuntu/Debian:
 ```bash
 sudo apt-get update
-sudo apt-get install gdal-bin libgdal-dev exiftool zbar-tools python3-gdal python3-cartopy
+sudo apt-get install gdal-bin libgdal-dev exiftool opencv zbar-tools python3-gdal python3-cartopy
 ```
 
+> [!IMPORTANT]
+> Pip on macOS currently doesn't search through the place homebrew installations go to.
+> Thus, you have to specify it using this method https://github.com/npinchot/zbar/issues/3#issuecomment-1038005495
 
 On macOS (using Homebrew):
 ```bash
-brew install gdal exiftool zbar
+brew install gdal exiftool zbar opencv
 ```
 
 ### Docker Installation (Alternative)
@@ -80,15 +100,6 @@ jupyter lab --allow-root --ip 0.0.0.0 /home/jovyan
 ```
 
 Copy the generated URL from the terminal into your web browser.
-
-### Conda Installation
-
-Alternatively, you can create a conda environment:
-
-```bash
-conda env create -f environment.yml
-conda activate dronewq
-```
 
 **Note**: We have included a modified version of the MicaSense imageprocessing scripts in this repo. Our modifications include:
 - Radiance data type expressed as Float32 instead of Uint16
