@@ -22,7 +22,7 @@ Windle, A.E. and Silsbe, G.M., 2021. Evaluation of unoccupied aircraft system (U
 ## Installation
 
 > [!IMPORTANT]
-> Our code requires a system level dependencies called `gdal`, `zbar`, and `exiftool`.
+> Our code requires a system level dependencies called `gdal`, `zbar`, `exiftool`, and `opencv`.
 > It is the most straightforward to install them through conda-forge.
 
 ### Install from PyPI (Recommended)
@@ -52,7 +52,7 @@ If you want to install from source:
 ```bash
 git clone https://github.com/aewindle110/DroneWQ.git
 cd DroneWQ
-conda create -n {your project name} python=3.10 exiftool gdal zbar -c conda-forge
+conda create -n {your project name} python=3.10 exiftool gdal zbar opencv -c conda-forge
 conda activate {your project name}
 pip install .
 ```
@@ -69,7 +69,7 @@ DroneWQ requires Python 3.8-3.12. Some dependencies may require additional syste
 On Ubuntu/Debian:
 ```bash
 sudo apt-get update
-sudo apt-get install gdal-bin libgdal-dev exiftool zbar-tools python3-gdal python3-cartopy
+sudo apt-get install gdal-bin libgdal-dev exiftool opencv zbar-tools python3-gdal python3-cartopy
 ```
 
 > [!IMPORTANT]
@@ -78,7 +78,7 @@ sudo apt-get install gdal-bin libgdal-dev exiftool zbar-tools python3-gdal pytho
 
 On macOS (using Homebrew):
 ```bash
-brew install gdal exiftool zbar
+brew install gdal exiftool zbar opencv
 ```
 
 ### Docker Installation (Alternative)
