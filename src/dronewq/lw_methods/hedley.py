@@ -1,90 +1,20 @@
 """Refactored by: Temuulen"""
 
-import concurrent.futures
 import glob
 import logging
-import os
 import random
-from functools import partial
 
 import numpy as np
 import rasterio
 from numpy.polynomial import Polynomial
 
+from dronewq.utils.data_types import Image
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
-def __compute(filepath, mean_min_lt_NIR, lw_dir):
-    """
-    Process a single Lt file to compute water-leaving radiance using Hedley deglinting.
-
-    Worker function that reads a total radiance (Lt) raster file, applies the Hedley
-    et al. deglinting method to remove sun glint effects, and writes the resulting
-    water-leaving radiance (Lw) to a new file. The method establishes a linear
-    relationship between NIR and visible bands, then uses this to remove glint
-    contribution based on deviation from ambient NIR levels.
-
-    Parameters
-    ----------
-    filepath : str
-        Path to the input Lt raster file.
-    mean_min_lt_NIR : float
-        Ambient NIR brightness level calculated from the minimum 10th percentile
-        of Lt(NIR) across a random subset of images. Represents NIR brightness
-        of pixels without sun glint.
-    lw_dir : str
-        Directory path where the output Lw file will be saved.
-
-    Returns
-    -------
-    str
-        The input filepath, returned for progress tracking.
-
-    Notes
-    -----
-    The function performs the following steps for each visible band (bands 0-3):
-    1. Fits a linear polynomial between NIR (band 4) and the visible band
-    2. Extracts the slope coefficient from the fitted relationship
-    3. Computes Lw = Lt - slope * (Lt_NIR - ambient_NIR)
-
-    The NIR band (band 4) is kept unchanged in the output.
-    Output files maintain the same basename as input files.
-    """
-    im_name = os.path.basename(filepath)
-
-    with rasterio.open(filepath, "r") as lt_src:
-        profile = lt_src.profile
-        lt = lt_src.read()
-        lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
-
-        lw_all = []
-        for j in range(4):
-            # Fit polynomial using new API
-            p = Polynomial.fit(lt_reshape[4, :], lt_reshape[j, :], 1)
-            # Extract slope coefficient (coefficient of x^1 term)
-            slopes = p.convert().coef[1]
-            # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
-            lw = lt[j, :, :] - slopes * (lt[4, :, :] - mean_min_lt_NIR)
-            lw_all.append(lw)
-
-        # Keep the original NIR band
-        lw_all.append(lt[4, :, :])
-
-        stacked_lw = np.stack(lw_all)
-        profile["count"] = 5
-
-        output = os.path.join(lw_dir, im_name)
-
-        # write new stacked Lw tif
-        with rasterio.open(output, "w", **profile) as dst:
-            dst.write(stacked_lw)
-
-    return filepath  # Return filepath for progress tracking
-
-
-def hedley(random_n=10, num_workers=4, executor=None):
+def hedley(lt_img: Image, mean_min_lt_NIR: float):
     """
     Calculate water-leaving radiance using the Hedley deglinting method.
 
@@ -149,8 +79,42 @@ def hedley(random_n=10, num_workers=4, executor=None):
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
 
+    try:
+        if lt_img.data.shape[0] < 5:
+            raise ValueError("Image must have at least 5 bands.")
+        lt = lt_img.data
+        lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
+
+        lw_all = []
+        for j in range(4):
+            # Fit polynomial using new API
+            p = Polynomial.fit(lt_reshape[4, :], lt_reshape[j, :], 1)
+            # Extract slope coefficient (coefficient of x^1 term)
+            slopes = p.convert().coef[1]
+            # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
+            lw = lt[j, :, :] - slopes * (lt[4, :, :] - mean_min_lt_NIR)
+            lw_all.append(lw)
+
+        # Keep the original NIR band
+        lw_all.append(lt[4, :, :])
+        stacked_lw = np.stack(lw_all)
+
+        lw_img = Image.from_image(lt_img, data=stacked_lw)
+        logger.info(
+            "Lw Stage (Hedley): Successfully processed: %s",
+            lt_img.file_name,
+        )
+        return lw_img
+    except Exception as e:
+        raise RuntimeError(f"File {lt_img.file_path!s} failed: {e!s}")
+
+
+def mean_min_lt_NIR(random_n=10) -> float:
+    """Sample a mean minimum lt NIR value from all the lt images."""
+    if settings.main_dir is None:
+        raise LookupError("Please set the main_dir path.")
+
     lt_dir = settings.lt_dir
-    lw_dir = settings.lw_dir
     filepaths = glob.glob(lt_dir + "/*.tif")
 
     lt_all = []
@@ -170,49 +134,4 @@ def hedley(random_n=10, num_workers=4, executor=None):
 
     mean_min_lt_NIR = np.mean(min_lt_NIR)
 
-    if executor is not None:
-        partial_compute = partial(
-            __compute,
-            mean_min_lt_NIR=mean_min_lt_NIR,
-            lw_dir=lw_dir,
-        )
-        results = list(executor.map(partial_compute, filepaths))
-        logger.info(
-            "Lw Stage (Hedley): Successfully processed: %d captures",
-            len(results),
-        )
-
-    else:
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=num_workers,
-        ) as executor:
-            futures = {}
-            for filepath in filepaths:
-                future = executor.submit(
-                    __compute,
-                    filepath,
-                    mean_min_lt_NIR,
-                    lw_dir,
-                )
-                futures[future] = filepath
-            # Wait for all tasks to complete and collect results
-            results = []
-            completed = 0
-
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    result = (
-                        future.result()
-                    )  # Blocks until this specific future completes
-                    results.append(result)
-                    completed += 1
-                except Exception as e:
-                    filepath = futures[future]
-                    print(f"File {filepath} failed: {e}")
-                    results.append(False)
-
-        logger.info(
-            "Lw Stage (Hedley): Successfully processed: %d/%d captures",
-            sum(results),
-            len(results),
-        )
+    return mean_min_lt_NIR
