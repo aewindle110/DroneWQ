@@ -5,8 +5,8 @@ import os
 
 import numpy as np
 
-import dronewq
-from dronewq.utils.filetypes import Image
+from dronewq.utils.data_types import Image
+from dronewq.utils.images import load_imgs
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -88,7 +88,7 @@ def mobley_rho(lt_img: Image, rho=0.028) -> np.ndarray:
         raise LookupError("There are no sky images in sky_lt_imgs folder.")
 
     # Grab the first ten sky images, average them, then delete from memory
-    sky_imgs_gen = dronewq.load_imgs(
+    sky_imgs_gen = load_imgs(
         sky_lt_dir,
         count=min(len(sky_imgs_filenames), 10),
         start=0,
