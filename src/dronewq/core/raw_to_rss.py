@@ -5,13 +5,15 @@ Removed a lot of unnecessary inputs. Could remove
 Refactored by: Temuulen
 """
 
-import concurrent.futures
 import logging
 import os
 import shutil
 from pathlib import Path
+from queue import Queue
+from threading import Thread
 
 import dronewq
+from dronewq.utils.images import reader_worker
 from dronewq.utils.settings import settings
 
 from ..micasense import imageset
@@ -145,89 +147,86 @@ def process_raw_to_rrs(
             num_workers=num_workers,
         )
 
-    # use a common process pool for the methods
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=num_workers,
-    ) as Executor:
-        if lw_method == "mobley_rho":
-            logger.info("Applying the mobley_rho_method (Lt -> Lw).")
-            dronewq.mobley_rho(num_workers=num_workers, executor=Executor)
+    # Buffer used to transfer read lt imgs to the pipeline
+    buffer = Queue(maxsize=10)
+    # Thread used to read from lt_dir
+    reader_thread = Thread(target=reader_worker, args=(lt_dir, buffer))
 
-        elif lw_method == "blackpixel":
-            logger.info("Applying the blackpixel_method (Lt -> Lw)")
-            dronewq.blackpixel(num_workers=num_workers, executor=Executor)
+    if lw_method == "mobley_rho":
+        logger.info("applying the mobley_rho_method (lt -> lw).")
+        dronewq.mobley_rho()
 
-        elif lw_method == "hedley":
-            logger.info("Applying the Hochberg/Hedley (Lt -> Lw)")
-            dronewq.hedley(
-                random_n,
-                num_workers=num_workers,
-                executor=Executor,
-            )
-        # just change this pointer if we didn't do anything
-        # the lt over to the lw dir
-        else:
-            logger.info("Not doing any Lw calculation.")
-            lw_dir = lt_dir
+    elif lw_method == "blackpixel":
+        logger.info("applying the blackpixel_method (lt -> lw)")
+        dronewq.blackpixel(num_workers=num_workers, executor=executor)
 
-        # normalize Lw by Ed to get Rrs
+    elif lw_method == "hedley":
+        logger.info("applying the hochberg/hedley (lt -> lw)")
+        dronewq.hedley(
+            random_n,
+            num_workers=num_workers,
+            executor=executor,
+        )
+    # just change this pointer if we didn't do anything
+    # the lt over to the lw dir
+    else:
+        logger.info("not doing any lw calculation.")
+        lw_dir = lt_dir
 
-        if ed_method == "panel_ed":
-            logger.info("Normalizing by panel irradiance (Lw/Ed -> Rrs).")
-            dronewq.panel_ed(output_csv_path, num_workers=num_workers)
+    # normalize lw by ed to get rrs
 
-        elif ed_method == "dls_ed":
-            logger.info("Normalizing by DLS irradiance (Lw/Ed -> Rrs).")
-            dronewq.dls_ed(
-                output_csv_path,
-                num_workers=num_workers,
-                executor=Executor,
-            )
+    if ed_method == "panel_ed":
+        logger.info("normalizing by panel irradiance (lw/ed -> rrs).")
+        dronewq.panel_ed(output_csv_path, num_workers=num_workers)
 
-        elif ed_method == "dls_and_panel_ed":
-            logger.info(
-                "Normalizing by DLS corrected by panel irradiance (Lw/Ed -> Rrs).",
-            )
-            dronewq.dls_ed(
-                output_csv_path,
-                dls_corr=True,
-                num_workers=num_workers,
-                executor=Executor,
-            )
-
-        else:
-            logger.info(
-                "No other irradiance normalization methods implemented yet, panel_ed is recommended.",
-            )
-            return False
-
-        logger.info(
-            "All data has been saved as Rrs using the %s to calculate Lw and normalized by %s irradiance.",
-            str(lw_method),
-            str(ed_method),
+    elif ed_method == "dls_ed":
+        logger.info("normalizing by dls irradiance (lw/ed -> rrs).")
+        dronewq.dls_ed(
+            output_csv_path,
+            num_workers=num_workers,
+            executor=executor,
         )
 
-        # mask pixels in the imagery (from glint, vegetation, shadows)
-        if pixel_masking_method == "value_threshold":
-            logger.info("Masking pixels using NIR and green Rrs thresholds")
-            dronewq.threshold_masking(
-                nir_threshold=nir_threshold,
-                green_threshold=green_threshold,
-                num_workers=num_workers,
-                executor=Executor,
-            )
-        elif pixel_masking_method == "std_threshold":
-            logger.info("Masking pixels using std Rrs(NIR)")
-            dronewq.std_masking(
-                mask_std_factor=mask_std_factor,
-                num_workers=num_workers,
-                executor=Executor,
-            )
+    elif ed_method == "dls_and_panel_ed":
+        logger.info(
+            "normalizing by dls corrected by panel irradiance (lw/ed -> rrs).",
+        )
+        dronewq.dls_ed(
+            output_csv_path,
+            dls_corr=true,
+            num_workers=num_workers,
+            executor=executor,
+        )
 
-        # if we don't do the glint correction then just change
-        # the pointer to the lt_dir
-        else:
-            logger.info("Not masking pixels.")
+    else:
+        logger.info(
+            "no other irradiance normalization methods implemented yet, panel_ed is recommended.",
+        )
+        return false
+
+    logger.info(
+        "all data has been saved as rrs using the %s to calculate lw and normalized by %s irradiance.",
+        str(lw_method),
+        str(ed_method),
+    )
+
+    # mask pixels in the imagery (from glint, vegetation, shadows)
+    if pixel_masking_method == "value_threshold":
+        logger.info("masking pixels using nir and green rrs thresholds")
+        dronewq.threshold_masking(
+            nir_threshold=nir_threshold,
+            green_threshold=green_threshold,
+        )
+    elif pixel_masking_method == "std_threshold":
+        logger.info("masking pixels using std rrs(nir)")
+        dronewq.std_masking(
+            mask_std_factor=mask_std_factor,
+        )
+
+    # if we don't do the glint correction then just change
+    # the pointer to the lt_dir
+    else:
+        logger.info("not masking pixels.")
 
     # finalize and add point output
     if clean_intermediates:
