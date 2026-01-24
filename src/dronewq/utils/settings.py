@@ -28,6 +28,11 @@ DEFAULT_CONFIG = dotdict(
     masked_rrs_dir=None,
     warp_img_dir=None,
     metadata=None,
+    lw_method="mobley_rho",
+    pixel_masking_method=None,
+    ed_method="dls_ed",
+    overwrite_lt_lw=False,
+    clean_intermediates=True,
 )
 
 main_thread_config = copy.deepcopy(DEFAULT_CONFIG)

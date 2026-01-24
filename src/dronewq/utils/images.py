@@ -1,7 +1,8 @@
-import concurrent.futures
 import datetime
 import logging
 import os
+from glob import glob
+from queue import Queue
 
 import cv2
 import numpy as np
@@ -9,7 +10,7 @@ import pandas as pd
 import rasterio
 
 import dronewq
-import dronewq.micasense as micasense
+from dronewq import micasense
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -291,7 +292,7 @@ def save(
         return True
     except Exception as e:
         # Log the error with capture information
-        logger.warn(f"Failed to save {capture.fullOutputPath}: {e}")
+        logger.warning(f"Failed to save {capture.fullOutputPath}: {e}")
         raise  # Re-raise with full traceback
 
 
@@ -316,54 +317,23 @@ def save_images(
 
     logger.info("output_path: %s", output_path)
 
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=num_workers,
-    ) as executor:
-        futures = {}
+    for idx, capture in enumerate(img_set.captures):
+        outputFilename = f"capture_{idx + 1}.tif"
+        thumbnailFilename = f"capture_{idx + 1}.jpg"
+        fullOutputPath = os.path.join(output_path, outputFilename)
+        fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
 
-        for idx, capture in enumerate(img_set.captures):
-            outputFilename = f"capture_{idx + 1}.tif"
-            thumbnailFilename = f"capture_{idx + 1}.jpg"
-            fullOutputPath = os.path.join(output_path, outputFilename)
-            fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
+        # Skip if exists and not overwriting
+        if os.path.exists(fullOutputPath) and not overwrite_lt_lw:
+            continue
 
-            # Skip if exists and not overwriting
-            if os.path.exists(fullOutputPath) and not overwrite_lt_lw:
-                continue
+        if len(capture.images) != len(img_set.captures[0].images):
+            continue
 
-            if len(capture.images) != len(img_set.captures[0].images):
-                continue
+        capture.fullOutputPath = fullOutputPath
+        capture.fullThumbnailPath = fullThumbnailPath
 
-            capture.fullOutputPath = fullOutputPath
-            capture.fullThumbnailPath = fullThumbnailPath
-
-            # Submit task and track it
-            future = executor.submit(
-                save,
-                capture,
-                warp_matrices,
-                generateThumbnails,
-            )
-            futures[future] = idx
-
-        # Wait for all tasks to complete and collect results
-        results = []
-        completed = 0
-
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                # Blocks until this specific future completes
-                result = future.result()
-                results.append(result)
-                completed += 1
-            except Exception as e:
-                idx = futures[future]
-                logger.error(
-                    "Capture %d failed: %s",
-                    idx,
-                    str(e),
-                )
-                results.append(False)
+        save(capture, warp_matrices)
 
     end = datetime.datetime.now()
     elapsed = (end - start).total_seconds()
@@ -374,15 +344,8 @@ def save_images(
     )
     logger.info(
         "Alignment+Saving rate: %.2f images per second",
-        len(results) / elapsed if elapsed > 0 else 0,
+        len(idx) / elapsed if elapsed > 0 else 0,
     )
-    logger.info(
-        "Successfully processed: %d/%d captures",
-        sum(results),
-        len(results),
-    )
-
-    return results
 
 
 def process_micasense_images(
@@ -390,7 +353,6 @@ def process_micasense_images(
     overwrite_lt_lw=False,
     sky=False,
     generateThumbnails=True,
-    num_workers=4,
 ):
     """
     Process MicaSense multispectral images to calibrated radiance units.
@@ -534,7 +496,6 @@ def process_micasense_images(
         warp_img_capture=warp_img_capture,
         generateThumbnails=generateThumbnails,
         overwrite_lt_lw=overwrite_lt_lw,
-        num_workers=num_workers,
     )
 
     logger.info("Finished saving images at: %s", output_path)
@@ -542,3 +503,13 @@ def process_micasense_images(
     logger.info("Finished saving image metadata at: %s", fullCsvPath)
 
     return output_path
+
+
+def reader_worker(dir_path: str, buffer: Queue):
+    file_paths = glob(dir_path + "/*.tif")
+
+    for file in file_paths:
+        with rasterio.open(file, "r") as src:
+            buffer.put(np.array(src.read()))
+
+    buffer.put(None)
