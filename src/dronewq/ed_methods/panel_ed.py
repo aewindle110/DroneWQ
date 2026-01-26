@@ -6,10 +6,9 @@ import os
 import numpy as np
 import pandas as pd
 
+from dronewq.micasense import imageset
 from dronewq.utils.data_types import Base_Compute_Method, Image
 from dronewq.utils.settings import settings
-
-from ..micasense import imageset
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ class Panel_ed(Base_Compute_Method):
         self.ed_row = self.__calculate_ed(output_csv_path)
         self.__ed_index = 0
 
-    def __call__(self, lw_img: Image):
+    def __call__(self, lw_img: Image) -> Image:
         """
         Calculate remote sensing reflectance using calibrated reflectance panel.
 

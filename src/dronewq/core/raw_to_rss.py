@@ -1,9 +1,4 @@
-"""
-Removed a lot of unnecessary inputs. Could remove
-`output_csv_path` too.
-
-Refactored by: Temuulen
-"""
+"""Refactored by: Temuulen."""
 
 import logging
 import os

@@ -22,7 +22,7 @@ class Image:
 
     @classmethod
     def from_image(cls, src: Image, data: np.ndarray, method: str = ""):
-        """Creates another Image instance from another Image"""
+        """Creates another Image instance from another Image."""
         return cls(
             file_name=src.file_name,
             file_path=src.file_path,
@@ -40,7 +40,7 @@ class Base_Compute_Method:
             raise ValueError("Please set the main_dir path.")
         self.save_images = save_images
 
-    def __call__(self, lt_img: Image):
+    def __call__(self, lt_img: Image) -> Image:
         pass
 
     def send_to_save(self, lw_img: Image, queue: Queue):

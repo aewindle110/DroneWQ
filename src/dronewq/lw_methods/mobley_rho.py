@@ -14,11 +14,6 @@ logger = logging.getLogger(__name__)
 
 class Mobley_rho(Base_Compute_Method):
     def __init__(self, save_images: bool = False, rho: float = 0.028):
-        super().__init__(save_images=save_images)
-        self.rho = rho
-        self.lsky_median = self.__lsky_median(settings.sky_lt_dir)
-
-    def __call__(self, lt_img: Image):
         """
         Calculate water-leaving radiance using Mobley's constant rho method.
 
@@ -30,8 +25,8 @@ class Mobley_rho(Base_Compute_Method):
 
         Parameters
         ----------
-        lt_img : Image
-            Input Lt Image object containing total radiance data.
+        save_images : bool, optional
+            Whether to save the processed output images to disk. Default is False.
         rho : float, optional
             Effective sea-surface reflectance of a wave facet. Typically 0.028 based
             on Mobley (1999) recommendations for wind speeds < 5 m/s.
@@ -79,9 +74,13 @@ class Mobley_rho(Base_Compute_Method):
         Mobley, C. D. (1999). Estimation of the remote-sensing reflectance from
         above-surface measurements. Applied Optics, 38(7), 7442-7455.
         """
+        super().__init__(save_images=save_images)
+        self.rho = rho
+        self.lsky_median = self.__lsky_median(settings.sky_lt_dir)
 
+    def __call__(self, lt_img: Image) -> Image:
         try:
-            stacked_lw = lt_img.data[:5] - (self.rho * self.lsky_median[:5])
+            stacked_lw = lt_img.data[:5] - (self.rho * self.lsky_median[:, None, None])
             lw_img = Image.from_image(
                 lt_img, stacked_lw, method=self.__class__.__name__
             )

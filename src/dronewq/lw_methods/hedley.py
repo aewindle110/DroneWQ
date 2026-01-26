@@ -1,8 +1,8 @@
 """Refactored by: Temuulen"""
 
-import glob
 import logging
 import random
+from pathlib import Path
 
 import numpy as np
 import rasterio
@@ -13,13 +13,11 @@ from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
+BANDS = 5
+
 
 class Hedley(Base_Compute_Method):
     def __init__(self, save_images: bool = False, random_n: int = 10):
-        super().__init__(save_images=save_images)
-        self.mean_min_lt_NIR = self.__mean_min_lt_NIR(random_n)
-
-    def __call__(self, lt_img: Image):
         """
         Calculate water-leaving radiance using the Hedley deglinting method.
 
@@ -33,6 +31,8 @@ class Hedley(Base_Compute_Method):
 
         Parameters
         ----------
+        save_images : bool, optional
+            If True, saves the processed images to the specified output directory.
         random_n : int, optional
             Number of random images to sample for calculating the ambient NIR level.
             More images provide a more robust estimate but increase computation time.
@@ -74,9 +74,14 @@ class Hedley(Base_Compute_Method):
         removal of sun glint for mapping shallow-water benthos. International Journal
         of Remote Sensing, 26(10), 2107-2112.
         """
+        super().__init__(save_images=save_images)
+        self.mean_min_lt_NIR = self.__mean_min_lt_nir(random_n)
+
+    def __call__(self, lt_img: Image) -> Image:
         try:
-            if lt_img.data.shape[0] < 5:
-                raise ValueError("Image must have at least 5 bands.")
+            if lt_img.data.shape[0] < BANDS:
+                msg = "Image must have at least 5 bands."
+                raise ValueError(msg)
             lt = lt_img.data
             lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
 
@@ -95,7 +100,9 @@ class Hedley(Base_Compute_Method):
             stacked_lw = np.stack(lw_all)
 
             lw_img = Image.from_image(
-                lt_img, data=stacked_lw, method=self.__class__.__name__
+                lt_img,
+                data=stacked_lw,
+                method=self.__class__.__name__,
             )
             logger.info(
                 "Lw Stage (Hedley): Successfully processed: %s",
@@ -103,13 +110,13 @@ class Hedley(Base_Compute_Method):
             )
             return lw_img
         except Exception as e:
-            raise RuntimeError(f"File {lt_img.file_path!s} failed: {e!s}")
+            msg = f"File {lt_img.file_path!s} failed: {e!s}"
+            raise RuntimeError(msg)
 
-    def __mean_min_lt_NIR(random_n=10) -> float:
+    def __mean_min_lt_nir(self, random_n=10) -> float:
         """Sample a mean minimum lt NIR value from all the lt images."""
-
         lt_dir = settings.lt_dir
-        filepaths = glob.glob(lt_dir + "/*.tif")
+        filepaths = list(Path(lt_dir).glob("/*.tif"))
 
         lt_all = []
         rand = random.sample(filepaths, random_n)

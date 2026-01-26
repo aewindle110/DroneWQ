@@ -1,105 +1,17 @@
 """Refactored by Temuulen"""
 
-import concurrent.futures
-import glob
 import logging
-import os
-from functools import partial
 
 import numpy as np
-import rasterio
 
+from dronewq.utils.data_types import Base_Compute_Method, Image
 from dronewq.utils.images import load_imgs
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
-def __compute(
-    filepath,
-    masked_rrs_dir,
-    rrs_nir_mean,
-    rrs_nir_std,
-    mask_std_factor,
-):
-    """
-    Process a single Rrs file to mask sun glint pixels based on NIR threshold.
-
-    Worker function that reads a remote sensing reflectance (Rrs) raster file,
-    identifies pixels likely contaminated by sun glint using NIR values exceeding
-    a statistical threshold, masks these pixels across all bands by setting them
-    to NaN, and writes the masked result to a new file.
-
-    Parameters
-    ----------
-    filepath : str
-        Path to the input Rrs raster file.
-    masked_rrs_dir : str
-        Directory path where the masked output file will be saved.
-    rrs_nir_mean : float
-        Mean NIR reflectance value calculated from a subset of images,
-        representing typical glint-free conditions.
-    rrs_nir_std : float
-        Standard deviation of NIR reflectance values from a subset of images.
-    mask_std_factor : float
-        Multiplier for standard deviation to determine the masking threshold.
-        Lower values result in more aggressive masking.
-
-    Notes
-    -----
-    Pixels are masked where: Rrs(NIR) > rrs_nir_mean + rrs_nir_std * mask_std_factor
-
-    The masking is applied to all 5 bands based on the NIR (band 5) threshold.
-    Masked pixels are set to NaN across all bands.
-    Output files maintain the same basename as input files.
-
-    Raises
-    ------
-    Exception
-        If file processing fails for any reason (logged as warning and re-raised).
-    """
-    im = filepath
-    try:
-        with rasterio.open(im, "r") as rrs_src:
-            profile = rrs_src.profile
-            profile["count"] = 5
-            rrs_deglint_all = []
-            rrs_nir_deglint = rrs_src.read(5)  # nir band
-            rrs_nir_deglint[
-                rrs_nir_deglint > (rrs_nir_mean + rrs_nir_std * mask_std_factor)
-            ] = np.nan
-            nan_index = np.isnan(rrs_nir_deglint)
-            # filter nan pixel indicies across all bands
-            for i in range(1, 6):
-                rrs_deglint = rrs_src.read(i)
-                rrs_deglint[nan_index] = np.nan
-                rrs_deglint_all.append(rrs_deglint)  # append all for each band
-            stacked_rrs_deglint = np.stack(rrs_deglint_all)  # stack into np.array
-            # write new stacked tifs
-            im_name = os.path.basename(
-                im,
-            )  # we're grabbing just the .tif file name instead of the whole path
-            with rasterio.open(
-                os.path.join(masked_rrs_dir, im_name),
-                "w",
-                **profile,
-            ) as dst:
-                dst.write(stacked_rrs_deglint)
-    except Exception as e:
-        logger.warning(
-            "Threshold Masking error: File %s has failed with error %s",
-            filepath,
-            str(e),
-        )
-        raise
-
-
-def std_masking(
-    num_images=10,
-    mask_std_factor=1,
-    num_workers=4,
-    executor=None,
-):
+class StdMasking(Base_Compute_Method):
     """
     Mask sun glint pixels using statistical threshold based on NIR values.
 
@@ -122,12 +34,6 @@ def std_masking(
         Lower values result in more aggressive masking (more pixels masked).
         Higher values are more conservative (fewer pixels masked). Typical
         values range from 0.5 to 2.0. Default is 1.
-    num_workers : int, optional
-        Number of parallel worker processes for file processing. Should be
-        tuned based on available CPU cores. Default is 4.
-    executor : concurrent.futures.Executor, optional
-        Pre-configured executor for parallel processing. If None, a new
-        ProcessPoolExecutor will be created. Default is None.
 
     Returns
     -------
@@ -158,54 +64,101 @@ def std_masking(
     - 1.0-1.5: Moderate masking for typical conditions
     - 1.5-2.0: Conservative masking to preserve more pixels
     """
-    if settings.main_dir is None:
-        raise LookupError("Please set the main_dir path.")
 
-    rrs_dir = settings.rrs_dir
-    masked_rrs_dir = settings.masked_rrs_dir
+    def __init__(
+        self,
+        num_images=10,
+        mask_std_factor=1,
+        save_images: bool = False,
+    ):
+        super().__init__(save_images=save_images)
 
-    # grab the first num_images images, finds the mean and std of NIR, then anything times the glint factor is classified as glint
-    rrs_imgs_gen = load_imgs(
-        rrs_dir,
-        count=num_images,
-        start=0,
-        altitude_cutoff=0,
-        random=True,
-    )
-    rrs_imgs = np.array(list(rrs_imgs_gen))
-    rrs_nir_mean = np.nanmean(rrs_imgs, axis=(0, 2, 3))[4]  # mean of NIR band
-    rrs_nir_std = np.nanstd(rrs_imgs, axis=(0, 2, 3))[4]  # std of NIR band
-    logger.info(
-        "The mean and std of Rrs from first N images is: %d, %d",
-        rrs_nir_mean,
-        rrs_nir_std,
-    )
-    logger.info(
-        "Pixels will be masked where Rrs(NIR) > %d",
-        rrs_nir_mean + rrs_nir_std * mask_std_factor,
-    )
-    del rrs_imgs  # free up the memory
+        self.std_factor = mask_std_factor
+        self.rrs_nir_mean, self.rrs_nir_std = self.__calculate_rrs_nir(
+            num_images,
+            mask_std_factor,
+        )
 
-    # go through each Rrs image in the dir and mask any pixels > mean+std*glint factor
-    filepaths = glob.glob(rrs_dir + "/*.tif")
+    def __call__(
+        self,
+        rrs_img: Image,
+    ):
+        """
+        Process a single Rrs file to mask sun glint pixels based on NIR threshold.
 
-    partial_compute = partial(
-        __compute,
-        masked_rrs_dir=masked_rrs_dir,
-        rrs_nir_mean=rrs_nir_mean,
-        rrs_nir_std=rrs_nir_std,
-        mask_std_factor=mask_std_factor,
-    )
+        Worker function that reads a remote sensing reflectance (Rrs) raster file,
+        identifies pixels likely contaminated by sun glint using NIR values exceeding
+        a statistical threshold, masks these pixels across all bands by setting them
+        to NaN, and writes the masked result to a new file.
 
-    if executor is not None:
-        results = list(executor.map(partial_compute, filepaths))
-    else:
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=num_workers,
-        ) as executor:
-            results = list(executor.map(partial_compute, filepaths))
+        Parameters
+        ----------
+        rrs_img : Image
+            Image object containing the Rrs raster file.
 
-    logger.info(
-        "Masking Stage (std): Successfully processed: %d captures",
-        len(results),
-    )
+        Notes
+        -----
+        Pixels are masked where: Rrs(NIR) > rrs_nir_mean + rrs_nir_std * mask_std_factor
+
+        The masking is applied to all 5 bands based on the NIR (band 5) threshold.
+        Masked pixels are set to NaN across all bands.
+        Output files maintain the same basename as input files.
+
+        Raises
+        ------
+        Exception
+            If file processing fails for any reason (logged as warning and re-raised).
+        """
+        try:
+            # write new stacked tifrrs = rrs_img.data  # shape: (5, H, W) (or generally (bands, ...))
+            rrs = rrs_img.data
+            thr = self.rrs_nir_mean + self.rrs_nir_std * self.std_factor
+            mask = rrs[4] > thr  # True where you want to NaN-out (based on NIR)
+
+            stacked_rrs_deglint = rrs.copy()  # avoid mutating original
+            stacked_rrs_deglint[:, mask] = np.nans
+            masked_rrs_img = Image.from_image(
+                rrs_img, data=stacked_rrs_deglint, method=self.__class__.__name__
+            )
+            logger.info(
+                "Threshold Masking: Successfully processed: %s",
+                rrs_img.file_name,
+            )
+            return masked_rrs_img
+        except Exception as e:
+            raise RuntimeError(f"File {rrs_img.file_path!s} failed: {e!s}")
+
+    def __calculate_rrs_nir(
+        self,
+        num_images=10,
+        mask_std_factor=1,
+    ):
+        if settings.rrs_dir is None:
+            raise ValueError("Please set the rrs_dir path.")
+
+        # grab the first num_images images,
+        # finds the mean and std of NIR,
+        # then anything times the glint factor
+        # is classified as glint
+        rrs_imgs_gen = load_imgs(
+            settings.rrs_dir,
+            count=num_images,
+            start=0,
+            altitude_cutoff=0,
+            random=True,
+        )
+        rrs_imgs = np.array(list(rrs_imgs_gen))
+        # mean of NIR band
+        rrs_nir_mean = np.nanmean(rrs_imgs, axis=(0, 2, 3))[4]
+        # std of NIR band
+        rrs_nir_std = np.nanstd(rrs_imgs, axis=(0, 2, 3))[4]
+        logger.info(
+            "The mean and std of Rrs from first N images is: %d, %d",
+            rrs_nir_mean,
+            rrs_nir_std,
+        )
+        logger.info(
+            "Pixels will be masked where Rrs(NIR) > %d",
+            rrs_nir_mean + rrs_nir_std * mask_std_factor,
+        )
+        return rrs_nir_mean, rrs_nir_std

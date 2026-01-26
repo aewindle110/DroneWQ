@@ -14,10 +14,6 @@ logger = logging.getLogger(__name__)
 
 class Blackpixel(Base_Compute_Method):
     def __init__(self, save_images: bool = False):
-        super().__init__(save_images=save_images)
-        self.lsky_median = self.__lsky_median(settings.sky_lt_dir)
-
-    def __call__(self, lt_img: Image):
         """
         Calculate water-leaving radiance using the black pixel assumption.
 
@@ -30,12 +26,8 @@ class Blackpixel(Base_Compute_Method):
 
         Parameters
         ----------
-        num_workers : int, optional
-            Number of parallel worker processes for file processing. Should be
-            tuned based on available CPU cores. Default is 4.
-        executor : concurrent.futures.Executor, optional
-            Pre-configured executor for parallel processing. If None, a new
-            ProcessPoolExecutor will be created. Default is None.
+        save_images : bool, optional
+            Whether to save the processed output images to disk. Default is False.
 
         Returns
         -------
@@ -69,6 +61,10 @@ class Blackpixel(Base_Compute_Method):
         - Spatially uniform surface reflectance properties
         - Stable sky conditions during data collection
         """
+        super().__init__(save_images=save_images)
+        self.lsky_median = self.__lsky_median(settings.sky_lt_dir)
+
+    def __call__(self, lt_img: Image) -> Image:
         lsky_median = self.lsky_median
 
         if lt_img.data.shape[0] < 5:

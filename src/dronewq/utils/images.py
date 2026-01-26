@@ -1,7 +1,7 @@
 import datetime
 import logging
 import os
-from glob import glob
+from pathlib import Path
 from queue import Queue
 
 import cv2
@@ -10,7 +10,8 @@ import pandas as pd
 import rasterio
 
 import dronewq
-from dronewq import micasense
+from dronewq.micasense import imageset, imageutils
+from dronewq.utils.data_types import Image
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -81,6 +82,11 @@ def load_imgs(
     >>> imgs = load_imgs('/path/to/images', count=10)
     >>> imgs = list(imgs)
     """
+    if not os.path.exists(img_dir):
+        raise FileNotFoundError(f"Directory {img_dir} does not exist.")
+    if not os.path.isdir(img_dir):
+        raise NotADirectoryError(f"{img_dir} is not a directory.")
+
     df = load_metadata(
         img_dir,
         count,
@@ -226,24 +232,24 @@ def get_warp_matrix(
 
     Parameters
     ----------
-        img_capture:
-            A capture is a set of images taken by one MicaSense camera
-            which share the same unique capture identifier (capture_id).
-            These images share the same filename prefix, such as
-            IMG_0000_*.tif. It is defined by running
-            ImageSet.from_directory().captures.
+    img_capture:
+        A capture is a set of images taken by one MicaSense camera
+        which share the same unique capture identifier (capture_id).
+        These images share the same filename prefix, such as
+        IMG_0000_*.tif. It is defined by running
+        ImageSet.from_directory().captures.
 
-        match_index: Index of the band. Default is 0.
+    match_index: Index of the band. Default is 0.
 
-        warp_mode: MOTION_HOMOGRAPHY or MOTION_AFFINE.
-            For Altum images only use MOTION_HOMOGRAPHY
+    warp_mode: MOTION_HOMOGRAPHY or MOTION_AFFINE.
+        For Altum images only use MOTION_HOMOGRAPHY
 
-        pyramid_levels:
-            Default is 1. For images with RigRelatives,
-            setting this to 0 or 1 may improve alignment
+    pyramid_levels:
+        Default is 1. For images with RigRelatives,
+        setting this to 0 or 1 may improve alignment
 
-        max_alignment_iterations:
-            The maximum number of solver iterations.
+    max_alignment_iterations:
+        The maximum number of solver iterations.
 
     Returns
     -------
@@ -257,7 +263,7 @@ def get_warp_matrix(
         "Aligning images. Depending on settings this can take from a few seconds to many minutes",
     )
     # Can potentially increase max_iterations for better results, but longer runtimes
-    warp_matrices, alignment_pairs = micasense.imageutils.align_capture(
+    warp_matrices, alignment_pairs = imageutils.align_capture(
         img_capture,
         ref_index=match_index,
         max_iterations=max_alignment_iterations,
@@ -289,7 +295,6 @@ def save(
         if generateThumbnails:
             capture.save_capture_as_rgb(capture.fullThumbnailPath)
         capture.clear_image_data()
-        return True
     except Exception as e:
         # Log the error with capture information
         logger.warning(f"Failed to save {capture.fullOutputPath}: {e}")
@@ -302,8 +307,7 @@ def save_images(
     thumbnail_path,
     warp_img_capture,
     generateThumbnails=True,
-    overwrite_lt_lw=False,
-    num_workers=4,
+    overwrite_lt=False,
 ):
     """Process captures in parallel using threading."""
     # Create output directories
@@ -324,7 +328,7 @@ def save_images(
         fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
 
         # Skip if exists and not overwriting
-        if os.path.exists(fullOutputPath) and not overwrite_lt_lw:
+        if os.path.exists(fullOutputPath) and not overwrite_lt:
             continue
 
         if len(capture.images) != len(img_set.captures[0].images):
@@ -342,15 +346,10 @@ def save_images(
         "Saving time: %.2f",
         elapsed,
     )
-    logger.info(
-        "Alignment+Saving rate: %.2f images per second",
-        len(idx) / elapsed if elapsed > 0 else 0,
-    )
 
 
 def process_micasense_images(
-    warp_img_dir=None,
-    overwrite_lt_lw=False,
+    overwrite_lt=False,
     sky=False,
     generateThumbnails=True,
 ):
@@ -365,11 +364,6 @@ def process_micasense_images(
 
     Parameters
     ----------
-    warp_img_dir : str, optional
-        Directory path containing a representative capture to use for computing
-        the band alignment (warp) matrix. If None, uses the first capture from
-        the input directory. Should contain a scene with distinct features visible
-        in all bands. Default is None.
     overwrite_lt_lw : bool, optional
         If True, overwrites previously processed Lt (total radiance) and Lw
         (water-leaving radiance) files. If False, skips processing for existing
@@ -383,10 +377,6 @@ def process_micasense_images(
         If True, generates RGB thumbnail JPEG images for quick visualization of
         each processed capture. Thumbnails are saved to separate thumbnail
         directories. Default is True.
-    num_workers : int, optional
-        Number of parallel worker processes for image processing. Higher values
-        speed up processing but require more memory and CPU cores. Should be
-        tuned based on available hardware. Default is 4.
 
     Returns
     -------
@@ -468,26 +458,26 @@ def process_micasense_images(
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
 
-    img_dir = settings.raw_sky_dir if sky else settings.raw_water_dir
-
-    img_set = micasense.imageset.ImageSet.from_directory(img_dir)
-
-    if warp_img_dir:
-        warp_img_capture = micasense.imageset.ImageSet.from_directory(
-            warp_img_dir,
-        ).captures[0]
-        logger.info("Used warp dir: %s", warp_img_dir)
-    else:
-        warp_img_capture = img_set.captures[0]
-
-    # just have the sky images go into a different dir and
-    # the water imgs go into a default 'lt_imgs' dir
     if sky:
+        img_dir = settings.raw_sky_dir
+        img_set = imageset.ImageSet.from_directory(img_dir)
+        # just have the sky images go into a different dir and
+        # the water imgs go into a default 'lt_imgs' dir
         output_path = settings.sky_lt_dir
         thumbnail_path = os.path.join(settings.main_dir, "sky_lt_thumbnails")
     else:
+        img_dir = settings.raw_water_dir
+        img_set = imageset.ImageSet.from_directory(img_dir)
         output_path = settings.lt_dir
         thumbnail_path = os.path.join(settings.main_dir, "lt_thumbnails")
+
+    if Path(settings.warp_img_dir).exists():
+        warp_img_capture = imageset.ImageSet.from_directory(
+            settings.warp_img_dir,
+        ).captures[0]
+        logger.info("Used warp dir: %s", settings.warp_img_dir)
+    else:
+        warp_img_capture = img_set.captures[0]
 
     save_images(
         img_set=img_set,
@@ -495,7 +485,7 @@ def process_micasense_images(
         thumbnail_path=thumbnail_path,
         warp_img_capture=warp_img_capture,
         generateThumbnails=generateThumbnails,
-        overwrite_lt_lw=overwrite_lt_lw,
+        overwrite_lt=overwrite_lt,
     )
 
     logger.info("Finished saving images at: %s", output_path)
@@ -506,10 +496,35 @@ def process_micasense_images(
 
 
 def reader_worker(dir_path: str, buffer: Queue):
-    file_paths = glob(dir_path + "/*.tif")
+    """Reads tiff files from a directory and puts them in a queue."""
+    file_paths = Path(dir_path).glob("*.tif")
 
     for file in file_paths:
+        print(file)
         with rasterio.open(file, "r") as src:
-            buffer.put(np.array(src.read()))
+            data = np.array(src.read())
+            profile = src.profile
+            file_name = file.name
+            lt_img = Image(file_name, file, "lt", profile, data)
+            buffer.put(lt_img)
 
     buffer.put(None)
+
+
+def save_worker(buffer: Queue):
+    """Saves images from a queue."""
+    main_dir = settings.main_dir
+    while True:
+        img = buffer.get()
+        if img is None:
+            break
+        profile = img.profile
+        profile["count"] = 5
+        ouput_path = Path(main_dir).joinpath(img.method).joinpath(img.file_name)
+
+        with rasterio.open(
+            ouput_path,
+            "w",
+            **profile,
+        ) as dst:
+            dst.write(img.data)

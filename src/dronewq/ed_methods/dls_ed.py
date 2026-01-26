@@ -6,10 +6,9 @@ import os
 import numpy as np
 import pandas as pd
 
+from dronewq.micasense import imageset
 from dronewq.utils.data_types import Base_Compute_Method, Image
 from dronewq.utils.settings import settings
-
-from ..micasense import imageset
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ class Dls_ed(Base_Compute_Method):
     def __call__(
         self,
         lw_img: Image,
-    ) -> str:
+    ) -> Image:
         """
         Calculate remote sensing reflectance using downwelling light sensor data.
 
@@ -70,7 +69,9 @@ class Dls_ed(Base_Compute_Method):
         # Process Lw imagery: divide by Ed to get Rrs
         try:
             idx = self.__ed_index
-            stacked_rrs = lw_img.data[:5] / self.ed_row[idx][1:6]
+            row = self.ed_row[idx]
+            ed = np.array(row[1:6])
+            stacked_rrs = lw_img.data[:5] / ed[:, None, None]
             self.__ed_index += 1
             rrs_img = Image.from_image(
                 lw_img,
@@ -87,7 +88,7 @@ class Dls_ed(Base_Compute_Method):
         except Exception as e:
             raise RuntimeError(f"File {lw_img.file_path!s} failed: {e!s}")
 
-    def __calculate_ed(self, dls_corr: bool = False, output_csv_path: str = None):
+    def __calculate_ed(self, dls_corr: bool, output_csv_path: str) -> list:
         if settings.main_dir is None:
             raise LookupError("Please set the main_dir path.")
 
