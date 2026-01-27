@@ -307,7 +307,6 @@ def save_images(
     thumbnail_path,
     warp_img_capture,
     generateThumbnails=True,
-    overwrite_lt=False,
 ):
     """Process captures in parallel using threading."""
     # Create output directories
@@ -328,7 +327,7 @@ def save_images(
         fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
 
         # Skip if exists and not overwriting
-        if os.path.exists(fullOutputPath) and not overwrite_lt:
+        if os.path.exists(fullOutputPath):
             continue
 
         if len(capture.images) != len(img_set.captures[0].images):
@@ -349,7 +348,6 @@ def save_images(
 
 
 def process_micasense_images(
-    overwrite_lt=False,
     sky=False,
     generateThumbnails=True,
 ):
@@ -485,7 +483,6 @@ def process_micasense_images(
         thumbnail_path=thumbnail_path,
         warp_img_capture=warp_img_capture,
         generateThumbnails=generateThumbnails,
-        overwrite_lt=overwrite_lt,
     )
 
     logger.info("Finished saving images at: %s", output_path)
@@ -500,7 +497,6 @@ def reader_worker(dir_path: str, buffer: Queue):
     file_paths = Path(dir_path).glob("*.tif")
 
     for file in file_paths:
-        print(file)
         with rasterio.open(file, "r") as src:
             data = np.array(src.read())
             profile = src.profile

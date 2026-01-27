@@ -116,7 +116,7 @@ class Hedley(Base_Compute_Method):
     def __mean_min_lt_nir(self, random_n=10) -> float:
         """Sample a mean minimum lt NIR value from all the lt images."""
         lt_dir = settings.lt_dir
-        filepaths = list(Path(lt_dir).glob("/*.tif"))
+        filepaths = list(Path(lt_dir).glob("*.tif"))
 
         lt_all = []
         rand = random.sample(filepaths, random_n)

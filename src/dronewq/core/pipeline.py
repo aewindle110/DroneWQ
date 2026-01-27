@@ -34,21 +34,25 @@ class RRS_Pipeline:
         self.overwrite_lt = overwrite_lt
         self.generate_thumbnails = generate_thumbnails
 
+        self.main_dir = Path(main_dir)
+
         self.__make_dirs()
 
     def __make_dirs(self) -> None:
         """Create the directories if they don't already exist."""
-        lt_dir = settings.lt_dir
-        lw_dir = settings.lw_dir
-        rrs_dir = settings.rrs_dir
-        masked_rrs_dir = settings.masked_rrs_dir
+        self.lt_dir = settings.lt_dir
+        self.lw_dir = self.main_dir.joinpath(self.lw_method.name)
+        self.rrs_dir = self.main_dir.joinpath(self.ed_method.name)
         # Make all these directories if they don't already exist
-        all_dirs = [lt_dir, lw_dir, rrs_dir]
+        all_dirs = [self.lt_dir, self.lw_dir, self.rrs_dir]
         for directory in all_dirs:
             Path(directory).mkdir(parents=True, exist_ok=True)
 
         if self.pixel_masking_method is not None:
-            Path(masked_rrs_dir).mkdir(parents=True, exist_ok=True)
+            self.masked_rrs_dir = self.main_dir.joinpath(
+                self.pixel_masking_method.name,
+            )
+            Path(self.masked_rrs_dir).mkdir(parents=True, exist_ok=True)
 
     def run(self) -> None:
         """Run the pipeline."""
@@ -57,18 +61,17 @@ class RRS_Pipeline:
             len(list(Path(settings.raw_water_dir).glob("*.tif"))),
         )
 
-        process_micasense_images(
-            overwrite_lt=self.overwrite_lt,
-            sky=False,
-            generateThumbnails=self.generate_thumbnails,
-        )
-
-        if isinstance(self.lw_method, (Mobley_rho, Blackpixel)):
+        if self.overwrite_lt:
+            logger.info("Overwriting existing Lt images.")
             process_micasense_images(
-                overwrite_lt=self.overwrite_lt,
-                sky=True,
+                sky=False,
                 generateThumbnails=self.generate_thumbnails,
             )
+            if isinstance(self.lw_method, (Mobley_rho, Blackpixel)):
+                process_micasense_images(
+                    sky=True,
+                    generateThumbnails=self.generate_thumbnails,
+                )
         # Buffer used to transfer read lt imgs to the pipeline
         reader_buffer = Queue(maxsize=10)
         # Buffer used to save final outputs of the pipeline

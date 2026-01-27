@@ -12,7 +12,7 @@ from pathlib import Path
 from dronewq.utils.utils import dotdict
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.ERROR,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 

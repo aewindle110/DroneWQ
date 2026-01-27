@@ -39,6 +39,7 @@ class Base_Compute_Method:
         if settings.main_dir is None:
             raise ValueError("Please set the main_dir path.")
         self.save_images = save_images
+        self.name = self.__class__.__name__
 
     def __call__(self, lt_img: Image) -> Image:
         pass
