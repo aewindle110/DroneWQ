@@ -2,6 +2,7 @@
 
 import logging
 import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 class Dls_ed(Base_Compute_Method):
     def __init__(
         self,
-        output_csv_path: str,
+        output_csv_path: Path,
         dls_corr: bool = False,
         save_images: bool = False,
     ):
@@ -88,7 +89,7 @@ class Dls_ed(Base_Compute_Method):
         except Exception as e:
             raise RuntimeError(f"File {lw_img.file_path!s} failed: {e!s}")
 
-    def __calculate_ed(self, dls_corr: bool, output_csv_path: str) -> list:
+    def __calculate_ed(self, dls_corr: bool, output_csv_path: Path) -> list:
         if settings.main_dir is None:
             raise LookupError("Please set the main_dir path.")
 
@@ -162,7 +163,7 @@ class Dls_ed(Base_Compute_Method):
                 index="image",
                 columns=ed_columns,
             )
-            dls_ed_corr_data_df.to_csv(os.path.join(output_csv_path, "dls_corr_ed.csv"))
+            dls_ed_corr_data_df.to_csv(output_csv_path / "dls_corr_ed.csv")
             del dls_ed_corr_data_df
 
         else:
@@ -185,6 +186,6 @@ class Dls_ed(Base_Compute_Method):
                 index="image",
                 columns=ed_columns,
             )
-            ed_data_df.to_csv(os.path.join(output_csv_path, "dls_ed.csv"))
+            ed_data_df.to_csv(output_csv_path / "dls_ed.csv")
 
         return ed_data
