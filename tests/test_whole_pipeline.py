@@ -1,11 +1,13 @@
-# Author: Temuulen
-import dronewq
+"""Author: Temuulen."""
+
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-import os
-from pathlib import Path
-from dronewq import settings
 from numpy.testing import assert_allclose
+
+import dronewq
+from dronewq import settings
 
 test_path = Path(__file__).absolute().parent
 test_path = test_path.joinpath("test_set")
