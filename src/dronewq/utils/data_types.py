@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
-from queue import Queue
-
-import numpy as np
-from rasterio.profiles import Profile
+from typing import TYPE_CHECKING
 
 from dronewq.utils.settings import settings
+
+if TYPE_CHECKING:
+    from pathlib import Path
+    from queue import Queue
+
+    import numpy as np
+    from rasterio.profiles import Profile
 
 
 @dataclass
@@ -35,14 +38,12 @@ class Image:
 class Base_Compute_Method:
     """Base class for all computation methods."""
 
-    def __init__(self, save_images: bool = False):
+    def __init__(self, save_images: bool = False) -> None:
         if settings.main_dir is None:
-            raise ValueError("Please set the main_dir path.")
+            msg = "Please set the main_dir path."
+            raise ValueError(msg)
         self.save_images = save_images
         self.name = self.__class__.__name__
 
-    def __call__(self, lt_img: Image) -> Image:
+    def __call__(self, img: Image) -> Image:
         pass
-
-    def send_to_save(self, lw_img: Image, queue: Queue):
-        queue.put(lw_img, block=True, timeout=None)
