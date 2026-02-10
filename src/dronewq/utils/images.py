@@ -492,9 +492,9 @@ def process_micasense_images(
     return output_path
 
 
-def reader_worker(dir_path: str, buffer: Queue):
+def reader_worker(dir_path: Path, buffer: Queue):
     """Reads tiff files from a directory and puts them in a queue."""
-    file_paths = Path(dir_path).glob("*.tif")
+    file_paths = dir_path.glob("*.tif")
 
     for file in file_paths:
         with rasterio.open(file, "r") as src:
