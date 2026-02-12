@@ -73,6 +73,9 @@ class RRSPipeline:
             "Processing a total of %d images.",
             len(list(Path(settings.raw_water_dir).glob("*.tif"))),
         )
+        if not settings.lt_dir.exists() or len(settings.lt_dir.listdir()) == 0:
+            msg = f"{settings.lt_dir} does not exist. Maybe set overwrite_lt=True?"
+            raise FileNotFoundError(msg)
 
         if self.overwrite_lt:
             logger.info("Overwriting existing Lt images.")
@@ -86,14 +89,10 @@ class RRSPipeline:
                     generateThumbnails=self.generate_thumbnails,
                 )
 
-        if not settings.lt_dir.exists():
-            msg = f"{settings.lt_dir} does not exist. Maybe set overwrite_lt=True?"
-            raise FileNotFoundError(msg)
-
         # Buffer used to transfer read lt imgs to the pipeline
         reader_buffer = Queue(maxsize=10)
         # Buffer used to save final outputs of the pipeline
-        saver_buffer = Queue(maxsize=20)
+        saver_buffer = Queue(maxsize=10)
         # Thread used to read from lt_dir
         reader_thread = Thread(
             target=reader_worker,
@@ -107,6 +106,11 @@ class RRSPipeline:
         # Start the reader thread
         reader_thread.start()
         saver_thread.start()
+
+        # The Lw methods need their respective additional preprocessing__lsky_median
+        # Such as finding the median of the sky images or
+        # mean minimum lt NIR value
+        self.lw_method.__preprocess()
 
         while True:
             lt_img = reader_buffer.get()

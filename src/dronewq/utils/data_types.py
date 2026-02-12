@@ -47,3 +47,6 @@ class Base_Compute_Method:
 
     def __call__(self, img: Image) -> Image:
         pass
+
+    def __preprocess(self):
+        pass

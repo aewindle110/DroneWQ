@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import pandas as pd
 import rasterio
+from rasterio.windows import Window
 
 import dronewq
 from dronewq.micasense import imageset, imageutils
@@ -186,7 +187,7 @@ def load_metadata(
     >>> df = load_metadata('/path/to/images', altitude_cutoff=10)
     >>> print(f"Mean altitude: {df['Altitude'].mean():.2f}m")
     """
-    if "sky" in img_dir:
+    if "sky" in str(img_dir):
         base = img_dir
     else:
         base = os.path.dirname(img_dir)
@@ -523,4 +524,20 @@ def save_worker(buffer: Queue):
             "w",
             **profile,
         ) as dst:
-            dst.write(img.data)
+            data = img.data
+            height, width = data.shape[-2:]
+            chunk_size = 256
+
+            for row in range(0, height, chunk_size):
+                for col in range(0, width, chunk_size):
+                    row_end = min(row + chunk_size, height)
+                    col_end = min(col + chunk_size, width)
+
+                    window = Window(col, row, col_end - col, row_end - row)
+
+                    if data.ndim == 3:
+                        window_data = data[:, row:row_end, col:col_end]
+                    else:
+                        window_data = data[row:row_end, col:col_end]
+
+                    dst.write(window_data, window=window)

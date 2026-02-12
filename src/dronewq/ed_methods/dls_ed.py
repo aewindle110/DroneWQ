@@ -22,8 +22,10 @@ class Dls_ed(Base_Compute_Method):
         save_images: bool = False,
     ):
         super().__init__(save_images=save_images)
-        self.ed_row = self.__calculate_ed(dls_corr, output_csv_path)
+        self.ed_row = None
         self.__ed_index = 0
+        self.dls_corr = dls_corr
+        self.output_csv_path = output_csv_path
 
     def __call__(
         self,
@@ -67,6 +69,8 @@ class Dls_ed(Base_Compute_Method):
         The function processes 5 spectral bands centered at approximately:
         475nm, 560nm, 668nm, 717nm, and 842nm.
         """
+        if self.ed_row is None:
+            self.__calculate_ed()
         # Process Lw imagery: divide by Ed to get Rrs
         try:
             idx = self.__ed_index
@@ -89,13 +93,15 @@ class Dls_ed(Base_Compute_Method):
         except Exception as e:
             raise RuntimeError(f"File {lw_img.file_path!s} failed: {e!s}")
 
-    def __calculate_ed(self, dls_corr: bool, output_csv_path: Path) -> list:
+    def __calculate_ed(self):
         if settings.main_dir is None:
             raise LookupError("Please set the main_dir path.")
 
         panel_dir = settings.panel_dir
         rrs_dir = settings.rrs_dir
         raw_water_dir = settings.raw_water_dir
+        dls_corr = self.dls_corr
+        output_csv_path = self.output_csv_path
 
         # Validate rrs_dir
         if rrs_dir is None:
@@ -188,4 +194,4 @@ class Dls_ed(Base_Compute_Method):
             )
             ed_data_df.to_csv(output_csv_path / "dls_ed.csv")
 
-        return ed_data
+        self.ed_row = ed_data

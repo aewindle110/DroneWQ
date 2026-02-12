@@ -75,7 +75,7 @@ class Hedley(Base_Compute_Method):
         of Remote Sensing, 26(10), 2107-2112.
         """
         super().__init__(save_images=save_images)
-        self.mean_min_lt_NIR = self.__mean_min_lt_nir(random_n)
+        self.mean_min_lt_NIR = None
 
     def __call__(self, lt_img: Image) -> Image:
         try:
@@ -113,7 +113,7 @@ class Hedley(Base_Compute_Method):
             msg = f"File {lt_img.file_path!s} failed: {e!s}"
             raise RuntimeError(msg)
 
-    def __mean_min_lt_nir(self, random_n=10) -> float:
+    def __preprocess(self, random_n=10):
         """Sample a mean minimum lt NIR value from all the lt images."""
         lt_dir = settings.lt_dir
         filepaths = list(Path(lt_dir).glob("*.tif"))
@@ -134,5 +134,4 @@ class Hedley(Base_Compute_Method):
             min_lt_NIR.append(np.percentile(stacked_lt_reshape[i, 4, :], 0.1))
 
         mean_min_lt_NIR = np.mean(min_lt_NIR)
-
-        return mean_min_lt_NIR
+        self.mean_min_lt_NIR = mean_min_lt_NIR

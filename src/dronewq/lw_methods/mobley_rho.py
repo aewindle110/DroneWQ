@@ -76,7 +76,7 @@ class Mobley_rho(Base_Compute_Method):
         """
         super().__init__(save_images=save_images)
         self.rho = rho
-        self.lsky_median = self.__lsky_median(settings.sky_lt_dir)
+        self.lsky_median = None
 
     def __call__(self, lt_img: Image) -> Image:
         try:
@@ -92,8 +92,9 @@ class Mobley_rho(Base_Compute_Method):
         except Exception as e:
             raise RuntimeError(f"File {lt_img.file_path!s} failed: {e!s}")
 
-    def __lsky_median(self, sky_lt_dir: str) -> np.ndarray:
+    def __preprocess(self):
         """Compute the median Lsky for all bands."""
+        sky_lt_dir = settings.sky_lt_dir
         if sky_lt_dir is None:
             raise ValueError("Please set the sky_lt_dir path in settings.")
 
@@ -114,5 +115,4 @@ class Mobley_rho(Base_Compute_Method):
 
         sky_imgs = np.array(list(sky_imgs_gen))
         lsky_median = np.median(sky_imgs, axis=(0, 2, 3))
-
-        return lsky_median
+        self.lsky_median = lsky_median
