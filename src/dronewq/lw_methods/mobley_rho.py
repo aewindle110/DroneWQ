@@ -1,4 +1,4 @@
-"""Refactored by: Temuulen"""
+"""Refactored by: Temuulen."""
 
 import logging
 import os

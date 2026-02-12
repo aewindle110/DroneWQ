@@ -3,7 +3,7 @@
 
 from .core.georeference import compute_flight_lines, georeference
 from .core.mosaic import downsample, mosaic
-from .core.pipeline import RRS_Pipeline
+from .core.pipeline import RRSPipeline
 from .core.plot_map import plot_basemap, plot_georeferenced_data
 from .core.raw_to_rss import process_raw_to_rrs
 from .core.wq_calc import (

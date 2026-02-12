@@ -14,18 +14,31 @@ from dronewq.utils.settings import settings
 logger = logging.getLogger(__name__)
 
 
-class RRS_Pipeline:
+class RRSPipeline:
+    """Main pipeline for dronewq.
+
+    Args:
+        lw_method: Method used to calculate water leaving radiance.
+            If uncertain, you can start with `mobley_rho()`.
+        ed_method: Method used to calculate downwelling irradiance (Ed).
+            If uncertain, you can start with `dls_ed()`.
+        pixel_masking_method: Method to mask pixels. Options are
+            `threshold_masking`, `std_masking`, or None. Default is None.
+        overwrite_lt (bool, optional): Whether to overwrite existing Lt images. Defaults to False.
+        generate_thumbnails (bool, optional): Whether to generate thumbnails. Defaults to True.
+    """
+
     def __init__(
         self,
-        main_dir: str,
         lw_method: Base_Compute_Method,
         ed_method: Base_Compute_Method,
         pixel_masking_method: Base_Compute_Method | None = None,
         overwrite_lt: bool = False,  # noqa: FBT001, FBT002
         generate_thumbnails: bool = True,  # noqa: FBT001, FBT002
     ):
-        if not Path(main_dir).exists():
-            msg = f"The main directory {main_dir} does not exist."
+        """Initialize the pipeline."""
+        if not settings.main_dir.exists():
+            msg = "Set main_dir first with settings.configure(main_dir='path')"
             raise LookupError(msg)
 
         self.lw_method = lw_method
@@ -34,18 +47,18 @@ class RRS_Pipeline:
         self.overwrite_lt = overwrite_lt
         self.generate_thumbnails = generate_thumbnails
 
-        self.main_dir = Path(main_dir)
+        self.main_dir = settings.main_dir
 
         self.__make_dirs()
 
     def __make_dirs(self) -> None:
         """Create the directories if they don't already exist."""
-        self.lt_dir = settings.lt_dir
-        self.lw_dir = self.main_dir.joinpath(self.lw_method.name)
-        self.rrs_dir = self.main_dir.joinpath(self.ed_method.name)
         # Make all these directories if they don't already exist
-        all_dirs = [self.lt_dir, self.lw_dir, self.rrs_dir]
-        for directory in all_dirs:
+        settings.lt_dir.mkdir(parents=True, exist_ok=True)
+
+        all_methods = [self.lw_method, self.ed_method]
+        for method in all_methods:
+            directory = self.main_dir.joinpath(method.name)
             Path(directory).mkdir(parents=True, exist_ok=True)
 
         if self.pixel_masking_method is not None:
@@ -72,10 +85,15 @@ class RRS_Pipeline:
                     sky=True,
                     generateThumbnails=self.generate_thumbnails,
                 )
+
+        if not settings.lt_dir.exists():
+            msg = f"{settings.lt_dir} does not exist. Maybe set overwrite_lt=True?"
+            raise FileNotFoundError(msg)
+
         # Buffer used to transfer read lt imgs to the pipeline
         reader_buffer = Queue(maxsize=10)
         # Buffer used to save final outputs of the pipeline
-        saver_buffer = Queue(maxsize=10)
+        saver_buffer = Queue(maxsize=20)
         # Thread used to read from lt_dir
         reader_thread = Thread(
             target=reader_worker,
@@ -92,14 +110,23 @@ class RRS_Pipeline:
 
         while True:
             lt_img = reader_buffer.get()
+            print("Reader:", reader_buffer.qsize())
+            print("Saver:", saver_buffer.qsize())
             if lt_img is None:
                 logger.info("Buffer Empty. Exiting.")
                 break
             lw_img = self.lw_method(lt_img)
+            if self.lw_method.save_images:
+                saver_buffer.put(lw_img)
             rrs_img = self.ed_method(lw_img)
-            if self.pixel_masking_method is not None:
-                rrs_img = self.pixel_masking_method(rrs_img)
-            saver_buffer.put(rrs_img)
+
+            if self.pixel_masking_method is None:
+                saver_buffer.put(rrs_img)
+            else:
+                if self.ed_method.save_images:
+                    saver_buffer.put(rrs_img)
+                masked_rrs_img = self.pixel_masking_method(rrs_img)
+                saver_buffer.put(masked_rrs_img)
         saver_buffer.put(None)
 
         # Wait for the saver thread to finish
