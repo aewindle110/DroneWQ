@@ -38,12 +38,10 @@ classifiers = [
 keywords = ["drone", "water quality", "remote sensing", "gis"]
 dependencies = [
   "numpy<=1.26", # for compatibility with micasense
-  "gdal~=3.9.2",
   "rasterio==1.3.11",
   "geopandas==1.0.1",
   "geopy==2.4.1",
   "matplotlib==3.9.2",
-  "opencv-python",
   "scikit-image",
   "contextily",
   "cmocean",
