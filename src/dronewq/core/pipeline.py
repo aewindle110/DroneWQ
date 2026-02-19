@@ -113,9 +113,9 @@ class RRSPipeline:
         self.lw_method.preprocess()
 
         while True:
+            # print("Reader:", reader_buffer.qsize())
+            # print("Saver:", saver_buffer.qsize())
             lt_img = reader_buffer.get()
-            print("Reader:", reader_buffer.qsize())
-            print("Saver:", saver_buffer.qsize())
             if lt_img is None:
                 logger.info("Buffer Empty. Exiting.")
                 break
