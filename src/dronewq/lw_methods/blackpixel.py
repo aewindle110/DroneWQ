@@ -89,7 +89,7 @@ class Blackpixel(Base_Compute_Method):
         except Exception as e:
             raise RuntimeError(f"File {lt_img.file_path!s} failed: {e!s}")
 
-    def __preprocess(self):
+    def preprocess(self):
         """Compute the median Lsky for all bands."""
         sky_lt_dir = settings.sky_lt_dir
         if sky_lt_dir is None:

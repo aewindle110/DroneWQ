@@ -73,7 +73,7 @@ class RRSPipeline:
             "Processing a total of %d images.",
             len(list(Path(settings.raw_water_dir).glob("*.tif"))),
         )
-        if not settings.lt_dir.exists() or len(settings.lt_dir.listdir()) == 0:
+        if not settings.lt_dir.exists():
             msg = f"{settings.lt_dir} does not exist. Maybe set overwrite_lt=True?"
             raise FileNotFoundError(msg)
 
@@ -107,10 +107,10 @@ class RRSPipeline:
         reader_thread.start()
         saver_thread.start()
 
-        # The Lw methods need their respective additional preprocessing__lsky_median
+        # The Lw methods need their respective additional preprocessing
         # Such as finding the median of the sky images or
         # mean minimum lt NIR value
-        self.lw_method.__preprocess()
+        self.lw_method.preprocess()
 
         while True:
             lt_img = reader_buffer.get()

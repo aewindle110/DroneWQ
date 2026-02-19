@@ -76,6 +76,7 @@ class Hedley(Base_Compute_Method):
         """
         super().__init__(save_images=save_images)
         self.mean_min_lt_NIR = None
+        self.random_n = random_n
 
     def __call__(self, lt_img: Image) -> Image:
         try:
@@ -113,13 +114,13 @@ class Hedley(Base_Compute_Method):
             msg = f"File {lt_img.file_path!s} failed: {e!s}"
             raise RuntimeError(msg)
 
-    def __preprocess(self, random_n=10):
+    def preprocess(self):
         """Sample a mean minimum lt NIR value from all the lt images."""
         lt_dir = settings.lt_dir
         filepaths = list(Path(lt_dir).glob("*.tif"))
 
         lt_all = []
-        rand = random.sample(filepaths, random_n)
+        rand = random.sample(filepaths, self.random_n)
 
         for im in rand:
             with rasterio.open(im, "r") as lt_src:
