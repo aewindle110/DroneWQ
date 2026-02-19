@@ -13,6 +13,8 @@ from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
+MASK_VALUE = np.nan
+
 
 def __compute(
     filepath,
@@ -83,7 +85,7 @@ def __compute(
             combined_mask = nir_mask | green_mask
 
             # Apply mask to all bands
-            rrs[:, combined_mask] = np.nan
+            rrs[:, combined_mask] = MASK_VALUE
 
             # Write masked output
             im_name = os.path.basename(filepath)
