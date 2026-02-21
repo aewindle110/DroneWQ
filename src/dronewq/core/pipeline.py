@@ -26,6 +26,7 @@ class RRSPipeline:
             `threshold_masking`, `std_masking`, or None. Default is None.
         overwrite_lt (bool, optional): Whether to overwrite existing Lt images. Defaults to False.
         generate_thumbnails (bool, optional): Whether to generate thumbnails. Defaults to True.
+        workers (int, optional): Number of parallel image processing instances. Defaults to 1.
     """
 
     def __init__(
@@ -35,6 +36,7 @@ class RRSPipeline:
         pixel_masking_method: Base_Compute_Method | None = None,
         overwrite_lt: bool = False,  # noqa: FBT001, FBT002
         generate_thumbnails: bool = True,  # noqa: FBT001, FBT002
+        workers: int = 1,
     ):
         """Initialize the pipeline."""
         if not settings.main_dir.exists():
@@ -46,8 +48,14 @@ class RRSPipeline:
         self.pixel_masking_method = pixel_masking_method
         self.overwrite_lt = overwrite_lt
         self.generate_thumbnails = generate_thumbnails
+        self.workers = workers
 
         self.main_dir = settings.main_dir
+
+        # Buffer used to transfer read lt_imgs to the pipeline
+        self.reader_buffer = Queue(maxsize=10)
+        # Buffer used to save final outputs of the pipeline
+        self.saver_buffer = Queue(maxsize=10)
 
         self.__make_dirs()
 
@@ -89,52 +97,83 @@ class RRSPipeline:
                     generateThumbnails=self.generate_thumbnails,
                 )
 
-        # Buffer used to transfer read lt imgs to the pipeline
-        reader_buffer = Queue(maxsize=10)
-        # Buffer used to save final outputs of the pipeline
-        saver_buffer = Queue(maxsize=10)
         # Thread used to read from lt_dir
         reader_thread = Thread(
             target=reader_worker,
-            args=(settings.lt_dir, reader_buffer),
+            args=(settings.lt_dir, self.reader_buffer),
         )
         saver_thread = Thread(
             target=save_worker,
-            args=(saver_buffer,),
+            args=(self.saver_buffer,),
         )
 
         # Start the reader thread
         reader_thread.start()
         saver_thread.start()
-
         # The Lw methods need their respective additional preprocessing
         # Such as finding the median of the sky images or
         # mean minimum lt NIR value
         self.lw_method.preprocess()
 
+        process_pool = ImageProcessorPool(
+            self.workers, self.reader_buffer, self.saver_buffer
+        )
+
+        process_pool.start(self.__worker)
+
+        reader_thread.join()
+        self.reader_buffer.join()
+        process_pool.shutdown()
+
+        # Wait for the saver thread to finish
+        self.saver_buffer.put(None)
+        self.saver_buffer.join()
+        saver_thread.join()
+
+        logger.info("Pipeline Finished.")
+
+    def __worker(self) -> None:
+        """
+        Process a single image.
+
+        This function is what actually happens in the pipeline.
+        """
         while True:
-            # print("Reader:", reader_buffer.qsize())
-            # print("Saver:", saver_buffer.qsize())
-            lt_img = reader_buffer.get()
+            lt_img = self.reader_buffer.get()
             if lt_img is None:
                 logger.info("Buffer Empty. Exiting.")
+                self.reader_buffer.task_done()
                 break
             lw_img = self.lw_method(lt_img)
             if self.lw_method.save_images:
-                saver_buffer.put(lw_img)
+                self.saver_buffer.put(lw_img)
             rrs_img = self.ed_method(lw_img)
 
             if self.pixel_masking_method is None:
-                saver_buffer.put(rrs_img)
+                self.saver_buffer.put(rrs_img)
             else:
                 if self.ed_method.save_images:
-                    saver_buffer.put(rrs_img)
+                    self.saver_buffer.put(rrs_img)
                 masked_rrs_img = self.pixel_masking_method(rrs_img)
-                saver_buffer.put(masked_rrs_img)
-        saver_buffer.put(None)
+                self.saver_buffer.put(masked_rrs_img)
+            self.reader_buffer.task_done()
 
-        # Wait for the saver thread to finish
-        saver_thread.join()
-        reader_thread.join()
 
-        logger.info("Pipeline Finished.")
+class ImageProcessorPool:
+    def __init__(self, n_workers, reader_q, saver_q):
+        self.reader_q = reader_q
+        self.saver_q = saver_q
+        self.threads = []
+        self.n_workers = n_workers
+
+    def start(self, task):
+        for _ in range(self.n_workers):
+            t = Thread(target=task)
+            t.start()
+            self.threads.append(t)
+
+    def shutdown(self):
+        for _ in self.threads:
+            self.reader_q.put(None)
+        for t in self.threads:
+            t.join()
