@@ -142,7 +142,7 @@ class ThresholdMasking(Base_Compute_Method):
             masked_rrs[:, combined_mask] = np.nan
 
             masked_rrs_img = Image.from_image(
-                rrs_img, data=masked_rrs, method=self.__class__.__name__
+                rrs_img, data=masked_rrs, method=self.name
             )
             logger.info(
                 "Threshold Masking: Successfully processed: %s",

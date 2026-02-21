@@ -118,7 +118,7 @@ class StdMasking(Base_Compute_Method):
             stacked_rrs_deglint = rrs.copy()  # avoid mutating original
             stacked_rrs_deglint[:, mask] = np.nans
             masked_rrs_img = Image.from_image(
-                rrs_img, data=stacked_rrs_deglint, method=self.__class__.__name__
+                rrs_img, data=stacked_rrs_deglint, method=self.name
             )
             logger.info(
                 "Threshold Masking: Successfully processed: %s",

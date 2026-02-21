@@ -78,9 +78,7 @@ class Blackpixel(Base_Compute_Method):
                 raise ValueError("Lsky_NIR is zero, cannot compute rho.")
             rho = Lt_NIR / Lsky_NIR
             stacked_lw = lt_img.data[:5] - (rho * lsky_median[:5])
-            lw_img = Image.from_image(
-                lt_img, stacked_lw, method=self.__class__.__name__
-            )
+            lw_img = Image.from_image(lt_img, stacked_lw, method=self.name)
             logger.info(
                 "Lw Stage (Blackpixel): Successfully processed: %s",
                 lt_img.file_name,

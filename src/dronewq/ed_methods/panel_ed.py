@@ -67,11 +67,7 @@ class Panel_ed(Base_Compute_Method):
             idx = self.__ed_index
             stacked_rrs = lw_img.data[:5] / self.ed_row[idx][1:6]
             self.__ed_index += 1
-            rrs_img = Image.from_image(
-                lw_img,
-                stacked_rrs,
-                method=self.__class__.__name__,
-            )
+            rrs_img = Image.from_image(lw_img, stacked_rrs, method=self.name)
 
             logger.info(
                 "Ed Stage: Successfully processed: %s",

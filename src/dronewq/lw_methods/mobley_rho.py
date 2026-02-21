@@ -81,9 +81,7 @@ class Mobley_rho(Base_Compute_Method):
     def __call__(self, lt_img: Image) -> Image:
         try:
             stacked_lw = lt_img.data[:5] - (self.rho * self.lsky_median[:, None, None])
-            lw_img = Image.from_image(
-                lt_img, stacked_lw, method=self.__class__.__name__
-            )
+            lw_img = Image.from_image(lt_img, stacked_lw, method=self.name)
             logger.info(
                 "Lw Stage (Mobley_rho): Successfully processed: %s",
                 lt_img.file_name,

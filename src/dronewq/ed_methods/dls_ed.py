@@ -78,11 +78,7 @@ class Dls_ed(Base_Compute_Method):
             ed = np.array(row[1:6])
             stacked_rrs = lw_img.data[:5] / ed[:, None, None]
             self.__ed_index += 1
-            rrs_img = Image.from_image(
-                lw_img,
-                stacked_rrs,
-                method=self.__class__.__name__,
-            )
+            rrs_img = Image.from_image(lw_img, stacked_rrs, method=self.name)
 
             logger.info(
                 "Ed Stage: Successfully processed: %s",

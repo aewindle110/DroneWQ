@@ -96,14 +96,31 @@ class Hedley(Base_Compute_Method):
                 lw = lt[j, :, :] - slopes * (lt[4, :, :] - self.mean_min_lt_NIR)
                 lw_all.append(lw)
 
-            # Keep the original NIR band
-            lw_all.append(lt[4, :, :])
+            # NOTE: This could potentially be faster than the above method
+
+            # x = lt_reshape[4, :]
+            # xm = x.mean()
+            # x_centered = x - xm
+            # var_x = (x_centered**2).mean()
+            #
+            # lw_all = []
+            #
+            # for j in range(4):
+            #     y = lt_reshape[j, :]
+            #     ym = y.mean()
+            #     cov_xy = (x_centered * (y - ym)).mean()
+            #     slope = cov_xy / var_x
+            #
+            #     lw = lt[j] - slope * (lt[4] - self.mean_min_lt_NIR)
+            #     lw_all.append(lw)
+
+            lw_all.append(lt[4])
             stacked_lw = np.stack(lw_all)
 
             lw_img = Image.from_image(
                 lt_img,
                 data=stacked_lw,
-                method=self.__class__.__name__,
+                method=self.name,
             )
             logger.info(
                 "Lw Stage (Hedley): Successfully processed: %s",
