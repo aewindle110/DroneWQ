@@ -514,6 +514,7 @@ def save_worker(buffer: Queue):
     while True:
         img = buffer.get()
         if img is None:
+            buffer.task_done()
             break
         profile = img.profile
         profile["count"] = 5
@@ -541,3 +542,4 @@ def save_worker(buffer: Queue):
                         window_data = data[row:row_end, col:col_end]
 
                     dst.write(window_data, window=window)
+        buffer.task_done()
