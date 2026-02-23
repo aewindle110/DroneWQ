@@ -7,7 +7,6 @@ from dronewq.utils.settings import settings
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from queue import Queue
 
     import numpy as np
     from rasterio.profiles import Profile
@@ -22,6 +21,7 @@ class Image:
     method: str
     profile: Profile
     data: np.ndarray
+    idx: int | None = None
 
     @classmethod
     def from_image(cls, src: Image, data: np.ndarray, method: str = ""):
@@ -32,6 +32,7 @@ class Image:
             method=method,
             profile=src.profile,
             data=data,
+            idx=src.idx,
         )
 
 
@@ -48,5 +49,5 @@ class Base_Compute_Method:
     def __call__(self, img: Image) -> Image:
         pass
 
-    def __preprocess(self):
+    def preprocess(self):
         pass

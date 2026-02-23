@@ -1,7 +1,6 @@
 """Refactored by: Temuulen"""
 
 import logging
-import os
 from pathlib import Path
 
 import numpy as np
@@ -14,7 +13,7 @@ from dronewq.utils.settings import settings
 logger = logging.getLogger(__name__)
 
 
-class Dls_ed(Base_Compute_Method):
+class DlsEd(Base_Compute_Method):
     def __init__(
         self,
         output_csv_path: Path,
@@ -22,8 +21,6 @@ class Dls_ed(Base_Compute_Method):
         save_images: bool = False,
     ):
         super().__init__(save_images=save_images)
-        self.ed_row = None
-        self.__ed_index = 0
         self.dls_corr = dls_corr
         self.output_csv_path = output_csv_path
 
@@ -69,15 +66,12 @@ class Dls_ed(Base_Compute_Method):
         The function processes 5 spectral bands centered at approximately:
         475nm, 560nm, 668nm, 717nm, and 842nm.
         """
-        if self.ed_row is None:
-            self.__calculate_ed()
         # Process Lw imagery: divide by Ed to get Rrs
         try:
-            idx = self.__ed_index
+            idx = lw_img.idx - 1
             row = self.ed_row[idx]
             ed = np.array(row[1:6])
             stacked_rrs = lw_img.data[:5] / ed[:, None, None]
-            self.__ed_index += 1
             rrs_img = Image.from_image(lw_img, stacked_rrs, method=self.name)
 
             logger.info(
@@ -89,7 +83,7 @@ class Dls_ed(Base_Compute_Method):
         except Exception as e:
             raise RuntimeError(f"File {lw_img.file_path!s} failed: {e!s}")
 
-    def __calculate_ed(self):
+    def preprocess(self):
         if settings.main_dir is None:
             raise LookupError("Please set the main_dir path.")
 
