@@ -14,11 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 class Panel_ed(Base_Compute_Method):
-    def __init__(self, output_csv_path: str, save_images: bool = False):
+    def __init__(
+        self,
+        output_csv_path: str,
+        save_images: bool = False,
+    ):
         super().__init__(save_images=save_images)
         self.output_csv_path = output_csv_path
-        self.ed_row = self.__calculate_ed(output_csv_path)
-        self.__ed_index = 0
 
     def __call__(self, lw_img: Image) -> Image:
         """
@@ -64,9 +66,8 @@ class Panel_ed(Base_Compute_Method):
         be detected.
         """
         try:
-            idx = self.__ed_index
+            idx = lw_img.idx - 1
             stacked_rrs = lw_img.data[:5] / self.ed_row[idx][1:6]
-            self.__ed_index += 1
             rrs_img = Image.from_image(lw_img, stacked_rrs, method=self.name)
 
             logger.info(
@@ -78,7 +79,8 @@ class Panel_ed(Base_Compute_Method):
         except Exception as e:
             raise RuntimeError(f"File {lw_img.file_path!s} failed: {e!s}")
 
-    def __calculate_ed(self, output_csv_path):
+    def preprocess(self):
+        """Calculate panel ed."""
         if os.path.exists(settings.panel_dir):
             raise LookupError("Please set the panel_dir path.")
 
@@ -116,6 +118,6 @@ class Panel_ed(Base_Compute_Method):
             index="image",
             columns=ed_columns,
         )
-        ed_data.to_csv(os.path.join(output_csv_path, "panel_ed.csv"))
+        ed_data.to_csv(os.path.join(self.output_csv_path, "panel_ed.csv"))
 
-        return ed
+        self.ed_row = ed

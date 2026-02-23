@@ -6,7 +6,6 @@ import numpy as np
 
 from dronewq.utils.data_types import Base_Compute_Method, Image
 from dronewq.utils.images import load_imgs
-from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +72,8 @@ class StdMasking(Base_Compute_Method):
     ):
         super().__init__(save_images=save_images)
 
-        self.std_factor = mask_std_factor
-        self.rrs_nir_mean, self.rrs_nir_std = self.__calculate_rrs_nir(
-            num_images,
-            mask_std_factor,
-        )
+        self.num_images = num_images
+        self.mask_std_factor = mask_std_factor
 
     def __call__(
         self,
@@ -109,6 +105,7 @@ class StdMasking(Base_Compute_Method):
         Exception
             If file processing fails for any reason (logged as warning and re-raised).
         """
+
         try:
             # write new stacked tifrrs = rrs_img.data  # shape: (5, H, W) (or generally (bands, ...))
             rrs = rrs_img.data
@@ -130,10 +127,8 @@ class StdMasking(Base_Compute_Method):
 
     def __calculate_rrs_nir(
         self,
-        num_images=10,
-        mask_std_factor=1,
     ):
-        if settings.rrs_dir is None:
+        if self.settings.rrs_dir is None:
             raise ValueError("Please set the rrs_dir path.")
 
         # grab the first num_images images,
@@ -141,8 +136,8 @@ class StdMasking(Base_Compute_Method):
         # then anything times the glint factor
         # is classified as glint
         rrs_imgs_gen = load_imgs(
-            settings.rrs_dir,
-            count=num_images,
+            self.settings.rrs_dir,
+            count=self.num_images,
             start=0,
             altitude_cutoff=0,
             random=True,
@@ -159,6 +154,6 @@ class StdMasking(Base_Compute_Method):
         )
         logger.info(
             "Pixels will be masked where Rrs(NIR) > %d",
-            rrs_nir_mean + rrs_nir_std * mask_std_factor,
+            rrs_nir_mean + rrs_nir_std * self.mask_std_factor,
         )
         return rrs_nir_mean, rrs_nir_std

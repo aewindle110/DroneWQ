@@ -2,7 +2,6 @@ import datetime
 import logging
 import os
 from pathlib import Path
-from queue import Queue
 
 import cv2
 import numpy as np
@@ -493,53 +492,52 @@ def process_micasense_images(
     return output_path
 
 
-def reader_worker(dir_path: Path, buffer: Queue):
-    """Reads tiff files from a directory and puts them in a queue."""
-    file_paths = dir_path.glob("*.tif")
-
-    for file in file_paths:
-        with rasterio.open(file, "r") as src:
-            data = np.array(src.read())
-            profile = src.profile
-            file_name = file.name
-            lt_img = Image(file_name, file, "lt", profile, data)
-            buffer.put(lt_img)
-
-    buffer.put(None)
+def get_filepaths(dir_path: Path) -> list[Path]:
+    """Reads a directory and returns a list of tiff files."""
+    return list(dir_path.glob("*.tif"))
 
 
-def save_worker(buffer: Queue):
-    """Saves images from a queue."""
-    main_dir = settings.main_dir
-    while True:
-        img = buffer.get()
-        if img is None:
-            buffer.task_done()
-            break
-        profile = img.profile
-        profile["count"] = 5
-        ouput_path = Path(main_dir).joinpath(img.method).joinpath(img.file_name)
+def read_file(file: Path) -> Image:
+    """Reads tiff file from a filepath."""
+    with rasterio.open(file, "r") as src:
+        data = np.array(src.read())
+        profile = src.profile
+        file_name = file.name
+        idx = int(file_name.split("_")[-1].split(".")[0])
+        lt_img = Image(file_name, file, "lt", profile, data, idx)
+    return lt_img
 
-        with rasterio.open(
-            ouput_path,
-            "w",
-            **profile,
-        ) as dst:
-            data = img.data
-            height, width = data.shape[-2:]
-            chunk_size = 256
 
-            for row in range(0, height, chunk_size):
-                for col in range(0, width, chunk_size):
-                    row_end = min(row + chunk_size, height)
-                    col_end = min(col + chunk_size, width)
+def save_img(img: Image):
+    """Saves image."""
+    # Getting the main dir filepath from the image
+    # instead of settings.main_dir because
+    # settings is not getting shared in between
+    # processes. TODO: Have to fix this.
+    main_dir = img.file_path.parent.parent
+    profile = img.profile
+    profile["count"] = 5
+    output_path = Path(main_dir).joinpath(img.method).joinpath(img.file_name)
 
-                    window = Window(col, row, col_end - col, row_end - row)
+    with rasterio.open(
+        output_path,
+        "w",
+        **profile,
+    ) as dst:
+        data = img.data
+        height, width = data.shape[-2:]
+        chunk_size = 256
 
-                    if data.ndim == 3:
-                        window_data = data[:, row:row_end, col:col_end]
-                    else:
-                        window_data = data[row:row_end, col:col_end]
+        for row in range(0, height, chunk_size):
+            for col in range(0, width, chunk_size):
+                row_end = min(row + chunk_size, height)
+                col_end = min(col + chunk_size, width)
 
-                    dst.write(window_data, window=window)
-        buffer.task_done()
+                window = Window(col, row, col_end - col, row_end - row)
+
+                if data.ndim == 3:
+                    window_data = data[:, row:row_end, col:col_end]
+                else:
+                    window_data = data[row:row_end, col:col_end]
+
+                dst.write(window_data, window=window)

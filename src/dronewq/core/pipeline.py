@@ -1,33 +1,27 @@
 """Main pipeline for dronewq."""
 
 import logging
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-from queue import Queue
-from threading import Thread
+
+from tqdm import tqdm
 
 from dronewq.lw_methods.blackpixel import Blackpixel
 from dronewq.lw_methods.mobley_rho import Mobley_rho
 from dronewq.utils.data_types import Base_Compute_Method
-from dronewq.utils.images import process_micasense_images, reader_worker, save_worker
+from dronewq.utils.images import (
+    get_filepaths,
+    process_micasense_images,
+    read_file,
+    save_img,
+)
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
 class RRSPipeline:
-    """Main pipeline for dronewq.
-
-    Args:
-        lw_method: Method used to calculate water leaving radiance.
-            If uncertain, you can start with `mobley_rho()`.
-        ed_method: Method used to calculate downwelling irradiance (Ed).
-            If uncertain, you can start with `dls_ed()`.
-        pixel_masking_method: Method to mask pixels. Options are
-            `threshold_masking`, `std_masking`, or None. Default is None.
-        overwrite_lt (bool, optional): Whether to overwrite existing Lt images. Defaults to False.
-        generate_thumbnails (bool, optional): Whether to generate thumbnails. Defaults to True.
-        workers (int, optional): Number of parallel image processing instances. Defaults to 1.
-    """
+    """Main pipeline for dronewq."""
 
     def __init__(
         self,
@@ -38,7 +32,21 @@ class RRSPipeline:
         generate_thumbnails: bool = True,  # noqa: FBT001, FBT002
         workers: int = 1,
     ):
-        """Initialize the pipeline."""
+        """Initialize the pipeline.
+
+        Args:
+            lw_method: Method used to calculate water leaving radiance.
+                If uncertain, you can start with `Mobley_rho()`.
+            ed_method: Method used to calculate downwelling irradiance (Ed).
+                If uncertain, you can start with `Dls_ed()`.
+            pixel_masking_method: Method to mask pixels. Options are
+                `ThresholdMasking`, `StdMasking`, or None. Default is None.
+            overwrite_lt (bool, optional): Whether to overwrite existing Lt images.
+                Should have this set to True if you are running the pipeline for the
+                first time. Defaults to False, which saves time if you are rerunning.
+            generate_thumbnails (bool, optional): Whether to generate thumbnails. Defaults to True.
+            workers (int, optional): Number of parallel image processing instances. Defaults to 1.
+        """
         if not settings.main_dir.exists():
             msg = "Set main_dir first with settings.configure(main_dir='path')"
             raise LookupError(msg)
@@ -51,11 +59,6 @@ class RRSPipeline:
         self.workers = workers
 
         self.main_dir = settings.main_dir
-
-        # Buffer used to transfer read lt_imgs to the pipeline
-        self.reader_buffer = Queue(maxsize=10)
-        # Buffer used to save final outputs of the pipeline
-        self.saver_buffer = Queue(maxsize=10)
 
         self.__make_dirs()
 
@@ -97,83 +100,43 @@ class RRSPipeline:
                     generateThumbnails=self.generate_thumbnails,
                 )
 
-        # Thread used to read from lt_dir
-        reader_thread = Thread(
-            target=reader_worker,
-            args=(settings.lt_dir, self.reader_buffer),
-        )
-        saver_thread = Thread(
-            target=save_worker,
-            args=(self.saver_buffer,),
-        )
-
-        # Start the reader thread
-        reader_thread.start()
-        saver_thread.start()
         # The Lw methods need their respective additional preprocessing
         # Such as finding the median of the sky images or
         # mean minimum lt NIR value
         self.lw_method.preprocess()
+        self.ed_method.preprocess()
 
-        process_pool = ImageProcessorPool(
-            self.workers, self.reader_buffer, self.saver_buffer
-        )
+        filepaths = get_filepaths(settings.lt_dir)
 
-        process_pool.start(self.__worker)
+        with ProcessPoolExecutor(max_workers=self.workers) as executor:
+            results = executor.map(self.worker, filepaths)
 
-        reader_thread.join()
-        self.reader_buffer.join()
-        process_pool.shutdown()
-
-        # Wait for the saver thread to finish
-        self.saver_buffer.put(None)
-        self.saver_buffer.join()
-        saver_thread.join()
+            # Use tqdm to show progress of processed images
+            for _ in tqdm(results, total=len(filepaths), desc="Processing images"):
+                pass
 
         logger.info("Pipeline Finished.")
 
-    def __worker(self) -> None:
+    def worker(self, filepath: Path) -> Path:
         """
         Process a single image.
 
         This function is what actually happens in the pipeline.
         """
-        while True:
-            lt_img = self.reader_buffer.get()
-            if lt_img is None:
-                logger.info("Buffer Empty. Exiting.")
-                self.reader_buffer.task_done()
-                break
-            lw_img = self.lw_method(lt_img)
-            if self.lw_method.save_images:
-                self.saver_buffer.put(lw_img)
-            rrs_img = self.ed_method(lw_img)
+        # TODO: Should have a try/except here
+        # Maybe to catch saving errors, since
+        # the processing methods have error handling
+        lt_img = read_file(filepath)
+        lw_img = self.lw_method(lt_img)
+        if self.lw_method.save_images:
+            save_img(lw_img)
+        rrs_img = self.ed_method(lw_img)
 
-            if self.pixel_masking_method is None:
-                self.saver_buffer.put(rrs_img)
-            else:
-                if self.ed_method.save_images:
-                    self.saver_buffer.put(rrs_img)
-                masked_rrs_img = self.pixel_masking_method(rrs_img)
-                self.saver_buffer.put(masked_rrs_img)
-            self.reader_buffer.task_done()
-
-
-class ImageProcessorPool:
-    def __init__(self, n_workers, reader_q, saver_q):
-        self.reader_q = reader_q
-        self.saver_q = saver_q
-        self.threads = []
-        self.n_workers = n_workers
-
-    def start(self, task):
-        for _ in range(self.n_workers):
-            t = Thread(target=task)
-            t.start()
-            self.threads.append(t)
-
-    def shutdown(self):
-        for _ in self.threads:
-            self.reader_q.put(None)
-        for t in self.threads:
-            t.join()
+        if self.pixel_masking_method is None:
+            save_img(rrs_img)
+        else:
+            if self.ed_method.save_images:
+                save_img(rrs_img)
+            masked_rrs_img = self.pixel_masking_method(rrs_img)
+            save_img(masked_rrs_img)
+        return filepath

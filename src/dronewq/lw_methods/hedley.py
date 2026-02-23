@@ -35,7 +35,7 @@ class Hedley(Base_Compute_Method):
             If True, saves the processed images to the specified output directory.
         random_n : int, optional
             Number of random images to sample for calculating the ambient NIR level.
-            More images provide a more robust estimate but increase computation time.
+            More images provide a robust estimate but increase computation time.
             Default is 10.
 
         Returns
@@ -96,7 +96,8 @@ class Hedley(Base_Compute_Method):
                 lw = lt[j, :, :] - slopes * (lt[4, :, :] - self.mean_min_lt_NIR)
                 lw_all.append(lw)
 
-            # NOTE: This could potentially be faster than the above method
+            # NOTE: This is faster than the above method.
+            # However, I haven't tested the correctness yet.
 
             # x = lt_reshape[4, :]
             # xm = x.mean()
