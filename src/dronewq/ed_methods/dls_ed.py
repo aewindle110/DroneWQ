@@ -22,6 +22,8 @@ class DlsEd(Base_Compute_Method):
     ):
         super().__init__(save_images=save_images)
         self.dls_corr = dls_corr
+        if isinstance(output_csv_path, str):
+            output_csv_path = Path(output_csv_path)
         self.output_csv_path = output_csv_path
 
     def __call__(
