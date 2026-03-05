@@ -1,68 +1,57 @@
 """Refactored by: Temuulen"""
 
 import logging
-import os
 
 import numpy as np
 
 from dronewq.utils.data_types import Base_Compute_Method, Image
-from dronewq.utils.images import load_imgs
+from dronewq.utils.images import get_filepaths, load_imgs
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
 class Blackpixel(Base_Compute_Method):
+    """
+    Calculate water-leaving radiance using the black pixel assumption.
+
+    This function computes water-leaving radiance (Lw) by applying the black pixel
+    assumption, which assumes that Lw in the near-infrared (NIR) band is negligible
+    due to strong water absorption. Under this assumption, total radiance (Lt) in
+    the NIR is considered to be solely surface-reflected light (Lsr), which allows
+    the surface reflectance factor (rho) to be calculated if sky radiance (Lsky)
+    is known. This rho is then used to remove surface-reflected light from all bands.
+
+    Parameters
+    ----------
+    save_images : bool, optional
+        Whether to save the processed output images to disk. Default is False.
+
+    Warnings
+    --------
+    This method should only be used for Case 1 waters (clear oceanic waters)
+    where there is little to no NIR signal. The black pixel assumption tends
+    to fail in more turbid Case 2 waters where high concentrations of suspended
+    particles enhance backscattering and produce significant Lw in the NIR.
+
+    Notes
+    -----
+    Sky radiance (Lsky) is computed from the first 10 sky images in settings.sky_lt_dir,
+    taking the median across all images for each band. This median Lsky is then used
+    for all water image processing.
+
+    The NIR band (band 4) is used to calculate the surface reflectance factor:
+    rho = Lt_NIR / Lsky_NIR
+
+    This method assumes:
+    - Negligible water-leaving radiance in the NIR
+    - Spatially uniform surface reflectance properties
+    - Stable sky conditions during data collection
+    """
+
     def __init__(self, save_images: bool = False):
-        """
-        Calculate water-leaving radiance using the black pixel assumption.
-
-        This function computes water-leaving radiance (Lw) by applying the black pixel
-        assumption, which assumes that Lw in the near-infrared (NIR) band is negligible
-        due to strong water absorption. Under this assumption, total radiance (Lt) in
-        the NIR is considered to be solely surface-reflected light (Lsr), which allows
-        the surface reflectance factor (rho) to be calculated if sky radiance (Lsky)
-        is known. This rho is then used to remove surface-reflected light from all bands.
-
-        Parameters
-        ----------
-        save_images : bool, optional
-            Whether to save the processed output images to disk. Default is False.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        LookupError
-            If main_dir is not set in settings.
-
-        Warnings
-        --------
-        This method should only be used for Case 1 waters (clear oceanic waters)
-        where there is little to no NIR signal. The black pixel assumption tends
-        to fail in more turbid Case 2 waters where high concentrations of suspended
-        particles enhance backscattering and produce significant Lw in the NIR.
-
-        Notes
-        -----
-        The function produces Lw GeoTIFF files with units of W/sr/nm in settings.lw_dir.
-
-        Sky radiance (Lsky) is computed from the first 10 sky images in settings.sky_lt_dir,
-        taking the median across all images for each band. This median Lsky is then used
-        for all water image processing.
-
-        The NIR band (band 4) is used to calculate the surface reflectance factor:
-        rho = Lt_NIR / Lsky_NIR
-
-        This method assumes:
-        - Negligible water-leaving radiance in the NIR
-        - Spatially uniform surface reflectance properties
-        - Stable sky conditions during data collection
-        """
         super().__init__(save_images=save_images)
-        self.lsky_median = None
+        self.lsky_median = []
 
     def __call__(self, lt_img: Image) -> Image:
 
@@ -93,17 +82,17 @@ class Blackpixel(Base_Compute_Method):
         if sky_lt_dir is None:
             raise ValueError("Please set the sky_lt_dir path in settings.")
 
-        if not os.path.exists(sky_lt_dir):
+        if not sky_lt_dir.exists():
             raise LookupError(f"{sky_lt_dir!s} path does not exist!.")
 
-        sky_imgs_filenames = os.listdir(sky_lt_dir)
-        if not (sky_imgs_filenames):
+        filepaths = get_filepaths(sky_lt_dir)
+        if not filepaths:
             raise LookupError("There are no sky images in sky_lt_imgs folder.")
 
         # Grab the first ten sky images, average them, then delete from memory
         sky_imgs_gen = load_imgs(
             sky_lt_dir,
-            count=min(len(sky_imgs_filenames), 10),
+            count=min(len(filepaths), 10),
             start=0,
             altitude_cutoff=0,
         )

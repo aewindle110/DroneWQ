@@ -30,15 +30,9 @@ class ThresholdMasking(Base_Compute_Method):
         Lower threshold for green reflectance (sr^-1). Pixels with Rrs(green) below
         this value are masked. These typically represent vegetation shadows or
         very dark features. Default is 0.005.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    LookupError
-        If main_dir is not set in settings.
+    save_images : bool, optional
+        If True, saves the processed images to the specified output directory.
+        Default is False.
 
     Notes
     -----
@@ -89,40 +83,6 @@ class ThresholdMasking(Base_Compute_Method):
         self,
         rrs_img: Image,
     ):
-        """
-        Process a single Rrs file to mask pixels based on NIR and green thresholds.
-
-        Worker function that reads a remote sensing reflectance (Rrs) raster file,
-        identifies pixels contaminated by sun glint, land features, or shadows using
-        NIR and green band thresholds, masks these pixels across all bands by setting
-        them to NaN, and writes the masked result to a new file.
-
-        Parameters
-        ----------
-        rrs_img : Image
-            Image object containing the Rrs raster file.
-
-        Returns
-        -------
-        masked_rrs_img : Image
-            Image object containing the masked Rrs raster file.
-
-        Raises
-        ------
-        Exception
-            If file processing fails for any reason (logged as warning and re-raised).
-
-        Notes
-        -----
-        The function applies two masking criteria:
-        1. Pixels where Rrs(NIR) > nir_threshold are masked (band 5)
-        2. Pixels where Rrs(green) < green_threshold are masked (band 2)
-
-        Pixels meeting EITHER criterion are masked across all 5 bands by setting
-        values to NaN. The combined boolean mask uses logical OR operation.
-
-        Output files maintain the same basename as input files.
-        """
         try:
             rrs = rrs_img.data
             # Extract NIR (band 5) and green (band 2)

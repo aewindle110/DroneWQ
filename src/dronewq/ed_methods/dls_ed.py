@@ -14,6 +14,42 @@ logger = logging.getLogger(__name__)
 
 
 class DlsEd(Base_Compute_Method):
+    """
+    Calculate remote sensing reflectance using downwelling light sensor data.
+
+    This function computes remote sensing reflectance (Rrs) by dividing
+    water-leaving radiance (Lw) by downwelling irradiance (Ed) derived from
+    the downwelling light sensor (DLS). The DLS collects Ed measurements at
+    every image capture. Optionally applies a correction factor derived from
+    calibration panel measurements to compensate for DLS variability.
+
+    Parameters
+    ----------
+    output_csv_path : Path
+        Path to the output CSV file.
+    dls_corr : bool, optional
+        Option to apply compensation factor from calibration panel to DLS Ed
+        measurements. Default is False.
+    save_images : bool, optional
+        If True, saves the processed images to the specified output directory.
+        Default is False.
+
+    Notes
+    -----
+    This method performs best in overcast or completely cloudy conditions where
+    light is relatively stable. Performance degrades under variable lighting
+    such as partly cloudy conditions.
+
+    The function produces two types of outputs:
+    - Rrs GeoTIFF files with units of sr^-1 in the rrs_dir
+    - CSV file(s) containing average Ed measurements in mW/m^2/nm
+
+    When dls_corr=True, outputs 'dls_corr_ed.csv'; otherwise outputs 'dls_ed.csv'.
+
+    The function processes 5 spectral bands centered at approximately:
+    475nm, 560nm, 668nm, 717nm, and 842nm.
+    """
+
     def __init__(
         self,
         output_csv_path: Path,
@@ -30,44 +66,6 @@ class DlsEd(Base_Compute_Method):
         self,
         lw_img: Image,
     ) -> Image:
-        """
-        Calculate remote sensing reflectance using downwelling light sensor data.
-
-        This function computes remote sensing reflectance (Rrs) by dividing
-        water-leaving radiance (Lw) by downwelling irradiance (Ed) derived from
-        the downwelling light sensor (DLS). The DLS collects Ed measurements at
-        every image capture. Optionally applies a correction factor derived from
-        calibration panel measurements to compensate for DLS variability.
-
-        Parameters
-        ----------
-        lw_img : Image
-            Input Lt Image object containing total radiance data.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        LookupError
-            If required directory paths (main_dir, rrs_dir) are not set in settings.
-
-        Notes
-        -----
-        This method performs best in overcast or completely cloudy conditions where
-        light is relatively stable. Performance degrades under variable lighting
-        such as partly cloudy conditions.
-
-        The function produces two types of outputs:
-        - Rrs GeoTIFF files with units of sr^-1 in the rrs_dir
-        - CSV file(s) containing average Ed measurements in mW/m^2/nm
-
-        When dls_corr=True, outputs 'dls_corr_ed.csv'; otherwise outputs 'dls_ed.csv'.
-
-        The function processes 5 spectral bands centered at approximately:
-        475nm, 560nm, 668nm, 717nm, and 842nm.
-        """
         # Process Lw imagery: divide by Ed to get Rrs
         try:
             idx = lw_img.idx - 1

@@ -17,63 +17,53 @@ BANDS = 5
 
 
 class Hedley(Base_Compute_Method):
+    """
+    Calculate water-leaving radiance using the Hedley deglinting method.
+
+    This function implements the Hedley et al. deglinting algorithm to remove
+    sun glint effects from water imagery. The method models a constant 'ambient'
+    NIR brightness level representing glint-free water, which is calculated by
+    averaging the minimum 10th percentile of Lt(NIR) across a random subset of
+    images. A linear relationship between Lt(NIR) and visible bands is established
+    for each image, and the slope of this relationship is used to remove glint
+    contribution based on each pixel's deviation from the ambient NIR level.
+
+    Parameters
+    ----------
+    save_images : bool, optional
+        If True, saves the processed images to the specified output directory.
+    random_n : int, optional
+        Number of random images to sample for calculating the ambient NIR level.
+        More images provide a robust estimate but increase computation time.
+        Default is 10.
+
+    Notes
+    -----
+    The Hedley deglinting algorithm performs the following steps:
+    1. Randomly samples `random_n` images from the Lt directory
+    2. Calculates the 0.1th percentile (minimum 10%) of NIR values for each image
+    3. Averages these minimum values to establish an ambient NIR level
+    4. For each pixel in each image:
+       - Fits a linear model between NIR and each visible band
+       - Removes glint: Lw = Lt - slope * (Lt_NIR - ambient_NIR)
+    5. Preserves the original NIR band in the output
+
+    This method is effective for removing sun glint when:
+    - Surface roughness is relatively uniform
+    - The water body contains some glint-free pixels
+    - Glint patterns are spatially coherent
+
+    The algorithm processes 5 bands, with bands 0-3 being deglinted visible bands
+    and band 4 being the unchanged NIR band.
+
+    References
+    ----------
+    Hedley, J. D., Harborne, A. R., & Mumby, P. J. (2005). Simple and robust
+    removal of sun glint for mapping shallow-water benthos. International Journal
+    of Remote Sensing, 26(10), 2107-2112.
+    """
+
     def __init__(self, save_images: bool = False, random_n: int = 10):
-        """
-        Calculate water-leaving radiance using the Hedley deglinting method.
-
-        This function implements the Hedley et al. deglinting algorithm to remove
-        sun glint effects from water imagery. The method models a constant 'ambient'
-        NIR brightness level representing glint-free water, which is calculated by
-        averaging the minimum 10th percentile of Lt(NIR) across a random subset of
-        images. A linear relationship between Lt(NIR) and visible bands is established
-        for each image, and the slope of this relationship is used to remove glint
-        contribution based on each pixel's deviation from the ambient NIR level.
-
-        Parameters
-        ----------
-        save_images : bool, optional
-            If True, saves the processed images to the specified output directory.
-        random_n : int, optional
-            Number of random images to sample for calculating the ambient NIR level.
-            More images provide a robust estimate but increase computation time.
-            Default is 10.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        LookupError
-            If main_dir is not set in settings.
-
-        Notes
-        -----
-        The function produces Lw GeoTIFF files with units of W/sr/nm in settings.lw_dir.
-
-        The Hedley deglinting algorithm performs the following steps:
-        1. Randomly samples `random_n` images from the Lt directory
-        2. Calculates the 0.1th percentile (minimum 10%) of NIR values for each image
-        3. Averages these minimum values to establish an ambient NIR level
-        4. For each pixel in each image:
-           - Fits a linear model between NIR and each visible band
-           - Removes glint: Lw = Lt - slope * (Lt_NIR - ambient_NIR)
-        5. Preserves the original NIR band in the output
-
-        This method is effective for removing sun glint when:
-        - Surface roughness is relatively uniform
-        - The water body contains some glint-free pixels
-        - Glint patterns are spatially coherent
-
-        The algorithm processes 5 bands, with bands 0-3 being deglinted visible bands
-        and band 4 being the unchanged NIR band.
-
-        References
-        ----------
-        Hedley, J. D., Harborne, A. R., & Mumby, P. J. (2005). Simple and robust
-        removal of sun glint for mapping shallow-water benthos. International Journal
-        of Remote Sensing, 26(10), 2107-2112.
-        """
         super().__init__(save_images=save_images)
         self.mean_min_lt_NIR = None
         self.random_n = random_n

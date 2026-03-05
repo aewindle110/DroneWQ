@@ -33,15 +33,9 @@ class StdMasking(Base_Compute_Method):
         Lower values result in more aggressive masking (more pixels masked).
         Higher values are more conservative (fewer pixels masked). Typical
         values range from 0.5 to 2.0. Default is 1.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    LookupError
-        If main_dir is not set in settings.
+    save_images : bool, optional
+        If True, saves the processed images to the specified output directory.
+        Default is False.
 
     Notes
     -----
@@ -79,33 +73,6 @@ class StdMasking(Base_Compute_Method):
         self,
         rrs_img: Image,
     ):
-        """
-        Process a single Rrs file to mask sun glint pixels based on NIR threshold.
-
-        Worker function that reads a remote sensing reflectance (Rrs) raster file,
-        identifies pixels likely contaminated by sun glint using NIR values exceeding
-        a statistical threshold, masks these pixels across all bands by setting them
-        to NaN, and writes the masked result to a new file.
-
-        Parameters
-        ----------
-        rrs_img : Image
-            Image object containing the Rrs raster file.
-
-        Notes
-        -----
-        Pixels are masked where: Rrs(NIR) > rrs_nir_mean + rrs_nir_std * mask_std_factor
-
-        The masking is applied to all 5 bands based on the NIR (band 5) threshold.
-        Masked pixels are set to NaN across all bands.
-        Output files maintain the same basename as input files.
-
-        Raises
-        ------
-        Exception
-            If file processing fails for any reason (logged as warning and re-raised).
-        """
-
         try:
             # write new stacked tifrrs = rrs_img.data  # shape: (5, H, W) (or generally (bands, ...))
             rrs = rrs_img.data

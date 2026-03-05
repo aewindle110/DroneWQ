@@ -14,6 +14,43 @@ logger = logging.getLogger(__name__)
 
 
 class Panel_ed(Base_Compute_Method):
+    """
+    Calculate remote sensing reflectance using calibrated reflectance panel.
+
+    This function computes remote sensing reflectance (Rrs) by dividing
+    water-leaving radiance (Lw) by downwelling irradiance (Ed) calculated
+    from a calibrated reflectance panel. The panel is imaged during data
+    collection to provide a reference for Ed measurements. This method
+    performs best under clear, sunny conditions with stable lighting.
+
+    Parameters
+    ----------
+    output_csv_path : str
+        Path to the output CSV file.
+    save_images : bool, optional
+        If True, saves the processed images to the specified output directory.
+        Default is False.
+
+    Notes
+    -----
+    This method does not perform well under variable lighting conditions such
+    as partly cloudy days. It is recommended for use on clear, sunny days with
+    stable illumination.
+
+    The function produces two types of outputs:
+    - Rrs GeoTIFF files with units of sr^-1 in settings.rrs_dir
+    - CSV file 'panel_ed.csv' containing average Ed measurements in mW/m^2/nm
+      calculated from calibrated reflectance panel captures
+
+    The function processes 5 spectral bands centered at approximately:
+    475nm, 560nm, 668nm, 717nm, and 842nm. Note that bands 4 and 5 (717nm and
+    842nm) are swapped during processing to correct band ordering.
+
+    The panel_irradiance() method automatically finds the panel albedo and
+    uses it to calculate Ed, otherwise raises an error if the panel cannot
+    be detected.
+    """
+
     def __init__(
         self,
         output_csv_path: str,
@@ -23,51 +60,9 @@ class Panel_ed(Base_Compute_Method):
         self.output_csv_path = output_csv_path
 
     def __call__(self, lw_img: Image) -> Image:
-        """
-        Calculate remote sensing reflectance using calibrated reflectance panel.
-
-        This function computes remote sensing reflectance (Rrs) by dividing
-        water-leaving radiance (Lw) by downwelling irradiance (Ed) calculated
-        from a calibrated reflectance panel. The panel is imaged during data
-        collection to provide a reference for Ed measurements. This method
-        performs best under clear, sunny conditions with stable lighting.
-
-        Parameters
-        ----------
-        lw_img : Image
-            Input Lw Image object containing total radiance data.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        LookupError
-            If main_dir is not set in settings.
-
-        Notes
-        -----
-        This method does not perform well under variable lighting conditions such
-        as partly cloudy days. It is recommended for use on clear, sunny days with
-        stable illumination.
-
-        The function produces two types of outputs:
-        - Rrs GeoTIFF files with units of sr^-1 in settings.rrs_dir
-        - CSV file 'panel_ed.csv' containing average Ed measurements in mW/m^2/nm
-          calculated from calibrated reflectance panel captures
-
-        The function processes 5 spectral bands centered at approximately:
-        475nm, 560nm, 668nm, 717nm, and 842nm. Note that bands 4 and 5 (717nm and
-        842nm) are swapped during processing to correct band ordering.
-
-        The panel_irradiance() method automatically finds the panel albedo and
-        uses it to calculate Ed, otherwise raises an error if the panel cannot
-        be detected.
-        """
         try:
             idx = lw_img.idx - 1
-            stacked_rrs = lw_img.data[:5] / self.ed_row[idx][1:6]
+            stacked_rrs = lw_img.data[:5] / self.ed[idx][1:6]
             rrs_img = Image.from_image(lw_img, stacked_rrs, method=self.name)
 
             logger.info(
@@ -89,7 +84,7 @@ class Panel_ed(Base_Compute_Method):
         panel_imgset = imageset.ImageSet.from_directory(panel_dir).captures
         panels = np.array(panel_imgset)
 
-        ed = []
+        ed_data = []
         ed_columns = ["image", "ed_475", "ed_560", "ed_668", "ed_717", "ed_842"]
 
         for i in range(len(panels)):
@@ -109,15 +104,15 @@ class Panel_ed(Base_Compute_Method):
                 + [np.mean(ed[3])]
                 + [np.mean(ed[4])]
             )
-            ed.append(ed_row)
+            ed_data.append(ed_row)
 
         # now divide the lw_imagery by Ed to get rrs
         # go through each Lt image in the dir and divide it by the lsky
         ed_data = pd.DataFrame.from_records(
-            ed,
+            ed_data,
             index="image",
             columns=ed_columns,
         )
         ed_data.to_csv(os.path.join(self.output_csv_path, "panel_ed.csv"))
 
-        self.ed_row = ed
+        self.ed = ed_data
