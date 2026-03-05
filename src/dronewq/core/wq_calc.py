@@ -7,6 +7,7 @@ import glob
 import logging
 import os
 from functools import partial
+from pathlib import Path
 
 import numpy as np
 import rasterio
@@ -63,11 +64,11 @@ def __compute(filename, wq_algs, main_dir):
         for wq_alg in wq_algs:
             try:
                 wq_dir_name = "masked_" + wq_alg + "_imgs"
-                wq_dir = os.path.join(main_dir, wq_dir_name)
+                wq_dir = main_dir / wq_dir_name
                 wq = algorithms[wq_alg](rrs)
 
                 with rasterio.open(
-                    os.path.join(wq_dir, os.path.basename(filename)),
+                    wq_dir / filename.name,
                     "w",
                     **profile,
                 ) as dst:
@@ -84,7 +85,7 @@ def __compute(filename, wq_algs, main_dir):
 
 
 def save_wq_imgs(
-    rrs_dir: str,
+    rrs_dir: Path | str,
     wq_algs: list[str] = ["chl_gitelson"],
     start: int = 0,
     count: int = 10000,
@@ -104,7 +105,7 @@ def save_wq_imgs(
 
     Parameters
     ----------
-    rrs_dir : str
+    rrs_dir : str | Path
         Directory containing input Rrs raster files.
 
     wq_algs : `list[str]`, optional
@@ -139,24 +140,30 @@ def save_wq_imgs(
     - `settings.main_dir` must be configured prior to calling this function.
     """
 
-    if settings.main_dir is None:
-        raise LookupError("Please set the main_dir path.")
+    if not isinstance(rrs_dir, Path):
+        rrs_dir = Path(rrs_dir)
 
-    main_dir = settings.main_dir
+    if not rrs_dir.exists():
+        raise FileNotFoundError(f"Rrs directory {rrs_dir} does not exist.")
+
+    if not rrs_dir.is_dir():
+        raise NotADirectoryError(f"Rrs directory {rrs_dir} is not a directory.")
+
+    main_dir = rrs_dir.parent
 
     for wq_alg in wq_algs:
         attribute_name = wq_alg + "_dir"
         wq_dir_name = "masked_" + wq_alg + "_imgs"
-        dir_path = os.path.join(main_dir, wq_dir_name)
-        setattr(settings, attribute_name, dir_path)
+        dir = main_dir / wq_dir_name
+        setattr(settings, attribute_name, dir)
         # make wq_dir directory
-        os.makedirs(os.path.join(main_dir, wq_dir_name), exist_ok=True)
+        dir.mkdir(parents=True, exist_ok=True)
 
-    def _capture_path_to_int(path: str) -> int:
-        return int(os.path.basename(path).split("_")[-1].split(".")[0])
+    def _capture_path_to_int(path: Path) -> int:
+        return int(path.stem.split("_")[-1].split(".")[0])
 
     filenames = sorted(
-        glob.glob(os.path.join(rrs_dir, "*")),
+        rrs_dir.glob("*.tif"),
         key=_capture_path_to_int,
     )[start:count]
 
