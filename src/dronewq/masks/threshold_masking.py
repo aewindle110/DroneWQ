@@ -8,6 +8,8 @@ from dronewq.utils.data_types import Base_Compute_Method, Image
 
 logger = logging.getLogger(__name__)
 
+MASK_VALUE = np.nan
+
 
 class ThresholdMasking(Base_Compute_Method):
     """
