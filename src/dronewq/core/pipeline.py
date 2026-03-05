@@ -16,15 +16,40 @@ from dronewq.utils.images import (
     save_img,
 )
 from dronewq.utils.settings import settings
+from dronewq.utils.utils import validate_folder
 
 logger = logging.getLogger(__name__)
 
 
 class RRSPipeline:
-    """Main pipeline for dronewq."""
+    """Main pipeline for dronewq.
+
+    Parameters
+    ----------
+    output_folder : Path | str
+        Path to the output folder.
+    lw_method : Base_Compute_Method
+        Method used to calculate water leaving radiance.
+        If uncertain, you can start with `Mobley_rho()`.
+    ed_method : Base_Compute_Method
+        Method used to calculate downwelling irradiance (Ed).
+        If uncertain, you can start with `Dls_ed()`.
+    pixel_masking_method : Base_Compute_Method | None, optional
+        Method to mask pixels. Options are
+        `ThresholdMasking`, `StdMasking`, or None. Default is None.
+    overwrite_lt : bool, optional
+        Whether to overwrite existing Lt images.
+        Should have this set to True if you are running the pipeline for the
+        first time. Defaults to False, which saves time if you are rerunning.
+    generate_thumbnails : bool, optional
+        Whether to generate thumbnails. Defaults to True.
+    workers : int, optional
+        Number of parallel image processing instances. Defaults to 1.
+    """
 
     def __init__(
         self,
+        output_folder: Path | str,
         lw_method: Base_Compute_Method,
         ed_method: Base_Compute_Method,
         pixel_masking_method: Base_Compute_Method | None = None,
@@ -32,25 +57,18 @@ class RRSPipeline:
         generate_thumbnails: bool = True,  # noqa: FBT001, FBT002
         workers: int = 1,
     ):
-        """Initialize the pipeline.
+        """Initialize the pipeline."""
 
-        Args:
-            lw_method: Method used to calculate water leaving radiance.
-                If uncertain, you can start with `Mobley_rho()`.
-            ed_method: Method used to calculate downwelling irradiance (Ed).
-                If uncertain, you can start with `Dls_ed()`.
-            pixel_masking_method: Method to mask pixels. Options are
-                `ThresholdMasking`, `StdMasking`, or None. Default is None.
-            overwrite_lt (bool, optional): Whether to overwrite existing Lt images.
-                Should have this set to True if you are running the pipeline for the
-                first time. Defaults to False, which saves time if you are rerunning.
-            generate_thumbnails (bool, optional): Whether to generate thumbnails. Defaults to True.
-            workers (int, optional): Number of parallel image processing instances. Defaults to 1.
-        """
-        if not settings.main_dir.exists():
-            msg = "Set main_dir first with settings.configure(main_dir='path')"
-            raise LookupError(msg)
+        if settings.main_dir is None:
+            raise LookupError(
+                "Please set the main_dir path in settings."
+                "settings.configure(main_dir='path')"
+            )
 
+        self.main_dir = validate_folder(settings.main_dir)
+        self.output_folder = (
+            Path(output_folder) if isinstance(output_folder, str) else output_folder
+        )
         self.lw_method = lw_method
         self.ed_method = ed_method
         self.pixel_masking_method = pixel_masking_method
@@ -58,22 +76,21 @@ class RRSPipeline:
         self.generate_thumbnails = generate_thumbnails
         self.workers = workers
 
-        self.main_dir = settings.main_dir
-
         self.__make_dirs()
 
     def __make_dirs(self) -> None:
         """Create the directories if they don't already exist."""
         # Make all these directories if they don't already exist
         settings.lt_dir.mkdir(parents=True, exist_ok=True)
+        self.output_folder.mkdir(parents=True, exist_ok=True)
 
         all_methods = [self.lw_method, self.ed_method]
         for method in all_methods:
-            directory = self.main_dir.joinpath(method.name)
+            directory = self.output_folder.joinpath(method.name)
             Path(directory).mkdir(parents=True, exist_ok=True)
 
         if self.pixel_masking_method is not None:
-            self.masked_rrs_dir = self.main_dir.joinpath(
+            self.masked_rrs_dir = self.output_folder.joinpath(
                 self.pixel_masking_method.name,
             )
             Path(self.masked_rrs_dir).mkdir(parents=True, exist_ok=True)
@@ -85,8 +102,17 @@ class RRSPipeline:
             len(list(Path(settings.raw_water_dir).glob("*.tif"))),
         )
         if not settings.lt_dir.exists():
-            msg = f"{settings.lt_dir} does not exist. Maybe set overwrite_lt=True?"
-            raise FileNotFoundError(msg)
+            logger.warning(
+                f"{settings.lt_dir} does not exist. Setting the overwrite_lt flag to True."
+            )
+            self.overwrite_lt = True
+
+        filepaths = get_filepaths(settings.lt_dir)
+        if not filepaths:
+            logger.warning(
+                f"{settings.lt_dir} does not have any files. Setting the overwrite_lt flag to True."
+            )
+            self.overwrite_lt = True
 
         if self.overwrite_lt:
             logger.info("Overwriting existing Lt images.")
@@ -105,8 +131,6 @@ class RRSPipeline:
         # mean minimum lt NIR value
         self.lw_method.preprocess()
         self.ed_method.preprocess()
-
-        filepaths = get_filepaths(settings.lt_dir)
 
         with ProcessPoolExecutor(max_workers=self.workers) as executor:
             results = executor.map(self.worker, filepaths)
@@ -129,14 +153,14 @@ class RRSPipeline:
         lt_img = read_file(filepath)
         lw_img = self.lw_method(lt_img)
         if self.lw_method.save_images:
-            save_img(lw_img)
+            save_img(lw_img, self.output_folder)
         rrs_img = self.ed_method(lw_img)
 
         if self.pixel_masking_method is None:
-            save_img(rrs_img)
+            save_img(rrs_img, self.output_folder)
         else:
             if self.ed_method.save_images:
-                save_img(rrs_img)
+                save_img(rrs_img, self.output_folder)
             masked_rrs_img = self.pixel_masking_method(rrs_img)
-            save_img(masked_rrs_img)
+            save_img(masked_rrs_img, self.output_folder)
         return filepath
