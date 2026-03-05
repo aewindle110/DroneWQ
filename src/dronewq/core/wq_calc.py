@@ -54,14 +54,14 @@ def __compute(filename, wq_algs, main_dir):
         "chl_gitelson": chl_gitelson,
         "tsm_nechad": tsm_nechad,
     }
-    try:
-        with rasterio.open(filename, "r") as src:
-            # Copy geotransform if it exists
-            profile = src.profile
-            rrs = np.squeeze(src.read())
-            profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
+    with rasterio.open(filename, "r") as src:
+        # Copy geotransform if it exists
+        profile = src.profile
+        rrs = np.squeeze(src.read())
+        profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
 
-            for wq_alg in wq_algs:
+        for wq_alg in wq_algs:
+            try:
                 wq_dir_name = "masked_" + wq_alg + "_imgs"
                 wq_dir = os.path.join(main_dir, wq_dir_name)
                 wq = algorithms[wq_alg](rrs)
@@ -72,15 +72,15 @@ def __compute(filename, wq_algs, main_dir):
                     **profile,
                 ) as dst:
                     dst.write(wq, 1)
+            except Exception as e:
+                logger.error(
+                    "File %s: %s using algorithm %s",
+                    filename,
+                    str(e),
+                    wq_alg,
+                )
+                return False
         return True
-    except Exception as e:
-        logger.error(
-            "File %s: %s using algorithm %s",
-            filename,
-            str(e),
-            wq_alg,
-        )
-        return False
 
 
 def save_wq_imgs(
