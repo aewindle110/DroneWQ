@@ -4,6 +4,7 @@ Simple dict class used for settings
 """
 
 import copy
+from pathlib import Path
 
 
 class dotdict(dict):
@@ -32,3 +33,12 @@ class dotdict(dict):
     def __deepcopy__(self, memo) -> None:
         # Use the default dict copying method to avoid infinite recursion.
         return dotdict(copy.deepcopy(dict(self), memo))
+
+
+def validate_folder(folder: Path | str) -> Path:
+    """Validate main_dir if it exists or not."""
+    folder = Path(folder) if isinstance(folder, str) else folder
+    if not folder.exists():
+        msg = f"{folder} does not exist."
+        raise LookupError(msg)
+    return folder

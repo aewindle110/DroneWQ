@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_imgs(
-    img_dir,
+    img_dir: str | Path,
     count=10000,
     start=0,
     altitude_cutoff=0,
@@ -35,7 +35,7 @@ def load_imgs(
 
     Parameters
     ----------
-    img_dir : str
+    img_dir : str | Path
         Directory path containing the images to be loaded. The directory or its
         parent must contain a 'metadata.csv' file with image information.
     count : int, optional
@@ -82,9 +82,11 @@ def load_imgs(
     >>> imgs = load_imgs('/path/to/images', count=10)
     >>> imgs = list(imgs)
     """
-    if not os.path.exists(img_dir):
+    if isinstance(img_dir, str):
+        img_dir = Path(img_dir)
+    if not img_dir.exists():
         raise FileNotFoundError(f"Directory {img_dir} does not exist.")
-    if not os.path.isdir(img_dir):
+    if not img_dir.is_dir():
         raise NotADirectoryError(f"{img_dir} is not a directory.")
 
     df = load_metadata(
@@ -95,7 +97,7 @@ def load_imgs(
         random,
     )
 
-    img_list = [os.path.join(img_dir, fn) for fn in df.index.values]
+    img_list = [img_dir / fn for fn in df.index.values]
 
     for im in img_list:
         with rasterio.open(im, "r") as src:
@@ -103,7 +105,7 @@ def load_imgs(
 
 
 def load_metadata(
-    img_dir,
+    img_dir: str | Path,
     count=10000,
     start=0,
     altitude_cutoff=0,
@@ -119,7 +121,7 @@ def load_metadata(
 
     Parameters
     ----------
-    img_dir : str
+    img_dir : str | Path
         Directory path containing the images. The directory or its parent must
         contain a 'metadata.csv' file with image information.
     count : int, optional
@@ -186,12 +188,15 @@ def load_metadata(
     >>> df = load_metadata('/path/to/images', altitude_cutoff=10)
     >>> print(f"Mean altitude: {df['Altitude'].mean():.2f}m")
     """
+    if isinstance(img_dir, str):
+        img_dir = Path(img_dir)
+
     if "sky" in str(img_dir):
         base = img_dir
     else:
-        base = os.path.dirname(img_dir)
+        base = img_dir.parent
 
-    csv_path = os.path.join(base, "metadata.csv")
+    csv_path = base / "metadata.csv"
 
     df = pd.read_csv(csv_path)
     df = df.set_index("filename")
@@ -326,13 +331,6 @@ def save_images(
         fullOutputPath = os.path.join(output_path, outputFilename)
         fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
 
-        # Skip if exists and not overwriting
-        if os.path.exists(fullOutputPath):
-            continue
-
-        if len(capture.images) != len(img_set.captures[0].images):
-            continue
-
         capture.fullOutputPath = fullOutputPath
         capture.fullThumbnailPath = fullThumbnailPath
 
@@ -362,10 +360,6 @@ def process_micasense_images(
 
     Parameters
     ----------
-    overwrite_lt_lw : bool, optional
-        If True, overwrites previously processed Lt (total radiance) and Lw
-        (water-leaving radiance) files. If False, skips processing for existing
-        files. Default is False.
     sky : bool, optional
         Processing mode flag:
         - True: Process sky reference images from raw_sky_dir, save to sky_lt_dir
@@ -431,7 +425,6 @@ def process_micasense_images(
     >>> output_dir = process_micasense_images(
     ...     warp_img_dir='/path/to/representative/capture',
     ...     num_workers=8,
-    ...     overwrite_lt_lw=True
     ... )
 
     >>> # Fast processing without thumbnails, using first capture for alignment
@@ -443,7 +436,6 @@ def process_micasense_images(
     >>> # Reprocess with different alignment, overwriting previous results
     >>> output_dir = process_micasense_images(
     ...     warp_img_dir='/path/to/better/capture',
-    ...     overwrite_lt_lw=True,
     ...     num_workers=6
     ... )
 
@@ -508,16 +500,15 @@ def read_file(file: Path) -> Image:
     return lt_img
 
 
-def save_img(img: Image):
+def save_img(img: Image, output_folder: Path):
     """Saves image."""
     # Getting the main dir filepath from the image
     # instead of settings.main_dir because
     # settings is not getting shared in between
     # processes. TODO: Have to fix this.
-    main_dir = img.file_path.parent.parent
     profile = img.profile
     profile["count"] = 5
-    output_path = Path(main_dir).joinpath(img.method).joinpath(img.file_name)
+    output_path = output_folder.joinpath(img.method).joinpath(img.file_name)
 
     with rasterio.open(
         output_path,

@@ -9,8 +9,6 @@ import os
 import pickle
 from pathlib import Path
 
-from tqdm import main
-
 from dronewq.utils.utils import dotdict
 
 logging.basicConfig(

@@ -21,7 +21,7 @@ class Image:
     method: str
     profile: Profile
     data: np.ndarray
-    idx: int | None = None
+    idx: int
 
     @classmethod
     def from_image(cls, src: Image, data: np.ndarray, method: str = ""):
@@ -40,9 +40,6 @@ class Base_Compute_Method:
     """Base class for all computation methods."""
 
     def __init__(self, save_images: bool = False) -> None:
-        if settings.main_dir is None:
-            msg = "Please set the main_dir path."
-            raise ValueError(msg)
         self.save_images = save_images
         self.name = self.__class__.__name__
 
