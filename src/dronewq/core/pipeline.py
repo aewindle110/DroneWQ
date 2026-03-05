@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from dronewq.lw_methods.blackpixel import Blackpixel
 from dronewq.lw_methods.mobley_rho import Mobley_rho
+from dronewq.masks.std_masking import StdMasking
 from dronewq.utils.data_types import Base_Compute_Method
 from dronewq.utils.images import (
     get_filepaths,
@@ -133,15 +134,25 @@ class RRSPipeline:
         self.ed_method.preprocess()
 
         with ProcessPoolExecutor(max_workers=self.workers) as executor:
-            results = executor.map(self.worker, filepaths)
+            results = executor.map(self.rrs_worker, filepaths)
 
             # Use tqdm to show progress of processed images
             for _ in tqdm(results, total=len(filepaths), desc="Processing images"):
                 pass
 
+            if self.pixel_masking_method is not None:
+                print("Masking rrs images")
+                rrs_dir = self.output_folder / self.ed_method.name
+                filepaths = get_filepaths(rrs_dir)
+                if isinstance(self.pixel_masking_method, StdMasking):
+                    self.pixel_masking_method.preprocess_masking(rrs_dir)
+                results = executor.map(self.mask_worker, filepaths)
+                for _ in tqdm(results, total=len(filepaths), desc="Processing images"):
+                    pass
+
         logger.info("Pipeline Finished.")
 
-    def worker(self, filepath: Path) -> Path:
+    def rrs_worker(self, filepath: Path) -> Path:
         """
         Process a single image.
 
@@ -155,12 +166,12 @@ class RRSPipeline:
         if self.lw_method.save_images:
             save_img(lw_img, self.output_folder)
         rrs_img = self.ed_method(lw_img)
+        save_img(rrs_img, self.output_folder)
 
-        if self.pixel_masking_method is None:
-            save_img(rrs_img, self.output_folder)
-        else:
-            if self.ed_method.save_images:
-                save_img(rrs_img, self.output_folder)
-            masked_rrs_img = self.pixel_masking_method(rrs_img)
-            save_img(masked_rrs_img, self.output_folder)
+        return filepath
+
+    def mask_worker(self, filepath: Path) -> Path:
+        rrs_img = read_file(filepath)
+        masked_rrs_img = self.pixel_masking_method(rrs_img)
+        save_img(masked_rrs_img, self.output_folder)
         return filepath

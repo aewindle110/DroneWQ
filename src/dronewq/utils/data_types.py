@@ -24,7 +24,7 @@ class Image:
     idx: int
 
     @classmethod
-    def from_image(cls, src: Image, data: np.ndarray, method: str = ""):
+    def from_image(cls, src: Image, data: np.ndarray, method: str):
         """Creates another Image instance from another Image."""
         return cls(
             file_name=src.file_name,
@@ -46,5 +46,5 @@ class Base_Compute_Method:
     def __call__(self, img: Image) -> Image:
         pass
 
-    def preprocess(self):
+    def preprocess(self, **kwargs) -> None:
         pass

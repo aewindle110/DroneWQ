@@ -1,6 +1,7 @@
 """Refactored by Temuulen"""
 
 import logging
+from pathlib import Path
 
 import numpy as np
 
@@ -76,11 +77,11 @@ class StdMasking(Base_Compute_Method):
         try:
             # write new stacked tifrrs = rrs_img.data  # shape: (5, H, W) (or generally (bands, ...))
             rrs = rrs_img.data
-            thr = self.rrs_nir_mean + self.rrs_nir_std * self.std_factor
+            thr = self.rrs_nir_mean + self.rrs_nir_std * self.mask_std_factor
             mask = rrs[4] > thr  # True where you want to NaN-out (based on NIR)
 
             stacked_rrs_deglint = rrs.copy()  # avoid mutating original
-            stacked_rrs_deglint[:, mask] = np.nans
+            stacked_rrs_deglint[:, mask] = np.nan
             masked_rrs_img = Image.from_image(
                 rrs_img, data=stacked_rrs_deglint, method=self.name
             )
@@ -92,18 +93,16 @@ class StdMasking(Base_Compute_Method):
         except Exception as e:
             raise RuntimeError(f"File {rrs_img.file_path!s} failed: {e!s}")
 
-    def __calculate_rrs_nir(
-        self,
-    ):
-        if self.settings.rrs_dir is None:
-            raise ValueError("Please set the rrs_dir path.")
+    def preprocess_masking(self, rrs_dir: Path) -> None:
+        if not rrs_dir.exists():
+            raise LookupError(f"Rrs directory {rrs_dir} does not exist.")
 
         # grab the first num_images images,
         # finds the mean and std of NIR,
         # then anything times the glint factor
         # is classified as glint
         rrs_imgs_gen = load_imgs(
-            self.settings.rrs_dir,
+            rrs_dir,
             count=self.num_images,
             start=0,
             altitude_cutoff=0,
@@ -123,4 +122,5 @@ class StdMasking(Base_Compute_Method):
             "Pixels will be masked where Rrs(NIR) > %d",
             rrs_nir_mean + rrs_nir_std * self.mask_std_factor,
         )
-        return rrs_nir_mean, rrs_nir_std
+        self.rrs_nir_mean = rrs_nir_mean
+        self.rrs_nir_std = rrs_nir_std
