@@ -25,9 +25,16 @@ authors:
   - name: Gabriel Navarro
     orcid: 0000-0002-8919-0060
     affiliation: 5
+  - name: Temuulen Enkhtamir
+    orcid: 0009-0000-1354-0792
+    affiliation: 6
+  - name: Kurtis Kwan
+    affiliation: 7
+  - name: Nidhi Khiantani
+    affiliation: 8
   - name: Greg M. Silsbe
     orcid: 0000-0003-2673-1162
-    affiliation: 6
+    affiliation: 9
 affiliations:
  - name: NASA Goddard Space Flight Center, Greenbelt, MD, United States
    index: 1
