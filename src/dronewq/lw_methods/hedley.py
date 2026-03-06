@@ -1,90 +1,22 @@
 """Refactored by: Temuulen"""
 
-import concurrent.futures
-import glob
 import logging
-import os
 import random
-from functools import partial
+from pathlib import Path
 
 import numpy as np
 import rasterio
 from numpy.polynomial import Polynomial
 
+from dronewq.utils.data_types import Base_Compute_Method, Image
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
-
-def __compute(filepath, mean_min_lt_NIR, lw_dir):
-    """
-    Process a single Lt file to compute water-leaving radiance using Hedley deglinting.
-
-    Worker function that reads a total radiance (Lt) raster file, applies the Hedley
-    et al. deglinting method to remove sun glint effects, and writes the resulting
-    water-leaving radiance (Lw) to a new file. The method establishes a linear
-    relationship between NIR and visible bands, then uses this to remove glint
-    contribution based on deviation from ambient NIR levels.
-
-    Parameters
-    ----------
-    filepath : str
-        Path to the input Lt raster file.
-    mean_min_lt_NIR : float
-        Ambient NIR brightness level calculated from the minimum 10th percentile
-        of Lt(NIR) across a random subset of images. Represents NIR brightness
-        of pixels without sun glint.
-    lw_dir : str
-        Directory path where the output Lw file will be saved.
-
-    Returns
-    -------
-    str
-        The input filepath, returned for progress tracking.
-
-    Notes
-    -----
-    The function performs the following steps for each visible band (bands 0-3):
-    1. Fits a linear polynomial between NIR (band 4) and the visible band
-    2. Extracts the slope coefficient from the fitted relationship
-    3. Computes Lw = Lt - slope * (Lt_NIR - ambient_NIR)
-
-    The NIR band (band 4) is kept unchanged in the output.
-    Output files maintain the same basename as input files.
-    """
-    im_name = os.path.basename(filepath)
-
-    with rasterio.open(filepath, "r") as lt_src:
-        profile = lt_src.profile
-        lt = lt_src.read()
-        lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
-
-        lw_all = []
-        for j in range(4):
-            # Fit polynomial using new API
-            p = Polynomial.fit(lt_reshape[4, :], lt_reshape[j, :], 1)
-            # Extract slope coefficient (coefficient of x^1 term)
-            slopes = p.convert().coef[1]
-            # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
-            lw = lt[j, :, :] - slopes * (lt[4, :, :] - mean_min_lt_NIR)
-            lw_all.append(lw)
-
-        # Keep the original NIR band
-        lw_all.append(lt[4, :, :])
-
-        stacked_lw = np.stack(lw_all)
-        profile["count"] = 5
-
-        output = os.path.join(lw_dir, im_name)
-
-        # write new stacked Lw tif
-        with rasterio.open(output, "w", **profile) as dst:
-            dst.write(stacked_lw)
-
-    return filepath  # Return filepath for progress tracking
+BANDS = 5
 
 
-def hedley(random_n=10, num_workers=4, executor=None):
+class Hedley(Base_Compute_Method):
     """
     Calculate water-leaving radiance using the Hedley deglinting method.
 
@@ -98,30 +30,15 @@ def hedley(random_n=10, num_workers=4, executor=None):
 
     Parameters
     ----------
+    save_images : bool, optional
+        If True, saves the processed images to the specified output directory.
     random_n : int, optional
         Number of random images to sample for calculating the ambient NIR level.
-        More images provide a more robust estimate but increase computation time.
+        More images provide a robust estimate but increase computation time.
         Default is 10.
-    num_workers : int, optional
-        Number of parallel worker processes for file processing. Should be
-        tuned based on available CPU cores. Default is 4.
-    executor : concurrent.futures.Executor, optional
-        Pre-configured executor for parallel processing. If None, a new
-        ProcessPoolExecutor will be created. Default is None.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    LookupError
-        If main_dir is not set in settings.
 
     Notes
     -----
-    The function produces Lw GeoTIFF files with units of W/sr/nm in settings.lw_dir.
-
     The Hedley deglinting algorithm performs the following steps:
     1. Randomly samples `random_n` images from the Lt directory
     2. Calculates the 0.1th percentile (minimum 10%) of NIR values for each image
@@ -144,75 +61,86 @@ def hedley(random_n=10, num_workers=4, executor=None):
     Hedley, J. D., Harborne, A. R., & Mumby, P. J. (2005). Simple and robust
     removal of sun glint for mapping shallow-water benthos. International Journal
     of Remote Sensing, 26(10), 2107-2112.
-
     """
-    if settings.main_dir is None:
-        raise LookupError("Please set the main_dir path.")
 
-    lt_dir = settings.lt_dir
-    lw_dir = settings.lw_dir
-    filepaths = glob.glob(lt_dir + "/*.tif")
+    def __init__(self, save_images: bool = False, random_n: int = 10):
+        super().__init__(save_images=save_images)
+        self.mean_min_lt_NIR = None
+        self.random_n = random_n
 
-    lt_all = []
-    rand = random.sample(filepaths, random_n)
+    def __call__(self, lt_img: Image) -> Image:
+        try:
+            if lt_img.data.shape[0] < BANDS:
+                msg = "Image must have at least 5 bands."
+                raise ValueError(msg)
+            lt = lt_img.data
+            lt_reshape = lt.reshape(*lt.shape[:-2], -1)  # flatten last two dims
 
-    for im in rand:
-        with rasterio.open(im, "r") as lt_src:
-            lt = lt_src.read()
-            lt_all.append(lt)
+            lw_all = []
+            for j in range(4):
+                # Fit polynomial using new API
+                p = Polynomial.fit(lt_reshape[4, :], lt_reshape[j, :], 1)
+                # Extract slope coefficient (coefficient of x^1 term)
+                slopes = p.convert().coef[1]
+                # calculate Lw (Lt - b(Lt(NIR)-min(Lt(NIR))))
+                lw = lt[j, :, :] - slopes * (lt[4, :, :] - self.mean_min_lt_NIR)
+                lw_all.append(lw)
 
-    stacked_lt = np.stack(lt_all)
-    stacked_lt_reshape = stacked_lt.reshape(*stacked_lt.shape[:-2], -1)
+            # NOTE: This is faster than the above method.
+            # However, I haven't tested the correctness yet.
 
-    min_lt_NIR = []
-    for i in range(len(rand)):
-        min_lt_NIR.append(np.percentile(stacked_lt_reshape[i, 4, :], 0.1))
+            # x = lt_reshape[4, :]
+            # xm = x.mean()
+            # x_centered = x - xm
+            # var_x = (x_centered**2).mean()
+            #
+            # lw_all = []
+            #
+            # for j in range(4):
+            #     y = lt_reshape[j, :]
+            #     ym = y.mean()
+            #     cov_xy = (x_centered * (y - ym)).mean()
+            #     slope = cov_xy / var_x
+            #
+            #     lw = lt[j] - slope * (lt[4] - self.mean_min_lt_NIR)
+            #     lw_all.append(lw)
 
-    mean_min_lt_NIR = np.mean(min_lt_NIR)
+            lw_all.append(lt[4])
+            stacked_lw = np.stack(lw_all)
 
-    if executor is not None:
-        partial_compute = partial(
-            __compute,
-            mean_min_lt_NIR=mean_min_lt_NIR,
-            lw_dir=lw_dir,
-        )
-        results = list(executor.map(partial_compute, filepaths))
-        logger.info(
-            "Lw Stage (Hedley): Successfully processed: %d captures",
-            len(results),
-        )
+            lw_img = Image.from_image(
+                lt_img,
+                data=stacked_lw,
+                method=self.name,
+            )
+            logger.info(
+                "Lw Stage (Hedley): Successfully processed: %s",
+                lt_img.file_name,
+            )
+            return lw_img
+        except Exception as e:
+            msg = f"File {lt_img.file_path!s} failed: {e!s}"
+            raise RuntimeError(msg)
 
-    else:
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=num_workers,
-        ) as executor:
-            futures = {}
-            for filepath in filepaths:
-                future = executor.submit(
-                    __compute,
-                    filepath,
-                    mean_min_lt_NIR,
-                    lw_dir,
-                )
-                futures[future] = filepath
-            # Wait for all tasks to complete and collect results
-            results = []
-            completed = 0
+    def preprocess(self):
+        """Sample a mean minimum lt NIR value from all the lt images."""
+        lt_dir = settings.lt_dir
+        filepaths = list(Path(lt_dir).glob("*.tif"))
 
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    result = (
-                        future.result()
-                    )  # Blocks until this specific future completes
-                    results.append(result)
-                    completed += 1
-                except Exception as e:
-                    filepath = futures[future]
-                    print(f"File {filepath} failed: {e}")
-                    results.append(False)
+        lt_all = []
+        rand = random.sample(filepaths, self.random_n)
 
-        logger.info(
-            "Lw Stage (Hedley): Successfully processed: %d/%d captures",
-            sum(results),
-            len(results),
-        )
+        for im in rand:
+            with rasterio.open(im, "r") as lt_src:
+                lt = lt_src.read()
+                lt_all.append(lt)
+
+        stacked_lt = np.stack(lt_all)
+        stacked_lt_reshape = stacked_lt.reshape(*stacked_lt.shape[:-2], -1)
+
+        min_lt_NIR = []
+        for i in range(len(rand)):
+            min_lt_NIR.append(np.percentile(stacked_lt_reshape[i, 4, :], 0.1))
+
+        mean_min_lt_NIR = np.mean(min_lt_NIR)
+        self.mean_min_lt_NIR = mean_min_lt_NIR

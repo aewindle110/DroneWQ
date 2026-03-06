@@ -3,50 +3,43 @@ Refactored by: Temuulen and Kurtis
 """
 
 import concurrent.futures
-import glob
 import logging
-import os
 from functools import partial
+from pathlib import Path
 
 import numpy as np
 import rasterio
+from rasterio.windows import Window
+from tqdm import tqdm
 
+from dronewq.utils.images import get_sorted_filepaths
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
+def save_wq(arr: np.ndarray, output_path: Path, profile: dict):
+    """Saves a 2D numpy array to band 1 of a raster file using windowed writing."""
+    profile = profile.copy()
+    profile["count"] = 1
+
+    height, width = arr.shape
+    chunk_size = 256
+
+    with rasterio.open(output_path, "w", **profile) as dst:
+        for row in range(0, height, chunk_size):
+            for col in range(0, width, chunk_size):
+                row_end = min(row + chunk_size, height)
+                col_end = min(col + chunk_size, width)
+
+                window = Window(col, row, col_end - col, row_end - row)
+                window_data = arr[row:row_end, col:col_end]
+
+                dst.write(window_data, 1, window=window)
+
+
 def __compute(filename, wq_algs, main_dir):
-    """
-    Apply one or more water-quality algorithms to a single Rrs raster.
-
-    This is an internal helper function used by ``save_wq_imgs``. It loads a
-    raster, runs the specified algorithms, and writes output rasters into the
-    corresponding algorithm-specific directories under ``main_dir``.
-
-    Parameters
-    ----------
-    filename : str
-        Path to the Rrs raster file.
-
-    wq_algs : `list[str]`
-        Algorithm names to apply to this file.
-
-    main_dir : str
-        Base directory where algorithm-specific output folders are located.
-
-    Returns
-    -------
-    bool
-        ``True`` if processing succeeds; ``False`` if an exception occurs.
-
-    Notes
-    -----
-    Output rasters:
-    - Use the same geotransform, CRS, and spatial dimensions as the input.
-    - Have ``float32`` dtype and ``nodata=np.nan``.
-    """
-
+    """Apply one or more water-quality algorithms to a single Rrs raster."""
     algorithms = {
         "chl_hu": chl_hu,
         "chl_ocx": chl_ocx,
@@ -54,42 +47,37 @@ def __compute(filename, wq_algs, main_dir):
         "chl_gitelson": chl_gitelson,
         "tsm_nechad": tsm_nechad,
     }
-    try:
-        with rasterio.open(filename, "r") as src:
-            # Copy geotransform if it exists
-            profile = src.profile
-            rrs = np.squeeze(src.read())
-            profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
+    with rasterio.open(filename, "r") as src:
+        # Copy geotransform if it exists
+        profile = src.profile
+        rrs = np.squeeze(src.read())
+        profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
 
-            for wq_alg in wq_algs:
+        for wq_alg in wq_algs:
+            try:
                 wq_dir_name = "masked_" + wq_alg + "_imgs"
-                wq_dir = os.path.join(main_dir, wq_dir_name)
+                wq_dir = main_dir / wq_dir_name
                 wq = algorithms[wq_alg](rrs)
 
-                with rasterio.open(
-                    os.path.join(wq_dir, os.path.basename(filename)),
-                    "w",
-                    **profile,
-                ) as dst:
-                    dst.write(wq, 1)
+                save_wq(wq, wq_dir / filename.name, profile)
+            except Exception as e:
+                logger.error(
+                    "File %s: %s using algorithm %s",
+                    filename,
+                    str(e),
+                    wq_alg,
+                )
+                return False
         return True
-    except Exception as e:
-        logger.error(
-            "File %s: %s using algorithm %s",
-            filename,
-            str(e),
-            wq_alg,
-        )
-        return False
 
 
 def save_wq_imgs(
-    rrs_dir: str,
+    rrs_dir: Path | str,
+    output_dir: Path | str = "",
     wq_algs: list[str] = ["chl_gitelson"],
     start: int = 0,
     count: int = 10000,
     num_workers: int = 4,
-    executor=None,
 ):
     """
     Generate and save water-quality (WQ) products from Rrs rasters.
@@ -99,13 +87,14 @@ def save_wq_imgs(
     and writes the results as new GeoTIFF files in dedicated subdirectories
     under `settings.main_dir`.
 
-    Processing is parallelized using either a provided executor or a
-    ProcessPoolExecutor.
-
     Parameters
     ----------
-    rrs_dir : str
+    rrs_dir : str | Path
         Directory containing input Rrs raster files.
+
+    output_dir : str | Path, optional
+        Directory to save output files. If not provided, defaults to
+        `rrs_dir.parent`.
 
     wq_algs : `list[str]`, optional
         List of algorithm names to apply.
@@ -121,44 +110,28 @@ def save_wq_imgs(
 
     num_workers : int, optional
         Number of worker processes to use if no executor is provided.
-
-    executor : Executor or None, optional
-        External concurrent executor.
-        If provided, it is used instead of creating a new ProcessPoolExecutor.
-
-    Returns
-    -------
-    None
-        The function writes output GeoTIFFs for each algorithm into:
-        ``<main_dir>/masked_<algorithm>_imgs/``.
-
-    Notes
-    -----
-    - Output filenames match the input filenames.
-    - Directories are automatically created for each WQ algorithm.
-    - `settings.main_dir` must be configured prior to calling this function.
     """
+    rrs_dir = Path(rrs_dir)
 
-    if settings.main_dir is None:
-        raise LookupError("Please set the main_dir path.")
+    if not rrs_dir.exists():
+        raise FileNotFoundError(f"Rrs directory {rrs_dir} does not exist.")
 
-    main_dir = settings.main_dir
+    if not rrs_dir.is_dir():
+        raise NotADirectoryError(f"Rrs directory {rrs_dir} is not a directory.")
+
+    main_dir = rrs_dir.parent
+
+    if output_dir:
+        main_dir = Path(output_dir)
+        main_dir.mkdir(parents=True, exist_ok=True)
 
     for wq_alg in wq_algs:
         attribute_name = wq_alg + "_dir"
         wq_dir_name = "masked_" + wq_alg + "_imgs"
-        dir_path = os.path.join(main_dir, wq_dir_name)
-        setattr(settings, attribute_name, dir_path)
+        dir = main_dir / wq_dir_name
+        setattr(settings, attribute_name, dir)
         # make wq_dir directory
-        os.makedirs(os.path.join(main_dir, wq_dir_name), exist_ok=True)
-
-    def _capture_path_to_int(path: str) -> int:
-        return int(os.path.basename(path).split("_")[-1].split(".")[0])
-
-    filenames = sorted(
-        glob.glob(os.path.join(rrs_dir, "*")),
-        key=_capture_path_to_int,
-    )[start:count]
+        dir.mkdir(parents=True, exist_ok=True)
 
     partial_compute = partial(
         __compute,
@@ -166,17 +139,20 @@ def save_wq_imgs(
         main_dir=main_dir,
     )
 
-    if executor is not None:
-        results = list(executor.map(partial_compute, filenames))
-    else:
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=num_workers,
-        ) as executor:
-            results = list(executor.map(partial_compute, filenames))
+    filenames = get_sorted_filepaths(rrs_dir, start, count)
+
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=num_workers,
+    ) as executor:
+        results = executor.map(partial_compute, filenames)
+
+        for _ in tqdm(results, total=len(filenames), desc="Processing images"):
+            pass
+
     logger.info(
         "WQ Stage: Successfully processed: %d/%d captures",
         sum(results),
-        len(results),
+        len(filenames),
     )
 
 
@@ -245,7 +221,17 @@ def chl_ocx(Rrs):
     a3 = 2.5635
     a4 = -0.7218
 
-    temp = np.log10(Rrsblue / Rrsgreen)
+    # Compute ratio, handling cases where values cannot be log10'd
+    ratio = Rrsblue / Rrsgreen
+    
+    # Create mask for valid values (positive, non-NaN ratios)
+    valid_mask = (ratio > 0) & (~np.isnan(ratio))
+    
+    # Initialize output array with NaN
+    temp = np.full_like(ratio, np.nan, dtype=np.float32)
+    
+    # Only compute log10 for valid values
+    temp[valid_mask] = np.log10(ratio[valid_mask])
 
     log10chl = a0 + a1 * (temp) + a2 * (temp) ** 2 + a3 * (temp) ** 3 + a4 * (temp) ** 4
 

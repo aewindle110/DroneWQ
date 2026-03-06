@@ -1,24 +1,37 @@
-# Author: Temuulen
-import dronewq
+"""Author: Temuulen."""
+
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-import os
-from pathlib import Path
-from dronewq import settings
 from numpy.testing import assert_allclose
+
+import dronewq
+from dronewq import DlsEd, Mobley_rho, settings
 
 test_path = Path(__file__).absolute().parent
 test_path = test_path.joinpath("test_set")
+
+settings.configure(main_dir=test_path)
 
 if not test_path.exists():
     msg = f"Could not find {test_path}"
     raise LookupError(msg)
 
-settings.configure(main_dir=test_path)
+RTOL = 1e-2
 
 dronewq.write_metadata_csv(settings.raw_water_dir, settings.main_dir)
 
-dronewq.process_raw_to_rrs(settings.main_dir, num_workers=1, clean_intermediates=False)
+pipeline = dronewq.RRSPipeline(
+    output_folder=settings.main_dir,
+    lw_method=Mobley_rho(save_images=True),
+    ed_method=DlsEd(test_path, save_images=True),
+    overwrite_lt=False,
+    generate_thumbnails=False,
+    workers=1,
+)
+
+pipeline.run()
 
 
 def test_Lt():
@@ -39,7 +52,7 @@ def test_Lt():
         results.append(med)
     results = np.array(results)
     results = np.squeeze(results)
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
 
 
 def test_Lw():
@@ -52,7 +65,8 @@ def test_Lw():
             0.02420409,
         ]
     )
-    lw_imgs = dronewq.load_imgs(settings.lw_dir)
+    lw_dir = settings.main_dir / "Mobley_rho"
+    lw_imgs = dronewq.load_imgs(lw_dir)
     results = []
 
     for lw_img in lw_imgs:
@@ -61,7 +75,7 @@ def test_Lw():
     results = np.array(results)
     results = np.squeeze(results)
 
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
 
 
 def test_Rrs():
@@ -74,7 +88,8 @@ def test_Rrs():
             3.4010543e-05,
         ]
     )
-    rrs_imgs = dronewq.load_imgs(settings.rrs_dir)
+    rrs_dir = settings.main_dir / "DlsEd"
+    rrs_imgs = dronewq.load_imgs(rrs_dir)
     results = []
 
     for rrs_img in rrs_imgs:
@@ -84,7 +99,7 @@ def test_Rrs():
 
     results = np.squeeze(results)
 
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
 
 
 def test_Ed():
@@ -108,12 +123,13 @@ def test_Ed():
 
     results = np.squeeze(results)
 
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
 
 
 def test_chl_hu_ocx():
     actual = 1.0326097
-    rrs_imgs = dronewq.load_imgs(settings.rrs_dir)
+    rrs_dir = settings.main_dir / "DlsEd"
+    rrs_imgs = dronewq.load_imgs(rrs_dir)
 
     results = []
     for rrs_img in rrs_imgs:
@@ -122,12 +138,13 @@ def test_chl_hu_ocx():
     results = np.array(results)
     results = np.squeeze(results)
 
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
 
 
 def test_tsm_nechad():
     actual = 1.6712015
-    rrs_imgs = dronewq.load_imgs(settings.rrs_dir)
+    rrs_dir = settings.main_dir / "DlsEd"
+    rrs_imgs = dronewq.load_imgs(rrs_dir)
 
     results = []
     for rrs_img in rrs_imgs:
@@ -136,4 +153,4 @@ def test_tsm_nechad():
     results = np.array(results)
     results = np.squeeze(results)
 
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)

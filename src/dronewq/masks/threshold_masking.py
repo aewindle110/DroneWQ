@@ -1,116 +1,17 @@
 """Refactored by Temuulen"""
 
-import concurrent.futures
-import glob
 import logging
-import os
-from functools import partial
 
 import numpy as np
-import rasterio
 
-from dronewq.utils.settings import settings
+from dronewq.utils.data_types import Base_Compute_Method, Image
 
 logger = logging.getLogger(__name__)
 
 MASK_VALUE = np.nan
 
 
-def __compute(
-    filepath,
-    nir_threshold,
-    green_threshold,
-    masked_rrs_dir,
-):
-    """
-    Process a single Rrs file to mask pixels based on NIR and green thresholds.
-
-    Worker function that reads a remote sensing reflectance (Rrs) raster file,
-    identifies pixels contaminated by sun glint, land features, or shadows using
-    NIR and green band thresholds, masks these pixels across all bands by setting
-    them to NaN, and writes the masked result to a new file.
-
-    Parameters
-    ----------
-    filepath : str
-        Path to the input Rrs raster file.
-    nir_threshold : float
-        Upper threshold for NIR reflectance. Pixels with Rrs(NIR) > nir_threshold
-        are masked. These typically represent sun glint or land features.
-    green_threshold : float
-        Lower threshold for green reflectance. Pixels with Rrs(green) < green_threshold
-        are masked. These typically represent vegetation shadows or dark features.
-    masked_rrs_dir : str
-        Directory path where the masked output file will be saved.
-
-    Returns
-    -------
-    bool
-        True if processing succeeded.
-
-    Raises
-    ------
-    Exception
-        If file processing fails for any reason (logged as warning and re-raised).
-
-    Notes
-    -----
-    The function applies two masking criteria:
-    1. Pixels where Rrs(NIR) > nir_threshold are masked (band 5)
-    2. Pixels where Rrs(green) < green_threshold are masked (band 2)
-
-    Pixels meeting EITHER criterion are masked across all 5 bands by setting
-    values to NaN. The combined boolean mask uses logical OR operation.
-
-    Output files maintain the same basename as input files.
-    """
-    try:
-        with rasterio.open(filepath, "r") as rrs_src:
-            profile = rrs_src.profile
-            profile["count"] = 5
-
-            # Read all bands once
-            rrs = rrs_src.read()  # Shape: (5, H, W)
-
-            # Extract NIR (band 5) and green (band 2)
-            # Note: rasterio uses 1-based indexing in read(), 0-based in arrays
-            nir = rrs[4, :, :]  # Band 5 -> index 4
-            green = rrs[1, :, :]  # Band 2 -> index 1
-
-            # Create boolean masks (True = invalid pixel)
-            nir_mask = nir > nir_threshold
-            green_mask = green < green_threshold
-
-            # Combine masks: pixel is invalid if EITHER condition is true
-            combined_mask = nir_mask | green_mask
-
-            # Apply mask to all bands
-            rrs[:, combined_mask] = MASK_VALUE
-
-            # Write masked output
-            im_name = os.path.basename(filepath)
-            output_path = os.path.join(masked_rrs_dir, im_name)
-
-            with rasterio.open(output_path, "w", **profile) as dst:
-                dst.write(rrs)
-
-        return True
-
-    except Exception as e:
-        logger.warning(
-            "Threshold Masking error: File %s has failed with error %s",
-            filepath,
-            str(e),
-        )
-        raise
-
-
-def threshold_masking(
-    nir_threshold=0.01,
-    green_threshold=0.005,
-    num_workers=4,
-    executor=None,
-):
+class ThresholdMasking(Base_Compute_Method):
     """
     Mask contaminated pixels using fixed reflectance thresholds.
 
@@ -131,21 +32,9 @@ def threshold_masking(
         Lower threshold for green reflectance (sr^-1). Pixels with Rrs(green) below
         this value are masked. These typically represent vegetation shadows or
         very dark features. Default is 0.005.
-    num_workers : int, optional
-        Number of parallel worker processes for file processing. Should be
-        tuned based on available CPU cores. Default is 4.
-    executor : concurrent.futures.Executor, optional
-        Pre-configured executor for parallel processing. If None, a new
-        ProcessPoolExecutor will be created. Default is None.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    LookupError
-        If main_dir is not set in settings.
+    save_images : bool, optional
+        If True, saves the processed images to the specified output directory.
+        Default is False.
 
     Notes
     -----
@@ -181,29 +70,45 @@ def threshold_masking(
     - Scenes with adjacent land or vegetation features
     - Data with shadow contamination from nearby structures or terrain
     """
-    if settings.main_dir is None:
-        raise LookupError("Please set the main_dir path.")
 
-    rrs_dir = settings.rrs_dir
-    masked_rrs_dir = settings.masked_rrs_dir
-    filepaths = glob.glob(rrs_dir + "/*.tif")
+    def __init__(
+        self,
+        nir_threshold=0.01,
+        green_threshold=0.005,
+    ):
+        super().__init__(save_images=True)
+        self.nir_threshold = nir_threshold
+        self.green_threshold = green_threshold
 
-    partial_compute = partial(
-        __compute,
-        nir_threshold=nir_threshold,
-        green_threshold=green_threshold,
-        masked_rrs_dir=masked_rrs_dir,
-    )
+    def __call__(
+        self,
+        rrs_img: Image,
+    ):
+        try:
+            rrs = rrs_img.data
+            # Extract NIR (band 5) and green (band 2)
+            # Note: rasterio uses 1-based indexing in read(), 0-based in arrays
+            nir = rrs[4, :, :]  # Band 5 -> index 4
+            green = rrs[1, :, :]  # Band 2 -> index 1
 
-    if executor is not None:
-        results = list(executor.map(partial_compute, filepaths))
-    else:
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=num_workers,
-        ) as executor:
-            results = list(executor.map(partial_compute, filepaths))
+            # Create boolean masks (True = invalid pixel)
+            nir_mask = nir > self.nir_threshold
+            green_mask = green < self.green_threshold
 
-    logger.info(
-        "Masking Stage (threshold_masking): Successfully processed: %d captures",
-        len(results),
-    )
+            # Combine masks: pixel is invalid if EITHER condition is true
+            combined_mask = nir_mask | green_mask
+
+            masked_rrs = rrs.copy()
+            # Apply mask to all bands
+            masked_rrs[:, combined_mask] = np.nan
+
+            masked_rrs_img = Image.from_image(
+                rrs_img, data=masked_rrs, method=self.name
+            )
+            logger.info(
+                "Threshold Masking: Successfully processed: %s",
+                rrs_img.file_name,
+            )
+            return masked_rrs_img
+        except Exception as e:
+            raise RuntimeError(f"File {rrs_img.file_path!s} failed: {e!s}")

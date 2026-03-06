@@ -12,7 +12,7 @@ from pathlib import Path
 from dronewq.utils.utils import dotdict
 
 logging.basicConfig(
-    level=logging.WARN,
+    level=logging.ERROR,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 
@@ -28,6 +28,11 @@ DEFAULT_CONFIG = dotdict(
     masked_rrs_dir=None,
     warp_img_dir=None,
     metadata=None,
+    lw_method="mobley_rho",
+    pixel_masking_method=None,
+    ed_method="dls_ed",
+    overwrite_lt_lw=False,
+    clean_intermediates=True,
 )
 
 main_thread_config = copy.deepcopy(DEFAULT_CONFIG)
@@ -98,39 +103,46 @@ class Settings:
 
     @property
     def config(self):
+        """Return a copy of the global config."""
         return self.copy()
 
     def configure(self, **kwargs):
+        """Update global config."""
         # Update global config
         for k, v in kwargs.items():
             main_thread_config[k] = v
 
         # If main_dir is set, automatically populate dependent dirs
         if "main_dir" in kwargs:
-            if not isinstance(kwargs["main_dir"], (str, Path)):
+            main_dir = kwargs["main_dir"]
+            if not isinstance(main_dir, (str, Path)):
                 msg = "main_dir should be a string of path."
                 raise ValueError(msg)
 
-            if not os.path.exists(kwargs["main_dir"]):
-                raise LookupError(f"{kwargs['main_dir']} path does not exist.")
+            if isinstance(main_dir, str):
+                main_dir = Path(main_dir)
 
-            main_dir = kwargs["main_dir"]
-            main_thread_config["raw_water_dir"] = os.path.join(
-                main_dir,
-                "raw_water_imgs",
-            )
-            main_thread_config["raw_sky_dir"] = os.path.join(main_dir, "raw_sky_imgs")
-            main_thread_config["lt_dir"] = os.path.join(main_dir, "lt_imgs")
-            main_thread_config["sky_lt_dir"] = os.path.join(main_dir, "sky_lt_imgs")
-            main_thread_config["lw_dir"] = os.path.join(main_dir, "lw_imgs")
-            main_thread_config["panel_dir"] = os.path.join(main_dir, "panel")
-            main_thread_config["rrs_dir"] = os.path.join(main_dir, "rrs_imgs")
-            main_thread_config["masked_rrs_dir"] = os.path.join(
-                main_dir,
-                "masked_rrs_imgs",
-            )
-            main_thread_config["warp_img_dir"] = os.path.join(main_dir, "align_img")
-            main_thread_config["metadata"] = os.path.join(main_dir, "metadata.csv")
+            if not main_dir.exists():
+                msg = f"{main_dir} path does not exist."
+                raise LookupError(msg)
+
+            main_thread_config["main_dir"] = main_dir
+            main_thread_config["raw_water_dir"] = main_dir / "raw_water_imgs"
+            raw_water_dir = settings.raw_water_dir
+
+            if not raw_water_dir.exists():
+                msg = f"{raw_water_dir} does not exist."
+                raise FileNotFoundError(msg)
+
+            main_thread_config["raw_sky_dir"] = main_dir / "raw_sky_imgs"
+            main_thread_config["lt_dir"] = main_dir / "lt_imgs"
+            main_thread_config["sky_lt_dir"] = main_dir / "sky_lt_imgs"
+            main_thread_config["lw_dir"] = main_dir / "lw_imgs"
+            main_thread_config["panel_dir"] = main_dir / "panel"
+            main_thread_config["rrs_dir"] = main_dir / "rrs_imgs"
+            main_thread_config["masked_rrs_dir"] = main_dir / "masked_rrs_imgs"
+            main_thread_config["warp_img_dir"] = main_dir / "align_img"
+            main_thread_config["metadata"] = main_dir / "metadata.csv"
         return self
 
 

@@ -1,87 +1,17 @@
 """Refactored by: Temuulen"""
 
-import concurrent.futures
-import glob
 import logging
-import os
-from functools import partial
 
 import numpy as np
-import rasterio
 
-from dronewq.utils.images import load_imgs
+from dronewq.utils.data_types import Base_Compute_Method, Image
+from dronewq.utils.images import get_filepaths, load_imgs
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
-def __compute(filepath, lw_dir, lsky_median):
-    """
-    Process a single Lt file to compute water-leaving radiance using black pixel assumption.
-
-    Worker function that reads a total radiance (Lt) raster file, applies the black
-    pixel assumption to remove surface-reflected light, and writes the resulting
-    water-leaving radiance (Lw) to a new file. The black pixel assumption uses the
-    NIR band to estimate the surface reflectance factor (rho), assuming negligible
-    water-leaving radiance in the NIR due to strong water absorption.
-
-    Parameters
-    ----------
-    filepath : str
-        Path to the input Lt raster file.
-    lw_dir : str
-        Directory path where the output Lw file will be saved.
-    lsky_median : array-like
-        Median sky radiance values for 5 bands, indexed from 0-4.
-
-    Returns
-    -------
-    bool
-        True if processing succeeded.
-
-    Raises
-    ------
-    Exception
-        If file processing fails for any reason (printed and re-raised).
-
-    Notes
-    -----
-    The function computes Lw = Lt - (rho * Lsky) for each band, where:
-    - rho is calculated from the NIR band (band 4): rho = Lt_NIR / Lsky_NIR
-    - This rho is then applied to all bands to remove surface-reflected light
-
-    Output files maintain the same basename as input files.
-    """
-    im = filepath
-    try:
-        with rasterio.open(im, "r") as Lt_src:
-            profile = Lt_src.profile
-            profile["count"] = 5
-
-            Lt = Lt_src.read(4)
-            rho = Lt / lsky_median[4 - 1]
-            lw_all = []
-            for i in range(1, 6):
-                # TODO: this is probably faster if we read them all and divide by the vector
-                lt = Lt_src.read(i)
-                lw = lt - (rho * lsky_median[i - 1])
-                lw_all.append(lw)  # append each band
-            stacked_lw = np.stack(lw_all)  # stack into np.array
-
-            # write new stacked lw tifs
-            im_name = os.path.basename(
-                im,
-            )  # we're grabbing just the .tif file name instead of the whole path
-            with rasterio.open(os.path.join(lw_dir, im_name), "w", **profile) as dst:
-                dst.write(stacked_lw)
-
-            return True
-    except Exception as e:
-        print(f"Blackpixel Error: File {filepath} has the error {e}")
-        raise
-
-
-def blackpixel(num_workers=4, executor=None):
+class Blackpixel(Base_Compute_Method):
     """
     Calculate water-leaving radiance using the black pixel assumption.
 
@@ -94,21 +24,8 @@ def blackpixel(num_workers=4, executor=None):
 
     Parameters
     ----------
-    num_workers : int, optional
-        Number of parallel worker processes for file processing. Should be
-        tuned based on available CPU cores. Default is 4.
-    executor : concurrent.futures.Executor, optional
-        Pre-configured executor for parallel processing. If None, a new
-        ProcessPoolExecutor will be created. Default is None.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    LookupError
-        If main_dir is not set in settings.
+    save_images : bool, optional
+        Whether to save the processed output images to disk. Default is False.
 
     Warnings
     --------
@@ -119,8 +36,6 @@ def blackpixel(num_workers=4, executor=None):
 
     Notes
     -----
-    The function produces Lw GeoTIFF files with units of W/sr/nm in settings.lw_dir.
-
     Sky radiance (Lsky) is computed from the first 10 sky images in settings.sky_lt_dir,
     taking the median across all images for each band. This median Lsky is then used
     for all water image processing.
@@ -133,66 +48,56 @@ def blackpixel(num_workers=4, executor=None):
     - Spatially uniform surface reflectance properties
     - Stable sky conditions during data collection
     """
-    if settings.main_dir is None:
-        raise LookupError("Please set the main_dir path.")
 
-    sky_lt_dir = settings.sky_lt_dir
-    lt_dir = settings.lt_dir
-    lw_dir = settings.lw_dir
+    def __init__(self, save_images: bool = False):
+        super().__init__(save_images=save_images)
+        self.lsky_median = []
 
-    filepaths = glob.glob(lt_dir + "/*.tif")
+    def __call__(self, lt_img: Image) -> Image:
 
-    # grab the first ten of these images, average them, then delete this from memory
-    sky_imgs_gen = load_imgs(
-        sky_lt_dir,
-        count=10,
-        start=0,
-        altitude_cutoff=0,
-    )
-    sky_imgs = np.array(list(sky_imgs_gen))
-    lsky_median = np.median(
-        sky_imgs,
-        axis=(0, 2, 3),
-    )  # here we want the median of each band
-    del sky_imgs
+        lsky_median = self.lsky_median
 
-    if executor is not None:
-        partial_compute = partial(
-            __compute,
-            lw_dir=lw_dir,
-            lsky_median=lsky_median,
+        if lt_img.data.shape[0] < 5:
+            raise ValueError("Image must have at least 5 bands.")
+
+        try:
+            Lt_NIR = lt_img.data[3]
+            Lsky_NIR = lsky_median[3]
+            if Lsky_NIR == 0:
+                raise ValueError("Lsky_NIR is zero, cannot compute rho.")
+            rho = Lt_NIR / Lsky_NIR
+            stacked_lw = lt_img.data[:5] - (rho * lsky_median[:5])
+            lw_img = Image.from_image(lt_img, stacked_lw, method=self.name)
+            logger.info(
+                "Lw Stage (Blackpixel): Successfully processed: %s",
+                lt_img.file_name,
+            )
+            return lw_img
+        except Exception as e:
+            raise RuntimeError(f"File {lt_img.file_path!s} failed: {e!s}")
+
+    def preprocess(self):
+        """Compute the median Lsky for all bands."""
+        sky_lt_dir = settings.sky_lt_dir
+        if sky_lt_dir is None:
+            raise ValueError("Please set the sky_lt_dir path in settings.")
+
+        if not sky_lt_dir.exists():
+            raise LookupError(f"{sky_lt_dir!s} path does not exist!.")
+
+        filepaths = get_filepaths(sky_lt_dir)
+        if not filepaths:
+            raise LookupError("There are no sky images in sky_lt_imgs folder.")
+
+        # Grab the first ten sky images, average them, then delete from memory
+        sky_imgs_gen = load_imgs(
+            sky_lt_dir,
+            count=min(len(filepaths), 10),
+            start=0,
+            altitude_cutoff=0,
         )
-        results = list(executor.map(partial_compute, filepaths))
-        logger.info(
-            "Lw Stage (blackpixel): Successfully processed: %d captures",
-            len(results),
-        )
-    else:
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=num_workers,
-        ) as executor:
-            futures = {}
-            for filepath in filepaths:
-                future = executor.submit(__compute, filepath, lw_dir, lsky_median)
-                futures[future] = filepath
-            # Wait for all tasks to complete and collect results
-            results = []
-            completed = 0
 
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    result = (
-                        future.result()
-                    )  # Blocks until this specific future completes
-                    results.append(result)
-                    completed += 1
-                except Exception as e:
-                    filepath = futures[future]
-                    print(f"File {filepath} failed: {e}")
-                    results.append(False)
+        sky_imgs = np.array(list(sky_imgs_gen))
+        lsky_median = np.median(sky_imgs, axis=(0, 2, 3))
 
-        logger.info(
-            "Lw Stage (blackpixel): Successfully processed: %d/%d captures",
-            sum(results),
-            len(results),
-        )
+        self.lsky_median = lsky_median

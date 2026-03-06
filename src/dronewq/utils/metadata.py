@@ -1,14 +1,14 @@
 """Refactored by: Temuulen"""
 
 import math
-import os
+from pathlib import Path
 
 import pandas as pd
 
 from ..micasense.imageset import ImageSet
 
 
-def write_metadata_csv(img_dir, csv_output_path):
+def write_metadata_csv(img_dir: str | Path, csv_output_path: str | Path) -> Path:
     """
     Grabs EXIF metadata from img_set and writes it to outputPath/metadata.csv.
 
@@ -19,10 +19,16 @@ def write_metadata_csv(img_dir, csv_output_path):
     Returns
         A string path to the generated .csv file
     """
-    if not os.path.exists(img_dir):
+    img_dir = Path(img_dir) if isinstance(img_dir, str) else img_dir
+    csv_output_path = (
+        Path(csv_output_path) if isinstance(csv_output_path, str) else csv_output_path
+    )
+    if not img_dir.exists():
         raise FileNotFoundError(
             f"Image directory {img_dir} does not exist."
         )  # pragma: no cover
+    if not csv_output_path.exists():
+        csv_output_path.mkdir(parents=True, exist_ok=True)
 
     img_set = ImageSet.from_directory(img_dir)
 
@@ -38,7 +44,7 @@ def write_metadata_csv(img_dir, csv_output_path):
 
     for i, capture in enumerate(img_set.captures):
         filename = f"capture_{i + 1}.tif"
-        fullOutputPath = os.path.join(img_dir, filename)
+        fullOutputPath = csv_output_path / filename
 
         img = capture.images[0]
         width, height = img.meta.image_size()
@@ -99,7 +105,7 @@ def write_metadata_csv(img_dir, csv_output_path):
     # df['UTC-Time'] = pd.to_datetime(df['DateStamp'] + ' ' + df['TimeStamp'],
     #                                  format="%Y-%m-%d %H:%M:%S")
 
-    fullCsvPath = os.path.join(csv_output_path, "metadata.csv")
+    fullCsvPath = csv_output_path / "metadata.csv"
     df.to_csv(fullCsvPath)
 
     return fullCsvPath

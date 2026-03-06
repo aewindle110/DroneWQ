@@ -1,22 +1,24 @@
-import concurrent.futures
 import datetime
 import logging
 import os
+from pathlib import Path
 
 import cv2
 import numpy as np
 import pandas as pd
 import rasterio
+from rasterio.windows import Window
 
 import dronewq
-import dronewq.micasense as micasense
+from dronewq.micasense import imageset, imageutils
+from dronewq.utils.data_types import Image
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
 def load_imgs(
-    img_dir,
+    img_dir: str | Path,
     count=10000,
     start=0,
     altitude_cutoff=0,
@@ -33,7 +35,7 @@ def load_imgs(
 
     Parameters
     ----------
-    img_dir : str
+    img_dir : str | Path
         Directory path containing the images to be loaded. The directory or its
         parent must contain a 'metadata.csv' file with image information.
     count : int, optional
@@ -80,6 +82,13 @@ def load_imgs(
     >>> imgs = load_imgs('/path/to/images', count=10)
     >>> imgs = list(imgs)
     """
+    if isinstance(img_dir, str):
+        img_dir = Path(img_dir)
+    if not img_dir.exists():
+        raise FileNotFoundError(f"Directory {img_dir} does not exist.")
+    if not img_dir.is_dir():
+        raise NotADirectoryError(f"{img_dir} is not a directory.")
+
     df = load_metadata(
         img_dir,
         count,
@@ -88,7 +97,7 @@ def load_imgs(
         random,
     )
 
-    img_list = [os.path.join(img_dir, fn) for fn in df.index.values]
+    img_list = [img_dir / fn for fn in df.index.values]
 
     for im in img_list:
         with rasterio.open(im, "r") as src:
@@ -96,7 +105,7 @@ def load_imgs(
 
 
 def load_metadata(
-    img_dir,
+    img_dir: str | Path,
     count=10000,
     start=0,
     altitude_cutoff=0,
@@ -112,7 +121,7 @@ def load_metadata(
 
     Parameters
     ----------
-    img_dir : str
+    img_dir : str | Path
         Directory path containing the images. The directory or its parent must
         contain a 'metadata.csv' file with image information.
     count : int, optional
@@ -179,12 +188,15 @@ def load_metadata(
     >>> df = load_metadata('/path/to/images', altitude_cutoff=10)
     >>> print(f"Mean altitude: {df['Altitude'].mean():.2f}m")
     """
-    if "sky" in img_dir:
+    if isinstance(img_dir, str):
+        img_dir = Path(img_dir)
+
+    if "sky" in str(img_dir):
         base = img_dir
     else:
-        base = os.path.dirname(img_dir)
+        base = img_dir.parent
 
-    csv_path = os.path.join(base, "metadata.csv")
+    csv_path = base / "metadata.csv"
 
     df = pd.read_csv(csv_path)
     df = df.set_index("filename")
@@ -225,24 +237,24 @@ def get_warp_matrix(
 
     Parameters
     ----------
-        img_capture:
-            A capture is a set of images taken by one MicaSense camera
-            which share the same unique capture identifier (capture_id).
-            These images share the same filename prefix, such as
-            IMG_0000_*.tif. It is defined by running
-            ImageSet.from_directory().captures.
+    img_capture:
+        A capture is a set of images taken by one MicaSense camera
+        which share the same unique capture identifier (capture_id).
+        These images share the same filename prefix, such as
+        IMG_0000_*.tif. It is defined by running
+        ImageSet.from_directory().captures.
 
-        match_index: Index of the band. Default is 0.
+    match_index: Index of the band. Default is 0.
 
-        warp_mode: MOTION_HOMOGRAPHY or MOTION_AFFINE.
-            For Altum images only use MOTION_HOMOGRAPHY
+    warp_mode: MOTION_HOMOGRAPHY or MOTION_AFFINE.
+        For Altum images only use MOTION_HOMOGRAPHY
 
-        pyramid_levels:
-            Default is 1. For images with RigRelatives,
-            setting this to 0 or 1 may improve alignment
+    pyramid_levels:
+        Default is 1. For images with RigRelatives,
+        setting this to 0 or 1 may improve alignment
 
-        max_alignment_iterations:
-            The maximum number of solver iterations.
+    max_alignment_iterations:
+        The maximum number of solver iterations.
 
     Returns
     -------
@@ -256,7 +268,7 @@ def get_warp_matrix(
         "Aligning images. Depending on settings this can take from a few seconds to many minutes",
     )
     # Can potentially increase max_iterations for better results, but longer runtimes
-    warp_matrices, alignment_pairs = micasense.imageutils.align_capture(
+    warp_matrices, alignment_pairs = imageutils.align_capture(
         img_capture,
         ref_index=match_index,
         max_iterations=max_alignment_iterations,
@@ -288,10 +300,9 @@ def save(
         if generateThumbnails:
             capture.save_capture_as_rgb(capture.fullThumbnailPath)
         capture.clear_image_data()
-        return True
     except Exception as e:
         # Log the error with capture information
-        logger.warn(f"Failed to save {capture.fullOutputPath}: {e}")
+        logger.warning(f"Failed to save {capture.fullOutputPath}: {e}")
         raise  # Re-raise with full traceback
 
 
@@ -301,8 +312,6 @@ def save_images(
     thumbnail_path,
     warp_img_capture,
     generateThumbnails=True,
-    overwrite_lt_lw=False,
-    num_workers=4,
 ):
     """Process captures in parallel using threading."""
     # Create output directories
@@ -316,54 +325,16 @@ def save_images(
 
     logger.info("output_path: %s", output_path)
 
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=num_workers,
-    ) as executor:
-        futures = {}
+    for idx, capture in enumerate(img_set.captures):
+        outputFilename = f"capture_{idx + 1}.tif"
+        thumbnailFilename = f"capture_{idx + 1}.jpg"
+        fullOutputPath = os.path.join(output_path, outputFilename)
+        fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
 
-        for idx, capture in enumerate(img_set.captures):
-            outputFilename = f"capture_{idx + 1}.tif"
-            thumbnailFilename = f"capture_{idx + 1}.jpg"
-            fullOutputPath = os.path.join(output_path, outputFilename)
-            fullThumbnailPath = os.path.join(thumbnail_path, thumbnailFilename)
+        capture.fullOutputPath = fullOutputPath
+        capture.fullThumbnailPath = fullThumbnailPath
 
-            # Skip if exists and not overwriting
-            if os.path.exists(fullOutputPath) and not overwrite_lt_lw:
-                continue
-
-            if len(capture.images) != len(img_set.captures[0].images):
-                continue
-
-            capture.fullOutputPath = fullOutputPath
-            capture.fullThumbnailPath = fullThumbnailPath
-
-            # Submit task and track it
-            future = executor.submit(
-                save,
-                capture,
-                warp_matrices,
-                generateThumbnails,
-            )
-            futures[future] = idx
-
-        # Wait for all tasks to complete and collect results
-        results = []
-        completed = 0
-
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                # Blocks until this specific future completes
-                result = future.result()
-                results.append(result)
-                completed += 1
-            except Exception as e:
-                idx = futures[future]
-                logger.error(
-                    "Capture %d failed: %s",
-                    idx,
-                    str(e),
-                )
-                results.append(False)
+        save(capture, warp_matrices)
 
     end = datetime.datetime.now()
     elapsed = (end - start).total_seconds()
@@ -372,25 +343,11 @@ def save_images(
         "Saving time: %.2f",
         elapsed,
     )
-    logger.info(
-        "Alignment+Saving rate: %.2f images per second",
-        len(results) / elapsed if elapsed > 0 else 0,
-    )
-    logger.info(
-        "Successfully processed: %d/%d captures",
-        sum(results),
-        len(results),
-    )
-
-    return results
 
 
 def process_micasense_images(
-    warp_img_dir=None,
-    overwrite_lt_lw=False,
     sky=False,
     generateThumbnails=True,
-    num_workers=4,
 ):
     """
     Process MicaSense multispectral images to calibrated radiance units.
@@ -403,15 +360,6 @@ def process_micasense_images(
 
     Parameters
     ----------
-    warp_img_dir : str, optional
-        Directory path containing a representative capture to use for computing
-        the band alignment (warp) matrix. If None, uses the first capture from
-        the input directory. Should contain a scene with distinct features visible
-        in all bands. Default is None.
-    overwrite_lt_lw : bool, optional
-        If True, overwrites previously processed Lt (total radiance) and Lw
-        (water-leaving radiance) files. If False, skips processing for existing
-        files. Default is False.
     sky : bool, optional
         Processing mode flag:
         - True: Process sky reference images from raw_sky_dir, save to sky_lt_dir
@@ -421,111 +369,37 @@ def process_micasense_images(
         If True, generates RGB thumbnail JPEG images for quick visualization of
         each processed capture. Thumbnails are saved to separate thumbnail
         directories. Default is True.
-    num_workers : int, optional
-        Number of parallel worker processes for image processing. Higher values
-        speed up processing but require more memory and CPU cores. Should be
-        tuned based on available hardware. Default is 4.
 
     Returns
     -------
     str
         Output directory path where processed radiance TIFF files were saved.
         Either settings.sky_lt_dir or settings.lt_dir depending on sky parameter.
-
-    Raises
-    ------
-    LookupError
-        If settings.main_dir is not configured.
-
-    Notes
-    -----
-    The function performs the following workflow:
-    1. Loads raw MicaSense images from the appropriate directory
-    2. Computes or loads band alignment (warp) matrices
-    3. Applies radiometric calibration to convert DN to radiance (W/sr/nm)
-    4. Aligns all bands to a reference band using warp matrices
-    5. Saves calibrated, aligned images as GeoTIFF files
-    6. Optionally generates RGB thumbnails for visualization
-    7. Writes metadata CSV file containing capture information
-
-    Directory structure:
-    - Water images: raw_water_dir → lt_dir + lt_thumbnails/
-    - Sky images: raw_sky_dir → sky_lt_dir + sky_lt_thumbnails/
-
-    The warp matrix computed from warp_img_dir (or first capture) is applied to
-    all captures in the flight, as the relative positions of camera sensors
-    remain fixed. For best results, choose a warp_img_dir capture containing:
-    - Man-made features (buildings, roads, vehicles)
-    - High contrast in all spectral bands
-    - Avoid repetitive patterns (crop rows)
-
-    Processing outputs:
-    - Calibrated radiance GeoTIFF files (W/sr/nm) with 5 bands
-    - Optional RGB thumbnail JPEGs for quick review
-    - metadata.csv containing capture times, GPS coordinates, altitude, etc.
-
-    Memory usage scales with image resolution and num_workers. For large datasets
-    (>1000 captures), consider processing in batches or reducing num_workers if
-    memory is limited.
-
-    Examples
-    --------
-    >>> # Process water surface images with default settings
-    >>> output_dir = process_micasense_images()
-    >>> print(f"Water images saved to: {output_dir}")
-
-    >>> # Process sky reference images
-    >>> sky_output = process_micasense_images(sky=True, generateThumbnails=False)
-
-    >>> # Use specific capture for alignment with parallel processing
-    >>> output_dir = process_micasense_images(
-    ...     warp_img_dir='/path/to/representative/capture',
-    ...     num_workers=8,
-    ...     overwrite_lt_lw=True
-    ... )
-
-    >>> # Fast processing without thumbnails, using first capture for alignment
-    >>> output_dir = process_micasense_images(
-    ...     generateThumbnails=False,
-    ...     num_workers=12
-    ... )
-
-    >>> # Reprocess with different alignment, overwriting previous results
-    >>> output_dir = process_micasense_images(
-    ...     warp_img_dir='/path/to/better/capture',
-    ...     overwrite_lt_lw=True,
-    ...     num_workers=6
-    ... )
-
-    See Also
-    --------
-    save_images : Underlying function that performs the actual processing
-    get_warp_matrix : Computes band alignment matrices
-    write_metadata_csv : Generates metadata CSV file
     """
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
 
-    img_dir = settings.raw_sky_dir if sky else settings.raw_water_dir
-
-    img_set = micasense.imageset.ImageSet.from_directory(img_dir)
-
-    if warp_img_dir:
-        warp_img_capture = micasense.imageset.ImageSet.from_directory(
-            warp_img_dir,
-        ).captures[0]
-        logger.info("Used warp dir: %s", warp_img_dir)
-    else:
-        warp_img_capture = img_set.captures[0]
-
-    # just have the sky images go into a different dir and
-    # the water imgs go into a default 'lt_imgs' dir
     if sky:
+        img_dir = settings.raw_sky_dir
+        # just have the sky images go into a different dir and
+        # the water imgs go into a default 'lt_imgs' dir
         output_path = settings.sky_lt_dir
-        thumbnail_path = os.path.join(settings.main_dir, "sky_lt_thumbnails")
+        thumbnail_path = settings.main_dir / "sky_lt_thumbnails"
     else:
+        img_dir = settings.raw_water_dir
         output_path = settings.lt_dir
-        thumbnail_path = os.path.join(settings.main_dir, "lt_thumbnails")
+        thumbnail_path = settings.main_dir / "lt_thumbnails"
+
+    img_set = imageset.ImageSet.from_directory(img_dir)
+    thumbnail_path.mkdir(exist_ok=True)
+
+    if sky:
+        warp_img_capture = img_set.captures[0]
+    else:
+        warp_img_capture = imageset.ImageSet.from_directory(
+            settings.warp_img_dir,
+        ).captures[0]
+        logger.info("Used warp dir: %s", settings.warp_img_dir)
 
     save_images(
         img_set=img_set,
@@ -533,8 +407,6 @@ def process_micasense_images(
         thumbnail_path=thumbnail_path,
         warp_img_capture=warp_img_capture,
         generateThumbnails=generateThumbnails,
-        overwrite_lt_lw=overwrite_lt_lw,
-        num_workers=num_workers,
     )
 
     logger.info("Finished saving images at: %s", output_path)
@@ -542,3 +414,69 @@ def process_micasense_images(
     logger.info("Finished saving image metadata at: %s", fullCsvPath)
 
     return output_path
+
+
+def get_filepaths(dir_path: Path) -> list[Path]:
+    """Reads a directory and returns a list of tiff files."""
+    return list(dir_path.glob("*.tif"))
+
+
+def get_sorted_filepaths(
+    dir_path: Path, start: int = 0, count: int = 10000
+) -> list[Path]:
+    """Reads a directory and returns a sorted list of tiff files."""
+
+    def _capture_path_to_int(path: Path) -> int:
+        return int(path.stem.split("_")[-1].split(".")[0])
+
+    filenames = sorted(
+        dir_path.glob("*.tif"),
+        key=_capture_path_to_int,
+    )[start:count]
+
+    return filenames
+
+
+def read_file(file: Path) -> Image:
+    """Reads tiff file from a filepath."""
+    with rasterio.open(file, "r") as src:
+        data = np.array(src.read(), dtype=np.float32)
+        profile = src.profile
+        file_name = file.name
+        idx = int(file_name.split("_")[-1].split(".")[0])
+        lt_img = Image(file_name, file, "lt", profile, data, idx)
+    return lt_img
+
+
+def save_img(img: Image, output_folder: Path):
+    """Saves image."""
+    # Getting the main dir filepath from the image
+    # instead of settings.main_dir because
+    # settings is not getting shared in between
+    # processes. TODO: Have to fix this.
+    profile = img.profile
+    profile["count"] = 5
+    output_path = output_folder.joinpath(img.method).joinpath(img.file_name)
+
+    with rasterio.open(
+        output_path,
+        "w",
+        **profile,
+    ) as dst:
+        data = img.data
+        height, width = data.shape[-2:]
+        chunk_size = 256
+
+        for row in range(0, height, chunk_size):
+            for col in range(0, width, chunk_size):
+                row_end = min(row + chunk_size, height)
+                col_end = min(col + chunk_size, width)
+
+                window = Window(col, row, col_end - col, row_end - row)
+
+                if data.ndim == 3:
+                    window_data = data[:, row:row_end, col:col_end]
+                else:
+                    window_data = data[row:row_end, col:col_end]
+
+                dst.write(window_data, window=window)
