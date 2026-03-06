@@ -18,13 +18,15 @@ if not test_path.exists():
     msg = f"Could not find {test_path}"
     raise LookupError(msg)
 
+RTOL = 1e-2
 
 dronewq.write_metadata_csv(settings.raw_water_dir, settings.main_dir)
 
 pipeline = dronewq.RRSPipeline(
+    output_folder=settings.main_dir,
     lw_method=Mobley_rho(save_images=True),
     ed_method=DlsEd(test_path, save_images=True),
-    overwrite_lt=True,
+    overwrite_lt=False,
     generate_thumbnails=False,
     workers=1,
 )
@@ -50,7 +52,7 @@ def test_Lt():
         results.append(med)
     results = np.array(results)
     results = np.squeeze(results)
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
 
 
 def test_Lw():
@@ -73,7 +75,7 @@ def test_Lw():
     results = np.array(results)
     results = np.squeeze(results)
 
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
 
 
 def test_Rrs():
@@ -97,7 +99,7 @@ def test_Rrs():
 
     results = np.squeeze(results)
 
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
 
 
 def test_Ed():
@@ -121,7 +123,7 @@ def test_Ed():
 
     results = np.squeeze(results)
 
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
 
 
 def test_chl_hu_ocx():
@@ -136,7 +138,7 @@ def test_chl_hu_ocx():
     results = np.array(results)
     results = np.squeeze(results)
 
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
 
 
 def test_tsm_nechad():
@@ -151,4 +153,4 @@ def test_tsm_nechad():
     results = np.array(results)
     results = np.squeeze(results)
 
-    assert_allclose(actual, results, rtol=1e-2)
+    assert_allclose(actual, results, rtol=RTOL)
