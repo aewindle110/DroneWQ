@@ -75,9 +75,8 @@ class ThresholdMasking(Base_Compute_Method):
         self,
         nir_threshold=0.01,
         green_threshold=0.005,
-        save_images: bool = False,
     ):
-        super().__init__(save_images=save_images)
+        super().__init__(save_images=True)
         self.nir_threshold = nir_threshold
         self.green_threshold = green_threshold
 

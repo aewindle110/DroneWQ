@@ -3,8 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from dronewq.utils.settings import settings
-
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -46,5 +44,5 @@ class Base_Compute_Method:
     def __call__(self, img: Image) -> Image:
         pass
 
-    def preprocess(self, **kwargs) -> None:
+    def preprocess(self) -> None:
         pass

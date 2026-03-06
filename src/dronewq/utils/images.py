@@ -375,99 +375,31 @@ def process_micasense_images(
     str
         Output directory path where processed radiance TIFF files were saved.
         Either settings.sky_lt_dir or settings.lt_dir depending on sky parameter.
-
-    Raises
-    ------
-    LookupError
-        If settings.main_dir is not configured.
-
-    Notes
-    -----
-    The function performs the following workflow:
-    1. Loads raw MicaSense images from the appropriate directory
-    2. Computes or loads band alignment (warp) matrices
-    3. Applies radiometric calibration to convert DN to radiance (W/sr/nm)
-    4. Aligns all bands to a reference band using warp matrices
-    5. Saves calibrated, aligned images as GeoTIFF files
-    6. Optionally generates RGB thumbnails for visualization
-    7. Writes metadata CSV file containing capture information
-
-    Directory structure:
-    - Water images: raw_water_dir → lt_dir + lt_thumbnails/
-    - Sky images: raw_sky_dir → sky_lt_dir + sky_lt_thumbnails/
-
-    The warp matrix computed from warp_img_dir (or first capture) is applied to
-    all captures in the flight, as the relative positions of camera sensors
-    remain fixed. For best results, choose a warp_img_dir capture containing:
-    - Man-made features (buildings, roads, vehicles)
-    - High contrast in all spectral bands
-    - Avoid repetitive patterns (crop rows)
-
-    Processing outputs:
-    - Calibrated radiance GeoTIFF files (W/sr/nm) with 5 bands
-    - Optional RGB thumbnail JPEGs for quick review
-    - metadata.csv containing capture times, GPS coordinates, altitude, etc.
-
-    Memory usage scales with image resolution and num_workers. For large datasets
-    (>1000 captures), consider processing in batches or reducing num_workers if
-    memory is limited.
-
-    Examples
-    --------
-    >>> # Process water surface images with default settings
-    >>> output_dir = process_micasense_images()
-    >>> print(f"Water images saved to: {output_dir}")
-
-    >>> # Process sky reference images
-    >>> sky_output = process_micasense_images(sky=True, generateThumbnails=False)
-
-    >>> # Use specific capture for alignment with parallel processing
-    >>> output_dir = process_micasense_images(
-    ...     warp_img_dir='/path/to/representative/capture',
-    ...     num_workers=8,
-    ... )
-
-    >>> # Fast processing without thumbnails, using first capture for alignment
-    >>> output_dir = process_micasense_images(
-    ...     generateThumbnails=False,
-    ...     num_workers=12
-    ... )
-
-    >>> # Reprocess with different alignment, overwriting previous results
-    >>> output_dir = process_micasense_images(
-    ...     warp_img_dir='/path/to/better/capture',
-    ...     num_workers=6
-    ... )
-
-    See Also
-    --------
-    save_images : Underlying function that performs the actual processing
-    get_warp_matrix : Computes band alignment matrices
-    write_metadata_csv : Generates metadata CSV file
     """
     if settings.main_dir is None:
         raise LookupError("Please set the main_dir path.")
 
     if sky:
         img_dir = settings.raw_sky_dir
-        img_set = imageset.ImageSet.from_directory(img_dir)
         # just have the sky images go into a different dir and
         # the water imgs go into a default 'lt_imgs' dir
         output_path = settings.sky_lt_dir
-        thumbnail_path = os.path.join(settings.main_dir, "sky_lt_thumbnails")
+        thumbnail_path = settings.main_dir / "sky_lt_thumbnails"
     else:
         img_dir = settings.raw_water_dir
-        img_set = imageset.ImageSet.from_directory(img_dir)
         output_path = settings.lt_dir
-        thumbnail_path = os.path.join(settings.main_dir, "lt_thumbnails")
+        thumbnail_path = settings.main_dir / "lt_thumbnails"
 
-    if Path(settings.warp_img_dir).exists():
+    img_set = imageset.ImageSet.from_directory(img_dir)
+    thumbnail_path.mkdir(exist_ok=True)
+
+    if sky:
+        warp_img_capture = img_set.captures[0]
+    else:
         warp_img_capture = imageset.ImageSet.from_directory(
             settings.warp_img_dir,
         ).captures[0]
         logger.info("Used warp dir: %s", settings.warp_img_dir)
-    else:
-        warp_img_capture = img_set.captures[0]
 
     save_images(
         img_set=img_set,
@@ -489,10 +421,26 @@ def get_filepaths(dir_path: Path) -> list[Path]:
     return list(dir_path.glob("*.tif"))
 
 
+def get_sorted_filepaths(
+    dir_path: Path, start: int = 0, count: int = 10000
+) -> list[Path]:
+    """Reads a directory and returns a sorted list of tiff files."""
+
+    def _capture_path_to_int(path: Path) -> int:
+        return int(path.stem.split("_")[-1].split(".")[0])
+
+    filenames = sorted(
+        dir_path.glob("*.tif"),
+        key=_capture_path_to_int,
+    )[start:count]
+
+    return filenames
+
+
 def read_file(file: Path) -> Image:
     """Reads tiff file from a filepath."""
     with rasterio.open(file, "r") as src:
-        data = np.array(src.read())
+        data = np.array(src.read(), dtype=np.float32)
         profile = src.profile
         file_name = file.name
         idx = int(file_name.split("_")[-1].split(".")[0])

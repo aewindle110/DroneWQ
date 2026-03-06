@@ -54,9 +54,8 @@ class DlsEd(Base_Compute_Method):
         self,
         output_csv_path: Path,
         dls_corr: bool = False,
-        save_images: bool = False,
     ):
-        super().__init__(save_images=save_images)
+        super().__init__(save_images=True)
         self.dls_corr = dls_corr
         if isinstance(output_csv_path, str):
             output_csv_path = Path(output_csv_path)

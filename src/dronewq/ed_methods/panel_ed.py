@@ -54,9 +54,8 @@ class Panel_ed(Base_Compute_Method):
     def __init__(
         self,
         output_csv_path: str,
-        save_images: bool = False,
     ):
-        super().__init__(save_images=save_images)
+        super().__init__(save_images=True)
         self.output_csv_path = output_csv_path
 
     def __call__(self, lw_img: Image) -> Image:

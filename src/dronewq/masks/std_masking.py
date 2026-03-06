@@ -63,9 +63,8 @@ class StdMasking(Base_Compute_Method):
         self,
         num_images=10,
         mask_std_factor=1,
-        save_images: bool = False,
     ):
-        super().__init__(save_images=save_images)
+        super().__init__(save_images=True)
 
         self.num_images = num_images
         self.mask_std_factor = mask_std_factor
