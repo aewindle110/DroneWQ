@@ -35,12 +35,13 @@ def __latlon_to_index(dst, src):
     xs, ys = rasterio.transform.xy(src.transform, rows, cols)
     lons, lats = np.array(xs), np.array(ys)
 
-    coords_to_index = np.array(
-        [dst.index(lons[i], lats[i]) for i in np.arange(src.height)],
-    )
-    lons, lats = coords_to_index[:, 0, :], coords_to_index[:, 1, :]
+    # Flatten, convert all at once, then reshape — avoids the row-by-row loop
+    row_indices, col_indices = rasterio.transform.rowcol(dst.transform, lons.flatten(), lats.flatten())
 
-    return lons, lats
+    row_indices = np.array(row_indices).reshape(src.height, src.width)
+    col_indices = np.array(col_indices).reshape(src.height, src.width)
+
+    return row_indices, col_indices
 
 
 def __get_raster_corners(raster_path):

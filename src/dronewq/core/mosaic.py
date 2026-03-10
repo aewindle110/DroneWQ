@@ -9,9 +9,10 @@ import os
 
 import numpy as np
 import rasterio
-import rasterio.transform
 from rasterio.enums import Resampling
 from rasterio.transform import Affine
+
+from dronewq.utils.images import write_data
 
 from .mosaic_methods import __first, __get_merge_transform, __max, __mean, __min
 
@@ -90,7 +91,7 @@ def mosaic(
         "min": __min,
     }
 
-    method = methods.get(method)
+    method = methods.get(method, __mean)
 
     with rasterio.open(raster_paths[0], "r") as raster:
         n_bands = raster.count
@@ -114,15 +115,15 @@ def mosaic(
             data = method(dst, raster_paths, n_bands, width, height, dtype)
 
         for band_index in range(n_bands):
-            with rasterio.open(
+            write_data(
+                np.array(data[band_index]),
                 output_name.replace(".", f"_band_{band_names[band_index]}."),
-                "w",
-                **profile,
-            ) as dst:
-                dst.write(np.array([data[band_index]]))
+                profile,
+            )
     else:
         with rasterio.open(output_name, "w", **profile) as dst:
-            dst.write(method(dst, raster_paths, n_bands, width, height, dtype))
+            data = method(dst, raster_paths, n_bands, width, height, dtype)
+        write_data(data, output_name, profile)
 
     return output_name
 
@@ -207,6 +208,5 @@ def downsample(
             },
         )
 
-        with rasterio.open(out_name, "w", **dst_kwargs) as dst:
-            dst.write(data)
+        write_data(data, out_name, dst_kwargs)
     return out_name
