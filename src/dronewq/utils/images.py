@@ -416,27 +416,6 @@ def process_micasense_images(
     return output_path
 
 
-def get_filepaths(dir_path: Path) -> list[Path]:
-    """Reads a directory and returns a list of tiff files."""
-    return list(dir_path.glob("*.tif"))
-
-
-def get_sorted_filepaths(
-    dir_path: Path, start: int = 0, count: int = 10000
-) -> list[Path]:
-    """Reads a directory and returns a sorted list of tiff files."""
-
-    def _capture_path_to_int(path: Path) -> int:
-        return int(path.stem.split("_")[-1].split(".")[0])
-
-    filenames = sorted(
-        dir_path.glob("*.tif"),
-        key=_capture_path_to_int,
-    )[start:count]
-
-    return filenames
-
-
 def read_file(file: Path) -> Image:
     """Reads tiff file from a filepath."""
     with rasterio.open(file, "r") as src:
@@ -448,22 +427,13 @@ def read_file(file: Path) -> Image:
     return lt_img
 
 
-def save_img(img: Image, output_folder: Path):
-    """Saves image."""
-    # Getting the main dir filepath from the image
-    # instead of settings.main_dir because
-    # settings is not getting shared in between
-    # processes. TODO: Have to fix this.
-    profile = img.profile
-    profile["count"] = 5
-    output_path = output_folder.joinpath(img.method).joinpath(img.file_name)
-
+def write_data(data, output_path, profile) -> None:
+    """Windowed data write to a filepath using rasterio."""
     with rasterio.open(
         output_path,
         "w",
         **profile,
     ) as dst:
-        data = img.data
         height, width = data.shape[-2:]
         chunk_size = 256
 
@@ -480,3 +450,15 @@ def save_img(img: Image, output_folder: Path):
                     window_data = data[row:row_end, col:col_end]
 
                 dst.write(window_data, window=window)
+
+
+def save_img(img: Image, output_folder: Path):
+    """Saves image."""
+    # Getting the main dir filepath from the image
+    # instead of settings.main_dir because
+    # settings is not getting shared in between
+    # processes. TODO: Have to fix this.
+    profile = img.profile
+    profile["count"] = 5
+    output_path = output_folder.joinpath(img.method).joinpath(img.file_name)
+    write_data(img.data, output_path, profile)

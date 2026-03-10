@@ -12,13 +12,12 @@ from dronewq.masks.std_masking import StdMasking
 from dronewq.masks.threshold_masking import ThresholdMasking
 from dronewq.utils.data_types import Base_Compute_Method
 from dronewq.utils.images import (
-    get_filepaths,
     process_micasense_images,
     read_file,
     save_img,
 )
 from dronewq.utils.settings import settings
-from dronewq.utils.utils import validate_folder
+from dronewq.utils.utils import validate_folder, get_filepaths
 
 logger = logging.getLogger(__name__)
 

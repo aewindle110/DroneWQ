@@ -12,7 +12,7 @@ import rasterio
 from rasterio.windows import Window
 from tqdm import tqdm
 
-from dronewq.utils.images import get_sorted_filepaths
+from dronewq.utils.utils import get_sorted_filepaths
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)
