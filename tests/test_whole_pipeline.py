@@ -24,9 +24,9 @@ dronewq.write_metadata_csv(settings.raw_water_dir, settings.main_dir)
 
 pipeline = dronewq.RRSPipeline(
     output_folder=settings.main_dir,
-    lw_method=Mobley_rho(save_images=True),
-    ed_method=DlsEd(test_path, save_images=True),
-    overwrite_lt=False,
+    lw_method=Mobley_rho(),
+    ed_method=DlsEd(test_path),
+    overwrite_lt=True,
     generate_thumbnails=False,
     workers=1,
 )
