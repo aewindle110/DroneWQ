@@ -29,12 +29,12 @@ authors:
     orcid: 0009-0000-1354-0792
     affiliation: 6
   - name: Kurtis Kwan
-    affiliation: 7
+    affiliation: 6
   - name: Nidhi Khiantani
-    affiliation: 8
+    affiliation: 6
   - name: Greg M. Silsbe
     orcid: 0000-0003-2673-1162
-    affiliation: 9
+    affiliation: 7
 affiliations:
  - name: NASA Goddard Space Flight Center, Greenbelt, MD, United States
    index: 1
@@ -46,8 +46,10 @@ affiliations:
    index: 4
  - name: Department of Ecology and Coastal Management, Institute of Marine Sciences of Andalusia (ICMAN-CSIC), Spanish National Research Council (CSIC), 11519 Puerto Real, Spain
    index: 5
- - name: Horn Point Laboratory, University of Maryland Center for Environmental Science, Cambridge, MD, United States
+ - name: Duke University, Durham, NC, United States
    index: 6
+ - name: Horn Point Laboratory, University of Maryland Center for Environmental Science, Cambridge, MD, United States
+   index: 7
  
 date: 13 November 2024
 bibliography: paper.bib
