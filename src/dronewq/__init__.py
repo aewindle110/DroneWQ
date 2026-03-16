@@ -6,7 +6,7 @@ from rasterio.errors import NotGeoreferencedWarning
 
 from .core.georeference import compute_flight_lines, georeference
 from .core.mosaic import downsample, mosaic
-from .core.pipeline import RRSPipeline
+from .core.pipeline import RrsPipeline
 from .core.plot_map import plot_basemap, plot_georeferenced_data
 from .core.wq_calc import (
     chl_gitelson,

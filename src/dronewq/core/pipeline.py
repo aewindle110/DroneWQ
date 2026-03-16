@@ -1,6 +1,7 @@
 """Main pipeline for dronewq."""
 
 import logging
+import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -11,18 +12,16 @@ from dronewq.lw_methods.mobley_rho import Mobley_rho
 from dronewq.masks.std_masking import StdMasking
 from dronewq.masks.threshold_masking import ThresholdMasking
 from dronewq.utils.data_types import Base_Compute_Method
-from dronewq.utils.images import (
-    process_micasense_images,
-    read_file,
-    save_img,
-)
+from dronewq.utils.images import process_micasense_images, read_file, save_img
 from dronewq.utils.settings import settings
-from dronewq.utils.utils import validate_folder, get_filepaths
+from dronewq.utils.utils import get_filepaths, validate_folder
 
 logger = logging.getLogger(__name__)
 
+ctx = mp.get_context("spawn")
 
-class RRSPipeline:
+
+class RrsPipeline:
     """Main pipeline for dronewq.
 
     Parameters
@@ -50,7 +49,6 @@ class RRSPipeline:
 
     def __init__(
         self,
-        output_folder: Path | str,
         lw_method: Base_Compute_Method,
         ed_method: Base_Compute_Method,
         masking_method: Base_Compute_Method | None = None,
@@ -65,11 +63,13 @@ class RRSPipeline:
                 "Please set the main_dir path in settings."
                 "settings.configure(main_dir='path')"
             )
+        if settings.output_dir is None:
+            raise LookupError(
+                "Please set the output_dir path in settings."
+                "settings.configure(output_dir='path')"
+            )
 
         self.main_dir = validate_folder(settings.main_dir)
-        self.output_folder = (
-            Path(output_folder) if isinstance(output_folder, str) else output_folder
-        )
         self.lw_method = lw_method
         self.ed_method = ed_method
         self.masking_method = masking_method
@@ -82,19 +82,19 @@ class RRSPipeline:
     def __make_dirs(self) -> None:
         """Create the directories if they don't already exist."""
         # Make all these directories if they don't already exist
-        settings.lt_dir.mkdir(parents=True, exist_ok=True)
-        self.output_folder.mkdir(parents=True, exist_ok=True)
-
-        all_methods = [self.lw_method, self.ed_method]
-        for method in all_methods:
-            directory = self.output_folder.joinpath(method.name)
-            Path(directory).mkdir(parents=True, exist_ok=True)
+        all_dirs = {
+            "lt_dir": settings.lt_dir,
+            "output_dir": settings.output_dir,
+            "lw_dir": settings.lw_dir,
+            "rrs_dir": settings.rrs_dir,
+        }
+        for dir in all_dirs.keys():
+            self.__setattr__(dir, all_dirs[dir])
+            all_dirs[dir].mkdir(parents=True, exist_ok=True)
 
         if self.masking_method is not None:
-            self.masked_rrs_dir = self.output_folder.joinpath(
-                self.masking_method.name,
-            )
-            Path(self.masked_rrs_dir).mkdir(parents=True, exist_ok=True)
+            self.masked_rrs_dir = Path(settings.masked_rrs_dir)
+            self.masked_rrs_dir.mkdir(parents=True, exist_ok=True)
 
     def run(self) -> None:
         """Run the pipeline."""
@@ -133,7 +133,7 @@ class RRSPipeline:
         self.lw_method.preprocess()
         self.ed_method.preprocess()
 
-        with ProcessPoolExecutor(max_workers=self.workers) as executor:
+        with ProcessPoolExecutor(max_workers=self.workers, mp_context=ctx) as executor:
             results = executor.map(self.rrs_worker, filepaths)
 
             # Use tqdm to show progress of processed images
@@ -142,9 +142,8 @@ class RRSPipeline:
 
             if isinstance(self.masking_method, StdMasking):
                 print("STD Masking Rrs images")
-                rrs_dir = self.output_folder / self.ed_method.name
-                filepaths = get_filepaths(rrs_dir)
-                self.masking_method.preprocess_masking(rrs_dir)
+                filepaths = get_filepaths(settings.rrs_dir)
+                self.masking_method.preprocess_masking(settings.rrs_dir)
                 results = executor.map(self.mask_worker, filepaths)
                 for _ in tqdm(results, total=len(filepaths), desc="Processing images"):
                     pass
@@ -163,18 +162,18 @@ class RRSPipeline:
         lt_img = read_file(filepath)
         lw_img = self.lw_method(lt_img)
         if self.lw_method.save_images:
-            save_img(lw_img, self.output_folder)
+            save_img(lw_img, self.lw_dir)
         rrs_img = self.ed_method(lw_img)
-        save_img(rrs_img, self.output_folder)
+        save_img(rrs_img, self.rrs_dir)
 
         if isinstance(self.masking_method, ThresholdMasking):
             rrs_img = self.masking_method(rrs_img)
-            save_img(rrs_img, self.output_folder)
+            save_img(rrs_img, self.masked_rrs_dir)
 
         return filepath
 
     def mask_worker(self, filepath: Path) -> Path:
         rrs_img = read_file(filepath)
         masked_rrs_img = self.masking_method(rrs_img)
-        save_img(masked_rrs_img, self.output_folder)
+        save_img(masked_rrs_img, self.masked_rrs_dir)
         return filepath

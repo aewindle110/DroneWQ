@@ -460,5 +460,5 @@ def save_img(img: Image, output_folder: Path):
     # processes. TODO: Have to fix this.
     profile = img.profile
     profile["count"] = 5
-    output_path = output_folder.joinpath(img.method).joinpath(img.file_name)
+    output_path = output_folder.joinpath(img.file_name)
     write_data(img.data, output_path, profile)

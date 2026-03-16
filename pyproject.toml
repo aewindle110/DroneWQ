@@ -46,7 +46,8 @@ dependencies = [
   "geopy",
   "matplotlib",
   "scikit-image",
-  "contextily",
+  "contextily", # uses requests
+  "charset-normalizer",  # requests needs this
   "cmocean",
   "imageio",
   "pandas",

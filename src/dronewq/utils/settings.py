@@ -18,6 +18,7 @@ logging.basicConfig(
 
 DEFAULT_CONFIG = dotdict(
     main_dir=None,
+    output_dir=None,
     raw_water_dir=None,
     raw_sky_dir=None,
     lt_dir=None,
@@ -119,8 +120,7 @@ class Settings:
                 msg = "main_dir should be a string of path."
                 raise ValueError(msg)
 
-            if isinstance(main_dir, str):
-                main_dir = Path(main_dir)
+            main_dir = Path(main_dir)
 
             if not main_dir.exists():
                 msg = f"{main_dir} path does not exist."
@@ -137,12 +137,26 @@ class Settings:
             main_thread_config["raw_sky_dir"] = main_dir / "raw_sky_imgs"
             main_thread_config["lt_dir"] = main_dir / "lt_imgs"
             main_thread_config["sky_lt_dir"] = main_dir / "sky_lt_imgs"
-            main_thread_config["lw_dir"] = main_dir / "lw_imgs"
             main_thread_config["panel_dir"] = main_dir / "panel"
-            main_thread_config["rrs_dir"] = main_dir / "rrs_imgs"
-            main_thread_config["masked_rrs_dir"] = main_dir / "masked_rrs_imgs"
             main_thread_config["warp_img_dir"] = main_dir / "align_img"
-            main_thread_config["metadata"] = main_dir / "metadata.csv"
+
+        if "output_dir" in kwargs:
+            output_dir = kwargs["output_dir"]
+            if not isinstance(output_dir, (str, Path)):
+                msg = "output_dir should be a string of path."
+                raise ValueError(msg)
+
+            output_dir = Path(output_dir)
+
+            if not output_dir.exists():
+                msg = f"{output_dir} path does not exist."
+                raise LookupError(msg)
+
+            main_thread_config["output_dir"] = output_dir
+            main_thread_config["lw_dir"] = output_dir / "lw_imgs"
+            main_thread_config["rrs_dir"] = output_dir / "rrs_imgs"
+            main_thread_config["masked_rrs_dir"] = output_dir / "masked_rrs_imgs"
+            main_thread_config["metadata"] = output_dir / "metadata.csv"
         return self
 
 
