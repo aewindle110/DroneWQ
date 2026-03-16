@@ -42,7 +42,7 @@ keywords = ["drone", "water quality", "remote sensing", "gis"]
 dependencies = [
   "numpy", # for compatibility with micasense
   "rasterio",
-  "geopandas",
+  "geopandas>=1.1.2 ", # Secutrity constraint
   "geopy",
   "matplotlib",
   "scikit-image",
