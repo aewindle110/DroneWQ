@@ -148,9 +148,7 @@ class Settings:
 
             output_dir = Path(output_dir)
 
-            if not output_dir.exists():
-                msg = f"{output_dir} path does not exist."
-                raise LookupError(msg)
+            output_dir.mkdir(exist_ok=True, parents=True)
 
             main_thread_config["output_dir"] = output_dir
             main_thread_config["lw_dir"] = output_dir / "lw_imgs"
