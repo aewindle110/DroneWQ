@@ -82,8 +82,7 @@ def load_imgs(
     >>> imgs = load_imgs('/path/to/images', count=10)
     >>> imgs = list(imgs)
     """
-    if isinstance(img_dir, str):
-        img_dir = Path(img_dir)
+    img_dir = Path(img_dir)
     if not img_dir.exists():
         raise FileNotFoundError(f"Directory {img_dir} does not exist.")
     if not img_dir.is_dir():
@@ -188,8 +187,7 @@ def load_metadata(
     >>> df = load_metadata('/path/to/images', altitude_cutoff=10)
     >>> print(f"Mean altitude: {df['Altitude'].mean():.2f}m")
     """
-    if isinstance(img_dir, str):
-        img_dir = Path(img_dir)
+    img_dir = Path(img_dir)
 
     if "sky" in str(img_dir):
         base = img_dir
@@ -410,9 +408,6 @@ def process_micasense_images(
     )
 
     logger.info("Finished saving images at: %s", output_path)
-    fullCsvPath = dronewq.write_metadata_csv(img_dir, output_path)
-    logger.info("Finished saving image metadata at: %s", fullCsvPath)
-
     return output_path
 
 

@@ -13,6 +13,7 @@ from dronewq.masks.std_masking import StdMasking
 from dronewq.masks.threshold_masking import ThresholdMasking
 from dronewq.utils.data_types import Base_Compute_Method
 from dronewq.utils.images import process_micasense_images, read_file, save_img
+from dronewq.utils.metadata import write_metadata_csv
 from dronewq.utils.settings import settings
 from dronewq.utils.utils import get_filepaths, validate_folder
 
@@ -103,14 +104,14 @@ class RrsPipeline:
             len(list(Path(settings.raw_water_dir).glob("*.tif"))),
         )
         if not settings.lt_dir.exists():
-            logger.warning(
+            print(
                 f"{settings.lt_dir} does not exist. Setting the overwrite_lt flag to True."
             )
             self.overwrite_lt = True
 
         filepaths = get_filepaths(settings.lt_dir)
         if not filepaths:
-            logger.warning(
+            print(
                 f"{settings.lt_dir} does not have any files. Setting the overwrite_lt flag to True."
             )
             self.overwrite_lt = True
@@ -126,6 +127,10 @@ class RrsPipeline:
                     sky=True,
                     generateThumbnails=self.generate_thumbnails,
                 )
+
+        filepaths = get_filepaths(settings.lt_dir)
+        fullCsvPath = write_metadata_csv(settings.raw_water_dir, settings.main_dir)
+        logger.info("Finished saving image metadata at: %s", fullCsvPath)
 
         # The Lw methods need their respective additional preprocessing
         # Such as finding the median of the sky images or

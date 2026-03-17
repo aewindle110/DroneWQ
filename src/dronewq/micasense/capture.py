@@ -177,7 +177,11 @@ class Capture:
                 "{} Band {} {}".format(
                     str(img.band_name),
                     str(img.band_index),
-                    (plot_type if img.band_name.upper() != "LWIR" else "Brightness Temperature"),
+                    (
+                        plot_type
+                        if img.band_name.upper() != "LWIR"
+                        else "Brightness Temperature"
+                    ),
                 )
                 for img in self.images
             ]
@@ -307,7 +311,10 @@ class Capture:
         :return: None
         """
         if irradiance_list is not None:
-            [img.reflectance(irradiance_list[i], force_recompute=force_recompute) for i, img in enumerate(self.images)]
+            [
+                img.reflectance(irradiance_list[i], force_recompute=force_recompute)
+                for i, img in enumerate(self.images)
+            ]
         else:
             [img.reflectance(force_recompute=force_recompute) for img in self.images]
 
@@ -331,7 +338,10 @@ class Capture:
                 for i, img in enumerate(self.images)
             ]
         else:
-            [img.undistorted_reflectance(force_recompute=force_recompute) for img in self.images]
+            [
+                img.undistorted_reflectance(force_recompute=force_recompute)
+                for img in self.images
+            ]
 
     def eo_images(self):
         """Returns a list of the EO Images in the Capture."""
@@ -343,11 +353,15 @@ class Capture:
 
     def eo_indices(self):
         """Returns a list of the indexes of the EO Images in the Capture."""
-        return [index for index, img in enumerate(self.images) if img.band_name != "LWIR"]
+        return [
+            index for index, img in enumerate(self.images) if img.band_name != "LWIR"
+        ]
 
     def lw_indices(self):
         """Returns a list of the indexes of the longwave infrared Images in the Capture."""
-        return [index for index, img in enumerate(self.images) if img.band_name == "LWIR"]
+        return [
+            index for index, img in enumerate(self.images) if img.band_name == "LWIR"
+        ]
 
     def reflectance(self, irradiance_list):
         """
@@ -355,7 +369,10 @@ class Capture:
         :param irradiance_list: List returned from Capture.dls_irradiance() or Capture.panel_irradiance()   TODO: improve this docstring
         :return: List of reflectance EO and long wave infrared Images for given irradiance.
         """
-        eo_imgs = [img.reflectance(irradiance_list[i]) for i, img in enumerate(self.eo_images())]
+        eo_imgs = [
+            img.reflectance(irradiance_list[i])
+            for i, img in enumerate(self.eo_images())
+        ]
         lw_imgs = [img.reflectance() for i, img in enumerate(self.lw_images())]
         return eo_imgs + lw_imgs
 
@@ -365,8 +382,13 @@ class Capture:
         :param irradiance_list: List returned from Capture.dls_irradiance() or Capture.panel_irradiance()   TODO: improve this docstring
         :return: List of undistorted reflectance images for given irradiance.
         """
-        eo_imgs = [img.undistorted(img.reflectance(irradiance_list[i])) for i, img in enumerate(self.eo_images())]
-        lw_imgs = [img.undistorted(img.reflectance()) for i, img in enumerate(self.lw_images())]
+        eo_imgs = [
+            img.undistorted(img.reflectance(irradiance_list[i]))
+            for i, img in enumerate(self.eo_images())
+        ]
+        lw_imgs = [
+            img.undistorted(img.reflectance()) for i, img in enumerate(self.lw_images())
+        ]
         return eo_imgs + lw_imgs
 
     def panels_in_all_expected_images(self):
@@ -374,7 +396,9 @@ class Capture:
         Check if all expected reflectance panels are detected in the EO Images in the Capture.
         :return: True if reflectance panels are detected.
         """
-        expected_panels = sum(str(img.band_name).upper() != "LWIR" for img in self.images)
+        expected_panels = sum(
+            str(img.band_name).upper() != "LWIR" for img in self.images
+        )
         return self.detect_panels() == expected_panels
 
     def panel_raw(self):
@@ -405,7 +429,9 @@ class Capture:
             if not self.panels_in_all_expected_images():
                 raise OSError("Panels not detected in all images.")
         if reflectances is None:
-            reflectances = [panel.reflectance_from_panel_serial() for panel in self.panels]
+            reflectances = [
+                panel.reflectance_from_panel_serial() for panel in self.panels
+            ]
         if len(reflectances) != len(self.panels):
             raise ValueError(
                 "Length of panel reflectances must match length of Images.",
@@ -447,13 +473,18 @@ class Capture:
 
         if self.panels is not None and self.detected_panel_count == len(self.images):
             return self.detected_panel_count
-        self.panels = [Panel(img, panelCorners=pc) for img, pc in zip(self.images, self.panel_corners)]
+        self.panels = [
+            Panel(img, panelCorners=pc)
+            for img, pc in zip(self.images, self.panel_corners)
+        ]
         self.detected_panel_count = 0
         for p in self.panels:
             if p.panel_detected():
                 self.detected_panel_count += 1
         # if panel_corners are defined by hand
-        if self.panel_corners is not None and all(corner is not None for corner in self.panel_corners):
+        if self.panel_corners is not None and all(
+            corner is not None for corner in self.panel_corners
+        ):
             self.detected_panel_count = len(self.panel_corners)
         return self.detected_panel_count
 
@@ -568,8 +599,10 @@ class Capture:
         :param photometric: str GDAL argument for GTiff color matching
         :param compress: str Compression algorithm ('DEFLATE', 'LZW', 'ZSTD', 'WEBP')
         """
-        from osgeo.gdal import GDT_Float32
-        from osgeo.gdal import GetDriverByName
+        from osgeo.gdal import UseExceptions
+
+        UseExceptions()
+        from osgeo.gdal import GDT_Float32, GetDriverByName
 
         if self.__aligned_capture is None:
             raise RuntimeError(
