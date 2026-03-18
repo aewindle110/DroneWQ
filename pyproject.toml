@@ -44,7 +44,7 @@ dependencies = [
   "rasterio",
   "geopandas>=1.1.2 ", # Secutrity constraint
   "geopy",
-  "matplotlib",
+  "matplotlib >= 3.10",
   "scikit-image",
   "contextily", # uses requests
   "charset-normalizer",  # requests needs this
