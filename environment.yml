@@ -2,33 +2,13 @@ name: dronewq
 channels:
   - conda-forge
 dependencies:
-  - python=3.10
-  - numpy<=1.26 # for compatibility with micasense
-  - gdal
+  - python=3.13
+  - numpy>2.0
+  - gdal>=3.11
+  - ipykernel
   - exiftool
   - zbar
-  - rasterio
-  - geopandas
-  - geopy
   - opencv
-  - matplotlib==3.9.2
-  - scikit-image
-  - contextily
-  - cmocean
-  - imageio
-  - pandas
-  - nb_conda
-  - cartopy
   - pip
-  - requests
-  - rioxarray
-  - tqdm
-  - pysolar
-  - mapboxgl
-  - flask
   - pip:
-      - cameratransform==1.2
-      - pyzbar==0.1.9
-      - pyexiftool<=0.4.13
-      - rawpy==0.21.0
       - dronewq
