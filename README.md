@@ -47,7 +47,7 @@ pip install dronewq
 
 ### Install from environment.yml
 
-1. Clone the repository or download the (environment.yml)[./environment.yml] file.
+1. Clone the repository or download the [environment.yml](./environment.yml) file.
 2. Create a conda environment using the environment.yml file:
 ```bash
 conda env create -f environment.yml
