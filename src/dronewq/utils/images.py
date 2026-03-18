@@ -9,7 +9,6 @@ import pandas as pd
 import rasterio
 from rasterio.windows import Window
 
-import dronewq
 from dronewq.micasense import imageset, imageutils
 from dronewq.utils.data_types import Image
 from dronewq.utils.settings import settings

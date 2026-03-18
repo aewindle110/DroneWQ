@@ -93,15 +93,12 @@ class Hedley(Base_Compute_Method):
             # xm = x.mean()
             # x_centered = x - xm
             # var_x = (x_centered**2).mean()
-            #
             # lw_all = []
-            #
             # for j in range(4):
             #     y = lt_reshape[j, :]
             #     ym = y.mean()
             #     cov_xy = (x_centered * (y - ym)).mean()
             #     slope = cov_xy / var_x
-            #
             #     lw = lt[j] - slope * (lt[4] - self.mean_min_lt_NIR)
             #     lw_all.append(lw)
 
