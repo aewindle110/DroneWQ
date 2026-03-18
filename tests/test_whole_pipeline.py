@@ -13,6 +13,7 @@ test_path = Path(__file__).absolute().parent
 test_path = test_path.joinpath("test_set")
 
 settings.configure(main_dir=test_path)
+settings.configure(output_dir=test_path)
 
 if not test_path.exists():
     msg = f"Could not find {test_path}"
@@ -22,11 +23,10 @@ RTOL = 1e-2
 
 dronewq.write_metadata_csv(settings.raw_water_dir, settings.main_dir)
 
-pipeline = dronewq.RRSPipeline(
-    output_folder=settings.main_dir,
+pipeline = dronewq.RrsPipeline(
     lw_method=Mobley_rho(save_images=True),
-    ed_method=DlsEd(test_path, save_images=True),
-    overwrite_lt=False,
+    ed_method=DlsEd(test_path),
+    overwrite_lt=True,
     generate_thumbnails=False,
     workers=1,
 )
@@ -65,7 +65,7 @@ def test_Lw():
             0.02420409,
         ]
     )
-    lw_dir = settings.main_dir / "Mobley_rho"
+    lw_dir = settings.lw_dir
     lw_imgs = dronewq.load_imgs(lw_dir)
     results = []
 
@@ -88,7 +88,7 @@ def test_Rrs():
             3.4010543e-05,
         ]
     )
-    rrs_dir = settings.main_dir / "DlsEd"
+    rrs_dir = settings.rrs_dir
     rrs_imgs = dronewq.load_imgs(rrs_dir)
     results = []
 
@@ -128,7 +128,7 @@ def test_Ed():
 
 def test_chl_hu_ocx():
     actual = 1.0326097
-    rrs_dir = settings.main_dir / "DlsEd"
+    rrs_dir = settings.rrs_dir
     rrs_imgs = dronewq.load_imgs(rrs_dir)
 
     results = []
@@ -143,7 +143,7 @@ def test_chl_hu_ocx():
 
 def test_tsm_nechad():
     actual = 1.6712015
-    rrs_dir = settings.main_dir / "DlsEd"
+    rrs_dir = settings.rrs_dir
     rrs_imgs = dronewq.load_imgs(rrs_dir)
 
     results = []

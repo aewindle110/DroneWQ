@@ -1,16 +1,20 @@
 """
-Not much is changed from the original code
-Refactored docstrings: Temuulen
+Not much is changed from the original code.
+
+Refactored docstrings: Temuulen.
 """
-import os
+
+from pathlib import Path
 
 import cameratransform as ct
 import numpy as np
 import pandas as pd
 import rasterio
 from pyproj import CRS
+from rasterio import control, transform
 from tqdm import tqdm
 
+from dronewq.utils.images import write_data
 
 def compute_flight_lines(
     captures_yaw,
@@ -123,7 +127,7 @@ def compute_flight_lines(
         {
             "start": line[0],
             "end": line[1] + 1,
-            "yaw": float(np.median(captures_yaw[line[0]: line[1]])),
+            "yaw": float(np.median(captures_yaw[line[0] : line[1]])),
             "pitch": pitch,
             "roll": roll,
             "alt": altitude,
@@ -198,207 +202,11 @@ def georeference(
     None
         Writes georeferenced `.tif` files into `output_dir`.
     """
+    input_dir = Path(input_dir)
 
-    def __get_transform(
-        f,
-        sensor_size,
-        image_size,
-        lat,
-        lon,
-        alt,
-        yaw,
-        pitch,
-        roll,
-    ):
-        """
-        Compute an affine geotransformation matrix for a single capture.
+    output_dir = Path(output_dir)
 
-        A rectilinear camera model is constructed using the capture’s intrinsic
-        parameters (focal length, sensor size, image dimensions) and its pose
-        (GPS position and yaw/pitch/roll). The four image corners are projected
-        to geographic coordinates, and these coordinates are used as ground
-        control points to derive an affine transform.
-
-        Parameters
-        ----------
-        f : float
-            Focal length in millimeters.
-
-        sensor_size : tuple[float, float]
-            Sensor dimensions in millimeters, ordered (width, height).
-
-        image_size : tuple[int, int]
-            Image dimensions in pixels, ordered (width, height).
-
-        lat : float
-            Camera latitude.
-
-        lon : float
-            Camera longitude.
-
-        alt : float
-            Camera altitude in meters.
-
-        yaw : float
-            Yaw angle in degrees.
-
-        pitch : float
-            Pitch angle in degrees.
-
-        roll : float
-            Roll angle in degrees.
-
-        Returns
-        -------
-        Affine
-            Affine transformation derived from the four GCPs.
-        """
-        cam = ct.Camera(
-            ct.RectilinearProjection(
-                focallength_mm=f,
-                sensor=sensor_size,
-                image=image_size,
-            ),
-            ct.SpatialOrientation(
-                elevation_m=alt,
-                tilt_deg=pitch,
-                roll_deg=roll,
-                heading_deg=yaw,
-                pos_x_m=0,
-                pos_y_m=0,
-            ),
-        )
-
-        cam.setGPSpos(lat, lon, alt)
-
-        coords: np.ndarray = np.array(
-            [
-                cam.gpsFromImage([0, 0]),
-                cam.gpsFromImage([image_size[0] - 1, 0]),
-                cam.gpsFromImage([image_size[0] - 1, image_size[1] - 1]),
-                cam.gpsFromImage([0, image_size[1] - 1]),
-            ],
-        )
-
-        gcp1 = rasterio.control.GroundControlPoint(
-            row=0,
-            col=0,
-            x=coords[0, 1],
-            y=coords[0, 0],
-            z=coords[0, 2],
-        )
-        gcp2 = rasterio.control.GroundControlPoint(
-            row=image_size[0] - 1,
-            col=0,
-            x=coords[1, 1],
-            y=coords[1, 0],
-            z=coords[1, 2],
-        )
-        gcp3 = rasterio.control.GroundControlPoint(
-            row=image_size[0] - 1,
-            col=image_size[1] - 1,
-            x=coords[2, 1],
-            y=coords[2, 0],
-            z=coords[2, 2],
-        )
-        gcp4 = rasterio.control.GroundControlPoint(
-            row=0,
-            col=image_size[1] - 1,
-            x=coords[3, 1],
-            y=coords[3, 0],
-            z=coords[3, 2],
-        )
-
-        return rasterio.transform.from_gcps([gcp1, gcp2, gcp3, gcp4])
-
-    def __get_georefence_by_uuid(
-        metadata: pd.DataFrame,
-        lines: list[dict[str, float | None]] | None = None,
-        altitude: float | None = None,
-        yaw: float | None = None,
-        pitch: float | None = None,
-        roll: float | None = None,
-    ):
-        """
-        Build affine geotransforms for each capture, grouped by flight lines.
-
-        For every capture in every flight line, this function determines the
-        orientation parameters (using overrides if provided), computes the
-        corresponding affine transform via `__get_transform()`, and stores the
-        result in a dictionary keyed by filename.
-
-        Parameters
-        ----------
-        metadata : pandas.DataFrame
-            DataFrame containing capture metadata, indexed by filename.
-
-        lines : list[dict] or None, optional
-            List of flight-line dictionaries. If None, a single line spanning
-            all captures is used.
-
-        altitude, yaw, pitch, roll : float or None, optional
-            Optional parameter overrides applied to all captures in each line.
-
-        Returns
-        -------
-        dict[str, Affine]
-            Mapping from filename (UUID) to its computed affine transformation.
-        """
-
-        lines = (
-            lines
-            if lines is not None
-            else [
-                {
-                    "start": 0,
-                    "end": None,
-                    "yaw": yaw,
-                    "pitch": pitch,
-                    "roll": roll,
-                    "alt": altitude,
-                },
-            ]
-        )
-
-        georeference_by_uuid = {}
-
-        for line in lines:
-            captures = metadata.iloc[line["start"]: line["end"]]
-            for _, capture in captures.iterrows():
-                focal = capture["FocalLength"]
-                image_size = (capture["ImageWidth"],
-                              capture["ImageHeight"])[::-1]
-                sensor_size = (capture["SensorX"], capture["SensorY"])[::-1]
-
-                lon = float(capture["Longitude"])
-                lat = float(capture["Latitude"])
-                alt = line["alt"] or float(capture["Altitude"])
-                capture_pitch = line["pitch"] if line["pitch"] is not None else float(
-                    capture["Pitch"])
-                capture_roll = line["roll"] if line["roll"] is not None else float(
-                    capture["Roll"])
-                capture_yaw = line["yaw"] if line["yaw"] is not None else float(
-                    capture["Yaw"])
-
-                filename = os.path.basename(capture["filename"])
-                georeference_by_uuid[filename] = __get_transform(
-                    focal,
-                    sensor_size,
-                    image_size,
-                    lat,
-                    lon,
-                    alt,
-                    capture_yaw,
-                    capture_pitch,
-                    capture_roll,
-                )
-
-        return georeference_by_uuid
-
-    def __convert_to_tif(name):
-        return ".".join([name.split(".")[0], "tif"])
-
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     metadata = metadata.set_index(metadata["filename"])
     georefence_by_uuid = __get_georefence_by_uuid(
@@ -414,8 +222,8 @@ def georeference(
         georefence_by_uuid.items(),
         total=len(georefence_by_uuid.items()),
     ):
-        with rasterio.open(os.path.join(input_dir, uuid), "r") as src:
-            data = src.read()
+        with rasterio.open(input_dir.joinpath(uuid), "r") as src:
+            data = np.array(src.read())
 
             profile = {
                 "dtype": src.profile["dtype"],
@@ -428,12 +236,208 @@ def georeference(
                 "transform": transform,
             }
 
-            with rasterio.open(
-                os.path.join(output_dir, __convert_to_tif(uuid)),
-                "w",
-                **profile,
-            ) as dst:
-                dst.write(
-                    data if axis_to_flip is None else np.flip(
-                        data, axis=axis_to_flip),
-                )
+            data = data if axis_to_flip is None else np.flip(data, axis=axis_to_flip)
+            write_data(data, output_dir.joinpath(__convert_to_tif(uuid)), profile)
+
+
+def __get_transform(
+    f,
+    sensor_size,
+    image_size,
+    lat,
+    lon,
+    alt,
+    yaw,
+    pitch,
+    roll,
+):
+    """
+    Compute an affine geotransformation matrix for a single capture.
+
+    A rectilinear camera model is constructed using the capture’s intrinsic
+    parameters (focal length, sensor size, image dimensions) and its pose
+    (GPS position and yaw/pitch/roll). The four image corners are projected
+    to geographic coordinates, and these coordinates are used as ground
+    control points to derive an affine transform.
+
+    Parameters
+    ----------
+    f : float
+        Focal length in millimeters.
+
+    sensor_size : tuple[float, float]
+        Sensor dimensions in millimeters, ordered (width, height).
+
+    image_size : tuple[int, int]
+        Image dimensions in pixels, ordered (width, height).
+
+    lat : float
+        Camera latitude.
+
+    lon : float
+        Camera longitude.
+
+    alt : float
+        Camera altitude in meters.
+
+    yaw : float
+        Yaw angle in degrees.
+
+    pitch : float
+        Pitch angle in degrees.
+
+    roll : float
+        Roll angle in degrees.
+
+    Returns
+    -------
+    Affine
+        Affine transformation derived from the four GCPs.
+    """
+    cam = ct.Camera(
+        ct.RectilinearProjection(
+            focallength_mm=f,
+            sensor=sensor_size,
+            image=image_size,
+        ),
+        ct.SpatialOrientation(
+            elevation_m=alt,
+            tilt_deg=pitch,
+            roll_deg=roll,
+            heading_deg=yaw,
+            pos_x_m=0,
+            pos_y_m=0,
+        ),
+    )
+
+    cam.setGPSpos(lat, lon, alt)
+
+    coords: np.ndarray = np.array(
+        [
+            cam.gpsFromImage([0, 0]),
+            cam.gpsFromImage([image_size[0] - 1, 0]),
+            cam.gpsFromImage([image_size[0] - 1, image_size[1] - 1]),
+            cam.gpsFromImage([0, image_size[1] - 1]),
+        ],
+    )
+
+    gcp1 = control.GroundControlPoint(
+        row=0,
+        col=0,
+        x=coords[0, 1],
+        y=coords[0, 0],
+        z=coords[0, 2],
+    )
+    gcp2 = control.GroundControlPoint(
+        row=image_size[0] - 1,
+        col=0,
+        x=coords[1, 1],
+        y=coords[1, 0],
+        z=coords[1, 2],
+    )
+    gcp3 = control.GroundControlPoint(
+        row=image_size[0] - 1,
+        col=image_size[1] - 1,
+        x=coords[2, 1],
+        y=coords[2, 0],
+        z=coords[2, 2],
+    )
+    gcp4 = control.GroundControlPoint(
+        row=0,
+        col=image_size[1] - 1,
+        x=coords[3, 1],
+        y=coords[3, 0],
+        z=coords[3, 2],
+    )
+
+    return transform.from_gcps([gcp1, gcp2, gcp3, gcp4])
+
+
+def __get_georefence_by_uuid(
+    metadata: pd.DataFrame,
+    lines: list[dict[str, float | None]] | None = None,
+    altitude: float | None = None,
+    yaw: float | None = None,
+    pitch: float | None = None,
+    roll: float | None = None,
+):
+    """
+    Build affine geotransforms for each capture, grouped by flight lines.
+
+    For every capture in every flight line, this function determines the
+    orientation parameters (using overrides if provided), computes the
+    corresponding affine transform via `__get_transform()`, and stores the
+    result in a dictionary keyed by filename.
+
+    Parameters
+    ----------
+    metadata : pandas.DataFrame
+        DataFrame containing capture metadata, indexed by filename.
+
+    lines : list[dict] or None, optional
+        List of flight-line dictionaries. If None, a single line spanning
+        all captures is used.
+
+    altitude, yaw, pitch, roll : float or None, optional
+        Optional parameter overrides applied to all captures in each line.
+
+    Returns
+    -------
+    dict[str, Affine]
+        Mapping from filename (UUID) to its computed affine transformation.
+    """
+    lines = (
+        lines
+        if lines is not None
+        else [
+            {
+                "start": 0,
+                "end": None,
+                "yaw": yaw,
+                "pitch": pitch,
+                "roll": roll,
+                "alt": altitude,
+            },
+        ]
+    )
+
+    georeference_by_uuid = {}
+
+    for line in lines:
+        captures = metadata.iloc[line["start"] : line["end"]]
+        for _, capture in captures.iterrows():
+            focal = capture["FocalLength"]
+            image_size = (capture["ImageWidth"], capture["ImageHeight"])[::-1]
+            sensor_size = (capture["SensorX"], capture["SensorY"])[::-1]
+
+            lon = float(capture["Longitude"])
+            lat = float(capture["Latitude"])
+            alt = line["alt"] or float(capture["Altitude"])
+            capture_pitch = (
+                line["pitch"] if line["pitch"] is not None else float(capture["Pitch"])
+            )
+            capture_roll = (
+                line["roll"] if line["roll"] is not None else float(capture["Roll"])
+            )
+            capture_yaw = (
+                line["yaw"] if line["yaw"] is not None else float(capture["Yaw"])
+            )
+
+            filename = Path(capture["filename"]).name
+            georeference_by_uuid[filename] = __get_transform(
+                focal,
+                sensor_size,
+                image_size,
+                lat,
+                lon,
+                alt,
+                capture_yaw,
+                capture_pitch,
+                capture_roll,
+            )
+
+    return georeference_by_uuid
+
+
+def __convert_to_tif(name):
+    return ".".join([name.split(".")[0], "tif"])

@@ -31,7 +31,7 @@ The easiest way to install DroneWQ is using conda and pip:
 
 First, create your conda environment:
 ```bash
-conda create -n {your project name} python=3.10 exiftool gdal zbar opencv -c conda-forge
+conda create -n {your project name} python=3.13 exiftool gdal zbar opencv -c conda-forge
 ```
 
 Then, activate your environemt:
@@ -52,14 +52,14 @@ If you want to install from source:
 ```bash
 git clone https://github.com/aewindle110/DroneWQ.git
 cd DroneWQ
-conda create -n {your project name} python=3.10 exiftool gdal zbar opencv -c conda-forge
+conda create -n {your project name} python=3.13 exiftool gdal zbar opencv -c conda-forge
 conda activate {your project name}
 pip install .
 ```
 
 ### System Requirements
 
-DroneWQ requires Python 3.8-3.12. Some dependencies may require additional system libraries:
+DroneWQ requires Python >=3.10. Some dependencies require additional system libraries which is installed through conda:
 
 - **GDAL**: Required for geospatial operations
 - **ExifTool**: Required for reading MicaSense image metadata
@@ -83,7 +83,7 @@ brew install gdal exiftool zbar opencv
 
 ### Docker Installation (Alternative)
 
-We recommend running this package in a Docker container for consistency. The Docker image includes all dependencies pre-configured. See https://docs.docker.com/ for installation files.
+The Docker image includes all dependencies pre-configured. See https://docs.docker.com/ for installation files.
 
 With Docker installed and running, launch the container:
 
@@ -149,17 +149,15 @@ The `configure()` function automatically sets up all subdirectory paths based on
 The main processing function converts raw imagery to calibrated remote sensing reflectance:
 
 ```python
+from dronewq import Hedley, DlsEd, ThresholdMasking
 # Process raw images to Rrs
-dronewq.process_raw_to_rrs(
-    output_csv_path="/path/to/metadata.csv",
-    lw_method="mobley_rho_method",      # Water leaving radiance method
-    ed_method="dls_ed",                 # Downwelling irradiance method
-    mask_pixels=True,                   # Apply pixel masking
-    pixel_masking_method="value_threshold",
-    nir_threshold=0.01,                 # NIR threshold for masking glint
-    green_threshold=0.005,              # Green threshold for masking shadows
-    num_workers=4                       # Number of parallel workers
-)
+dronewq.RRSPipeline(
+    output_folder=output_folder,
+    lw_method=Hedley(save_images=True),
+    ed_method=DlsEd(output_folder),
+    masking_method=ThresholdMasking(nir_threshold=0.02),
+    workers=4,
+    )
 ```
 
 **Processing workflow:**
@@ -175,7 +173,7 @@ Apply bio-optical algorithms to retrieve water quality parameters:
 ```python
 # Calculate chlorophyll-a using Gitelson algorithm
 dronewq.save_wq_imgs(
-    wq_alg="chl_gitelson",  # Options: chl_gitelson, chl_hu, chl_ocx, chl_hu_ocx, nechad_tsm
+    wq_alg=["chl_gitelson"],  # Options: chl_gitelson, chl_hu, chl_ocx, chl_hu_ocx, nechad_tsm
     num_workers=4
 )
 ```
@@ -214,207 +212,7 @@ dronewq.mosaic(
 
 ## Detailed Documentation 
 
-
 For detailed documentation on the processing theory and methods, please visit: https://dronewq.readthedocs.io/
-
-## API Reference
-
-### Core Processing Functions
-
-#### `process_raw_to_rrs()`
-
-Main function to process raw imagery to remote sensing reflectance (Rrs).
-
-```python
-dronewq.process_raw_to_rrs(
-    output_csv_path: str,
-    lw_method: str = "mobley_rho_method",
-    mask_pixels: bool = False,
-    random_n: int = 10,
-    pixel_masking_method: str = "value_threshold",
-    mask_std_factor: int = 1,
-    nir_threshold: float = 0.01,
-    green_threshold: float = 0.005,
-    ed_method: str = "dls_ed",
-    overwrite_lt_lw: bool = False,
-    clean_intermediates: bool = True,
-    num_workers: int = 4
-)
-```
-
-**Parameters:**
-- `output_csv_path` (str): Path to write the metadata CSV file
-- `lw_method` (str): Method for calculating water-leaving radiance. Options:
-  - `"mobley_rho_method"` (default): Uses Mobley's rho parameter
-  - `"hedley_method"`: Hedley/Hochberg sky glint removal
-  - `"blackpixel_method"`: Black pixel assumption method
-- `ed_method` (str): Method for calculating downwelling irradiance. Options:
-  - `"dls_ed"` (default): Uses DLS sensor data
-  - `"panel_ed"`: Uses calibrated reflectance panel
-  - `"dls_and_panel_ed"`: DLS corrected by panel
-- `mask_pixels` (bool): Whether to apply pixel masking (default: False)
-- `pixel_masking_method` (str): Masking method - `"value_threshold"` or `"std_threshold"`
-- `nir_threshold` (float): NIR reflectance threshold for masking glint (default: 0.01)
-- `green_threshold` (float): Green reflectance threshold for masking shadows (default: 0.005)
-- `num_workers` (int): Number of parallel workers (default: 4)
-
-#### `save_wq_imgs()`
-
-Calculate water quality parameters from Rrs images.
-
-```python
-dronewq.save_wq_imgs(
-    wq_alg: str = "chl_gitelson",
-    start: int = 0,
-    count: int = 10000,
-    num_workers: int = 4
-)
-```
-
-**Parameters:**
-- `wq_alg` (str): Water quality algorithm to apply. Options:
-  - `"chl_gitelson"` (default): Gitelson et al. 2007, recommended for coastal waters
-  - `"chl_hu"`: Hu et al. 2012, for low chlorophyll (<0.15 mg m⁻³)
-  - `"chl_ocx"`: OCx algorithm, for higher chlorophyll (>0.2 mg m⁻³)
-  - `"chl_hu_ocx"`: Blended NASA algorithm combining Hu and OCx
-  - `"nechad_tsm"`: Nechad et al. 2010 for total suspended matter
-- `start` (int): Starting image index (default: 0)
-- `count` (int): Number of images to process (default: 10000)
-- `num_workers` (int): Number of parallel workers (default: 4)
-
-### Water Quality Algorithms
-
-#### Chlorophyll-a Algorithms
-
-```python
-# Gitelson (recommended for coastal/Case 2 waters)
-chl = dronewq.chl_gitelson(Rrsred, Rrsrededge)
-
-# Hu (for low chlorophyll concentrations)
-chl = dronewq.chl_hu(Rrsblue, Rrsgreen, Rrsred)
-
-# OCx (for higher chlorophyll concentrations)
-chl = dronewq.chl_ocx(Rrsblue, Rrsgreen)
-
-# Blended Hu-OCx (NASA standard)
-chl = dronewq.chl_hu_ocx(Rrsblue, Rrsgreen, Rrsred)
-```
-
-#### Total Suspended Matter
-
-```python
-# Nechad et al. 2010
-tsm = dronewq.tsm_nechad(Rrsred)
-```
-
-### Georeferencing and Mosaicking
-
-#### `compute_flight_lines()`
-
-Compute flight lines from capture metadata.
-
-```python
-flight_lines = dronewq.compute_flight_lines(
-    captures_yaw: np.ndarray,
-    altitude: float,
-    pitch: float = 0,
-    roll: float = 0,
-    threshold: float = 10
-)
-```
-
-#### `georeference()`
-
-Georeference images using camera metadata and flight parameters.
-
-```python
-dronewq.georeference(
-    metadata: pd.DataFrame,
-    input_dir: str,
-    output_dir: str,
-    lines: List[Dict] = None,
-    altitude: float = None,
-    pitch: float = 0,
-    roll: float = 0,
-    yaw: float = None,
-    num_workers: int = 4
-)
-```
-
-#### `mosaic()`
-
-Create an orthomosaic from georeferenced images.
-
-```python
-dronewq.mosaic(
-    input_dir: str,
-    output_path: str,
-    method: str = "mean"
-)
-```
-
-### Utility Functions
-
-#### `configure()`
-
-Configure package settings (main directory and subdirectories).
-
-```python
-dronewq.configure(main_dir="/path/to/main_directory")
-```
-
-#### `retrieve_imgs_and_metadata()`
-
-Load images and associated metadata.
-
-```python
-images, metadata = dronewq.retrieve_imgs_and_metadata(
-    img_dir: str,
-    count: int = 10000,
-    start: int = 0,
-    altitude_cutoff: float = 0,
-    sky: bool = False,
-    random: bool = False
-)
-```
-
-#### `write_metadata_csv()`
-
-Extract and save image metadata to CSV.
-
-```python
-dronewq.write_metadata_csv(
-    img_set: ImageSet,
-    csv_output_path: str
-)
-```
-
-### Module Overview
-
-**Core Modules (`dronewq.core`):**
-- `raw_to_rss.py`: Main processing pipeline (raw → Rrs)
-- `wq_calc.py`: Water quality algorithm implementations
-- `georeference.py`: Image georeferencing functions
-- `mosaic.py`: Orthomosaic creation
-- `plot_map.py`: Visualization utilities
-
-**Water Leaving Radiance Methods (`dronewq.lw_methods`):**
-- `mobley_rho.py`: Mobley rho sky reflection removal
-- `hedley.py`: Hedley/Hochberg method
-- `blackpixel.py`: Black pixel assumption method
-
-**Downwelling Irradiance Methods (`dronewq.ed_methods`):**
-- `dls_ed.py`: DLS-based irradiance calculation
-- `panel_ed.py`: Panel-based irradiance calculation
-
-**Masking Methods (`dronewq.masks`):**
-- `threshold_masking.py`: Threshold-based pixel masking
-- `std_masking.py`: Standard deviation-based masking
-
-**Utilities (`dronewq.utils`):**
-- `settings.py`: Configuration management
-- `images.py`: Image loading and processing utilities
-- `metadata.py`: Metadata extraction and management
 
 ## Example Workflow
 
@@ -426,33 +224,11 @@ See the `primary_demo.ipynb` notebook for a complete example workflow using the 
 4. Applying bio-optical algorithms
 5. Georeferencing and creating mosaics
 
-## Configuration
-
-DroneWQ uses a singleton settings object to manage paths and configuration:
-
-```python
-import dronewq
-
-# Set main directory (auto-populates subdirectories)
-dronewq.configure(main_dir="/path/to/data")
-
-# Access settings
-print(dronewq.settings.main_dir)
-print(dronewq.settings.rrs_dir)
-print(dronewq.settings.wq_dir)
-
-# Or use the settings object directly
-from dronewq.utils.settings import settings
-settings.configure(main_dir="/path/to/data")
-```
-
 ## Performance Tips
 
 1. **Parallel Processing**: Adjust `num_workers` based on your CPU cores (default: 4)
 2. **Batch Processing**: Use `start` and `count` parameters to process large datasets in batches
-3. **Intermediate Cleanup**: Set `clean_intermediates=True` to save disk space after processing
-4. **Memory Management**: For very large datasets, process images in smaller batches
-
+3. **save_images=False**: Turn off intermediate image saving to save disk space and speed up processing
 
 ---
 

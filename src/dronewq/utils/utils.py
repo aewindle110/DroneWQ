@@ -42,3 +42,24 @@ def validate_folder(folder: Path | str) -> Path:
         msg = f"{folder} does not exist."
         raise LookupError(msg)
     return folder
+
+
+def get_filepaths(dir_path: Path) -> list[Path]:
+    """Reads a directory and returns a list of tiff files."""
+    return list(dir_path.glob("*.tif"))
+
+
+def get_sorted_filepaths(
+    dir_path: Path, start: int = 0, count: int = 10000
+) -> list[Path]:
+    """Reads a directory and returns a sorted list of tiff files."""
+
+    def _capture_path_to_int(path: Path) -> int:
+        return int(path.stem.split("_")[-1].split(".")[0])
+
+    filenames = sorted(
+        dir_path.glob("*.tif"),
+        key=_capture_path_to_int,
+    )[start:count]
+
+    return filenames

@@ -19,16 +19,13 @@ def write_metadata_csv(img_dir: str | Path, csv_output_path: str | Path) -> Path
     Returns
         A string path to the generated .csv file
     """
-    img_dir = Path(img_dir) if isinstance(img_dir, str) else img_dir
-    csv_output_path = (
-        Path(csv_output_path) if isinstance(csv_output_path, str) else csv_output_path
-    )
+    img_dir = Path(img_dir)
+    csv_output_path = Path(csv_output_path)
+    csv_output_path.mkdir(parents=True, exist_ok=True)
     if not img_dir.exists():
         raise FileNotFoundError(
             f"Image directory {img_dir} does not exist."
         )  # pragma: no cover
-    if not csv_output_path.exists():
-        csv_output_path.mkdir(parents=True, exist_ok=True)
 
     img_set = ImageSet.from_directory(img_dir)
 

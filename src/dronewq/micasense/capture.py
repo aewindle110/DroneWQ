@@ -589,15 +589,20 @@ class Capture:
         out_file_name,
         sort_by_wavelength=False,
         photometric="MINISBLACK",
+        compress="DEFLATE",
     ):
         """
         Output the Images in the Capture object as GTiff image stack.
+        Optimized for speed and scalability with larger tile sizes and better I/O patterns.
         :param out_file_name: str system file path
         :param sort_by_wavelength: boolean
         :param photometric: str GDAL argument for GTiff color matching
+        :param compress: str Compression algorithm ('DEFLATE', 'LZW', 'ZSTD', 'WEBP')
         """
-        from osgeo.gdal import GDT_Float32  # PGedits I also changed this
-        from osgeo.gdal import GetDriverByName
+        from osgeo.gdal import UseExceptions
+
+        UseExceptions()
+        from osgeo.gdal import GDT_Float32, GetDriverByName
 
         if self.__aligned_capture is None:
             raise RuntimeError(
@@ -607,6 +612,7 @@ class Capture:
         rows, cols, bands = self.__aligned_capture.shape
         driver = GetDriverByName("GTiff")
 
+        tile_size = 512
         out_raster = driver.Create(
             out_file_name,
             cols,
@@ -615,8 +621,12 @@ class Capture:
             GDT_Float32,
             options=[
                 "INTERLEAVE=BAND",
-                "COMPRESS=DEFLATE",
+                f"COMPRESS={compress}",
+                "TILED=YES",
+                f"BLOCKXSIZE={tile_size}",
+                f"BLOCKYSIZE={tile_size}",
                 f"PHOTOMETRIC={photometric}",
+                "NUM_THREADS=3",
             ],
         )
         try:
@@ -630,25 +640,21 @@ class Capture:
             else:
                 eo_list = self.eo_indices()
 
-            for out_band, in_band in enumerate(eo_list):
-                out_band = out_raster.GetRasterBand(out_band + 1)
-                out_data = self.__aligned_capture[:, :, in_band]
-                out_data[out_data < 0] = 0
-                # out_data[out_data > 2] = 2  # limit reflectance data to 200% to allow some specular reflections
-                # out_band.WriteArray(out_data * 32768)  # scale reflectance images so 100% = 32768
-                out_band.WriteArray(out_data)  # PGedits we're not scaling for now
-                out_band.FlushCache()
+            all_band_indices = eo_list + self.lw_indices()
 
-            for out_band, in_band in enumerate(self.lw_indices()):
-                out_band = out_raster.GetRasterBand(len(eo_list) + out_band + 1)
-                # scale data from float degC to back to centi-Kelvin to fit into uint16
-                # out_data = (self.__aligned_capture[:, :, in_band] + 273.15) * 100
-                # we don't scale
-                out_data = self.__aligned_capture[:, :, in_band]
-                out_data[out_data < 0] = 0
-                out_data[out_data > 65535] = 65535
+            for out_band_idx, in_band in enumerate(all_band_indices):
+                out_band = out_raster.GetRasterBand(out_band_idx + 1)
+                out_data = self.__aligned_capture[:, :, in_band].copy()
+
+                if out_band_idx < len(eo_list):
+                    out_data[out_data < 0] = 0
+                else:
+                    out_data = np.clip(out_data, 0, 65535)
+
                 out_band.WriteArray(out_data)
                 out_band.FlushCache()
+                out_band = None
+
         finally:
             out_raster = None
 

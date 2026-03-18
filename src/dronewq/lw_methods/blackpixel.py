@@ -5,7 +5,8 @@ import logging
 import numpy as np
 
 from dronewq.utils.data_types import Base_Compute_Method, Image
-from dronewq.utils.images import get_filepaths, load_imgs
+from dronewq.utils.images import load_imgs
+from dronewq.utils.utils import get_filepaths
 from dronewq.utils.settings import settings
 
 logger = logging.getLogger(__name__)

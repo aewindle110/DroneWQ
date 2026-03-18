@@ -4,6 +4,7 @@ Refactored by: Temuulen and Kurtis
 
 import concurrent.futures
 import logging
+import multiprocessing as mp
 from functools import partial
 from pathlib import Path
 
@@ -12,10 +13,12 @@ import rasterio
 from rasterio.windows import Window
 from tqdm import tqdm
 
-from dronewq.utils.images import get_sorted_filepaths
 from dronewq.utils.settings import settings
+from dronewq.utils.utils import get_sorted_filepaths
 
 logger = logging.getLogger(__name__)
+
+context = mp.get_context("spawn")
 
 
 def save_wq(arr: np.ndarray, output_path: Path, profile: dict):
@@ -73,7 +76,6 @@ def __compute(filename, wq_algs, main_dir):
 
 def save_wq_imgs(
     rrs_dir: Path | str,
-    output_dir: Path | str = "",
     wq_algs: list[str] = ["chl_gitelson"],
     start: int = 0,
     count: int = 10000,
@@ -92,9 +94,6 @@ def save_wq_imgs(
     rrs_dir : str | Path
         Directory containing input Rrs raster files.
 
-    output_dir : str | Path, optional
-        Directory to save output files. If not provided, defaults to
-        `rrs_dir.parent`.
 
     wq_algs : `list[str]`, optional
         List of algorithm names to apply.
@@ -121,10 +120,6 @@ def save_wq_imgs(
 
     main_dir = rrs_dir.parent
 
-    if output_dir:
-        main_dir = Path(output_dir)
-        main_dir.mkdir(parents=True, exist_ok=True)
-
     for wq_alg in wq_algs:
         attribute_name = wq_alg + "_dir"
         wq_dir_name = "masked_" + wq_alg + "_imgs"
@@ -143,6 +138,7 @@ def save_wq_imgs(
 
     with concurrent.futures.ProcessPoolExecutor(
         max_workers=num_workers,
+        mp_context=context,
     ) as executor:
         results = executor.map(partial_compute, filenames)
 
@@ -223,13 +219,13 @@ def chl_ocx(Rrs):
 
     # Compute ratio, handling cases where values cannot be log10'd
     ratio = Rrsblue / Rrsgreen
-    
+
     # Create mask for valid values (positive, non-NaN ratios)
     valid_mask = (ratio > 0) & (~np.isnan(ratio))
-    
+
     # Initialize output array with NaN
     temp = np.full_like(ratio, np.nan, dtype=np.float32)
-    
+
     # Only compute log10 for valid values
     temp[valid_mask] = np.log10(ratio[valid_mask])
 

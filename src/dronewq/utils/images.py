@@ -9,7 +9,6 @@ import pandas as pd
 import rasterio
 from rasterio.windows import Window
 
-import dronewq
 from dronewq.micasense import imageset, imageutils
 from dronewq.utils.data_types import Image
 from dronewq.utils.settings import settings
@@ -82,8 +81,7 @@ def load_imgs(
     >>> imgs = load_imgs('/path/to/images', count=10)
     >>> imgs = list(imgs)
     """
-    if isinstance(img_dir, str):
-        img_dir = Path(img_dir)
+    img_dir = Path(img_dir)
     if not img_dir.exists():
         raise FileNotFoundError(f"Directory {img_dir} does not exist.")
     if not img_dir.is_dir():
@@ -188,8 +186,7 @@ def load_metadata(
     >>> df = load_metadata('/path/to/images', altitude_cutoff=10)
     >>> print(f"Mean altitude: {df['Altitude'].mean():.2f}m")
     """
-    if isinstance(img_dir, str):
-        img_dir = Path(img_dir)
+    img_dir = Path(img_dir)
 
     if "sky" in str(img_dir):
         base = img_dir
@@ -410,31 +407,7 @@ def process_micasense_images(
     )
 
     logger.info("Finished saving images at: %s", output_path)
-    fullCsvPath = dronewq.write_metadata_csv(img_dir, output_path)
-    logger.info("Finished saving image metadata at: %s", fullCsvPath)
-
     return output_path
-
-
-def get_filepaths(dir_path: Path) -> list[Path]:
-    """Reads a directory and returns a list of tiff files."""
-    return list(dir_path.glob("*.tif"))
-
-
-def get_sorted_filepaths(
-    dir_path: Path, start: int = 0, count: int = 10000
-) -> list[Path]:
-    """Reads a directory and returns a sorted list of tiff files."""
-
-    def _capture_path_to_int(path: Path) -> int:
-        return int(path.stem.split("_")[-1].split(".")[0])
-
-    filenames = sorted(
-        dir_path.glob("*.tif"),
-        key=_capture_path_to_int,
-    )[start:count]
-
-    return filenames
 
 
 def read_file(file: Path) -> Image:
@@ -448,22 +421,13 @@ def read_file(file: Path) -> Image:
     return lt_img
 
 
-def save_img(img: Image, output_folder: Path):
-    """Saves image."""
-    # Getting the main dir filepath from the image
-    # instead of settings.main_dir because
-    # settings is not getting shared in between
-    # processes. TODO: Have to fix this.
-    profile = img.profile
-    profile["count"] = 5
-    output_path = output_folder.joinpath(img.method).joinpath(img.file_name)
-
+def write_data(data, output_path, profile) -> None:
+    """Windowed data write to a filepath using rasterio."""
     with rasterio.open(
         output_path,
         "w",
         **profile,
     ) as dst:
-        data = img.data
         height, width = data.shape[-2:]
         chunk_size = 256
 
@@ -480,3 +444,15 @@ def save_img(img: Image, output_folder: Path):
                     window_data = data[row:row_end, col:col_end]
 
                 dst.write(window_data, window=window)
+
+
+def save_img(img: Image, output_folder: Path):
+    """Saves image."""
+    # Getting the main dir filepath from the image
+    # instead of settings.main_dir because
+    # settings is not getting shared in between
+    # processes. TODO: Have to fix this.
+    profile = img.profile
+    profile["count"] = 5
+    output_path = output_folder.joinpath(img.file_name)
+    write_data(img.data, output_path, profile)
