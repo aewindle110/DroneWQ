@@ -36,7 +36,9 @@ def __latlon_to_index(dst, src):
     lons, lats = np.array(xs), np.array(ys)
 
     # Flatten, convert all at once, then reshape — avoids the row-by-row loop
-    row_indices, col_indices = rasterio.transform.rowcol(dst.transform, lons.flatten(), lats.flatten())
+    row_indices, col_indices = rasterio.transform.rowcol(
+        dst.transform, lons.flatten(), lats.flatten()
+    )
 
     row_indices = np.array(row_indices).reshape(src.height, src.width)
     col_indices = np.array(col_indices).reshape(src.height, src.width)
@@ -212,6 +214,7 @@ def __mean(
         ndarray: resulting merge
     """
     final_data = np.zeros(shape=(n_bands, height, width), dtype=dtype)
+    final_data[:] = np.nan
     count = np.zeros(shape=(n_bands, height, width), dtype=np.uint8)
 
     for raster_path in tqdm(raster_paths):
@@ -231,7 +234,13 @@ def __mean(
                 axis=0,
             )
 
-    return np.divide(final_data, count)
+    result = np.divide(
+        final_data,
+        count,
+        where=count != 0,
+        out=np.full_like(final_data, np.nan, dtype=dtype),
+    )
+    return result
 
 
 def __first(

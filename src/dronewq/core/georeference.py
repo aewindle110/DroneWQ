@@ -1,6 +1,7 @@
 """
-Not much is changed from the original code
-Refactored docstrings: Temuulen
+Not much is changed from the original code.
+
+Refactored docstrings: Temuulen.
 """
 
 from pathlib import Path
@@ -14,7 +15,6 @@ from rasterio import control, transform
 from tqdm import tqdm
 
 from dronewq.utils.images import write_data
-
 
 def compute_flight_lines(
     captures_yaw,
@@ -386,7 +386,6 @@ def __get_georefence_by_uuid(
     dict[str, Affine]
         Mapping from filename (UUID) to its computed affine transformation.
     """
-
     lines = (
         lines
         if lines is not None
