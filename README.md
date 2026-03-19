@@ -3,7 +3,7 @@
 # DroneWQ: A Python library for measuring water quality with a multispectral drone sensor
 
 
-DroneWQ is a Python package that can be used to analyze multispectral data collected from a drone to derive ocean color radiometry and water quality properties. These scripts are specific for the MicaSense RedEdge and Altum cameras. Please note that since this code was originally developed, changes to proprietary sensor branding have occurred. In 2021, MicaSense was acquired by AgEagle Aerial Systems, which subsequently rebranded as EagleNXT in 2025. The [MicaSense sensor product line](https://eaglenxt.com/solutions/micasense-series-multispectral-cameras/) remains available and is expected to remain compatible with DroneWQ.
+DroneWQ is a Python package that can be used to analyze multispectral data collected from a drone to derive ocean color radiometry and estimate water quality concentrations. These scripts are specific for the MicaSense RedEdge and Altum cameras. Please note that since this code was originally developed, changes to proprietary sensor branding have occurred. In 2021, MicaSense was acquired by AgEagle Aerial Systems, which subsequently rebranded as EagleNXT in 2025. The [MicaSense sensor product line](https://eaglenxt.com/solutions/micasense-series-multispectral-cameras/) remains available and is expected to remain compatible with DroneWQ.
 
 
 ![Caption for example figure.\label{fig:DroneWQ_workflow}](figs/DroneWQ.png)
@@ -119,7 +119,7 @@ Copy the generated URL from the terminal into your web browser.
 - Image radiance output in milliwatts (mW) instead of watts (W)
 - Modified `capture.save_capture_as_stack()` to not scale and filter data
 
-These modifications impact the panel_ed calculation. When MicaSense releases a package with user-specified radiance data types, we will revert to their official package. 
+These modifications impact the `panel_ed` calculation. If MicaSense releases a package with user-specified radiance data types, we will revert to their official package. 
 
 
 ## Quick Start
@@ -142,7 +142,7 @@ DroneWQ requires MicaSense images organized in a specific folder structure:
 - **raw_water_imgs/**: Contains all water images captured during the flight
 - **align_img/**: Contains one image capture (5 .tif files, one per band) from `raw_water_imgs/` used to compute the warp matrix for aligning all images
 
-You can find a sample dataset (Lake Erie) at [Zenodo DOI](https://doi.org/10.5281/zenodo.14018788). It is recommended to upload this dataset to the `examples` directory. 
+A sample drone dataset consisting of images collected over western Lake Erie is available on [Zenodo](https://doi.org/10.5281/zenodo.14018788) and is 5.84 GB unzipped. Depending on your computer's speed, you may want to subset the data before running the full workflow. 
 
 ### 2. Configure Settings
 
@@ -164,7 +164,7 @@ The main processing function converts raw imagery to calibrated remote sensing r
 ```python
 from dronewq import Hedley, DlsEd, ThresholdMasking
 # Process raw images to Rrs
-dronewq.RRSPipeline(
+dronewq.RrSPipeline(
     output_folder=output_folder,
     lw_method=Hedley(save_images=True),
     ed_method=DlsEd(output_folder),
@@ -175,13 +175,13 @@ dronewq.RRSPipeline(
 
 **Processing workflow:**
 1. **Raw → Lt**: Converts raw pixel values to radiance (Lt)
-2. **Lt → Lw**: Removes sky reflection to get water-leaving radiance (Lw)
-3. **Lw → Rrs**: Normalizes by downwelling irradiance (Ed) to get remote sensing reflectance (Rrs)
+2. **Lt → Lw**: Removes sky reflection to obtain water-leaving radiance (Lw)
+3. **Lw → Rrs**: Normalizes by downwelling irradiance (Ed) to obtain remote sensing reflectance (Rrs)
 4. **Masking**: Optionally masks pixels containing glint, shadows, or vegetation
 
 ### 4. Calculate Water Quality Parameters
 
-Apply bio-optical algorithms to retrieve water quality parameters:
+Apply bio-optical algorithms to estimate water quality parameters:
 
 ```python
 # Calculate chlorophyll-a using Gitelson algorithm
