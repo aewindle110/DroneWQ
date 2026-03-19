@@ -51,7 +51,7 @@ affiliations:
  - name: Horn Point Laboratory, University of Maryland Center for Environmental Science, Cambridge, MD, United States
    index: 7
  
-date: 13 November 2024
+date: 19 March 2026
 bibliography: paper.bib
 ---
 
@@ -115,7 +115,7 @@ We acknowledge and appreciate helpful support from the Micasense team. We thank 
 Contributions are welcome, and they are greatly appreciated! Every little bit helps, and credit will always be given.
 
 Report bugs, request features or submit feedback as a GitHub Issue.
-Make fixes, add content or improvements using GitHub Pull Requests
+Make fixes, add content or improvements using GitHub Pull Requests.
 
 # References
 
