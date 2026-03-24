@@ -94,26 +94,6 @@ On macOS (using Homebrew):
 brew install gdal exiftool zbar opencv
 ```
 
-### Docker Installation (Alternative)
-
-The Docker image includes all dependencies pre-configured. See https://docs.docker.com/ for installation files.
-
-With Docker installed and running, launch the container:
-
-```bash
-docker run -it -v <local directory>:/home/jovyan --rm -p 8888:8888 clifgray/dronewq:v3
-```
-
-where `<local directory>` is where you want data to be saved. 
-
-Then launch Jupyter Lab:
-
-```bash
-jupyter lab --allow-root --ip 0.0.0.0 /home/jovyan
-```
-
-Copy the generated URL from the terminal into your web browser.
-
 **Note**: We have included a modified version of the MicaSense imageprocessing scripts in this repo. Our modifications include:
 - Radiance data type expressed as Float32 instead of Uint16
 - Image radiance output in milliwatts (mW) instead of watts (W)
