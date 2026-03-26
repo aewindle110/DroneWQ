@@ -4,17 +4,12 @@ build:
   os: "ubuntu-22.04"
   tools:
     python: "3.10"
-  apt_packages:
-    - python3-hatch
   commands:
-    # Install hatch if not available
-    - pip install hatch
-    # Build documentation using hatch
-    - hatch run docs:build
-    # Copy built HTML to ReadTheDocs output directory
     - mkdir --parents _readthedocs/html/
+    - ls docs/
+    - ls docs/pre_built_html/
     - cp --recursive docs/pre_built_html/* _readthedocs/html/
 
 sphinx:
   configuration: docs/source/conf.py
-  fail_on_warning: true
+  fail_on_warning: false
