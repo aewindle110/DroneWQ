@@ -6,8 +6,6 @@ from dronewq.utils.data_types import Base_Compute_Method, Image
 
 logger = logging.getLogger(__name__)
 
-MASK_VALUE = np.nan
-
 
 class ThresholdMasking(Base_Compute_Method):
     """
@@ -30,9 +28,6 @@ class ThresholdMasking(Base_Compute_Method):
         Lower threshold for green reflectance (sr^-1). Pixels with Rrs(green) below
         this value are masked. These typically represent vegetation shadows or
         very dark features. Default is 0.005.
-    save_images : bool, optional
-        If True, saves the processed images to the specified output directory.
-        Default is False.
 
     Notes
     -----

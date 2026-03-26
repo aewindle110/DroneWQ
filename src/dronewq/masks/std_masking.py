@@ -32,9 +32,6 @@ class StdMasking(Base_Compute_Method):
         Lower values result in more aggressive masking (more pixels masked).
         Higher values are more conservative (fewer pixels masked). Typical
         values range from 0.5 to 2.0. Default is 1.
-    save_images : bool, optional
-        If True, saves the processed images to the specified output directory.
-        Default is False.
 
     Notes
     -----
@@ -91,6 +88,18 @@ class StdMasking(Base_Compute_Method):
             raise RuntimeError(f"File {rrs_img.file_path!s} failed: {e!s}")
 
     def preprocess_masking(self, rrs_dir: Path) -> None:
+        """
+        Calculates the mean and standard deviation of NIR reflectance values
+        from a random subset of images.
+
+        Saves the calculated values to the method object's attributes.
+
+        Parameters
+        ----------
+        rrs_dir : Path
+            Path to the directory containing Rrs images.
+
+        """
         if not rrs_dir.exists():
             raise LookupError(f"Rrs directory {rrs_dir} does not exist.")
 

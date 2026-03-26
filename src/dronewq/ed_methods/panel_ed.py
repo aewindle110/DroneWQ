@@ -25,9 +25,6 @@ class Panel_ed(Base_Compute_Method):
     ----------
     output_csv_path : str
         Path to the output CSV file.
-    save_images : bool, optional
-        If True, saves the processed images to the specified output directory.
-        Default is False.
 
     Notes
     -----
