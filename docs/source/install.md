@@ -2,9 +2,8 @@
 
 ## Requirements
 
-> [!IMPORTANT]
-> Our code requires system level dependencies `gdal`, `zbar`, `exiftool`, and `opencv`.
-> It is the most straightforward to install them through conda-forge.
+**IMPORTANT:** Our code requires system level dependencies `gdal`, `zbar`, `exiftool`, and `opencv`.
+It is the most straightforward to install them through conda-forge.
 
 ### Install from PyPI (Recommended)
 
@@ -66,9 +65,8 @@ sudo apt-get update
 sudo apt-get install gdal-bin libgdal-dev exiftool opencv zbar-tools python3-gdal python3-cartopy
 ```
 
-> [!IMPORTANT]
-> Pip on macOS currently doesn't search through the place homebrew installations go to.
-> Thus, you have to specify it using this method https://github.com/npinchot/zbar/issues/3#issuecomment-1038005495
+**IMPORTANT:** Pip on macOS currently doesn't search through the place homebrew installations go to.
+Thus, you have to specify it using this [method](https://github.com/npinchot/zbar/issues/3#issuecomment-1038005495).
 
 On macOS (using Homebrew):
 ```bash

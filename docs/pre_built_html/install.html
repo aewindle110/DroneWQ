@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Installation &mdash; dronewq 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -47,11 +47,18 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="theory.html">Processing and theory</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#initial-setup">Initial Setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#launching-code">Launching code</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#alternative-installation-conda">Alternative Installation (conda)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#micasense-folder-structure">MicaSense Folder Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#install-from-pypi-recommended">Install from PyPI (Recommended)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#install-from-environment-yml">Install from environment.yml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#install-from-source">Install from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#system-requirements">System Requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#organize-your-data">Organize Your Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configure-settings">Configure Settings</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="primary_demo.html">Demonstration of <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> functions and processing code</a></li>
@@ -94,49 +101,117 @@
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
 <section id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
-<p>We recommend running this package in a Docker container, which is the environment that it was developed and tested in. See https://docs.docker.com/ for installation files. You will also need to install git (https://github.com/git-guides/install-git). Total file size is ~ 1.6 GB.</p>
-</section>
-<section id="initial-setup">
-<h2>Initial Setup<a class="headerlink" href="#initial-setup" title="Link to this heading"></a></h2>
-<p>Once Docker and git are installed, setup a local directory. Navigate to the directory through terminal (OSX or Linux) or Powershell (Windows). Clone the repo to your local machine:</p>
-<p><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/aewindle110/DroneWQ.git</span></code>.</p>
-</section>
-<section id="launching-code">
-<h2>Launching code<a class="headerlink" href="#launching-code" title="Link to this heading"></a></h2>
-<p>With the Docker app running on your desktop, you need to launch the Docker container. Note that the first execution of this line of code will install the Docker image and setup and configure all required software (python, jupyter notebooks) and packages. This could take several minutes, depending on computer speed.</p>
-<p><code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span> <span class="pre">-it</span> <span class="pre">-v</span> <span class="pre">&lt;local</span> <span class="pre">directory&gt;:/home/jovyan</span> <span class="pre">--rm</span> <span class="pre">-p</span> <span class="pre">8888:8888</span> <span class="pre">clifgray/dronewq:v3</span></code></p>
-<p>where <code class="docutils literal notranslate"><span class="pre">&lt;local</span> <span class="pre">directory&gt;</span></code> is where you want data to be saved.</p>
-<p>It should already be activated but if you need to activate the dronewq conda environment:</p>
-<p><code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dronewq</span></code></p>
-<p>And then launch a jupyter lab or notebook from the home directory on the docker container:</p>
-<p><code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">lab</span> <span class="pre">--allow-root</span> <span class="pre">--ip</span> <span class="pre">0.0.0.0</span> <span class="pre">/home/jovyan</span></code></p>
-<p>Copy the generated URL in the terminal (e.g. <code class="docutils literal notranslate"><span class="pre">http://127.0.0.1:8888/?token=&lt;auto</span> <span class="pre">generated</span> <span class="pre">token&gt;</span></code>) into a web browser.</p>
-</section>
-<section id="alternative-installation-conda">
-<h2>Alternative Installation (conda)<a class="headerlink" href="#alternative-installation-conda" title="Link to this heading"></a></h2>
-<p>You can also build the environment yourself by following the instructions from the micasense repo here https://micasense.github.io/imageprocessing/MicaSense%20Image%20Processing%20Setup.html which includes instructions on how to download exiftool. We have included a lightweight version of the MicaSense imageprocessing scripts in this repo (they can be found <a class="reference external" href="https://github.com/micasense/imageprocessing">here</a>. Note that our <code class="docutils literal notranslate"><span class="pre">micasense</span></code> scripts are slightly modified in that radiance data type is expressed as Float32 instead of Uint16 and we change the output of image.radiance() to output milliwatts (mW) instead of watts (W). This impacts the panel_ed calculation which relies on image.radiance(). We also modified capture.save_capture_as_stack() accordingly to not scale and filter the data. MicaSense is planning on a future package with user specified radiance data types, at which point we will revert to their package version.</p>
-<p>After you have cloned the DroneWQ repo to your local machine and installed exiftool, <code class="docutils literal notranslate"><span class="pre">cd</span></code> to the directory you cloned this repository to.</p>
-<p>Create a virtual conda env by running <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">env</span> <span class="pre">create</span> <span class="pre">-f</span> <span class="pre">environment.yml</span></code>. This will configure an anaconda environment with all of the required tools and libraries.
-When it’s done, run <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dronewq</span></code> to activate the environment configured.
-Each time you start a new anaconda prompt, you’ll need to run <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dronewq</span></code>.</p>
-<p>To access jupyter notebook or lab, run <code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">lab</span></code> or <code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">notebook</span></code></p>
-</section>
-<section id="micasense-folder-structure">
-<h2>MicaSense Folder Structure<a class="headerlink" href="#micasense-folder-structure" title="Link to this heading"></a></h2>
-<p>Once all MicaSense images have been downloaded into a local directory (e.g. <code class="docutils literal notranslate"><span class="pre">\data</span></code>), you will need to manually separate images into 4 sub-directories as below:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>\<span class="n">data</span>
-    \<span class="n">panel</span>
-    \<span class="n">raw_sky_imgs</span>
-    \<span class="n">raw_water_imgs</span>
-    \<span class="n">align_img</span>
+<blockquote>
+<div><p>[!IMPORTANT]
+Our code requires system level dependencies <code class="docutils literal notranslate"><span class="pre">gdal</span></code>, <code class="docutils literal notranslate"><span class="pre">zbar</span></code>, <code class="docutils literal notranslate"><span class="pre">exiftool</span></code>, and <code class="docutils literal notranslate"><span class="pre">opencv</span></code>.
+It is the most straightforward to install them through conda-forge.</p>
+</div></blockquote>
+<section id="install-from-pypi-recommended">
+<h3>Install from PyPI (Recommended)<a class="headerlink" href="#install-from-pypi-recommended" title="Link to this heading"></a></h3>
+<p>The easiest way to install DroneWQ is using conda and pip:</p>
+<p>First, create your conda environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span><span class="o">{</span>your<span class="w"> </span>project<span class="w"> </span>name<span class="o">}</span><span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.13<span class="w"> </span>exiftool<span class="w"> </span>gdal<span class="w"> </span>zbar<span class="w"> </span>opencv<span class="w"> </span>-c<span class="w"> </span>conda-forge
 </pre></div>
 </div>
+<p>Then, activate your environemt:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span><span class="o">{</span>your<span class="w"> </span>project<span class="w"> </span>name<span class="o">}</span>
+</pre></div>
+</div>
+<p>Finally, install dronewq:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>dronewq
+</pre></div>
+</div>
+</section>
+<section id="install-from-environment-yml">
+<h3>Install from environment.yml<a class="headerlink" href="#install-from-environment-yml" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Clone the repository or download the <a class="reference internal" href="#./environment.yml"><span class="xref myst">environment.yml</span></a> file.</p></li>
+<li><p>Create a conda environment using the environment.yml file:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Activate the environment:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span>dronewq
+</pre></div>
+</div>
+</section>
+<section id="install-from-source">
+<h3>Install from Source<a class="headerlink" href="#install-from-source" title="Link to this heading"></a></h3>
+<p>If you want to install from source:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/aewindle110/DroneWQ.git
+<span class="nb">cd</span><span class="w"> </span>DroneWQ
+conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span><span class="o">{</span>your<span class="w"> </span>project<span class="w"> </span>name<span class="o">}</span><span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.13<span class="w"> </span>exiftool<span class="w"> </span>gdal<span class="w"> </span>zbar<span class="w"> </span>opencv<span class="w"> </span>-c<span class="w"> </span>conda-forge
+conda<span class="w"> </span>activate<span class="w"> </span><span class="o">{</span>your<span class="w"> </span>project<span class="w"> </span>name<span class="o">}</span>
+pip<span class="w"> </span>install<span class="w"> </span>.
+</pre></div>
+</div>
+</section>
+<section id="system-requirements">
+<h3>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading"></a></h3>
+<p>DroneWQ requires Python &gt;=3.10. Some dependencies require additional system libraries which is installed through conda:</p>
 <ul class="simple">
-<li><p>The panel directory should contain all image captures of the Micasense calibrated reflectance panel taken either before or after the flight</p></li>
-<li><p>The raw_sky_imgs directory should contain all image captures taken of the sky at a 40 deg angle from zenith and an apprximate 135 deg azimuthal viewing direction</p></li>
-<li><p>The raw_water_imgs directory should contain all image captures of water taken during flight</p></li>
-<li><p>The align_img directory should contain one image capture (5 .tifs) from the raw_water_imgs directory. The warp_matrix derived from this image capture is used to align all image captures in raw_water_imgs.</p></li>
+<li><p><strong>GDAL</strong>: Required for geospatial operations</p></li>
+<li><p><strong>ExifTool</strong>: Required for reading MicaSense image metadata</p></li>
+<li><p><strong>ZBar</strong>: Required for QR code reading from calibration panels</p></li>
 </ul>
+<p>On Ubuntu/Debian:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt-get<span class="w"> </span>update
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>gdal-bin<span class="w"> </span>libgdal-dev<span class="w"> </span>exiftool<span class="w"> </span>opencv<span class="w"> </span>zbar-tools<span class="w"> </span>python3-gdal<span class="w"> </span>python3-cartopy
+</pre></div>
+</div>
+<blockquote>
+<div><p>[!IMPORTANT]
+Pip on macOS currently doesn’t search through the place homebrew installations go to.
+Thus, you have to specify it using this method https://github.com/npinchot/zbar/issues/3#issuecomment-1038005495</p>
+</div></blockquote>
+<p>On macOS (using Homebrew):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>brew<span class="w"> </span>install<span class="w"> </span>gdal<span class="w"> </span>exiftool<span class="w"> </span>zbar<span class="w"> </span>opencv
+</pre></div>
+</div>
+<p><strong>Note</strong>: We have included a modified version of the MicaSense imageprocessing scripts in this repo. Our modifications include:</p>
+<ul class="simple">
+<li><p>Radiance data type expressed as Float32 instead of Uint16</p></li>
+<li><p>Image radiance output in milliwatts (mW) instead of watts (W)</p></li>
+<li><p>Modified <code class="docutils literal notranslate"><span class="pre">capture.save_capture_as_stack()</span></code> to not scale and filter data</p></li>
+</ul>
+<p>These modifications impact the <code class="docutils literal notranslate"><span class="pre">panel_ed</span></code> calculation. If MicaSense releases a package with user-specified radiance data types, we will revert to their official package.</p>
+</section>
+</section>
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<section id="organize-your-data">
+<h3>Organize Your Data<a class="headerlink" href="#organize-your-data" title="Link to this heading"></a></h3>
+<p>DroneWQ requires MicaSense images organized in a specific folder structure:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&lt;main_directory&gt;/
+    ├── panel/              # Calibrated reflectance panel images (before/after flight)
+    ├── raw_sky_imgs/       # Sky images (40° from zenith, ~135° azimuth)
+    ├── raw_water_imgs/     # Water images from flight
+    └── align_img/          # One image capture (5 .tif files) for alignment
+</pre></div>
+</div>
+<p><strong>Directory descriptions:</strong></p>
+<ul class="simple">
+<li><p><strong>panel</strong>: Contains image captures of the MicaSense calibrated reflectance panel</p></li>
+<li><p><strong>raw_sky_imgs</strong>: Contains sky images taken at 40° from zenith and ~135° azimuthal viewing direction</p></li>
+<li><p><strong>raw_water_imgs</strong>: Contains all water images captured during the flight</p></li>
+<li><p><strong>align_img</strong>: Contains one image capture (5 .tif files, one per band) from <code class="docutils literal notranslate"><span class="pre">raw_water_imgs</span></code> used to compute the warp matrix for aligning all images</p></li>
+</ul>
+<p>A sample drone dataset consisting of images collected over western Lake Erie is available on <a class="reference external" href="https://doi.org/10.5281/zenodo.14018788">Zenodo</a> and is 5.84 GB unzipped. Depending on your computer’s speed, you may want to subset the data before running the full workflow.</p>
+</section>
+<section id="configure-settings">
+<h3>Configure Settings<a class="headerlink" href="#configure-settings" title="Link to this heading"></a></h3>
+<p>Before processing, configure the main directory path:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dronewq</span>
+
+<span class="c1"># Configure the main directory containing your organized images</span>
+<span class="n">dronewq</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">main_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/your/main_directory&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">configure()</span></code> function automatically sets up all subdirectory paths based on the main directory.</p>
+</section>
 </section>
 </section>
 

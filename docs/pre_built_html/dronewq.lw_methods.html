@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>dronewq.lw_methods package &mdash; dronewq 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -55,27 +55,9 @@
 <li class="toctree-l1"><a class="reference internal" href="dronewq.core.html">dronewq.core package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">dronewq.lw_methods package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-dronewq.lw_methods.blackpixel">dronewq.lw_methods.blackpixel module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#dronewq.lw_methods.blackpixel.Blackpixel"><code class="docutils literal notranslate"><span class="pre">Blackpixel</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#dronewq.lw_methods.blackpixel.Blackpixel.preprocess"><code class="docutils literal notranslate"><span class="pre">Blackpixel.preprocess()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-dronewq.lw_methods.hedley">dronewq.lw_methods.hedley module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#dronewq.lw_methods.hedley.Hedley"><code class="docutils literal notranslate"><span class="pre">Hedley</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#dronewq.lw_methods.hedley.Hedley.preprocess"><code class="docutils literal notranslate"><span class="pre">Hedley.preprocess()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-dronewq.lw_methods.mobley_rho">dronewq.lw_methods.mobley_rho module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#dronewq.lw_methods.mobley_rho.Mobley_rho"><code class="docutils literal notranslate"><span class="pre">Mobley_rho</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#dronewq.lw_methods.mobley_rho.Mobley_rho.preprocess"><code class="docutils literal notranslate"><span class="pre">Mobley_rho.preprocess()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#dronewq-lw-methods-blackpixel-module">dronewq.lw_methods.blackpixel module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dronewq-lw-methods-hedley-module">dronewq.lw_methods.hedley module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dronewq-lw-methods-mobley-rho-module">dronewq.lw_methods.mobley_rho module</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dronewq.ed_methods.html">dronewq.ed_methods package</a></li>
@@ -113,171 +95,14 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
-<section id="module-dronewq.lw_methods.blackpixel">
-<span id="dronewq-lw-methods-blackpixel-module"></span><h2>dronewq.lw_methods.blackpixel module<a class="headerlink" href="#module-dronewq.lw_methods.blackpixel" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="dronewq.lw_methods.blackpixel.Blackpixel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dronewq.lw_methods.blackpixel.</span></span><span class="sig-name descname"><span class="pre">Blackpixel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_images</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dronewq.lw_methods.blackpixel.Blackpixel" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base_Compute_Method</span></code></a></p>
-<p>Calculate water-leaving radiance using the black pixel assumption.</p>
-<p>This function computes water-leaving radiance (Lw) by applying the black pixel
-assumption, which assumes that Lw in the near-infrared (NIR) band is negligible
-due to strong water absorption. Under this assumption, total radiance (Lt) in
-the NIR is considered to be solely surface-reflected light (Lsr), which allows
-the surface reflectance factor (rho) to be calculated if sky radiance (Lsky)
-is known. This rho is then used to remove surface-reflected light from all bands.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>save_images</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save the processed output images to disk. Default is False.</p>
-</dd>
-</dl>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>This method should only be used for Case 1 waters (clear oceanic waters)
-where there is little to no NIR signal. The black pixel assumption tends
-to fail in more turbid Case 2 waters where high concentrations of suspended
-particles enhance backscattering and produce significant Lw in the NIR.</p>
-</div>
-<p class="rubric">Notes</p>
-<p>Sky radiance (Lsky) is computed from the first 10 sky images in settings.sky_lt_dir,
-taking the median across all images for each band. This median Lsky is then used
-for all water image processing.</p>
-<p>The NIR band (band 4) is used to calculate the surface reflectance factor:
-rho = Lt_NIR / Lsky_NIR</p>
-<p>This method assumes:
-- Negligible water-leaving radiance in the NIR
-- Spatially uniform surface reflectance properties
-- Stable sky conditions during data collection</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="dronewq.lw_methods.blackpixel.Blackpixel.preprocess">
-<span class="sig-name descname"><span class="pre">preprocess</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dronewq.lw_methods.blackpixel.Blackpixel.preprocess" title="Link to this definition"></a></dt>
-<dd><p>Compute the median Lsky for all bands.</p>
-</dd></dl>
-
-</dd></dl>
-
+<section id="dronewq-lw-methods-blackpixel-module">
+<h2>dronewq.lw_methods.blackpixel module<a class="headerlink" href="#dronewq-lw-methods-blackpixel-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-dronewq.lw_methods.hedley">
-<span id="dronewq-lw-methods-hedley-module"></span><h2>dronewq.lw_methods.hedley module<a class="headerlink" href="#module-dronewq.lw_methods.hedley" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="dronewq.lw_methods.hedley.Hedley">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dronewq.lw_methods.hedley.</span></span><span class="sig-name descname"><span class="pre">Hedley</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_images</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dronewq.lw_methods.hedley.Hedley" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base_Compute_Method</span></code></a></p>
-<p>Calculate water-leaving radiance using the Hedley deglinting method.</p>
-<p>This function implements the Hedley et al. deglinting algorithm to remove
-sun glint effects from water imagery. The method models a constant ‘ambient’
-NIR brightness level representing glint-free water, which is calculated by
-averaging the minimum 10th percentile of Lt(NIR) across a random subset of
-images. A linear relationship between Lt(NIR) and visible bands is established
-for each image, and the slope of this relationship is used to remove glint
-contribution based on each pixel’s deviation from the ambient NIR level.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>save_images</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, saves the processed images to the specified output directory.</p></li>
-<li><p><strong>random_n</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of random images to sample for calculating the ambient NIR level.
-More images provide a robust estimate but increase computation time.
-Default is 10.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>The Hedley deglinting algorithm performs the following steps:
-1. Randomly samples <cite>random_n</cite> images from the Lt directory
-2. Calculates the 0.1th percentile (minimum 10%) of NIR values for each image
-3. Averages these minimum values to establish an ambient NIR level
-4. For each pixel in each image:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Fits a linear model between NIR and each visible band</p></li>
-<li><p>Removes glint: Lw = Lt - slope * (Lt_NIR - ambient_NIR)</p></li>
-</ul>
-</div></blockquote>
-<ol class="arabic simple" start="5">
-<li><p>Preserves the original NIR band in the output</p></li>
-</ol>
-<p>This method is effective for removing sun glint when:
-- Surface roughness is relatively uniform
-- The water body contains some glint-free pixels
-- Glint patterns are spatially coherent</p>
-<p>The algorithm processes 5 bands, with bands 0-3 being deglinted visible bands
-and band 4 being the unchanged NIR band.</p>
-<p class="rubric">References</p>
-<p>Hedley, J. D., Harborne, A. R., &amp; Mumby, P. J. (2005). Simple and robust
-removal of sun glint for mapping shallow-water benthos. International Journal
-of Remote Sensing, 26(10), 2107-2112.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="dronewq.lw_methods.hedley.Hedley.preprocess">
-<span class="sig-name descname"><span class="pre">preprocess</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dronewq.lw_methods.hedley.Hedley.preprocess" title="Link to this definition"></a></dt>
-<dd><p>Sample a mean minimum lt NIR value from all the lt images.</p>
-</dd></dl>
-
-</dd></dl>
-
+<section id="dronewq-lw-methods-hedley-module">
+<h2>dronewq.lw_methods.hedley module<a class="headerlink" href="#dronewq-lw-methods-hedley-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-dronewq.lw_methods.mobley_rho">
-<span id="dronewq-lw-methods-mobley-rho-module"></span><h2>dronewq.lw_methods.mobley_rho module<a class="headerlink" href="#module-dronewq.lw_methods.mobley_rho" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="dronewq.lw_methods.mobley_rho.Mobley_rho">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dronewq.lw_methods.mobley_rho.</span></span><span class="sig-name descname"><span class="pre">Mobley_rho</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_images</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.028</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dronewq.lw_methods.mobley_rho.Mobley_rho" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base_Compute_Method</span></code></a></p>
-<p>Calculate water-leaving radiance using Mobley’s constant rho method.</p>
-<p>This function computes water-leaving radiance (Lw) by removing surface-reflected
-sky radiance from total radiance measurements using a constant effective surface
-reflectance factor (rho). Sky radiance (Lsky) is calculated from a median of sky
-images and multiplied by rho to estimate the surface-reflected component, which
-is then subtracted from total radiance: Lw = Lt - rho * Lsky.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>save_images</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save the processed output images to disk. Default is False.</p></li>
-<li><p><strong>rho</strong> (<em>float</em><em>, </em><em>optional</em>) – Effective sea-surface reflectance of a wave facet. Typically 0.028 based
-on Mobley (1999) recommendations for wind speeds &lt; 5 m/s.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>New Image object containing water-leaving radiance (Lw) data.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Image" title="dronewq.utils.data_types.Image">Image</a></p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>LookupError</strong> – If main_dir or sky_lt_dir are not set in settings.</p>
-</dd>
-</dl>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>This method should only be used when:
-- Sky conditions are relatively stable during the flight
-- Wind speeds are less than 5 m/s
-- Sea surface roughness is relatively uniform</p>
-<p>Variable sky conditions or higher wind speeds may require spatially or temporally
-varying rho values for accurate results.</p>
-</div>
-<p class="rubric">Notes</p>
-<p>The function produces Lw GeoTIFF files with units of W/sr/nm.</p>
-<p>Sky radiance is computed from the first 10 or the available
-sky images in settings.sky_lt_dir, taking the median across
-all images for each band. This median Lsky assumes
-relatively stable sky conditions throughout the data collection period.</p>
-<p>The rho value of 0.028 corresponds to moderately rough sea surfaces under typical
-viewing and illumination geometries. This value may need adjustment for:
-- Very calm waters (lower rho, ~0.02)
-- Rough seas or high winds (higher rho, ~0.05)
-- Off-nadir viewing angles
-- Different solar zenith angles</p>
-<p>The function processes 5 spectral bands across all input images.</p>
-<p class="rubric">References</p>
-<p>Mobley, C. D. (1999). Estimation of the remote-sensing reflectance from
-above-surface measurements. Applied Optics, 38(7), 7442-7455.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="dronewq.lw_methods.mobley_rho.Mobley_rho.preprocess">
-<span class="sig-name descname"><span class="pre">preprocess</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dronewq.lw_methods.mobley_rho.Mobley_rho.preprocess" title="Link to this definition"></a></dt>
-<dd><p>Compute the median Lsky for all bands.</p>
-</dd></dl>
-
-</dd></dl>
-
+<section id="dronewq-lw-methods-mobley-rho-module">
+<h2>dronewq.lw_methods.mobley_rho module<a class="headerlink" href="#dronewq-lw-methods-mobley-rho-module" title="Link to this heading"></a></h2>
 </section>
 </section>
 

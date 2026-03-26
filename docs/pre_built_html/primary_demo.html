@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Demonstration of DroneWQ functions and processing code &mdash; dronewq 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/nbsphinx-code-cells.css?v=2aa19091" />
 
   
@@ -879,7 +879,7 @@ plt.legend(frameon=False)
 </div>
 <p>Let’s compare the <span class="math notranslate nohighlight">\(\mathrm{R}{\mathrm{rs}}\)</span> spectra from our MicaSense data to an <span class="math notranslate nohighlight">\(\mathrm{R}{\mathrm{rs}}\)</span> spectrum retrieved by a satellite at the same location and time. Below is a plot of <span class="math notranslate nohighlight">\(\mathrm{R}{\mathrm{rs}}\)</span> from the Ocean and Land Color Instrument (OLCI) on board the European Sentinel-3A satellite. OLCI measures additional spectral bands, which is why there are more points on the plot. Despite this, the overall spectral shape closely matches the MicaSense-derived
 <span class="math notranslate nohighlight">\(\mathrm{R}{\mathrm{rs}}\)</span>. The troughs at 475 nm and 668 nm correspond to chlorophyll absorption, while the peak at 717 nm is likely due to scattering by phytoplankton particles.</p>
-<p><a href="#id1"><span class="problematic" id="id2">|588b2b3b33d84b0d9e4b559a15e69933|</span></a></p>
+<p><a href="#id1"><span class="problematic" id="id2">|56d53b86a77846ba9986642fe1d60424|</span></a></p>
 <p>Let’s plot the <span class="math notranslate nohighlight">\(\mathrm{L}{\mathrm{t}}\)</span>, <span class="math notranslate nohighlight">\(\mathrm{L}{\mathrm{w}}\)</span>, <span class="math notranslate nohighlight">\(\mathrm{E}{\mathrm{d}}\)</span> spectra as well. First, we need to retrieve all the data.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[54]:
@@ -1581,7 +1581,7 @@ dronewq.georeference(img_metadata, input_dir, output_dir, lines)
 100%|██████████| 17/17 [00:00&lt;00:00, 89.78it/s]
 </pre></div></div>
 </div>
-<p>When we plot these images in QGIS, it looks like: <a href="#id3"><span class="problematic" id="id4">|2c2228885b8b4c059db1de8c020f8a14|</span></a></p>
+<p>When we plot these images in QGIS, it looks like: <a href="#id3"><span class="problematic" id="id4">|3cc51a723b854be8952029b48dd1d912|</span></a></p>
 <p>You can observe that using the metadata yaw angle for georeferencing does not always produce accurate results.</p>
 <p>Option 2: Running <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> with fixed yaw angles of 90° and 270°.</p>
 <div class="nbinput docutils container">
@@ -1630,7 +1630,7 @@ dronewq.georeference(img_metadata, input_dir, output_dir, lines)
 100%|██████████| 17/17 [00:00&lt;00:00, 87.10it/s]
 </pre></div></div>
 </div>
-<p>When we plot these images in QGIS: <a href="#id5"><span class="problematic" id="id6">|0432f85337a84cb387aa4605d74cfe18|</span></a></p>
+<p>When we plot these images in QGIS: <a href="#id5"><span class="problematic" id="id6">|e289855cc3ea4043b75325e595c6df80|</span></a></p>
 <p>Using these fixed yaw angles results in improved georeferencing, with the shoreline aligning more closely with the satellite basemap.</p>
 <p>Therefore, we will apply fixed yaw angles of 90° and 270° to georeference the <code class="docutils literal notranslate"><span class="pre">masked_chl_hu_ocx_imgs</span></code>:</p>
 <div class="nbinput docutils container">

@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>dronewq.core package &mdash; dronewq 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -70,26 +70,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#dronewq.core.geometry.is_point_within_vertices"><code class="docutils literal notranslate"><span class="pre">is_point_within_vertices()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-dronewq.core.georeference">dronewq.core.georeference module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#dronewq.core.georeference.compute_flight_lines"><code class="docutils literal notranslate"><span class="pre">compute_flight_lines()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#dronewq.core.georeference.georeference"><code class="docutils literal notranslate"><span class="pre">georeference()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-dronewq.core.mosaic">dronewq.core.mosaic module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#dronewq.core.mosaic.downsample"><code class="docutils literal notranslate"><span class="pre">downsample()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#dronewq.core.mosaic.mosaic"><code class="docutils literal notranslate"><span class="pre">mosaic()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#dronewq-core-georeference-module">dronewq.core.georeference module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dronewq-core-mosaic-module">dronewq.core.mosaic module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-dronewq.core.mosaic_methods">dronewq.core.mosaic_methods module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-dronewq.core.pipeline">dronewq.core.pipeline module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#dronewq.core.pipeline.RrsPipeline"><code class="docutils literal notranslate"><span class="pre">RrsPipeline</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#dronewq.core.pipeline.RrsPipeline.mask_worker"><code class="docutils literal notranslate"><span class="pre">RrsPipeline.mask_worker()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#dronewq.core.pipeline.RrsPipeline.rrs_worker"><code class="docutils literal notranslate"><span class="pre">RrsPipeline.rrs_worker()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#dronewq.core.pipeline.RrsPipeline.run"><code class="docutils literal notranslate"><span class="pre">RrsPipeline.run()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#dronewq-core-pipeline-module">dronewq.core.pipeline module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-dronewq.core.plot_map">dronewq.core.plot_map module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#dronewq.core.plot_map.plot_basemap"><code class="docutils literal notranslate"><span class="pre">plot_basemap()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#dronewq.core.plot_map.plot_georeferenced_data"><code class="docutils literal notranslate"><span class="pre">plot_georeferenced_data()</span></code></a></li>
@@ -357,224 +341,17 @@ checks whether the point lies consistently on the same side
 </dd></dl>
 
 </section>
-<section id="module-dronewq.core.georeference">
-<span id="dronewq-core-georeference-module"></span><h2>dronewq.core.georeference module<a class="headerlink" href="#module-dronewq.core.georeference" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="dronewq.core.georeference.compute_flight_lines">
-<span class="sig-prename descclassname"><span class="pre">dronewq.core.georeference.</span></span><span class="sig-name descname"><span class="pre">compute_flight_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">captures_yaw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">altitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pitch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#dronewq.core.georeference.compute_flight_lines" title="Link to this definition"></a></dt>
-<dd><p>Identify contiguous flight transects based on yaw measurements and compute
-representative orientation parameters for each transect.</p>
-<p>The function groups captures into two broad yaw directions—those below the
-global median yaw and those above it. For each direction, it computes a
-filtered median yaw by selecting captures whose yaw values fall within
-<cite>± threshold</cite> degrees of that direction’s median. Contiguous index ranges
-within these filtered captures are treated as individual flight lines.</p>
-<p>Each flight line is returned as a dictionary containing:
-- start/end indices of the transect,
-- the median yaw of that transect,
-- the supplied altitude, pitch, and roll values.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>captures_yaw</strong> (<em>array-like</em>) – Sequence of yaw values (in degrees) for each capture.</p></li>
-<li><p><strong>altitude</strong> (<em>float</em>) – Altitude to assign to all generated flight lines.</p></li>
-<li><p><strong>pitch</strong> (<em>float</em>) – Pitch angle (in degrees) assigned to all flight lines.</p></li>
-<li><p><strong>roll</strong> (<em>float</em>) – Roll angle (in degrees) assigned to all flight lines.</p></li>
-<li><p><strong>threshold</strong> (<em>float</em><em>, </em><em>optional</em>) – Accepted deviation (in degrees) from a direction’s median yaw when
-determining valid captures. Default is 10.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>A list of flight-line descriptions. Each dictionary contains:</dt><dd><ul class="simple">
-<li><p>”start”: index of first capture in transect,</p></li>
-<li><p>”end”: index after the last capture in transect,</p></li>
-<li><p>”yaw”: median yaw for the transect,</p></li>
-<li><p>”pitch”: pitch angle,</p></li>
-<li><p>”roll”: roll angle,</p></li>
-<li><p>”alt”: altitude value.</p></li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list[dict[str, float]]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="dronewq.core.georeference.georeference">
-<span class="sig-prename descclassname"><span class="pre">dronewq.core.georeference.</span></span><span class="sig-name descname"><span class="pre">georeference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">altitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yaw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pitch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_to_flip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dronewq.core.georeference.georeference" title="Link to this definition"></a></dt>
-<dd><p>Georeference a set of image captures using their metadata and orientation
-parameters, producing georeferenced GeoTIFF files.</p>
-<p>For each capture, this function builds an affine transformation using:
-- focal length,
-- sensor size,
-- image dimensions,
-- GPS coordinates,
-- yaw/pitch/roll (from metadata or provided overrides).</p>
-<p>The function then applies the transform and saves the output as a GeoTIFF
-in <cite>output_dir</cite>. Captures may be restricted to specific flight lines
-(as produced by <cite>compute_flight_lines()</cite>).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>metadata</strong> (<em>pandas.DataFrame</em>) – DataFrame containing per-image metadata. Must include:
-FocalLength, SensorX, SensorY, ImageWidth, ImageHeight,
-Latitude, Longitude, Altitude, Pitch, Roll, Yaw, filename.</p></li>
-<li><p><strong>input_dir</strong> (<em>str</em>) – Directory containing the source images.</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em>) – Directory where georeferenced images are written.</p></li>
-<li><p><strong>lines</strong> (<em>list</em><em>[</em><em>dict</em><em>] or </em><em>None</em><em>, </em><em>optional</em>) – Flight line definitions such as those returned by
-<cite>compute_flight_lines()</cite>. If None, all captures are processed.</p></li>
-<li><p><strong>altitude</strong> (<em>float</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Override altitude for all captures. If None, metadata altitude is used.</p></li>
-<li><p><strong>yaw</strong> (<em>float</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Override yaw for all captures. If None, metadata yaw is used.</p></li>
-<li><p><strong>pitch</strong> (<em>float</em><em>, </em><em>optional</em>) – Override pitch angle for all captures. Default is 0.</p></li>
-<li><p><strong>roll</strong> (<em>float</em><em>, </em><em>optional</em>) – Override roll angle for all captures. Default is 0.</p></li>
-<li><p><strong>axis_to_flip</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Axis along which to flip the image before writing. Default is 1.
-Set to None to disable flipping.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Writes georeferenced <cite>.tif</cite> files into <cite>output_dir</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="dronewq-core-georeference-module">
+<h2>dronewq.core.georeference module<a class="headerlink" href="#dronewq-core-georeference-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-dronewq.core.mosaic">
-<span id="dronewq-core-mosaic-module"></span><h2>dronewq.core.mosaic module<a class="headerlink" href="#module-dronewq.core.mosaic" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="dronewq.core.mosaic.downsample">
-<span class="sig-prename descclassname"><span class="pre">dronewq.core.mosaic.</span></span><span class="sig-name descname"><span class="pre">downsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_tif</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Resampling.average</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dronewq.core.mosaic.downsample" title="Link to this definition"></a></dt>
-<dd><p>Downsample a raster by reducing its spatial resolution.</p>
-<p>This function reads the input raster and resizes it by the specified
-factors (<cite>scale_x</cite>, <cite>scale_y</cite>) using the given resampling method.
-The resulting downsampled raster is saved to <cite>output_dir</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_tif</strong> (<em>str</em>) – Path to the input GeoTIFF to downsample.</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em>) – Directory where the downsampled raster will be saved.
-The directory is created if it does not exist.</p></li>
-<li><p><strong>scale_x</strong> (<em>int</em>) – Horizontal downsampling factor.
-For example, <cite>scale_x=2</cite> halves the raster width.</p></li>
-<li><p><strong>scale_y</strong> (<em>int</em>) – Vertical downsampling factor.
-For example, <cite>scale_y=2</cite> halves the raster height.</p></li>
-<li><p><strong>method</strong> (<em>rasterio.enums.Resampling</em><em>, </em><em>optional</em>) – The resampling algorithm to apply (e.g., <cite>Resampling.average</cite>,
-<cite>Resampling.nearest</cite>, <cite>Resampling.bilinear</cite>).
-Default is <cite>Resampling.average</cite>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The filepath of the generated downsampled raster.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<ul class="simple">
-<li><p>The affine transform is automatically scaled to match the new resolution.</p></li>
-<li><p>For a full list of resampling methods, see Rasterio’s documentation.</p></li>
-</ul>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="dronewq.core.mosaic.mosaic">
-<span class="sig-prename descclassname"><span class="pre">dronewq.core.mosaic.</span></span><span class="sig-name descname"><span class="pre">mosaic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;class</span> <span class="pre">'numpy.float32'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band_names=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dronewq.core.mosaic.mosaic" title="Link to this definition"></a></dt>
-<dd><p>Mosaic multiple raster files into a single GeoTIFF.</p>
-<p>This function reads all raster files in <cite>input_dir</cite> and merges them into
-one mosaic using the specified merging method. If <cite>band_names</cite> is provided,
-the mosaicked result is written as multiple single-band files—one file per
-band—named using the provided band names. Otherwise, a single multi-band
-raster is written.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_dir</strong> (<em>str</em>) – Path to a directory containing the input rasters to mosaic.</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em>) – Path to the directory where the output raster(s) will be saved.
-The directory is created if it does not exist.</p></li>
-<li><p><strong>output_name</strong> (<em>str</em>) – Base filename (without extension) for the mosaicked output.</p></li>
-<li><p><strong>method</strong> (<em>{&quot;mean&quot;</em><em>, </em><em>&quot;first&quot;</em><em>, </em><em>&quot;min&quot;</em><em>, </em><em>&quot;max&quot;}</em><em>, </em><em>optional</em>) – Method used to combine overlapping pixels when multiple rasters
-cover the same area. Default is <cite>“mean”</cite>.</p></li>
-<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em>, </em><em>optional</em>) – Data type of the output raster. Defaults to <cite>np.float32</cite>.</p></li>
-<li><p><strong>band_names</strong> (<em>list</em><em>[</em><em>str</em><em>] or </em><em>None</em><em>, </em><em>optional</em>) – If provided, one output file will be created per band, using the given
-band names (e.g., <cite>[“red”, “green”, “blue”]</cite>).
-The number of entries must match the number of bands in the input
-rasters.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The filepath of the generated mosaic (or the first band file if
-<cite>band_names</cite> is provided).</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<ul class="simple">
-<li><p>This function assumes all rasters share the same coordinate reference
-system (CRS).</p></li>
-<li><p>When multiple input files are found, the output extent is computed to
-cover all rasters.</p></li>
-</ul>
-</dd></dl>
-
+<section id="dronewq-core-mosaic-module">
+<h2>dronewq.core.mosaic module<a class="headerlink" href="#dronewq-core-mosaic-module" title="Link to this heading"></a></h2>
 </section>
 <section id="module-dronewq.core.mosaic_methods">
 <span id="dronewq-core-mosaic-methods-module"></span><h2>dronewq.core.mosaic_methods module<a class="headerlink" href="#module-dronewq.core.mosaic_methods" title="Link to this heading"></a></h2>
 </section>
-<section id="module-dronewq.core.pipeline">
-<span id="dronewq-core-pipeline-module"></span><h2>dronewq.core.pipeline module<a class="headerlink" href="#module-dronewq.core.pipeline" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="dronewq.core.pipeline.RrsPipeline">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dronewq.core.pipeline.</span></span><span class="sig-name descname"><span class="pre">RrsPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lw_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><span class="pre">Base_Compute_Method</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ed_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><span class="pre">Base_Compute_Method</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">masking_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><span class="pre">Base_Compute_Method</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_lt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generate_thumbnails</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dronewq.core.pipeline.RrsPipeline" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Main pipeline for dronewq.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>output_folder</strong> (<em>Path</em><em> | </em><em>str</em>) – Path to the output folder.</p></li>
-<li><p><strong>lw_method</strong> (<a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><em>Base_Compute_Method</em></a>) – Method used to calculate water leaving radiance.
-If uncertain, you can start with <cite>Mobley_rho()</cite>.</p></li>
-<li><p><strong>ed_method</strong> (<a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><em>Base_Compute_Method</em></a>) – Method used to calculate downwelling irradiance (Ed).
-If uncertain, you can start with <cite>Dls_ed()</cite>.</p></li>
-<li><p><strong>masking_method</strong> (<a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><em>Base_Compute_Method</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Method to mask pixels. Options are
-<cite>ThresholdMasking</cite>, <cite>StdMasking</cite>, or None. Default is None.</p></li>
-<li><p><strong>overwrite_lt</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to overwrite existing Lt images.
-Should have this set to True if you are running the pipeline for the
-first time. Defaults to False, which saves time if you are rerunning.</p></li>
-<li><p><strong>generate_thumbnails</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to generate thumbnails. Defaults to True.</p></li>
-<li><p><strong>workers</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of parallel image processing instances. Defaults to 1.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="dronewq.core.pipeline.RrsPipeline.mask_worker">
-<span class="sig-name descname"><span class="pre">mask_worker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="headerlink" href="#dronewq.core.pipeline.RrsPipeline.mask_worker" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="dronewq.core.pipeline.RrsPipeline.rrs_worker">
-<span class="sig-name descname"><span class="pre">rrs_worker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="headerlink" href="#dronewq.core.pipeline.RrsPipeline.rrs_worker" title="Link to this definition"></a></dt>
-<dd><p>Process a single image.</p>
-<p>This function is what actually happens in the pipeline.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="dronewq.core.pipeline.RrsPipeline.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dronewq.core.pipeline.RrsPipeline.run" title="Link to this definition"></a></dt>
-<dd><p>Run the pipeline.</p>
-</dd></dl>
-
-</dd></dl>
-
+<section id="dronewq-core-pipeline-module">
+<h2>dronewq.core.pipeline module<a class="headerlink" href="#dronewq-core-pipeline-module" title="Link to this heading"></a></h2>
 </section>
 <section id="module-dronewq.core.plot_map">
 <span id="dronewq-core-plot-map-module"></span><h2>dronewq.core.plot_map module<a class="headerlink" href="#module-dronewq.core.plot_map" title="Link to this heading"></a></h2>

@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>dronewq.masks package &mdash; dronewq 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -57,17 +57,8 @@
 <li class="toctree-l1"><a class="reference internal" href="dronewq.ed_methods.html">dronewq.ed_methods package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">dronewq.masks package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-dronewq.masks.std_masking">dronewq.masks.std_masking module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#dronewq.masks.std_masking.StdMasking"><code class="docutils literal notranslate"><span class="pre">StdMasking</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#dronewq.masks.std_masking.StdMasking.preprocess_masking"><code class="docutils literal notranslate"><span class="pre">StdMasking.preprocess_masking()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-dronewq.masks.threshold_masking">dronewq.masks.threshold_masking module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#dronewq.masks.threshold_masking.ThresholdMasking"><code class="docutils literal notranslate"><span class="pre">ThresholdMasking</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#dronewq-masks-std-masking-module">dronewq.masks.std_masking module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dronewq-masks-threshold-masking-module">dronewq.masks.threshold_masking module</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dronewq.utils.html">dronewq.utils package</a></li>
@@ -103,114 +94,11 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
-<section id="module-dronewq.masks.std_masking">
-<span id="dronewq-masks-std-masking-module"></span><h2>dronewq.masks.std_masking module<a class="headerlink" href="#module-dronewq.masks.std_masking" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="dronewq.masks.std_masking.StdMasking">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dronewq.masks.std_masking.</span></span><span class="sig-name descname"><span class="pre">StdMasking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_images</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_std_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dronewq.masks.std_masking.StdMasking" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base_Compute_Method</span></code></a></p>
-<p>Mask sun glint pixels using statistical threshold based on NIR values.</p>
-<p>This function identifies and masks pixels contaminated by specular sun glint
-by applying a statistical threshold to near-infrared (NIR) reflectance values.
-The mean and standard deviation of NIR values are calculated from a random
-subset of images, and any pixel with NIR reflectance exceeding
-mean + std * mask_std_factor is masked across all bands. This approach assumes
-that glint-contaminated pixels have elevated NIR reflectance compared to
-glint-free water.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>num_images</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of images to randomly sample for calculating NIR statistics
-(mean and standard deviation). More images provide more robust statistics
-but increase computation time. Default is 10.</p></li>
-<li><p><strong>mask_std_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – Multiplier for the standard deviation to set the masking threshold.
-Lower values result in more aggressive masking (more pixels masked).
-Higher values are more conservative (fewer pixels masked). Typical
-values range from 0.5 to 2.0. Default is 1.</p></li>
-<li><p><strong>save_images</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, saves the processed images to the specified output directory.
-Default is False.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>The function produces masked Rrs GeoTIFF files in settings.masked_rrs_dir where
-glint-contaminated pixels are set to NaN across all bands.</p>
-<dl class="simple">
-<dt>The masking threshold is calculated as:</dt><dd><p>threshold = mean(Rrs_NIR) + std(Rrs_NIR) * mask_std_factor</p>
-</dd>
-</dl>
-<p>Pixels where Rrs(NIR) &gt; threshold are masked in all 5 bands.</p>
-<p>The method assumes:
-- Sun glint causes elevated NIR reflectance
-- The sampled images are representative of the dataset
-- NIR values follow an approximately normal distribution for glint-free pixels</p>
-<p>Recommended mask_std_factor values:
-- 0.5-1.0: Aggressive masking for highly glint-contaminated data
-- 1.0-1.5: Moderate masking for typical conditions
-- 1.5-2.0: Conservative masking to preserve more pixels</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="dronewq.masks.std_masking.StdMasking.preprocess_masking">
-<span class="sig-name descname"><span class="pre">preprocess_masking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rrs_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dronewq.masks.std_masking.StdMasking.preprocess_masking" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<section id="dronewq-masks-std-masking-module">
+<h2>dronewq.masks.std_masking module<a class="headerlink" href="#dronewq-masks-std-masking-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-dronewq.masks.threshold_masking">
-<span id="dronewq-masks-threshold-masking-module"></span><h2>dronewq.masks.threshold_masking module<a class="headerlink" href="#module-dronewq.masks.threshold_masking" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="dronewq.masks.threshold_masking.ThresholdMasking">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dronewq.masks.threshold_masking.</span></span><span class="sig-name descname"><span class="pre">ThresholdMasking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nir_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">green_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dronewq.masks.threshold_masking.ThresholdMasking" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="dronewq.utils.html#dronewq.utils.data_types.Base_Compute_Method" title="dronewq.utils.data_types.Base_Compute_Method"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base_Compute_Method</span></code></a></p>
-<p>Mask contaminated pixels using fixed reflectance thresholds.</p>
-<p>This function identifies and masks pixels contaminated by sun glint, adjacent
-land features, or shadows by applying fixed threshold values to NIR and green
-band reflectances. Pixels with elevated NIR values (typically glint or land)
-or low green values (typically shadows) are masked across all bands. This
-dual-threshold approach helps remove multiple sources of contamination in
-aquatic remote sensing imagery.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>nir_threshold</strong> (<em>float</em><em>, </em><em>optional</em>) – Upper threshold for NIR reflectance (sr^-1). Pixels with Rrs(NIR) exceeding
-this value are masked. These typically represent specular sun glint or
-adjacent land features. Default is 0.01.</p></li>
-<li><p><strong>green_threshold</strong> (<em>float</em><em>, </em><em>optional</em>) – Lower threshold for green reflectance (sr^-1). Pixels with Rrs(green) below
-this value are masked. These typically represent vegetation shadows or
-very dark features. Default is 0.005.</p></li>
-<li><p><strong>save_images</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, saves the processed images to the specified output directory.
-Default is False.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>The function produces masked Rrs GeoTIFF files with units of sr^-1 in
-settings.masked_rrs_dir where contaminated pixels are set to NaN across
-all bands.</p>
-<p>Masking criteria (applied with logical OR):
-1. Rrs(NIR) &gt; nir_threshold: Masks sun glint and land features
-2. Rrs(green) &lt; green_threshold: Masks shadows and very dark features</p>
-<p>A pixel is masked if it meets EITHER criterion, and the mask is applied
-to all 5 spectral bands.</p>
-<p>Threshold selection guidance:</p>
-<p>NIR threshold:
-- 0.005-0.01: Standard for clear oceanic waters (Case 1)
-- 0.01-0.02: Moderate for slightly turbid waters (Case 2)
-- 0.02-0.05: High for very turbid or coastal waters
-- Values too low may mask valid turbid water pixels
-- Values too high may allow glint contamination</p>
-<p>Green threshold:
-- 0.001-0.005: Conservative, masks strong shadows only
-- 0.005-0.01: Moderate, removes most shadow effects
-- 0.01-0.02: Aggressive, may remove valid dark water pixels
-- Values too low may allow shadow contamination
-- Values too high may mask valid oligotrophic water pixels</p>
-<p>This method is most effective for:
-- Imagery containing sun glint not removed by deglinting algorithms
-- Scenes with adjacent land or vegetation features
-- Data with shadow contamination from nearby structures or terrain</p>
-</dd></dl>
-
+<section id="dronewq-masks-threshold-masking-module">
+<h2>dronewq.masks.threshold_masking module<a class="headerlink" href="#dronewq-masks-threshold-masking-module" title="Link to this heading"></a></h2>
 </section>
 </section>
 
