@@ -1,11 +1,3 @@
-"""
-Not much is changed from the original code
-Only separated the methods from the main
-part of the code.
-Please check line 107 again. It seems unnecessary?
-Refactored by: Temuulen
-"""
-
 import numpy as np
 import rasterio
 from rasterio.transform import Affine

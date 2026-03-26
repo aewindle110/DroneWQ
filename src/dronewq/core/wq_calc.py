@@ -1,7 +1,3 @@
-"""
-Refactored by: Temuulen and Kurtis
-"""
-
 import concurrent.futures
 import logging
 import multiprocessing as mp

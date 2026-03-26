@@ -1,5 +1,3 @@
-"""Refactored by: Temuulen"""
-
 import logging
 import random
 from pathlib import Path

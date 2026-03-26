@@ -1,5 +1,3 @@
-"""Main pipeline for dronewq."""
-
 import logging
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor

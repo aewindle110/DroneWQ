@@ -1,5 +1,3 @@
-"""Refactored by Temuulen"""
-
 import logging
 from pathlib import Path
 

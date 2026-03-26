@@ -1,7 +1,3 @@
-"""
-Not much is changed from the original code
-Refactored docstrings: Temuulen
-"""
 import numpy as np
 
 
