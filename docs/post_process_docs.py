@@ -12,10 +12,20 @@ import re
 import shutil
 from pathlib import Path
 
+PRIMARY_DEMO_FILEPATH = Path(__file__).parent.parent / "examples" / "primary_demo.ipynb"
+
+
 FILES_TO_SKIP_DELETE = [
     "index.rst",
     "intro.rst",
 ]
+
+
+def copy_demo_nb(source_path, dest_dir):
+    """Copy the primary demo notebook to the docs/source/api/ directory."""
+    print(f"Copying {source_path} to {dest_dir}")
+    dest = dest_dir / "primary_demo.ipynb"
+    shutil.copy2(source_path, dest)
 
 
 def remove_micasense_from_rst(content):
@@ -64,9 +74,7 @@ def main():
     # Clean old files in source/api
     if source_dir.exists():
         for f in source_dir.glob("*.rst"):
-            print(f"Removing old file: {f.name}")
             if f.name in FILES_TO_SKIP_DELETE:
-                print(f"Skipping file: {f.name}")
                 continue
             f.unlink()
 
@@ -86,6 +94,8 @@ def main():
             # Copy to source/api/
             dest = source_dir / rst_file.name
             shutil.copy2(rst_file, dest)
+
+    copy_demo_nb(PRIMARY_DEMO_FILEPATH, source_dir)
 
     print(f"\nProcessed {len(processed)} files")
     print(f"Files copied to: {source_dir}")
