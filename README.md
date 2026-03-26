@@ -22,7 +22,7 @@ Windle, A.E. and Silsbe, G.M., 2021. Evaluation of unoccupied aircraft system (U
 ## Installation
 
 > [!IMPORTANT]
-> Our code requires a system level dependencies called `gdal`, `zbar`, `exiftool`, and `opencv`.
+> Our code requires system level dependencies `gdal`, `zbar`, `exiftool`, and `opencv`.
 > It is the most straightforward to install them through conda-forge.
 
 ### Install from PyPI (Recommended)
@@ -117,10 +117,10 @@ DroneWQ requires MicaSense images organized in a specific folder structure:
 ```
 
 **Directory descriptions:**
-- **panel/**: Contains image captures of the MicaSense calibrated reflectance panel
-- **raw_sky_imgs/**: Contains sky images taken at 40° from zenith and ~135° azimuthal viewing direction
-- **raw_water_imgs/**: Contains all water images captured during the flight
-- **align_img/**: Contains one image capture (5 .tif files, one per band) from `raw_water_imgs/` used to compute the warp matrix for aligning all images
+- **panel**: Contains image captures of the MicaSense calibrated reflectance panel
+- **raw_sky_imgs**: Contains sky images taken at 40° from zenith and ~135° azimuthal viewing direction
+- **raw_water_imgs**: Contains all water images captured during the flight
+- **align_img**: Contains one image capture (5 .tif files, one per band) from `raw_water_imgs` used to compute the warp matrix for aligning all images
 
 A sample drone dataset consisting of images collected over western Lake Erie is available on [Zenodo](https://doi.org/10.5281/zenodo.14018788) and is 5.84 GB unzipped. Depending on your computer's speed, you may want to subset the data before running the full workflow. 
 
