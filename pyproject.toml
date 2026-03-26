@@ -267,12 +267,12 @@ dependencies = [
 build = [
     "sphinx-apidoc -o docs/api src/dronewq '*/micasense/*'",
     "python docs/post_process_docs.py",
-    "sphinx-build {args:-W -b html docs/source docs/_build}",
+    "sphinx-build {args:-W -b html docs/source docs/pre_built_html}",
 ]
 serve = [
     "sphinx-apidoc -o docs/api src/dronewq '*/micasense/*'",
     "python docs/post_process_docs.py",
-    "sphinx-autobuild docs/source --watch src/dronewq {args:-b html docs/_build/serve}",
+    "sphinx-autobuild docs/source --watch src/dronewq {args:-b html docs/pre_built_html/serve}",
 ]
 #--------------- Format & style your code ---------------#
 
