@@ -1,13 +1,11 @@
-"""Refactored by: Temuulen"""
-
 import logging
 
 import numpy as np
 
 from dronewq.utils.data_types import Base_Compute_Method, Image
 from dronewq.utils.images import load_imgs
-from dronewq.utils.utils import get_filepaths
 from dronewq.utils.settings import settings
+from dronewq.utils.utils import get_filepaths
 
 logger = logging.getLogger(__name__)
 
@@ -28,16 +26,10 @@ class Blackpixel(Base_Compute_Method):
     save_images : bool, optional
         Whether to save the processed output images to disk. Default is False.
 
-    Warnings
-    --------
-    This method should only be used for Case 1 waters (clear oceanic waters)
-    where there is little to no NIR signal. The black pixel assumption tends
-    to fail in more turbid Case 2 waters where high concentrations of suspended
-    particles enhance backscattering and produce significant Lw in the NIR.
-
     Notes
     -----
-    Sky radiance (Lsky) is computed from the first 10 sky images in settings.sky_lt_dir,
+    Sky radiance (Lsky) is computed from the first 10 sky images in settings.sky_lt_dir
+    or all the images if there is less than 10 sky images,
     taking the median across all images for each band. This median Lsky is then used
     for all water image processing.
 

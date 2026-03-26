@@ -1,5 +1,3 @@
-"""Refactored by: Temuulen"""
-
 import logging
 import random
 from pathlib import Path
@@ -123,9 +121,10 @@ class Hedley(Base_Compute_Method):
         """Sample a mean minimum lt NIR value from all the lt images."""
         lt_dir = settings.lt_dir
         filepaths = list(Path(lt_dir).glob("*.tif"))
+        sample_size = min(len(filepaths), self.random_n)
 
         lt_all = []
-        rand = random.sample(filepaths, self.random_n)
+        rand = random.sample(filepaths, sample_size)
 
         for im in rand:
             with rasterio.open(im, "r") as lt_src:

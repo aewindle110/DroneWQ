@@ -93,6 +93,8 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/api
+docs/pre_built_html/serve
 
 # PyBuilder
 .pybuilder/

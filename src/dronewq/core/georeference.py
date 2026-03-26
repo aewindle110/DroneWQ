@@ -1,9 +1,3 @@
-"""
-Not much is changed from the original code.
-
-Refactored docstrings: Temuulen.
-"""
-
 from pathlib import Path
 
 import cameratransform as ct
@@ -15,6 +9,7 @@ from rasterio import control, transform
 from tqdm import tqdm
 
 from dronewq.utils.images import write_data
+
 
 def compute_flight_lines(
     captures_yaw,

@@ -1,5 +1,3 @@
-"""Main pipeline for dronewq."""
-
 import logging
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
@@ -98,7 +96,13 @@ class RrsPipeline:
             self.masked_rrs_dir.mkdir(parents=True, exist_ok=True)
 
     def run(self) -> None:
-        """Run the pipeline."""
+        """Run the pipeline.
+
+        This function is the main entry point for the pipeline. It will process
+        all the raw images to Lt images if overwrite_lt is True, or when no Lt
+        images are found in the lt_dir.
+
+        """
         logger.info(
             "Processing a total of %d images.",
             len(list(Path(settings.raw_water_dir).glob("*.tif"))),
@@ -160,6 +164,8 @@ class RrsPipeline:
         Process a single image.
 
         This function is what actually happens in the pipeline.
+
+        Will mask Rrs images if `ThresholdMasking` masking method is used.
         """
         # TODO: Should have a try/except here
         # Maybe to catch saving errors, since
@@ -178,6 +184,19 @@ class RrsPipeline:
         return filepath
 
     def mask_worker(self, filepath: Path) -> Path:
+        """
+        Masks Rrs images using the STD masking method.
+
+        Parameters
+        ----------
+        filepath : Path
+            Path to the Rrs image to be masked.
+
+        Returns
+        -------
+        Path
+            Path to the masked Rrs image.
+        """
         rrs_img = read_file(filepath)
         masked_rrs_img = self.masking_method(rrs_img)
         save_img(masked_rrs_img, self.masked_rrs_dir)

@@ -23,7 +23,7 @@ class Image:
 
     @classmethod
     def from_image(cls, src: Image, data: np.ndarray, method: str):
-        """Creates another Image instance from another Image."""
+        """Creates new Image instance from another Image."""
         return cls(
             file_name=src.file_name,
             file_path=src.file_path,

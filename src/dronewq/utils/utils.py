@@ -1,8 +1,3 @@
-"""
-Created by Temuulen
-Simple dict class used for settings
-"""
-
 import copy
 from pathlib import Path
 

@@ -1,10 +1,3 @@
-"""
-Not much is changed from the original code
-Only separated the methods from the main
-part of the code.
-Refactored by: Temuulen
-"""
-
 import os
 
 import numpy as np

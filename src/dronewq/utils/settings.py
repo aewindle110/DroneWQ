@@ -1,8 +1,3 @@
-"""
-Created by: Temuulen
-Took inspo from the DSPY package's settings
-"""
-
 import copy
 import logging
 import os

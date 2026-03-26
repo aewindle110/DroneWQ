@@ -1,5 +1,3 @@
-"""Refactored by: Temuulen"""
-
 import logging
 from pathlib import Path
 
@@ -30,9 +28,6 @@ class DlsEd(Base_Compute_Method):
     dls_corr : bool, optional
         Option to apply compensation factor from calibration panel to DLS Ed
         measurements. Default is False.
-    save_images : bool, optional
-        If True, saves the processed images to the specified output directory.
-        Default is False.
 
     Notes
     -----

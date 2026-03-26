@@ -1,10 +1,3 @@
-"""
-In plot_georeferenced_data, there used to be a depreciated
-code for transforms.
-
-Refactored by: Temuulen
-"""
-
 import contextily as cx
 import numpy as np
 import rasterio

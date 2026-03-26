@@ -1,13 +1,11 @@
-"""Refactored by: Temuulen."""
-
 import logging
 
 import numpy as np
 
 from dronewq.utils.data_types import Base_Compute_Method, Image
 from dronewq.utils.images import load_imgs
-from dronewq.utils.utils import get_filepaths
 from dronewq.utils.settings import settings
+from dronewq.utils.utils import get_filepaths
 
 logger = logging.getLogger(__name__)
 
@@ -35,25 +33,8 @@ class Mobley_rho(Base_Compute_Method):
     Image
         New Image object containing water-leaving radiance (Lw) data.
 
-    Raises
-    ------
-    LookupError
-        If main_dir or sky_lt_dir are not set in settings.
-
-    Warnings
-    --------
-    This method should only be used when:
-    - Sky conditions are relatively stable during the flight
-    - Wind speeds are less than 5 m/s
-    - Sea surface roughness is relatively uniform
-
-    Variable sky conditions or higher wind speeds may require spatially or temporally
-    varying rho values for accurate results.
-
     Notes
     -----
-    The function produces Lw GeoTIFF files with units of W/sr/nm.
-
     Sky radiance is computed from the first 10 or the available
     sky images in settings.sky_lt_dir, taking the median across
     all images for each band. This median Lsky assumes

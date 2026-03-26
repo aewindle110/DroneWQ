@@ -1,5 +1,3 @@
-"""Refactored by: Temuulen"""
-
 import math
 from pathlib import Path
 

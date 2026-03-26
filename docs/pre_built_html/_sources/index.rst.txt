@@ -11,8 +11,13 @@
    primary_demo
    
 .. toctree::
-   :maxdepth: 2
-   :caption: API
+   :maxdepth: 3
+   :caption: API Reference
 
-   modules
+   dronewq
+   dronewq.core
+   dronewq.lw_methods
+   dronewq.ed_methods
+   dronewq.masks
+   dronewq.utils
 
