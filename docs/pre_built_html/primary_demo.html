@@ -55,10 +55,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#Contents">Contents</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#1.-Setup">1. Setup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#2.-View-metadata">2. View metadata</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#3.-Process-raw-imagery-to-remote-sensing-reflectance-(Rrs)-and-visualize-data">3. Process raw imagery to remote sensing reflectance (Rrs) and visualize data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#3.-Process-raw-imagery-to-remote-sensing-reflectance">3. Process raw imagery to remote sensing reflectance</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#4.-Convert-to-point-samples">4. Convert to point samples</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#5.-Apply-bio-optical-algorithms">5. Apply bio-optical algorithms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#6.-Georeference-and-mosaic-chlorophyll-a-images">6. Georeference and mosaic chlorophyll a images</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#6.-Georeference-and-mosaic-chlorophyll-a-images">6. Georeference and mosaic chlorophyll <em>a</em> images</a></li>
 </ul>
 </li>
 </ul>
@@ -100,15 +100,15 @@
 <h1>Demonstration of <code class="docutils literal notranslate"><span class="pre">DroneWQ</span></code> functions and processing code<a class="headerlink" href="#Demonstration-of-DroneWQ-functions-and-processing-code" title="Link to this heading"></a></h1>
 <section id="Summary">
 <h2>Summary<a class="headerlink" href="#Summary" title="Link to this heading"></a></h2>
-<p>This notebook provides an example workflow of DroneWQ using multispectral images collected by the MicaSense RedEdge-MX sensor over western Lake Erie on August 17, 2022. The workflow processes raw imagery to remote sensing reflectance and applies bio-optical algorithms to retrieve chlorophyll a concentrations. It georeferences the images producing a final chlorophyll a mosaic of the full dataset.</p>
-<p>The Lake Erie drone dataset can be found in the <a class="reference external" href="https://doi.org/10.5281/zenodo.14018788">Zenodo DOI</a>, please note it is 5.84 GB unzipped. Depending on computer speed, you may need to subset the data before running the code workflow shown here.</p>
+<p>This notebook demonstrates an example workflow of DroneWQ using multispectral images collected by the MicaSense RedEdge-MX sensor over western Lake Erie on August 17, 2022. The workflow converts raw imagery to remote sensing reflectance (<span class="math notranslate nohighlight">\(\mathrm{R}_{\mathrm{rs}}\)</span>) and applies bio-optical algorithms to estimate chlorophyll <em>a</em> and total suspended matter (TSM) concentrations. The images are georeferenced, producing a final chlorophyll <em>a</em> mosaic of the entire dataset.</p>
+<p>The Lake Erie drone dataset is available on <a class="reference external" href="https://doi.org/10.5281/zenodo.14018788">Zenodo</a> and is 5.84 GB unzipped. Depending on your computer’s speed, you may want to subset the data before running the full workflow. This notebook is set up to run directly if the <code class="docutils literal notranslate"><span class="pre">Lake_Erie</span></code> dataset is placed in the <code class="docutils literal notranslate"><span class="pre">examples</span></code> directory.</p>
 </section>
 <section id="Contents">
 <h2>Contents<a class="headerlink" href="#Contents" title="Link to this heading"></a></h2>
 <ol class="arabic simple">
 <li><p><a class="reference internal" href="#1.-Setup"><span class="std std-ref">Setup</span></a></p></li>
 <li><p><a class="reference internal" href="#2.-View-metadata"><span class="std std-ref">View metadata</span></a></p></li>
-<li><p><a class="reference internal" href="#3.-Process-raw-imagery-to-remote-sensing-reflectance-(Rrs)-and-visualize-data"><span class="std std-ref">Process raw to Rrs</span></a></p></li>
+<li><p><a class="reference internal" href="#3.-Process-raw-imagery-to-remote-sensing-reflectance"><span class="std std-ref">Process raw imagery to remote sensing reflectance</span></a></p></li>
 <li><p><a class="reference internal" href="#4.-Convert-to-point-samples"><span class="std std-ref">Convert to point samples</span></a></p></li>
 <li><p><a class="reference internal" href="#5.-Apply-bio-optical-algorithms"><span class="std std-ref">Apply bio-optical algorithms</span></a></p></li>
 <li><p><a class="reference internal" href="#6.-Georeference-and-mosaic-chlorophyll-a-images"><span class="std std-ref">Georeference and mosaic</span></a></p></li>
@@ -116,24 +116,27 @@
 </section>
 <section id="1.-Setup">
 <h2>1. Setup<a class="headerlink" href="#1.-Setup" title="Link to this heading"></a></h2>
-<p>Pull in all the libraries needed for this notebook.</p>
+<p>Import all the libraries needed for this notebook.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[42]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import os
+import dronewq
+import glob
 import numpy as np
+import pandas as pd
+import contextily as cx
 import matplotlib.pyplot as plt
-from cartopy.crs import Mercator
 import matplotlib.image as mpimg
+from cartopy.crs import Mercator
+from rasterio.enums import Resampling
 
 plt.rcParams[&#39;mathtext.default&#39;] = &#39;regular&#39;
-
-from utils import *
 </pre></div>
 </div>
 </div>
-<p>Make sure your imagery has been manually organized into this exact structure (name the main_dir whatever you want but keep the rest exactly as named here):</p>
+<p>Ensure that your imagery is manually organized using the following directory structure (you may name the <code class="docutils literal notranslate"><span class="pre">main_dir</span></code> directory anything you like, but the remaining folder names should match exactly as shown below):</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;main_dir&gt;/
     raw_water_imgs/
     align_img/
@@ -141,38 +144,34 @@ from utils import *
     panel/
 </pre></div>
 </div>
-<p>With that structure now just specify the path to your main_dir below. Here, we have the main_dir called ‘Lake_Erie’.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<p>Once your data are organized in this structure, simply specify the path to your <code class="docutils literal notranslate"><span class="pre">main_dir</span></code> below. In this example, the <code class="docutils literal notranslate"><span class="pre">main_dir</span></code> is named <code class="docutils literal notranslate"><span class="pre">Lake_Erie</span></code>.</p>
+<blockquote>
+<div><p>This may need modification if your <code class="docutils literal notranslate"><span class="pre">Lake_Erie</span></code> directory is placed elsewhere.</p>
+</div></blockquote>
+<p>The <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> will contain all processed data products after total radiance (<span class="math notranslate nohighlight">\(\mathrm{L}_{\mathrm{t}}\)</span>). <code class="docutils literal notranslate"><span class="pre">lt_imgs</span></code> and <code class="docutils literal notranslate"><span class="pre">lt_thumbnails</span></code> will be saved in the <code class="docutils literal notranslate"><span class="pre">Lake_Erie</span></code> main directory, while all other downstream products will be saved in a user-specificed directory. In this example, it is named <code class="docutils literal notranslate"><span class="pre">hedley_dls_rrs</span></code> to reflect the processing options used in this demonstration, but you may name it whatever you prefer.</p>
+<p>Note that the Lake Erie drone dataset does not include raw_sky_imgs.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[43]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>project_path = os.path.join(&#39;Lake_Erie&#39;)
-project_path
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>dronewq.configure(main_dir=&#39;../Lake_Erie&#39;)
+dronewq.configure(output_dir=&quot;../Lake_Erie/hedley_dls_rrs&quot;)
+settings = dronewq.settings
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-&#39;Lake_Erie&#39;
-</pre></div></div>
 </div>
 </section>
 <section id="2.-View-metadata">
 <h2>2. View metadata<a class="headerlink" href="#2.-View-metadata" title="Link to this heading"></a></h2>
-<p>MicaSense raw images contain metatdata including imager information, GPS coordianates, and more. We can use the <code class="docutils literal notranslate"><span class="pre">write_metadata_csv()</span></code> function to extract image metadata and save it as .csv.</p>
+<p>MicaSense raw images contain metatdata including sensor information, GPS coordianates, and more. We can use the <code class="docutils literal notranslate"><span class="pre">write_metadata_csv()</span></code> function to extract image metadata and save it as .csv.</p>
 <p>Let’s open the first five lines of the .csv to take a look.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[44]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>write_metadata_csv(img_set = imageset.ImageSet.from_directory(project_path+&#39;/raw_water_imgs&#39;),
-                                                            csv_output_path=project_path)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>metadata_path = dronewq.write_metadata_csv(settings.raw_water_dir, settings.output_dir)
 
-img_metadata = pd.read_csv(os.path.join(project_path, &#39;metadata.csv&#39;))
+img_metadata = pd.read_csv(metadata_path)
 img_metadata.head()
 </pre></div>
 </div>
@@ -182,11 +181,11 @@ img_metadata.head()
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Loading ImageSet from: Lake_Erie/raw_water_imgs
+Loading ImageSet from: ../Lake_Erie/raw_water_imgs
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[44]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -235,7 +234,7 @@ Loading ImageSet from: Lake_Erie/raw_water_imgs
     <tr>
       <th>0</th>
       <td>capture_1.tif</td>
-      <td>Lake_Erie/capture_1.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_1.tif</td>
       <td>2022-08-17</td>
       <td>15:37:04</td>
       <td>41.828528</td>
@@ -259,7 +258,7 @@ Loading ImageSet from: Lake_Erie/raw_water_imgs
     <tr>
       <th>1</th>
       <td>capture_2.tif</td>
-      <td>Lake_Erie/capture_2.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_2.tif</td>
       <td>2022-08-17</td>
       <td>15:37:08</td>
       <td>41.828670</td>
@@ -283,7 +282,7 @@ Loading ImageSet from: Lake_Erie/raw_water_imgs
     <tr>
       <th>2</th>
       <td>capture_3.tif</td>
-      <td>Lake_Erie/capture_3.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_3.tif</td>
       <td>2022-08-17</td>
       <td>15:37:10</td>
       <td>41.828809</td>
@@ -307,7 +306,7 @@ Loading ImageSet from: Lake_Erie/raw_water_imgs
     <tr>
       <th>3</th>
       <td>capture_4.tif</td>
-      <td>Lake_Erie/capture_4.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_4.tif</td>
       <td>2022-08-17</td>
       <td>15:37:13</td>
       <td>41.828956</td>
@@ -331,7 +330,7 @@ Loading ImageSet from: Lake_Erie/raw_water_imgs
     <tr>
       <th>4</th>
       <td>capture_5.tif</td>
-      <td>Lake_Erie/capture_5.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_5.tif</td>
       <td>2022-08-17</td>
       <td>15:37:16</td>
       <td>41.829081</td>
@@ -357,9 +356,9 @@ Loading ImageSet from: Lake_Erie/raw_water_imgs
 <p>5 rows × 21 columns</p>
 </div></div>
 </div>
-<p>We can plot the altitude and lat,lon, and yaw angle metadata of the image captures to get a sense of the flight plan.</p>
+<p>We can plot the altitude, latitude/longitude, and yaw angle metadata of the image captures to get a sense of the flight plan.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, ax = plt.subplots(1,3, figsize=(10,3), layout=&#39;tight&#39;)
@@ -377,7 +376,7 @@ ax[2].set_ylabel(&#39;Yaw&#39;)
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -393,14 +392,15 @@ Text(0, 0.5, &#39;Yaw&#39;)
 </div>
 </div>
 </section>
-<section id="3.-Process-raw-imagery-to-remote-sensing-reflectance-(Rrs)-and-visualize-data">
-<h2>3. Process raw imagery to remote sensing reflectance (Rrs) and visualize data<a class="headerlink" href="#3.-Process-raw-imagery-to-remote-sensing-reflectance-(Rrs)-and-visualize-data" title="Link to this heading"></a></h2>
-<p>Now let’s get to processing. The <code class="docutils literal notranslate"><span class="pre">process_raw_to_rrs()</span></code> function has a number of options that you can see here:</p>
+<section id="3.-Process-raw-imagery-to-remote-sensing-reflectance">
+<h2>3. Process raw imagery to remote sensing reflectance<a class="headerlink" href="#3.-Process-raw-imagery-to-remote-sensing-reflectance" title="Link to this heading"></a></h2>
+<p>Now, let’s get to processing.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">RrsPipeline</span></code> class is the main processing unit of DroneWQ. It allows you to define which methods are used at each stage of the processing pipeline, and the parameters for each selected method can be customized to suit your workflow.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?process_raw_to_rrs
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?dronewq.RrsPipeline
 </pre></div>
 </div>
 </div>
@@ -409,56 +409,66 @@ Text(0, 0.5, &#39;Yaw&#39;)
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">Signature:</span>
-process_raw_to_rrs<span class="ansi-blue-fg">(</span>
-    main_dir<span class="ansi-blue-fg">,</span>
-    rrs_dir_name<span class="ansi-blue-fg">,</span>
-    output_csv_path<span class="ansi-blue-fg">,</span>
-    lw_method<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&#39;mobley_rho_method&#39;</span><span class="ansi-blue-fg">,</span>
-    mask_pixels<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
-    random_n<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">10</span><span class="ansi-blue-fg">,</span>
-    pixel_masking_method<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&#39;value_threshold&#39;</span><span class="ansi-blue-fg">,</span>
-    mask_std_factor<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">,</span>
-    nir_threshold<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0.01</span><span class="ansi-blue-fg">,</span>
-    green_threshold<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0.005</span><span class="ansi-blue-fg">,</span>
-    ed_method<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&#39;dls_ed&#39;</span><span class="ansi-blue-fg">,</span>
-    overwrite_lt_lw<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
-    clean_intermediates<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">True</span><span class="ansi-blue-fg">,</span>
-<span class="ansi-blue-fg">)</span>
+<span class="ansi-red-fg">Init signature:</span>
+dronewq.RrsPipeline(
+    lw_method: dronewq.utils.data_types.Base_Compute_Method,
+    ed_method: dronewq.utils.data_types.Base_Compute_Method,
+    masking_method: dronewq.utils.data_types.Base_Compute_Method | <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> = <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>,
+    overwrite_lt: bool = <span class="ansi-bold" style="color: rgb(0,135,0)">False</span>,
+    generate_thumbnails: bool = <span class="ansi-bold" style="color: rgb(0,135,0)">True</span>,
+    workers: int = <span class="ansi-green-fg">1</span>,
+)
 <span class="ansi-red-fg">Docstring:</span>
-This functions is the main processing script that processs raw imagery to units of remote sensing reflectance (Rrs). Users can select which processing parameters to use to calculate Rrs.
+Main pipeline for dronewq.
 
-Inputs:
-main_dir: A string containing the main image directory
-rrs_dir_name: A string containing the directory filepath of new rrs images
-output_csv_path: A string containing the filepath to write the metadata.csv
-lw_method: Method used to calculate water leaving radiance. Default is mobley_rho_method().
-random_n: The amount of random images to calculate ambient NIR level. Default is 10. Only need if lw_method = &#39;hedley_method&#39;
-mask_pixels: Option to mask pixels containing specular sun glint, shadowing, adjacent vegetation, etc. Default is False.
-pixel_masking_method: Method to mask pixels. Options are &#39;value_threshold&#39; or &#39;std_threshold&#39;. Default is value_threshold.
-mask_std_factor: A factor to multiply to the standard deviation of NIR values. Default is 1. Only need if pixel_masking_method = &#39;std_threshold&#39;
-nir_threshold: An Rrs(NIR) value where pixels above this will be masked. Default is 0.01. These are usually pixels of specular sun glint or land features. Only need if pixel_masking_method = &#39;value_threshold&#39;.
-green_threshold: A Rrs(green) value where pixels below this will be masked. Default is 0.005. These are usually pixels of vegetation shadowing.  Only need if pixel_masking_method = &#39;value_threshold&#39;.
-ed_method: Method used to calculate downwelling irradiance (Ed). Default is dls_ed().
-overwrite_lt_lw: Option to overwrite lt and lw files that have been written previously. Default is False but this is only applied to the Lt images.
-clean_intermediates: Option to erase intermediates of processing (Lt, Lw, unmasked Rrs)
-
-Output: New Rrs tifs (masked or unmasked) with units of sr^-1.
-<span class="ansi-red-fg">File:</span>      /glusteruser/awindled/DroneWQ/utils.py
-<span class="ansi-red-fg">Type:</span>      function
+Parameters
+----------
+output_folder : Path | str
+    Path to the output folder.
+lw_method : Base_Compute_Method
+    Method used to calculate water leaving radiance.
+    If uncertain, you can start with `Mobley_rho()`.
+ed_method : Base_Compute_Method
+    Method used to calculate downwelling irradiance (Ed).
+    If uncertain, you can start with `Dls_ed()`.
+masking_method : Base_Compute_Method | None, optional
+    Method to mask pixels. Options are
+    `ThresholdMasking`, `StdMasking`, or None. Default is None.
+overwrite_lt : bool, optional
+    Whether to overwrite existing Lt images.
+    Should have this set to True if you are running the pipeline for the
+    first time. Defaults to False, which saves time if you are rerunning.
+generate_thumbnails : bool, optional
+    Whether to generate thumbnails. Defaults to True.
+workers : int, optional
+    Number of parallel image processing instances. Defaults to 1.
+<span class="ansi-red-fg">Init docstring:</span> Initialize the pipeline.
+<span class="ansi-red-fg">File:</span>           ~/Developer/DroneWQ/src/dronewq/core/pipeline.py
+<span class="ansi-red-fg">Type:</span>           type
+<span class="ansi-red-fg">Subclasses:</span>
 </pre></div></div>
 </div>
-<p>For this example, we’re calculating water leaving radiance (Lw) using the Hedley approach, calculating downwelling irradiance (Ed) using the downwelling light sensor (DLS). We are applying the default masking procedure with a NIR threshold of 0.02. We’ll save processed images out two directories called <code class="docutils literal notranslate"><span class="pre">rrs_hedley</span></code> and <code class="docutils literal notranslate"><span class="pre">masked_rrs_hedley</span></code>. Please see paper.md for more information on the different processing methods used here.</p>
-<p>In summary, this code will process: Raw -&gt; Lt -&gt; Lw (Hedley method) -&gt; Rrs (using Ed from DLS) with pixel masking.</p>
-<p>Note that we are changing the default nir_threshold for pixel masking from 0.01 to 0.02 since 0.01 was not high enough to mask glint pixels in this dataset. It is important to consider these values since they may change according to your dataset.</p>
+<p>For this example, we’re calculating water leaving radiance (<span class="math notranslate nohighlight">\(\mathrm{L}_{\mathrm{w}}\)</span>) using the Hedley approach, calculating downwelling irradiance (<span class="math notranslate nohighlight">\(\mathrm{E}_{\mathrm{d}}\)</span>) using the downwelling light sensor (DLS), and are applying the default masking procedure. We’ll save processed images out to two directories called <code class="docutils literal notranslate"><span class="pre">rrs_imgs</span></code> and <code class="docutils literal notranslate"><span class="pre">masked_rrs_imgs</span></code>. Please see the <em>Processing and theory</em> section in the <a class="reference external" href="https://dronewq.readthedocs.io/en/latest/index.html">DroneWQ
+readthedocs</a> for more information on the different processing methods used here.</p>
+<p>In summary, this code will process: Raw imagery -&gt; <span class="math notranslate nohighlight">\(\mathrm{L}_{\mathrm{t}}\)</span> -&gt; <span class="math notranslate nohighlight">\(\mathrm{L}_{\mathrm{w}}\)</span> (Hedley method) -&gt; <span class="math notranslate nohighlight">\(\mathrm{R}_{\mathrm{rs}}\)</span> (using <span class="math notranslate nohighlight">\(\mathrm{E}_{\mathrm{d}}\)</span> from DLS) with pixel masking.</p>
+<blockquote>
+<div><p>Note that we are changing the default <code class="docutils literal notranslate"><span class="pre">nir_threshold</span></code> for pixel masking from 0.01 to 0.02 since 0.01 was not high enough to mask glint pixels in this dataset. It is important to consider these values since they may change according to your dataset.</p>
+</div></blockquote>
+<p>If your hardware allows, you can adjust the <code class="docutils literal notranslate"><span class="pre">workers</span></code> parameter to potentially speed up processing. Keep in mind that the optimal value depends on your system’s hardware capabilities.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[47]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>process_raw_to_rrs(main_dir=project_path, rrs_dir_name=&#39;rrs_hedley&#39;, output_csv_path=project_path, lw_method=&#39;hedley_method&#39;,
-                   random_n=10, mask_pixels=True, pixel_masking_method=&#39;value_threshold&#39;, nir_threshold=0.02, ed_method=&#39;dls_ed&#39;,
-                   overwrite_lt_lw=False, clean_intermediates=False)
-<br/></pre></div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from dronewq import Hedley, DlsEd, ThresholdMasking
+pipeline = dronewq.RrsPipeline(
+    lw_method=Hedley(save_images=True),
+    ed_method=DlsEd(settings.output_dir),
+    masking_method=ThresholdMasking(nir_threshold=0.02),
+    workers=4,
+)
+
+pipeline.run()
+</pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -466,45 +476,40 @@ Output: New Rrs tifs (masked or unmasked) with units of sr^-1.
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Loading ImageSet from: Lake_Erie/align_img
-Processing a total of 2351 images or 470 captures.
-Converting raw images to radiance (raw -&gt; Lt).
-Loading ImageSet from: Lake_Erie/raw_water_imgs
-Loading ImageSet from: Lake_Erie/align_img
-used warp dir Lake_Erie/align_img
-Aligning images. Depending on settings this can take from a few seconds to many minutes
-Finished aligning band 0
-Finished aligning band 1
-Finished aligning band 2
-Finished aligning band 3
-Finished aligning band 4
-Saving time: 0:00:00.525930
-Alignment+Saving rate: 893.66 images per second
-Finished saving images.
-Finished saving image metadata.
-Applying the Hochberg/Hedley (Lt -&gt; Lw)
-Normalizing by DLS irradiance (Lw/Ed -&gt; Rrs).
-Loading ImageSet from: Lake_Erie/raw_water_imgs
-All data has been saved as Rrs using the hedley_method to calculate Lw and normalized by dls_ed irradiance.
-Masking pixels using NIR and green Rrs thresholds
+Loading ImageSet from: ../Lake_Erie/raw_water_imgs
+Loading ImageSet from: ../Lake_Erie/raw_water_imgs
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
-</pre></div>
+<div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
+<div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-True
+Processing images: 100%|██████████| 470/470 [02:28&lt;00:00,  3.17it/s]
 </pre></div></div>
 </div>
-<p>To grab these processed images and their metadata you can use the helper function <code class="docutils literal notranslate"><span class="pre">retrieve_imgs_and_metadata()</span></code>. The images can also easily be loaded in with the lower level <code class="docutils literal notranslate"><span class="pre">load_images()</span></code> function or even just with rasterio’s <code class="docutils literal notranslate"><span class="pre">open()</span></code> function but the higher level <code class="docutils literal notranslate"><span class="pre">retrieve_imgs_and_metadata()</span></code> allows you to apply an altitude cutoff and limit the number of files being opened. In the case of large processing jobs it will likely be more appropriate to loop through the files individually
-or in batches which can be done by looping the <code class="docutils literal notranslate"><span class="pre">start</span></code> and <code class="docutils literal notranslate"><span class="pre">count</span></code> arguments in <code class="docutils literal notranslate"><span class="pre">retrieve_imgs_and_metadata()</span></code>.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?retrieve_imgs_and_metadata
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Setting the paths for our outputs
+lw_dir = settings.lw_dir
+rrs_dir = settings.rrs_dir
+masked_rrs_dir = settings.masked_rrs_dir
+</pre></div>
+</div>
+</div>
+<p>To grab these processed images and their metadata you can use the helper functions <code class="docutils literal notranslate"><span class="pre">load_imgs()</span></code> and <code class="docutils literal notranslate"><span class="pre">load_metadata()</span></code>.</p>
+<p>The images can easily be loaded in with <code class="docutils literal notranslate"><span class="pre">load_imgs()</span></code> function or even just with rasterio’s <code class="docutils literal notranslate"><span class="pre">open()</span></code> function. The higher level <code class="docutils literal notranslate"><span class="pre">load_imgs()</span></code> allows you to apply an altitude cutoff and limit the number of files being opened.</p>
+<p>In the case of large processing jobs it will likely be more appropriate to loop through the files individually to save memory and not crash the python kernel.</p>
+<blockquote>
+<div><p>Note that the <code class="docutils literal notranslate"><span class="pre">load_imgs()</span></code> function returns a generator (one image at a time) instead of a list. This means that you should iterate over the returned object. However, you can also get all of the images by wrapping the returned object with a <code class="docutils literal notranslate"><span class="pre">list()</span></code> like in the following code.</p>
+</div></blockquote>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[49]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?dronewq.load_imgs
 </pre></div>
 </div>
 </div>
@@ -514,47 +519,200 @@ or in batches which can be done by looping the <code class="docutils literal not
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 <span class="ansi-red-fg">Signature:</span>
-retrieve_imgs_and_metadata<span class="ansi-blue-fg">(</span>
-    img_dir<span class="ansi-blue-fg">,</span>
-    count<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">10000</span><span class="ansi-blue-fg">,</span>
-    start<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0</span><span class="ansi-blue-fg">,</span>
-    altitude_cutoff<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0</span><span class="ansi-blue-fg">,</span>
-    sky<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
-    random<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
-<span class="ansi-blue-fg">)</span>
+dronewq.load_imgs(
+    img_dir: str | pathlib._local.Path,
+    count=<span class="ansi-green-fg">10000</span>,
+    start=<span class="ansi-green-fg">0</span>,
+    altitude_cutoff=<span class="ansi-green-fg">0</span>,
+    random=<span class="ansi-bold" style="color: rgb(0,135,0)">False</span>,
+)
 <span class="ansi-red-fg">Docstring:</span>
-This function is the main interface we expect the user to use when grabbing a subset of imagery from any stage in processing. This returns the images as a numpy array and metadata as a pandas dataframe.
+Load images from a directory as numpy arrays with metadata filtering.
 
-Inputs:
-img_dir: A string containing the directory filepath of images to be retrieved
-count: The amount of images you want to list. Default is 10000
-start: The number of image to start on. Default is 0 (first image in img_dir).
-random: A boolean to load random images. Default is False
+This function reads raster images from a specified directory and returns them
+as an iterator of numpy arrays. Images can be filtered and selected based on
+metadata criteria including count, starting position, altitude threshold, and
+random sampling. The function leverages metadata stored in a CSV file to
+efficiently select and load images.
 
-Outputs: A multidimensional numpy array of all image captures in a directory and a Pandas dataframe of image metadata.
-<span class="ansi-red-fg">File:</span>      /glusteruser/awindled/DroneWQ/utils.py
+Parameters
+----------
+img_dir : str | Path
+    Directory path containing the images to be loaded. The directory or its
+    parent must contain a &#39;metadata.csv&#39; file with image information.
+count : int, optional
+    Maximum number of images to load. If count exceeds the number of available
+    images after filtering, all available images are loaded. Default is 10000.
+start : int, optional
+    Index of the first image to load when loading sequentially (random=False).
+    Zero-based indexing. Default is 0.
+altitude_cutoff : float, optional
+    Minimum altitude threshold in meters. Images captured below this altitude
+    are excluded. Default is 0 (no altitude filtering).
+random : bool, optional
+    If True, randomly samples &#39;count&#39; images from the available set. If False,
+    loads images sequentially starting from &#39;start&#39; index. Default is False.
+
+Yields
+------
+numpy.ndarray
+    3D numpy array for each image with shape (bands, height, width), where
+    bands is the number of spectral bands in the raster image.
+
+Notes
+-----
+The function expects a &#39;metadata.csv&#39; file containing at least the following columns:
+- &#39;filename&#39;: Name of the image file (used as index)
+- &#39;Altitude&#39;: Altitude at which the image was captured
+
+Images are loaded using rasterio, which supports various raster formats including
+GeoTIFF. The function uses lazy loading via a generator pattern to minimize
+memory usage when processing large datasets.
+
+The metadata CSV location is determined by:
+- If &#39;sky&#39; is in img_dir: looks for metadata.csv in img_dir
+- Otherwise: looks for metadata.csv in the parent directory of img_dir
+
+Examples
+--------
+&gt;&gt;&gt; # Load first 10 images from directory
+&gt;&gt;&gt; imgs = load_imgs(&#39;/path/to/images&#39;, count=10)
+&gt;&gt;&gt; for img in imgs:
+...     print(img.shape)
+
+&gt;&gt;&gt; # Load first 10 images without iterating
+&gt;&gt;&gt; imgs = load_imgs(&#39;/path/to/images&#39;, count=10)
+&gt;&gt;&gt; imgs = list(imgs)
+<span class="ansi-red-fg">File:</span>      ~/Developer/DroneWQ/src/dronewq/utils/images.py
 <span class="ansi-red-fg">Type:</span>      function
 </pre></div></div>
 </div>
-<p>Let’s retrieve the Rrs data (5 bands) and visualize the first 5 images:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[50]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>rrs_imgs_hedley, img_metadata = retrieve_imgs_and_metadata(img_dir = os.path.join(project_path, &#39;rrs_hedley&#39;), start=0, count=5)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?dronewq.load_metadata
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">Signature:</span>
+dronewq.load_metadata(
+    img_dir: str | pathlib._local.Path,
+    count=<span class="ansi-green-fg">10000</span>,
+    start=<span class="ansi-green-fg">0</span>,
+    altitude_cutoff=<span class="ansi-green-fg">0</span>,
+    random=<span class="ansi-bold" style="color: rgb(0,135,0)">False</span>,
+)
+<span class="ansi-red-fg">Docstring:</span>
+Load and filter image metadata from a CSV file.
+
+This function reads image metadata from a CSV file and returns a filtered
+pandas DataFrame based on specified criteria including image count, starting
+position, altitude threshold, and random sampling. The metadata is used to
+efficiently select images for loading without reading the actual image files.
+
+Parameters
+----------
+img_dir : str | Path
+    Directory path containing the images. The directory or its parent must
+    contain a &#39;metadata.csv&#39; file with image information.
+count : int, optional
+    Maximum number of images to include in the returned DataFrame. If count
+    exceeds the number of available images, all available images are included.
+    Default is 10000.
+start : int, optional
+    Index of the first image to include when selecting sequentially (random=False).
+    Zero-based indexing. Default is 0.
+altitude_cutoff : float, optional
+    Minimum altitude threshold in meters. Images captured below this altitude
+    are excluded from the DataFrame. Applied after count/start filtering.
+    Default is 0 (no altitude filtering).
+random : bool, optional
+    If True, randomly samples &#39;count&#39; images from the available metadata.
+    If False, selects images sequentially starting from &#39;start&#39; index.
+    Default is False.
+
+Returns
+-------
+pandas.DataFrame
+    DataFrame containing metadata for selected images, with &#39;filename&#39; as
+    the index. Only includes images meeting the altitude_cutoff criterion.
+
+Notes
+-----
+The function expects a &#39;metadata.csv&#39; file with at least the following columns:
+- &#39;filename&#39;: Name of the image file (becomes DataFrame index)
+- &#39;Altitude&#39;: Altitude at which the image was captured (in meters)
+
+Additional columns may include:
+- &#39;UTC-Time&#39;: Timestamp of image capture
+- &#39;Latitude&#39;, &#39;Longitude&#39;: Geographic coordinates
+- Other sensor-specific metadata
+
+The metadata CSV location is determined by:
+- If &#39;sky&#39; appears in img_dir path: looks for metadata.csv in img_dir
+- Otherwise: looks for metadata.csv in the parent directory of img_dir
+
+This logic accommodates directory structures where sky images may have
+separate metadata from water/ground images.
+
+The filtering order is:
+1. Load full metadata CSV
+2. Set filename as index
+3. Apply count and start (or random sampling)
+4. Apply altitude_cutoff filter
+
+Examples
+--------
+&gt;&gt;&gt; # Load metadata for first 50 images
+&gt;&gt;&gt; df = load_metadata(&#39;/path/to/images&#39;, count=50)
+&gt;&gt;&gt; print(df.columns)
+
+&gt;&gt;&gt; # Load metadata for random sample with altitude filter
+&gt;&gt;&gt; df = load_metadata(&#39;/path/to/images&#39;, count=100, altitude_cutoff=15, random=True)
+&gt;&gt;&gt; print(f&#34;Selected {len(df)} images above 15m altitude&#34;)
+
+&gt;&gt;&gt; # Load metadata starting from image 20
+&gt;&gt;&gt; df = load_metadata(&#39;/path/to/images&#39;, count=30, start=20)
+&gt;&gt;&gt; filenames = df.index.tolist()
+
+&gt;&gt;&gt; # Get all available metadata with altitude filter
+&gt;&gt;&gt; df = load_metadata(&#39;/path/to/images&#39;, altitude_cutoff=10)
+&gt;&gt;&gt; print(f&#34;Mean altitude: {df[&#39;Altitude&#39;].mean():.2f}m&#34;)
+<span class="ansi-red-fg">File:</span>      ~/Developer/DroneWQ/src/dronewq/utils/images.py
+<span class="ansi-red-fg">Type:</span>      function
+</pre></div></div>
+</div>
+<p>Let’s retrieve the <span class="math notranslate nohighlight">\(\mathrm{R}_{\mathrm{rs}}\)</span> data (5 bands) and visualize the first five images:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>rrs_imgs_gen = dronewq.load_imgs(img_dir=rrs_dir, start=0, count=5)
+
+img_metadata = dronewq.load_metadata(img_dir=rrs_dir, count=5)
+
+# you can convert the generator to a list or array if needed
+rrs_imgs = np.array(list(rrs_imgs_gen))
+
 print(img_metadata.index)
 
 band_names = [&#39;blue&#39;, &#39;green&#39;, &#39;red&#39;, &#39;red edge&#39;, &#39;nir&#39;]
 
-for j in range(len(rrs_imgs_hedley[0:5])):
+for j in range(len(rrs_imgs[0:5])):
     fig, ax = plt.subplots(1,5, figsize=(10,3.5))
     for i in range(5):
-        im = ax[i].imshow(rrs_imgs_hedley[j,i], cmap=&#39;viridis&#39;, vmin=0.001, vmax=0.02)
+        im = ax[i].imshow(rrs_imgs[j,i], cmap=&#39;viridis&#39;, vmin=0.001, vmax=0.02)
         ax[i].set_xticks([])
         ax[i].set_yticks([])
         ax[i].set_title(band_names[i])
     cbar = fig.colorbar(im, ax=ax[i], fraction=0.046, pad=0.04)
-    cbar.set_label(&#39;$R_{rs}\ (sr^{-1}$)&#39;, rotation=270, labelpad=15)
+    cbar.set_label(r&#39;$R_{rs}\ (sr^{-1}$)&#39;, rotation=270, labelpad=15)
     fig.tight_layout()
     plt.show()
 </pre></div>
@@ -567,74 +725,7 @@ for j in range(len(rrs_imgs_hedley[0:5])):
 <div class="highlight"><pre>
 Index([&#39;capture_1.tif&#39;, &#39;capture_2.tif&#39;, &#39;capture_3.tif&#39;, &#39;capture_4.tif&#39;,
        &#39;capture_5.tif&#39;],
-      dtype=&#39;object&#39;, name=&#39;filename&#39;)
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="_images/primary_demo_21_1.png" src="_images/primary_demo_21_1.png" />
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="_images/primary_demo_21_2.png" src="_images/primary_demo_21_2.png" />
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="_images/primary_demo_21_3.png" src="_images/primary_demo_21_3.png" />
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="_images/primary_demo_21_4.png" src="_images/primary_demo_21_4.png" />
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="_images/primary_demo_21_5.png" src="_images/primary_demo_21_5.png" />
-</div>
-</div>
-<p>We can also visualize the masked Rrs:</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>masked_rrs_imgs_hedley, img_metadata = retrieve_imgs_and_metadata(img_dir = os.path.join(project_path, &#39;masked_rrs_hedley&#39;), start=0, count=5)
-print(img_metadata.index)
-
-for j in range(len(masked_rrs_imgs_hedley[0:5])):
-    fig, ax = plt.subplots(1,5, figsize=(10,3.5))
-    for i in range(5):
-        im = ax[i].imshow(masked_rrs_imgs_hedley[j,i],cmap=&#39;viridis&#39;, vmin=0.001, vmax=0.02)
-        ax[i].set_xticks([])
-        ax[i].set_yticks([])
-        ax[i].set_title(band_names[i])
-    cbar = fig.colorbar(im, ax=ax[i], fraction=0.046, pad=0.04)
-    cbar.set_label(&#39;$R_{rs}\ (sr^{-1}$)&#39;, rotation=270, labelpad=15)
-    fig.tight_layout()
-    plt.show()
-</pre></div>
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Index([&#39;capture_1.tif&#39;, &#39;capture_2.tif&#39;, &#39;capture_3.tif&#39;, &#39;capture_4.tif&#39;,
-       &#39;capture_5.tif&#39;],
-      dtype=&#39;object&#39;, name=&#39;filename&#39;)
+      dtype=&#39;str&#39;, name=&#39;filename&#39;)
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -672,62 +763,139 @@ Index([&#39;capture_1.tif&#39;, &#39;capture_2.tif&#39;, &#39;capture_3.tif&#39;
 <img alt="_images/primary_demo_23_5.png" src="_images/primary_demo_23_5.png" />
 </div>
 </div>
-<p>Let’s plot the masked Rrs spectra of the first 25 images:</p>
+<p>We can also visualize the masked <span class="math notranslate nohighlight">\(\mathrm{R}_{\mathrm{rs}}\)</span>:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>masked_rrs_imgs_hedley, img_metadata = retrieve_imgs_and_metadata(img_dir = os.path.join(project_path, &#39;masked_rrs_hedley&#39;), count=25)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>masked_rrs_imgs_gen = dronewq.load_imgs(img_dir=masked_rrs_dir, start=0, count=5)
 
-fig, ax = plt.subplots(1,1, figsize=(6,3))
+img_metadata = dronewq.load_metadata(img_dir=masked_rrs_dir, count=5)
 
-wv = [475, 560, 668, 717, 842]
-colors = plt.cm.viridis(np.linspace(0,1,len(masked_rrs_imgs_hedley)))
+masked_rrs_imgs = np.array(list(masked_rrs_imgs_gen))
 
-for i in range(len(masked_rrs_imgs_hedley)):
-    plt.plot(wv, np.nanmean(masked_rrs_imgs_hedley[i,0:5,:,:],axis=(1,2)), marker = &#39;o&#39;, color=colors[i], label=&quot;&quot;)
-    plt.xlabel(&#39;Wavelength (nm)&#39;)
-    plt.ylabel(&#39;$R_{rs}\ (sr^{-1}$)&#39;)
-plt.plot(wv, np.nanmean(masked_rrs_imgs_hedley[:,0:5,:,:], axis=(0,2,3)),  marker = &#39;o&#39;, color=&#39;black&#39;, linewidth=5, label=&#39;Mean&#39;)
+print(img_metadata.index)
 
-plt.legend(frameon=False)
+for j in range(len(masked_rrs_imgs[0:5])):
+    fig, ax = plt.subplots(1,5, figsize=(10,3.5))
+    for i in range(5):
+        im = ax[i].imshow(masked_rrs_imgs[j,i],cmap=&#39;viridis&#39;, vmin=0.001, vmax=0.02)
+        ax[i].set_xticks([])
+        ax[i].set_yticks([])
+        ax[i].set_title(band_names[i])
+    cbar = fig.colorbar(im, ax=ax[i], fraction=0.046, pad=0.04)
+    cbar.set_label(r&#39;$R_{rs}\ (sr^{-1}$)&#39;, rotation=270, labelpad=15)
+    fig.tight_layout()
+    plt.show()
 </pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
-</pre></div>
+<div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x7f9ed1712530&gt;
+Index([&#39;capture_1.tif&#39;, &#39;capture_2.tif&#39;, &#39;capture_3.tif&#39;, &#39;capture_4.tif&#39;,
+       &#39;capture_5.tif&#39;],
+      dtype=&#39;str&#39;, name=&#39;filename&#39;)
 </pre></div></div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <img alt="_images/primary_demo_25_1.png" src="_images/primary_demo_25_1.png" />
 </div>
 </div>
-<p>Let’s compare this Rrs spectra to Rrs spectra retrived by a satellite at the same location and time. Below is a plot of Rrs from the Ocean Land Color Imager (OLCI) on board the European satellite, Sentinel-3A. OLCI collects in a few more bands which is why there are more points on the plot. However, the shape looks similar to the MicaSense retrieved Rrs. The troughs at 475 nm and 668 nm is associated with chlorophyll absorption and the peak at 717 nm is likely due to phytoplankton particle
-scattering.</p>
-<p><img alt="Lake Erie OLCI" src="_images/OLCI_Rrs_Lake_Erie.png" /></p>
-<p>Let’s plot the Lt, Lw, Ed spectra as well. First, we need to retrieve all the data.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_25_2.png" src="_images/primary_demo_25_2.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_25_3.png" src="_images/primary_demo_25_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_25_4.png" src="_images/primary_demo_25_4.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_25_5.png" src="_images/primary_demo_25_5.png" />
+</div>
+</div>
+<p>Let’s plot the masked <span class="math notranslate nohighlight">\(\mathrm{R}_{\mathrm{rs}}\)</span> spectra of the first 25 images:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[53]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>lt_imgs, img_metadata = retrieve_imgs_and_metadata(img_dir = project_path+&#39;/lt_imgs&#39;, count=25)
-lw_imgs, img_metadata = retrieve_imgs_and_metadata(img_dir = project_path+&#39;/lw_imgs&#39;, count=25)
-dls_ed = pd.read_csv(project_path+&#39;/dls_ed.csv&#39;)
-rrs_imgs_hedley, img_metadata = retrieve_imgs_and_metadata(img_dir = project_path+&#39;/rrs_hedley&#39;, count=25)
-masked_rrs_imgs_hedley, img_metadata = retrieve_imgs_and_metadata(img_dir = project_path+&#39;/masked_rrs_hedley&#39;, count=25)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>masked_rrs_imgs_gen = dronewq.load_imgs(img_dir = masked_rrs_dir, count=25)
+
+masked_rrs_imgs = np.array(list(masked_rrs_imgs_gen))
+
+fig, ax = plt.subplots(1,1, figsize=(6,3))
+
+wv = [475, 560, 668, 717, 842]
+
+color_map = plt.get_cmap(&quot;viridis&quot;)
+colors = [color_map(i) for i in np.linspace(0, 1, len(masked_rrs_imgs))]
+
+for i in range(len(masked_rrs_imgs)):
+    plt.plot(wv, np.nanmean(masked_rrs_imgs[i,0:5,:,:],axis=(1,2)), marker = &#39;o&#39;, color=colors[i], label=&quot;&quot;)
+    plt.xlabel(&#39;Wavelength (nm)&#39;)
+    plt.ylabel(r&#39;$R_{rs}\ (sr^{-1}$)&#39;)
+plt.plot(wv, np.nanmean(masked_rrs_imgs[:,0:5,:,:], axis=(0,2,3)),  marker = &#39;o&#39;, color=&#39;black&#39;, linewidth=5, label=&#39;Mean&#39;)
+
+plt.legend(frameon=False)
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[53]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.legend.Legend at 0x7fad35002e90&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/primary_demo_27_1.png" src="_images/primary_demo_27_1.png" />
+</div>
+</div>
+<p>Let’s compare the <span class="math notranslate nohighlight">\(\mathrm{R}{\mathrm{rs}}\)</span> spectra from our MicaSense data to an <span class="math notranslate nohighlight">\(\mathrm{R}{\mathrm{rs}}\)</span> spectrum retrieved by a satellite at the same location and time. Below is a plot of <span class="math notranslate nohighlight">\(\mathrm{R}{\mathrm{rs}}\)</span> from the Ocean and Land Color Instrument (OLCI) on board the European Sentinel-3A satellite. OLCI measures additional spectral bands, which is why there are more points on the plot. Despite this, the overall spectral shape closely matches the MicaSense-derived
+<span class="math notranslate nohighlight">\(\mathrm{R}{\mathrm{rs}}\)</span>. The troughs at 475 nm and 668 nm correspond to chlorophyll absorption, while the peak at 717 nm is likely due to scattering by phytoplankton particles.</p>
+<p><a href="#id1"><span class="problematic" id="id2">|588b2b3b33d84b0d9e4b559a15e69933|</span></a></p>
+<p>Let’s plot the <span class="math notranslate nohighlight">\(\mathrm{L}{\mathrm{t}}\)</span>, <span class="math notranslate nohighlight">\(\mathrm{L}{\mathrm{w}}\)</span>, <span class="math notranslate nohighlight">\(\mathrm{E}{\mathrm{d}}\)</span> spectra as well. First, we need to retrieve all the data.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[54]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>lt_imgs = dronewq.load_imgs(img_dir = settings.lt_dir, count=25)
+lw_imgs = dronewq.load_imgs(img_dir = settings.lw_dir, count=25)
+csv_path = os.path.join(settings.output_dir, &#39;dls_ed.csv&#39;)
+dls_ed = pd.read_csv(csv_path)
+rrs_imgs = dronewq.load_imgs(img_dir = rrs_dir, count=25)
+masked_rrs_imgs = dronewq.load_imgs(img_dir = masked_rrs_dir, count=25)
 </pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[55]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, axs = plt.subplots(2,2, figsize=(10,5))
@@ -735,44 +903,47 @@ masked_rrs_imgs_hedley, img_metadata = retrieve_imgs_and_metadata(img_dir = proj
 axs = axs.ravel()
 
 wv = [475, 560, 668, 717, 842]
-colors = plt.cm.viridis(np.linspace(0,1,len(lt_imgs)))
+colors = plt.get_cmap(&quot;viridis&quot;)(np.linspace(0,1,25))
 
 #lt
-for i in range(len(lt_imgs)):
-    axs[0].plot(wv, np.nanmean(lt_imgs[i,0:5,:,:],axis=(1,2)),  marker = &#39;o&#39;, color=colors[i], label=&quot;&quot;)
+total_mean = []
+for i, img in enumerate(lt_imgs):
+    img_mean = np.nanmean(img[0:5,:,:], axis=(1,2))
+    total_mean.append(img_mean)
+    axs[0].plot(wv, img_mean,  marker = &#39;o&#39;, color=colors[i], label=&quot;&quot;)
     axs[0].set_xlabel(&#39;Wavelength (nm)&#39;)
-    axs[0].set_ylabel(&#39;$L_t\ (mW\ m^2\ sr^{-1}\ nm^{-1}$)&#39;)
-axs[0].plot(wv, np.nanmean(lt_imgs[:,0:5,:,:], axis=(0,2,3)),  marker = &#39;o&#39;, color=&#39;black&#39;, linewidth=5, label=&#39;Mean&#39;)
+    axs[0].set_ylabel(r&#39;$L_t\ (mW\ m^2\ sr^{-1}\ nm^{-1}$)&#39;)
+axs[0].plot(wv, np.mean(total_mean, axis=0),  marker = &#39;o&#39;, color=&#39;black&#39;, linewidth=5, label=&#39;Mean&#39;)
 axs[0].legend(frameon=False)
 
 #dls ed
-ed = pd.read_csv(project_path+&#39;/dls_ed.csv&#39;)
-colors = plt.cm.viridis(np.linspace(0,1,len(ed)))
+dls_colors = plt.get_cmap(&quot;viridis&quot;)(np.linspace(0,1,len(dls_ed)))
 
-for i in range(len(ed)):
-    axs[1].plot(wv, ed.iloc[i,1:6],  marker = &#39;o&#39;, color=colors[i])
+for i in range(len(dls_ed)):
+    axs[1].plot(wv, dls_ed.iloc[i,1:6],  marker = &#39;o&#39;, color=dls_colors[i])
     axs[1].set_xlabel(&#39;Wavelength (nm)&#39;)
-    axs[1].set_ylabel(&#39;$E_d\ (mW\ m^2\ nm^{-1}$)&#39;)
-axs[1].plot(wv, ed.iloc[:,1:6].mean(axis=0),  marker = &#39;o&#39;, color=&#39;black&#39;, linewidth=5, label=&#39;Mean&#39;)
+    axs[1].set_ylabel(r&#39;$E_d\ (mW\ m^2\ nm^{-1}$)&#39;)
+axs[1].plot(wv, dls_ed.iloc[:,1:6].mean(axis=0),  marker = &#39;o&#39;, color=&#39;black&#39;, linewidth=5, label=&#39;Mean&#39;)
 
-#rrs_imgs_hedley
-colors = plt.cm.viridis(np.linspace(0,1,len(rrs_imgs_hedley)))
-
-for i in range(len(rrs_imgs_hedley)):
-    axs[2].plot(wv, np.nanmean(rrs_imgs_hedley[i,0:5,:,:],axis=(1,2)),  marker = &#39;o&#39;, color=colors[i], label=&quot;&quot;)
+#rrs_imgs
+total_mean = []
+for i, img in enumerate(rrs_imgs):
+    img_mean = np.nanmean(img[0:5,:,:],axis=(1,2))
+    total_mean.append(img_mean)
+    axs[2].plot(wv, img_mean,  marker = &#39;o&#39;, color=colors[i], label=&quot;&quot;)
     axs[2].set_xlabel(&#39;Wavelength (nm)&#39;)
-    axs[2].set_ylabel(&#39;$R_{rs}\ (sr^{-1}$)&#39;)
-axs[2].plot(wv, np.nanmean(rrs_imgs_hedley[:,0:5,:,:], axis=(0,2,3)),  marker = &#39;o&#39;, color=&#39;black&#39;, linewidth=5, label=&#39;Mean&#39;)
+    axs[2].set_ylabel(r&#39;$R_{rs}\ (sr^{-1}$)&#39;)
+axs[2].plot(wv, np.mean(total_mean, axis=0),  marker = &#39;o&#39;, color=&#39;black&#39;, linewidth=5, label=&#39;Mean&#39;)
 
-
-#rrs_imgs_hedley_masked
-colors = plt.cm.viridis(np.linspace(0,1,len(masked_rrs_imgs_hedley)))
-
-for i in range(len(masked_rrs_imgs_hedley)):
-    axs[3].plot(wv, np.nanmean(masked_rrs_imgs_hedley[i,0:5,:,:],axis=(1,2)),  marker = &#39;o&#39;, color=colors[i], label=&quot;&quot;)
+#rrs_imgs_masked
+total_mean = []
+for i, img in enumerate(masked_rrs_imgs):
+    img_mean = np.nanmean(img[0:5,:,:],axis=(1,2))
+    total_mean.append(img_mean)
+    axs[3].plot(wv, img_mean,  marker = &#39;o&#39;, color=colors[i], label=&quot;&quot;)
     axs[3].set_xlabel(&#39;Wavelength (nm)&#39;)
-    axs[3].set_ylabel(&#39;$R_{rs}\ (sr^{-1}$)&#39;)
-axs[3].plot(wv, np.nanmean(masked_rrs_imgs_hedley[:,0:5,:,:], axis=(0,2,3)),  marker = &#39;o&#39;, color=&#39;black&#39;, linewidth=5, label=&#39;Mean&#39;)
+    axs[3].set_ylabel(r&#39;$R_{rs}\ (sr^{-1}$)&#39;)
+axs[3].plot(wv, np.mean(total_mean, axis=0),  marker = &#39;o&#39;, color=&#39;black&#39;, linewidth=5, label=&#39;Mean&#39;)
 
 fig.tight_layout()
 </pre></div>
@@ -782,18 +953,19 @@ fig.tight_layout()
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="_images/primary_demo_29_0.png" src="_images/primary_demo_29_0.png" />
+<img alt="_images/primary_demo_31_0.png" src="_images/primary_demo_31_0.png" />
 </div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">process_raw_to_rrs()</span></code> function also saves images processed to total radiance (Lt) as stacked red-green-blue (RGB) .jpg’s in a folder called ‘lt_thumbnails’. This is an easy way to quickly view the images to see what the water surface looked like. Let’s open a few to take a look:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">RrsPipeline</span></code> class also saves images processed to total radiance (<span class="math notranslate nohighlight">\(\mathrm{L}{\mathrm{t}}\)</span>) as stacked red-green-blue (RGB) <code class="docutils literal notranslate"><span class="pre">.jpg</span></code> files in a directory called <code class="docutils literal notranslate"><span class="pre">lt_thumbnails</span></code>. These thumbnails provide a quick way to visually inspect the imagery and see what the water surface looked like during flight. Let’s open a few to take a look:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[56]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def capture_path_to_int(path : str) -&gt; int:
     return int(os.path.basename(path).split(&#39;_&#39;)[-1].split(&#39;.&#39;)[0])
 
-lt_thumbnails = sorted(glob.glob(project_path + &#39;/lt_thumbnails/*.jpg&#39;), key = capture_path_to_int)[10:]
+thumbnail_path = os.path.join(settings.main_dir, &#39;lt_thumbnails&#39;)
+lt_thumbnails = sorted(glob.glob(thumbnail_path + &#39;/*.jpg&#39;), key = capture_path_to_int)[10:]
 
 fig, axs = plt.subplots(2,3, figsize=(6,4), sharex=True, sharey=True, layout=&#39;tight&#39;)
 axs = axs.ravel()
@@ -811,44 +983,42 @@ plt.show()
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="_images/primary_demo_31_0.png" src="_images/primary_demo_31_0.png" />
+<img alt="_images/primary_demo_33_0.png" src="_images/primary_demo_33_0.png" />
 </div>
 </div>
 </section>
 <section id="4.-Convert-to-point-samples">
 <h2>4. Convert to point samples<a class="headerlink" href="#4.-Convert-to-point-samples" title="Link to this heading"></a></h2>
-<p>You might be interested in averaging values for every image, to work with point samples. This code calculates the median Rrs across bands and saves them to a Pandas dataframe with the dirname, lat, and lon.</p>
+<p>You may want to average values from each image to work with point-based samples. The code below calculates the median <span class="math notranslate nohighlight">\(\mathrm{R}_{\mathrm{rs}}\)</span> across bands for each image and saves the results to a Pandas DataFrame along with the directory name, latitude, and longitude.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[57]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>masked_rrs_imgs_hedley, img_metadata = retrieve_imgs_and_metadata(img_dir = project_path+&#39;/masked_rrs_hedley&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>masked_rrs_imgs = dronewq.load_imgs(img_dir = masked_rrs_dir)
+img_metadata = dronewq.load_metadata(img_dir = masked_rrs_dir)
 
-rrs_blue = []
-rrs_green = []
-rrs_red = []
-rrs_rededge = []
-rrs_nir= []
+# Compute per-image median for first 5 bands (shape -&gt; (n_images, 5))
+# We take median across spatial dims (H, W)
+medians = []
+for img in masked_rrs_imgs:
+    # Handle the all-NaN case here
+    if np.isnan(img[:5, :, :]).all():
+        med = np.full(5, np.nan)  # or any default value
+    else:
+        med = np.nanmedian(img[:5, :, :], axis=(1, 2))
+    medians.append(med)
 
-for i in range(len(masked_rrs_imgs_hedley)):
-    rrs_blue.append(np.nanmedian(masked_rrs_imgs_hedley[i,0,:,:]))
-    rrs_green.append(np.nanmedian(masked_rrs_imgs_hedley[i,1,:,:]))
-    rrs_red.append(np.nanmedian(masked_rrs_imgs_hedley[i,2,:,:]))
-    rrs_rededge.append(np.nanmedian(masked_rrs_imgs_hedley[i,3,:,:]))
-    rrs_nir.append(np.nanmedian(masked_rrs_imgs_hedley[i,4,:,:]))
+# Build dataframe safely and assign median band values
+df = img_metadata[[&#39;dirname&#39;, &#39;Latitude&#39;, &#39;Longitude&#39;]].copy()
+df[[&#39;rrs_blue&#39;, &#39;rrs_green&#39;, &#39;rrs_red&#39;, &#39;rrs_rededge&#39;, &#39;rrs_nir&#39;]] = medians
 
-df = img_metadata[[&#39;dirname&#39;, &#39;Latitude&#39;, &#39;Longitude&#39;]]
-df[&#39;rrs_blue&#39;] = rrs_blue
-df[&#39;rrs_green&#39;] = rrs_green
-df[&#39;rrs_red&#39;] = rrs_red
-df[&#39;rrs_rededge&#39;] = rrs_rededge
-df[&#39;rrs_nir&#39;] = rrs_nir
+# Show result
 df.head()
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[57]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -894,86 +1064,90 @@ df.head()
   <tbody>
     <tr>
       <th>capture_1.tif</th>
-      <td>Lake_Erie/capture_1.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_1.tif</td>
       <td>41.828528</td>
       <td>-83.398762</td>
-      <td>0.007600</td>
-      <td>0.018665</td>
-      <td>0.009293</td>
-      <td>0.013961</td>
-      <td>0.004451</td>
+      <td>0.007012</td>
+      <td>0.017829</td>
+      <td>0.008522</td>
+      <td>0.012956</td>
+      <td>0.005471</td>
     </tr>
     <tr>
       <th>capture_2.tif</th>
-      <td>Lake_Erie/capture_2.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_2.tif</td>
       <td>41.828670</td>
       <td>-83.398764</td>
-      <td>0.007605</td>
-      <td>0.018555</td>
-      <td>0.009364</td>
-      <td>0.013934</td>
-      <td>0.004396</td>
+      <td>0.007162</td>
+      <td>0.018282</td>
+      <td>0.008805</td>
+      <td>0.013387</td>
+      <td>0.005055</td>
     </tr>
     <tr>
       <th>capture_3.tif</th>
-      <td>Lake_Erie/capture_3.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_3.tif</td>
       <td>41.828809</td>
       <td>-83.398760</td>
-      <td>0.008022</td>
-      <td>0.019594</td>
-      <td>0.009729</td>
-      <td>0.014719</td>
-      <td>0.004636</td>
+      <td>0.007174</td>
+      <td>0.018256</td>
+      <td>0.008776</td>
+      <td>0.013331</td>
+      <td>0.005070</td>
     </tr>
     <tr>
       <th>capture_4.tif</th>
-      <td>Lake_Erie/capture_4.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_4.tif</td>
       <td>41.828956</td>
       <td>-83.398761</td>
-      <td>0.007390</td>
-      <td>0.018215</td>
-      <td>0.009205</td>
-      <td>0.013672</td>
-      <td>0.004342</td>
+      <td>0.007158</td>
+      <td>0.018260</td>
+      <td>0.008775</td>
+      <td>0.013308</td>
+      <td>0.005082</td>
     </tr>
     <tr>
       <th>capture_5.tif</th>
-      <td>Lake_Erie/capture_5.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_5.tif</td>
       <td>41.829081</td>
       <td>-83.398763</td>
-      <td>0.007621</td>
-      <td>0.018760</td>
-      <td>0.009456</td>
-      <td>0.014053</td>
-      <td>0.004457</td>
+      <td>0.007195</td>
+      <td>0.018344</td>
+      <td>0.008787</td>
+      <td>0.013316</td>
+      <td>0.005089</td>
     </tr>
   </tbody>
 </table>
 </div></div>
 </div>
-<p>Easy to save as a .csv:</p>
+<p>These values can be easily saved to a <code class="docutils literal notranslate"><span class="pre">csv</span></code> file:</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[58]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>df.to_csv(project_path + &#39;/median_rrs.csv&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>median_rrs_path = settings.output_dir / &#39;median_rrs.csv&#39;
+df.to_csv(median_rrs_path)
 </pre></div>
 </div>
 </div>
 </section>
 <section id="5.-Apply-bio-optical-algorithms">
 <h2>5. Apply bio-optical algorithms<a class="headerlink" href="#5.-Apply-bio-optical-algorithms" title="Link to this heading"></a></h2>
-<p>We can also apply bio-optical algorithms to derive chlorophyll a and total suspended matter (TSM) concentrations. See the paper.md for more information on each algorithm. Here, we are applying the blended NASA chlorophyll a algorithm (Hu et al., 2019).</p>
+<p>We can also apply bio-optical algorithms to estimate chlorophyll <em>a</em> and total suspended matter (TSM) concentrations. For more information on each algorithm, see the <em>Processing and theory section</em> in the <a class="reference external" href="https://dronewq.readthedocs.io/en/latest/index.html">DroneWQ readthedocs</a>. Here, we apply the blended NASA chlorophyll <em>a</em> algorithm (Hu et al., 2019).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[59]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>masked_rrs_imgs_hedley, img_metadata = retrieve_imgs_and_metadata(img_dir = project_path+&#39;/masked_rrs_hedley&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>masked_rrs_imgs = dronewq.load_imgs(img_dir = masked_rrs_dir)
 
-chl_hu_ocx_imgs = chl_hu_ocx(Rrsblue=masked_rrs_imgs_hedley[:,0,:,:],
-                             Rrsgreen=masked_rrs_imgs_hedley[:,1,:,:],
-                             Rrsred=masked_rrs_imgs_hedley[:,2,:,:])
-print(chl_hu_ocx_imgs.shape)
+chl_hu_ocx_values = []
+for img in masked_rrs_imgs:
+    result = dronewq.chl_hu_ocx(img)
+    chl_hu_ocx_values.append(result)
+
+chl_hu_ocx_values = np.array(chl_hu_ocx_values)
+print(chl_hu_ocx_values.shape)
 </pre></div>
 </div>
 </div>
@@ -985,13 +1159,13 @@ print(chl_hu_ocx_imgs.shape)
 (470, 928, 1227)
 </pre></div></div>
 </div>
-<p>Let’s take a quick look at a histogram of all chl values:</p>
+<p>Let’s take a quick look at a histogram of all chlorophyll <em>a</em> values:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[60]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.hist(chl_hu_ocx_imgs.ravel(), range=[0, 30])
-print(np.nanmedian(chl_hu_ocx_imgs))
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.hist(chl_hu_ocx_values.ravel(), range=(0, 30))
+print(np.nanmedian(chl_hu_ocx_values))
 </pre></div>
 </div>
 </div>
@@ -1000,24 +1174,32 @@ print(np.nanmedian(chl_hu_ocx_imgs))
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-10.943304
+11.653076
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="_images/primary_demo_41_1.png" src="_images/primary_demo_41_1.png" />
+<img alt="_images/primary_demo_43_1.png" src="_images/primary_demo_43_1.png" />
 </div>
 </div>
-<p>The median value looks to be around 11 mg <span class="math notranslate nohighlight">\(m^{-3}\)</span>, which is reasonable for inland waters.</p>
-<p>Now, we can save new .tifs processed with this algorithm.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[61]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>save_wq_imgs(main_dir=project_path, rrs_img_dir=&#39;masked_rrs_hedley&#39;,
-             wq_dir_name=&#39;masked_chl_hu_ocx_imgs&#39;, wq_alg =&#39;chl_hu_ocx&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Cleanup Memory
+del chl_hu_ocx_values
+</pre></div>
+</div>
+</div>
+<p>The median value is approximately 10 mg <span class="math notranslate nohighlight">\(m^{-3}\)</span>, which is reasonable for Lake Erie.</p>
+<p>Next, we can save new <code class="docutils literal notranslate"><span class="pre">.tif</span></code> files generated with this algorithm.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[62]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>dronewq.save_wq_imgs(rrs_dir = masked_rrs_dir, wq_algs = [&#39;chl_hu_ocx&#39;])
 </pre></div>
 </div>
 </div>
@@ -1026,26 +1208,27 @@ print(np.nanmedian(chl_hu_ocx_imgs))
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 470/470 [04:12&lt;00:00,  1.86it/s]
+Processing images: 100%|██████████| 470/470 [00:29&lt;00:00, 15.97it/s]
 </pre></div></div>
 </div>
-<p>Let’s visualize a few chl a images.</p>
+<p>Let’s visualize a few chlorophyll <em>a</em> images.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[63]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>chl_imgs, img_metadata = retrieve_imgs_and_metadata(img_dir = os.path.join(project_path, &#39;masked_chl_hu_ocx_imgs&#39;), start=0, count=6)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>chl_imgs = dronewq.load_imgs(img_dir = settings.chl_hu_ocx_dir, start=0, count=6)
+img_metadata = dronewq.load_metadata(img_dir = settings.chl_hu_ocx_dir, count=6)
 print(img_metadata.index)
 
-fig, axs = plt.subplots(2,3, figsize=(6,3), sharex=True, sharey=True, layout=&#39;tight&#39;)
+fig, axs = plt.subplots(2,3, figsize=(6,3), sharex=True, sharey=True, constrained_layout=True)
 
 axs = axs.ravel()
 
-for i in range(6):
-    im = axs[i].imshow(chl_imgs[i,0,:,:], cmap=&#39;Greens&#39;, vmin=0, vmax=20)
+for i, img in enumerate(chl_imgs):
+    im = axs[i].imshow(img[0,:,:], cmap=&#39;Greens&#39;, vmin=0, vmax=20)
 
-cbar_ax = fig.add_axes([0.99, 0.15, 0.05, 0.7])
-fig.colorbar(im, cax=cbar_ax, label=&#39;Chl a (mg $m^{-3}$)&#39;)
+cbar_ax = fig.add_axes((0.99, 0.1, 0.02, 0.8))
+fig.colorbar(im, cax=cbar_ax, label=&#39;Chlorophyll a (mg $m^{-3}$)&#39;)
 
 plt.show()
 </pre></div>
@@ -1058,45 +1241,53 @@ plt.show()
 <div class="highlight"><pre>
 Index([&#39;capture_1.tif&#39;, &#39;capture_2.tif&#39;, &#39;capture_3.tif&#39;, &#39;capture_4.tif&#39;,
        &#39;capture_5.tif&#39;, &#39;capture_6.tif&#39;],
-      dtype=&#39;object&#39;, name=&#39;filename&#39;)
+      dtype=&#39;str&#39;, name=&#39;filename&#39;)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="_images/primary_demo_45_1.png" src="_images/primary_demo_45_1.png" />
+<img alt="_images/primary_demo_48_1.png" src="_images/primary_demo_48_1.png" />
 </div>
 </div>
-<p>We can also save average chl-a/TSM concentrations for each image in dataframe to use as point data:</p>
+<p>We can also compute and save the average chlorophyll <em>a</em> and TSM concentrations for each image in DataFrame, allowing them to be used as point-based data:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[64]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>masked_rrs_imgs_hedley, img_metadata = retrieve_imgs_and_metadata(img_dir = project_path+&#39;/masked_rrs_hedley&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>df = pd.read_csv(median_rrs_path)
+masked_rrs_imgs_hedley = dronewq.load_imgs(img_dir = masked_rrs_dir)
 
-chl_hu_ocx_imgs = chl_hu_ocx(Rrsblue=masked_rrs_imgs_hedley[:,0,:,:],
-                             Rrsgreen=masked_rrs_imgs_hedley[:,1,:,:],
-                             Rrsred=masked_rrs_imgs_hedley[:,2,:,:])
+chl_hu_ocx_imgs = []
+tsm_nechad_imgs = []
+for img in masked_rrs_imgs_hedley:
+    # Check if image is completely NaN
+    if np.isnan(img[:5, :, :]).all():
+        med = np.nan
+        chl_hu_ocx_imgs.append(med)
+        tsm_nechad_imgs.append(med)
+        continue
+    chl_median = np.nanmedian(dronewq.chl_hu_ocx(img), axis=(0,1))
+    tsm_median = np.nanmedian(dronewq.tsm_nechad(img), axis=(0,1))
+    chl_hu_ocx_imgs.append(chl_median)
+    tsm_nechad_imgs.append(tsm_median)
 
-tsm_nechad_imgs = tsm_nechad(Rrsred=masked_rrs_imgs_hedley[:,2,:,:])
+chl_hu_ocx_imgs = np.array(chl_hu_ocx_imgs)
+tsm_nechad_imgs = np.array(tsm_nechad_imgs)
 
-chl_hu_ocx_values = []
-tsm_nechad_values = []
+df[&#39;chl_hu_ocx&#39;] = chl_hu_ocx_imgs
+df[&#39;tsm_nechad&#39;] = tsm_nechad_imgs
 
-for i in range(len(masked_rrs_imgs_hedley)):
-    chl_hu_ocx_values.append(np.nanmedian(chl_hu_ocx_imgs[i,:,:]))
-    tsm_nechad_values.append(np.nanmedian(tsm_nechad_imgs[i,:,:]))
-
-df[&#39;chl_hu_ocx&#39;] = chl_hu_ocx_values
-df[&#39;tsm_nechad&#39;] = tsm_nechad_values
+del chl_hu_ocx_imgs
+del tsm_nechad_imgs
 
 df.head()
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[64]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -1118,6 +1309,7 @@ df.head()
   <thead>
     <tr style="text-align: right;">
       <th></th>
+      <th>filename</th>
       <th>dirname</th>
       <th>Latitude</th>
       <th>Longitude</th>
@@ -1129,109 +1321,102 @@ df.head()
       <th>chl_hu_ocx</th>
       <th>tsm_nechad</th>
     </tr>
-    <tr>
-      <th>filename</th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-    </tr>
   </thead>
   <tbody>
     <tr>
-      <th>capture_1.tif</th>
-      <td>Lake_Erie/capture_1.tif</td>
+      <th>0</th>
+      <td>capture_1.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_1.tif</td>
       <td>41.828528</td>
       <td>-83.398762</td>
-      <td>0.007600</td>
-      <td>0.018665</td>
-      <td>0.009293</td>
-      <td>0.013961</td>
-      <td>0.004451</td>
-      <td>10.849049</td>
-      <td>5.088389</td>
+      <td>0.007012</td>
+      <td>0.017829</td>
+      <td>0.008522</td>
+      <td>0.012956</td>
+      <td>0.005471</td>
+      <td>11.630777</td>
+      <td>4.799673</td>
     </tr>
     <tr>
-      <th>capture_2.tif</th>
-      <td>Lake_Erie/capture_2.tif</td>
+      <th>1</th>
+      <td>capture_2.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_2.tif</td>
       <td>41.828670</td>
       <td>-83.398764</td>
-      <td>0.007605</td>
-      <td>0.018555</td>
-      <td>0.009364</td>
-      <td>0.013934</td>
-      <td>0.004396</td>
-      <td>10.691706</td>
-      <td>5.115107</td>
+      <td>0.007162</td>
+      <td>0.018282</td>
+      <td>0.008805</td>
+      <td>0.013387</td>
+      <td>0.005055</td>
+      <td>11.683230</td>
+      <td>4.905617</td>
     </tr>
     <tr>
-      <th>capture_3.tif</th>
-      <td>Lake_Erie/capture_3.tif</td>
+      <th>2</th>
+      <td>capture_3.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_3.tif</td>
       <td>41.828809</td>
       <td>-83.398760</td>
-      <td>0.008022</td>
-      <td>0.019594</td>
-      <td>0.009729</td>
-      <td>0.014719</td>
-      <td>0.004636</td>
-      <td>10.681633</td>
-      <td>5.251874</td>
+      <td>0.007174</td>
+      <td>0.018256</td>
+      <td>0.008776</td>
+      <td>0.013331</td>
+      <td>0.005070</td>
+      <td>11.609665</td>
+      <td>4.894979</td>
     </tr>
     <tr>
-      <th>capture_4.tif</th>
-      <td>Lake_Erie/capture_4.tif</td>
+      <th>3</th>
+      <td>capture_4.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_4.tif</td>
       <td>41.828956</td>
       <td>-83.398761</td>
-      <td>0.007390</td>
-      <td>0.018215</td>
-      <td>0.009205</td>
-      <td>0.013672</td>
-      <td>0.004342</td>
-      <td>10.880504</td>
-      <td>5.055672</td>
+      <td>0.007158</td>
+      <td>0.018260</td>
+      <td>0.008775</td>
+      <td>0.013308</td>
+      <td>0.005082</td>
+      <td>11.653489</td>
+      <td>4.894382</td>
     </tr>
     <tr>
-      <th>capture_5.tif</th>
-      <td>Lake_Erie/capture_5.tif</td>
+      <th>4</th>
+      <td>capture_5.tif</td>
+      <td>../Lake_Erie/hedley_dls_rrs/capture_5.tif</td>
       <td>41.829081</td>
       <td>-83.398763</td>
-      <td>0.007621</td>
-      <td>0.018760</td>
-      <td>0.009456</td>
-      <td>0.014053</td>
-      <td>0.004457</td>
-      <td>10.863681</td>
-      <td>5.149392</td>
+      <td>0.007195</td>
+      <td>0.018344</td>
+      <td>0.008787</td>
+      <td>0.013316</td>
+      <td>0.005089</td>
+      <td>11.658862</td>
+      <td>4.898822</td>
     </tr>
   </tbody>
 </table>
 </div></div>
 </div>
-<p>Easy to save as .csv:</p>
+<p>These values can be easily saved to a <code class="docutils literal notranslate"><span class="pre">csv</span></code> file:</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[65]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>#save as csv
-df.to_csv(project_path + &#39;/median_rrs_and_wq.csv&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Save as csv
+median_rrs_wq_path = settings.output_dir / &#39;median_rrs_and_wq.csv&#39;
+df.to_csv(median_rrs_wq_path)
 </pre></div>
 </div>
 </div>
-<p>We can use this dataframe to map point samples of mean chl-a and TSM concentrations:</p>
+<p>We can use this DataFrame to create maps of point samples showing the mean chlorophyll <em>a</em> and TSM concentrations:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[82]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, ax = plt.subplots(1,2, figsize=(8,3), layout=&#39;tight&#39;)
-for i in range(len(df)):
-    g1 = ax[0].scatter(df[&#39;Latitude&#39;], df[&#39;Longitude&#39;], c=df[&#39;chl_hu_ocx&#39;], cmap=&#39;Greens&#39;, vmin=10, vmax=12)
-    g2 = ax[1].scatter(df[&#39;Latitude&#39;], df[&#39;Longitude&#39;], c=df[&#39;tsm_nechad&#39;], cmap=&#39;YlOrRd&#39;, vmin=5, vmax=6)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>df = pd.read_csv(median_rrs_wq_path)
+fig, ax = plt.subplots(1,2, figsize=(8,3), layout=&#39;tight&#39;)
+g1 = ax[0].scatter(df[&#39;Latitude&#39;], df[&#39;Longitude&#39;], c=df[&#39;chl_hu_ocx&#39;], cmap=&#39;Greens&#39;, vmin=10, vmax=12)
+g2 = ax[1].scatter(df[&#39;Latitude&#39;], df[&#39;Longitude&#39;], c=df[&#39;tsm_nechad&#39;], cmap=&#39;YlOrRd&#39;, vmin=4, vmax=6)
 
 cbar = fig.colorbar(g1, ax=ax[0])
 cbar.set_label(&#39;Chlorophyll a (mg $m^{-3}$)&#39;, rotation=270, labelpad=12)
@@ -1246,18 +1431,18 @@ plt.show()
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="_images/primary_demo_51_0.png" src="_images/primary_demo_51_0.png" />
+<img alt="_images/primary_demo_54_0.png" src="_images/primary_demo_54_0.png" />
 </div>
 </div>
 </section>
 <section id="6.-Georeference-and-mosaic-chlorophyll-a-images">
-<h2>6. Georeference and mosaic chlorophyll a images<a class="headerlink" href="#6.-Georeference-and-mosaic-chlorophyll-a-images" title="Link to this heading"></a></h2>
-<p>We can georeference the images based on the sensor yaw, pitch, roll, lat, lon, and altitude. Note that georeferencing can be inaccurate if the yaw, pitch, and roll information is imprecise. Let’s look at the options in the <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> function.</p>
+<h2>6. Georeference and mosaic chlorophyll <em>a</em> images<a class="headerlink" href="#6.-Georeference-and-mosaic-chlorophyll-a-images" title="Link to this heading"></a></h2>
+<p>We can georeference the images using the sensor’s yaw, pitch, roll, latitude, longitude, and altitude. Note that georeferencing may be inaccurate if the yaw, pitch, and roll data are imprecise. Let’s review the options available in the <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> function.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[67]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?georeference
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?dronewq.georeference
 </pre></div>
 </div>
 </div>
@@ -1267,58 +1452,94 @@ plt.show()
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 <span class="ansi-red-fg">Signature:</span>
-georeference<span class="ansi-blue-fg">(</span>
-    metadata<span class="ansi-blue-fg">,</span>
-    input_dir<span class="ansi-blue-fg">,</span>
-    output_dir<span class="ansi-blue-fg">,</span>
-    lines<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">None</span><span class="ansi-blue-fg">,</span>
-    altitude<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">None</span><span class="ansi-blue-fg">,</span>
-    yaw<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">None</span><span class="ansi-blue-fg">,</span>
-    pitch<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0</span><span class="ansi-blue-fg">,</span>
-    roll<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0</span><span class="ansi-blue-fg">,</span>
-    axis_to_flip<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">,</span>
-<span class="ansi-blue-fg">)</span>
+dronewq.georeference(
+    metadata,
+    input_dir,
+    output_dir,
+    lines=<span class="ansi-bold" style="color: rgb(0,135,0)">None</span>,
+    altitude=<span class="ansi-bold" style="color: rgb(0,135,0)">None</span>,
+    yaw=<span class="ansi-bold" style="color: rgb(0,135,0)">None</span>,
+    pitch=<span class="ansi-green-fg">0</span>,
+    roll=<span class="ansi-green-fg">0</span>,
+    axis_to_flip=<span class="ansi-green-fg">1</span>,
+) -&gt; <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
 <span class="ansi-red-fg">Docstring:</span>
-This function georeferences all the captures indicated in the line parameter following the specification of the other parameters such as altitude, yaw, pitch, roll, axis_to_flip
+Georeference a set of image captures using their metadata and orientation
+parameters, producing georeferenced GeoTIFF files.
 
-Inputs:
-metadata: A Pandas dataframe of the metadata
-input_dir: A string containing the directory filepath of the images to be retrieved for georeferencing.
-output_dir: A string containing the directory filepath to be saved.
-lines: Selection of images to be processed. Defaults to None. Example: [slice(0,10)]
-altitude: sets the altitude where all captures were taken. Defaults to None which uses the altitude data saved in the metadata for each respective capture.
-yaw: sets the sensor&#39;s direction angle during all captures. Defaults to None which uses the yaw angle saved in the metadata for each respective capture.
-pitch: sets the sensor&#39;s pitch angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
-roll: sets the sensor&#39;s roll angle during all captures. Defaults to 0 which means the sensor was horizontal to the ground.
-axis_to_flip: The axis to apply a flip. Defaults to 1.
+For each capture, this function builds an affine transformation using:
+- focal length,
+- sensor size,
+- image dimensions,
+- GPS coordinates,
+- yaw/pitch/roll (from metadata or provided overrides).
 
-Output: Georeferenced .tifs in output_dir
-<span class="ansi-red-fg">File:</span>      /glusteruser/awindled/DroneWQ/utils.py
+The function then applies the transform and saves the output as a GeoTIFF
+in `output_dir`. Captures may be restricted to specific flight lines
+(as produced by `compute_flight_lines()`).
+
+Parameters
+----------
+metadata : pandas.DataFrame
+    DataFrame containing per-image metadata. Must include:
+    FocalLength, SensorX, SensorY, ImageWidth, ImageHeight,
+    Latitude, Longitude, Altitude, Pitch, Roll, Yaw, filename.
+
+input_dir : str
+    Directory containing the source images.
+
+output_dir : str
+    Directory where georeferenced images are written.
+
+lines : list[dict] or None, optional
+    Flight line definitions such as those returned by
+    `compute_flight_lines()`. If None, all captures are processed.
+
+altitude : float or None, optional
+    Override altitude for all captures. If None, metadata altitude is used.
+
+yaw : float or None, optional
+    Override yaw for all captures. If None, metadata yaw is used.
+
+pitch : float, optional
+    Override pitch angle for all captures. Default is 0.
+
+roll : float, optional
+    Override roll angle for all captures. Default is 0.
+
+axis_to_flip : int or None, optional
+    Axis along which to flip the image before writing. Default is 1.
+    Set to None to disable flipping.
+
+Returns
+-------
+None
+    Writes georeferenced `.tif` files into `output_dir`.
+<span class="ansi-red-fg">File:</span>      ~/Developer/DroneWQ/src/dronewq/core/georeference.py
 <span class="ansi-red-fg">Type:</span>      function
 </pre></div></div>
 </div>
-<p>We have two options here. We can set fixed georeferencing parameters, or allow the function to use parameters saved in the metadata.</p>
-<p>In this example, the image metadata lists the altitude around 260-265 m; however, the altitude was set at 87 m in the flight planning software. Therefore, we will set the altitude to a fixed altitude of 87 m.</p>
-<p>If you can maintain a consistent sensor yaw angle throughout the whole flight, you should use a single fixed angle. If your sensor changes yaw angle during every transect (such as in this example), a different yaw angle should be provided in the function for each transect. The <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> function can read in a <code class="docutils literal notranslate"><span class="pre">lines</span></code> parameter that can be created either manually or you can use the function <code class="docutils literal notranslate"><span class="pre">compute_flight_lines()</span></code> to automatically produce a list of capture indices per transect with
-the median yaw angle, ignoring capturing collected during turns. More information can be found in the paper.md.</p>
-<p>It is recommended to run the <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> function on a few captures that contain a shoreline or land if possible and plot them with a satellite basemap or pull them into a GIS software to assess the georeferencing. We have provided examples here by manually creating a new folder of rrs_hedley_subset and lt_thumbnails_subset with captures 443 to 450 containing the shoreline.</p>
-<ol class="arabic simple">
-<li><p>Running <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> with the automatic <code class="docutils literal notranslate"><span class="pre">compute_flight_lines()</span></code> function produces a flight_lines list with yaw angle changing from 207 to 24 degrees:</p></li>
-</ol>
+<p>There are two options for georeferencing: you can either set fixed parameters or allow the function to use values saved in the image metadata.</p>
+<p>In this example, the image metadata lists the altitude of ~260-265 m, but the flight was planned for 87 m. We will therfore use a set altitude of 87 m.</p>
+<p>For the sensor yaw angle: if it remains consistent throughout the flight, a single fixed value can be used. If the yaw changes between transects, as in this example, you should provide a separate yaw value for each transect. The <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> function can accept a <code class="docutils literal notranslate"><span class="pre">lines</span></code> parameter, which can be created manually or generated automatically using the <code class="docutils literal notranslate"><span class="pre">compute_flight_lines()</span></code> function. This produces a list of capture indices per transect with the median yaw angle, ignoring images collected
+during turns. More details are available in the Processing and Theory section of the <a class="reference external" href="https://dronewq.readthedocs.io/en/latest/index.html">DroneWQ Read the Docs</a>.</p>
+<p>It is recommended to test the georeferencing on a few captures containing shoreline or land features. You can visualize these against a satellite basemap or import them into GIS software to assess accuracy. In this example, we created subsets in new folders (<code class="docutils literal notranslate"><span class="pre">rrs_hedley_subset</span></code> and <code class="docutils literal notranslate"><span class="pre">lt_thumbnails_subset</span></code>) with captures 433–450, which include the shoreline, for testing.</p>
+<p>Option 1: Using <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> with the automatic <code class="docutils literal notranslate"><span class="pre">compute_flight_lines()</span></code> function generates a <code class="docutils literal notranslate"><span class="pre">flight_lines</span></code> list, where the yaw angle varies from 207° to 25°.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[68]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>rrs_hedley_subset, img_metadata = retrieve_imgs_and_metadata(img_dir = project_path+&#39;/rrs_hedley_subset&#39;, start=432, count=18)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>rrs_imgs_subset_path = settings.output_dir / &#39;rrs_imgs_subset&#39;
+img_metadata = dronewq.load_metadata(img_dir = rrs_imgs_subset_path, start=432, count=18)
 img_metadata = img_metadata.reset_index()
 
-flight_lines = compute_flight_lines(img_metadata.Yaw, 87, 0, 0, threshold=100)
+flight_lines = dronewq.compute_flight_lines(img_metadata.Yaw, 87, 0, 0, threshold=100)
 flight_lines
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[68]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1337,18 +1558,18 @@ flight_lines
   &#39;alt&#39;: 87}]
 </pre></div></div>
 </div>
-<p>We can edit the metadata to change file extension from’.tif’ to ‘.jpg’ and run <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> on the lt_thumbnails_subset:</p>
+<p>We can update the metadata to change file extensions from <code class="docutils literal notranslate"><span class="pre">.tif</span></code> to <code class="docutils literal notranslate"><span class="pre">.jpg</span></code> and then run <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> on the <code class="docutils literal notranslate"><span class="pre">lt_thumbnails_subset</span></code>:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[69]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>img_metadata[&#39;filename&#39;] = img_metadata[&#39;filename&#39;].apply(lambda x : x.replace(&#39;.tif&#39;, &#39;.jpg&#39;))
 
-input_dir = os.path.join(project_path, &#39;lt_thumbnails_subset&#39;)
-output_dir = os.path.join(project_path, &#39;automatic_georeferenced_lt_thumbnails_subset&#39;)
+input_dir = settings.main_dir / &#39;lt_thumbnails_subset&#39;
+output_dir = settings.main_dir / &#39;automatic_georeferenced_lt_thumbnails_subset&#39;
 lines = flight_lines
 
-georeference(img_metadata, input_dir, output_dir, lines)
+dronewq.georeference(img_metadata, input_dir, output_dir, lines)
 </pre></div>
 </div>
 </div>
@@ -1357,20 +1578,17 @@ georeference(img_metadata, input_dir, output_dir, lines)
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 17/17 [00:02&lt;00:00,  7.87it/s]
+100%|██████████| 17/17 [00:00&lt;00:00, 89.78it/s]
 </pre></div></div>
 </div>
-<p>When we plot these images in QGIS, it looks like:</p>
-<p><img alt="Auto Flightlines QGIS" src="_images/automatic_flightlines_QGIS.png" /></p>
-<p>You can see that using the metadata yaw angle in georeferencing doesn’t always lead to accurate georeferencing.</p>
-<ol class="arabic simple" start="2">
-<li><p>Running <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> using fixed yaw angles of 90 and 270 degrees:</p></li>
-</ol>
+<p>When we plot these images in QGIS, it looks like: <a href="#id3"><span class="problematic" id="id4">|2c2228885b8b4c059db1de8c020f8a14|</span></a></p>
+<p>You can observe that using the metadata yaw angle for georeferencing does not always produce accurate results.</p>
+<p>Option 2: Running <code class="docutils literal notranslate"><span class="pre">georeference()</span></code> with fixed yaw angles of 90° and 270°.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[70]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>flight_lines = compute_flight_lines(img_metadata.Yaw, 87, 0, 0, threshold=100)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>flight_lines = dronewq.compute_flight_lines(img_metadata.Yaw, 87, 0, 0, threshold=100)
 
 even_yaw = 90
 odd_yaw = 270
@@ -1383,7 +1601,7 @@ flight_lines
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[70]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1393,14 +1611,14 @@ flight_lines
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[71]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>input_dir = os.path.join(project_path, &#39;lt_thumbnails_subset&#39;)
-output_dir = os.path.join(project_path, &#39;manual_georeferenced_lt_thumbnails_subset&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>input_dir = settings.main_dir / &#39;lt_thumbnails_subset&#39;
+output_dir = settings.main_dir / &#39;manual_georeferenced_lt_thumbnails_subset&#39;
 lines = flight_lines
 
-georeference(img_metadata, input_dir, output_dir, lines)
+dronewq.georeference(img_metadata, input_dir, output_dir, lines)
 </pre></div>
 </div>
 </div>
@@ -1409,20 +1627,19 @@ georeference(img_metadata, input_dir, output_dir, lines)
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 17/17 [00:01&lt;00:00, 10.16it/s]
+100%|██████████| 17/17 [00:00&lt;00:00, 87.10it/s]
 </pre></div></div>
 </div>
-<p>When we plot these images in QGIS:</p>
-<p><img alt="Manual Flightlines QGIS" src="_images/manual_flightlines_QGIS.png" /></p>
-<p>You can see that using these fixed yaw angles leads to better georeferencing where the shoreline better matches to the satellite basemap.</p>
-<p>Therefore, we will use fixed yaw angles of 90 and 270 degrees to georeference the masked_chl_hu_ocx_imgs:</p>
+<p>When we plot these images in QGIS: <a href="#id5"><span class="problematic" id="id6">|0432f85337a84cb387aa4605d74cfe18|</span></a></p>
+<p>Using these fixed yaw angles results in improved georeferencing, with the shoreline aligning more closely with the satellite basemap.</p>
+<p>Therefore, we will apply fixed yaw angles of 90° and 270° to georeference the <code class="docutils literal notranslate"><span class="pre">masked_chl_hu_ocx_imgs</span></code>:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[72]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>metadata = pd.read_csv(os.path.join(project_path, &#39;metadata.csv&#39;))
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>metadata = pd.read_csv(metadata_path)
 
-flight_lines = compute_flight_lines(metadata.Yaw, 87, 0, 0)
+flight_lines = dronewq.compute_flight_lines(metadata.Yaw, 87, 0, 0)
 even_yaw = 90
 odd_yaw = 270
 threshold = np.median(metadata.Yaw)
@@ -1433,7 +1650,7 @@ flight_lines[0:5]
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[72]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1446,15 +1663,14 @@ flight_lines[0:5]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[73]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>metadata = pd.read_csv(os.path.join(project_path, &#39;metadata.csv&#39;))
-input_dir = os.path.join(project_path, &#39;masked_chl_hu_ocx_imgs&#39;)
-output_dir = os.path.join(project_path, &#39;georeferenced_masked_chl_hu_ocx&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>input_dir = settings.output_dir / &#39;masked_chl_hu_ocx_imgs&#39;
+output_dir = settings.output_dir / &#39;georeferenced_masked_chl_hu_ocx&#39;
 lines = flight_lines
 
-georeference(metadata, input_dir, output_dir, lines)
+dronewq.georeference(metadata, input_dir, output_dir, lines)
 </pre></div>
 </div>
 </div>
@@ -1463,48 +1679,48 @@ georeference(metadata, input_dir, output_dir, lines)
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 328/328 [01:18&lt;00:00,  4.16it/s]
+100%|██████████| 328/328 [00:07&lt;00:00, 43.96it/s]
 </pre></div></div>
 </div>
 <p>Let’s plot a few of these georeferenced images by the shoreline:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[74]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize=(12, 6), subplot_kw = dict(projection = Mercator()))
-ax_0, mappable_0 = plot_georeferenced_data(ax=ax, filename=&quot;Lake_Erie/georeferenced_masked_chl_hu_ocx/capture_444.tif&quot;,
-                                           vmin=5, vmax=20, cmap=&#39;Greens&#39;, norm=None, basemap = cx.providers.OpenStreetMap.Mapnik)
+ax_0, mappable_0 = dronewq.plot_georeferenced_data(ax=ax, filename=f&quot;{settings.output_dir}/georeferenced_masked_chl_hu_ocx/capture_444.tif&quot;,
+                                           vmin=5, vmax=20, cmap=&#39;Greens&#39;, norm=None, zoom=19, basemap = cx.providers.OpenStreetMap.Mapnik)
 
-ax_0, mappable_0 = plot_georeferenced_data(ax=ax, filename=&quot;Lake_Erie/georeferenced_masked_chl_hu_ocx/capture_445.tif&quot;,
-                                           vmin=5, vmax=20, cmap=&#39;Greens&#39;, norm=None, basemap = cx.providers.OpenStreetMap.Mapnik)
+ax_0, mappable_0 = dronewq.plot_georeferenced_data(ax=ax, filename=f&quot;{settings.output_dir}/georeferenced_masked_chl_hu_ocx/capture_445.tif&quot;,
+                                           vmin=5, vmax=20, cmap=&#39;Greens&#39;, norm=None, zoom=19, basemap = cx.providers.OpenStreetMap.Mapnik)
 
-ax_0.set_title(&#39;Hu OCX Chl Alg&#39;)
+ax_0.set_title(&#39;&#39;)
 plt.colorbar(mappable_0, label=&#39;Chlorophyll a (mg $m^{-3}$)&#39;)
 </pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[74]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.colorbar.Colorbar at 0x7f9e93a15720&gt;
+&lt;matplotlib.colorbar.Colorbar at 0x7fad34572ad0&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="_images/primary_demo_68_1.png" src="_images/primary_demo_68_1.png" />
+<img alt="_images/primary_demo_71_1.png" src="_images/primary_demo_71_1.png" />
 </div>
 </div>
-<p>We can mosaic all of the individual georeferenced images. Let’s look at the options.</p>
+<p>We can create a mosaic from all the individual georeferenced images. Let’s review the available options.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[75]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?mosaic
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?dronewq.mosaic
 </pre></div>
 </div>
 </div>
@@ -1514,40 +1730,73 @@ plt.colorbar(mappable_0, label=&#39;Chlorophyll a (mg $m^{-3}$)&#39;)
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 <span class="ansi-red-fg">Signature:</span>
-mosaic<span class="ansi-blue-fg">(</span>
-    input_dir<span class="ansi-blue-fg">,</span>
-    output_dir<span class="ansi-blue-fg">,</span>
-    output_name<span class="ansi-blue-fg">,</span>
-    method<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&#39;mean&#39;</span><span class="ansi-blue-fg">,</span>
-    dtype<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&lt;</span><span class="ansi-green-fg">class</span> <span class="ansi-blue-fg">&#39;numpy.float32&#39;</span><span class="ansi-blue-fg">&gt;</span><span class="ansi-blue-fg">,</span>
-    band_names<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">None</span><span class="ansi-blue-fg">,</span>
-<span class="ansi-blue-fg">)</span>
+dronewq.mosaic(
+    input_dir,
+    output_dir,
+    output_name,
+    method=<span class="ansi-yellow-fg">&#39;mean&#39;</span>,
+    dtype=&lt;<span class="ansi-bold" style="color: rgb(0,135,0)">class</span> <span class="ansi-yellow-fg">&#39;numpy.float32&#39;</span>&gt;,
+    band_names=<span class="ansi-bold" style="color: rgb(0,135,0)">None</span>,
+)
 <span class="ansi-red-fg">Docstring:</span>
-This function moasics all the given rasters into a single raster file
+Mosaic multiple raster files into a single GeoTIFF.
 
-Inputs:
-input_dir: a string containing the directory filepath of images to be mosaicked
-output_dir: a string containing the directory filepath to save the output
-output_name: a string of the output name of mosaicked .tif
-method: Method to be used when multiple captures coincide at same location. Options: &#39;mean&#39;, &#39;first&#39;, &#39;min&#39;, &#39;max&#39;. Defaults to &#39;mean&#39;.
-dtype: dtype of the mosaicked raster. Defaults to np.float32.
-band_names: List of band names. If it is not None, it writes one file for each band instead of one file with all the bands. Defaults to None.
+This function reads all raster files in `input_dir` and merges them into
+one mosaic using the specified merging method. If `band_names` is provided,
+the mosaicked result is written as multiple single-band files—one file per
+band—named using the provided band names. Otherwise, a single multi-band
+raster is written.
 
-Returns:
-Mosaicked .tif file
-<span class="ansi-red-fg">File:</span>      /glusteruser/awindled/DroneWQ/utils.py
+Parameters
+----------
+input_dir : str
+    Path to a directory containing the input rasters to mosaic.
+
+output_dir : str
+    Path to the directory where the output raster(s) will be saved.
+    The directory is created if it does not exist.
+
+output_name : str
+    Base filename (without extension) for the mosaicked output.
+
+method : {&#34;mean&#34;, &#34;first&#34;, &#34;min&#34;, &#34;max&#34;}, optional
+    Method used to combine overlapping pixels when multiple rasters
+    cover the same area. Default is `&#34;mean&#34;`.
+
+dtype : numpy.dtype, optional
+    Data type of the output raster. Defaults to `np.float32`.
+
+band_names : list[str] or None, optional
+    If provided, one output file will be created per band, using the given
+    band names (e.g., `[&#34;red&#34;, &#34;green&#34;, &#34;blue&#34;]`).
+    The number of entries must match the number of bands in the input
+    rasters.
+
+Returns
+-------
+str
+    The filepath of the generated mosaic (or the first band file if
+    `band_names` is provided).
+
+Notes
+-----
+- This function assumes all rasters share the same coordinate reference
+  system (CRS).
+- When multiple input files are found, the output extent is computed to
+  cover all rasters.
+<span class="ansi-red-fg">File:</span>      ~/Developer/DroneWQ/src/dronewq/core/mosaic.py
 <span class="ansi-red-fg">Type:</span>      function
 </pre></div></div>
 </div>
-<p>We will make a mosaic from all the georeferenced chl images, calculating the mean of overlapping pixels.</p>
+<p>We will make a mosaic from all the georeferenced chlorophyll <em>a</em> images, calculating the mean of overlapping pixels.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[76]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>input_dir = os.path.join(project_path, &#39;georeferenced_masked_chl_hu_ocx&#39;)
-output_dir = os.path.join(project_path, &#39;mosaic_chl_hu_ocx&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>input_dir = settings.output_dir / &#39;georeferenced_masked_chl_hu_ocx&#39;
+output_dir = settings.output_dir / &#39;mosaic_chl_hu_ocx&#39;
 
-mosaic(input_dir, output_dir, output_name = &#39;mean_mosaic_chl_hu_ocx&#39;,
+dronewq.mosaic(input_dir, output_dir, output_name = &#39;mean_mosaic_chl_hu_ocx&#39;,
            method=&#39;mean&#39;, band_names = None)
 </pre></div>
 </div>
@@ -1557,53 +1806,53 @@ mosaic(input_dir, output_dir, output_name = &#39;mean_mosaic_chl_hu_ocx&#39;,
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 328/328 [09:12&lt;00:00,  1.69s/it]
+100%|██████████| 328/328 [00:40&lt;00:00,  8.01it/s]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[76]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&#39;Lake_Erie/mosaic_chl_hu_ocx/mean_mosaic_chl_hu_ocx.tif&#39;
+&#39;../Lake_Erie/hedley_dls_rrs/mosaic_chl_hu_ocx/mean_mosaic_chl_hu_ocx.tif&#39;
 </pre></div></div>
 </div>
 <p>Now let’s plot the mosaicked image.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[77]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize=(12, 6), subplot_kw = dict(projection = Mercator()))
-ax_0, mappable_0 = plot_georeferenced_data(ax=ax, filename=&quot;Lake_Erie/mosaic_chl_hu_ocx/mean_mosaic_chl_hu_ocx.tif&quot;,
+ax_0, mappable_0 = dronewq.plot_georeferenced_data(ax=ax, filename=f&quot;{settings.output_dir}/mosaic_chl_hu_ocx/mean_mosaic_chl_hu_ocx.tif&quot;,
                                            vmin=0, vmax=20, cmap=&#39;Greens&#39;, norm=None, basemap = cx.providers.Esri.WorldImagery)
-ax_0.set_title(&#39;Hu OCX Chl&#39;)
-plt.colorbar(mappable_0, label=&#39;Chlorophyll a (mg $m^{-3}$)&#39;)
+ax_0.set_title(&#39;&#39;)
+plt.colorbar(mappable_0, label=&#39;Chlowrophyll a (mg $m^{-3}$)&#39;)
 </pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[77]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.colorbar.Colorbar at 0x7f9e93dd0c10&gt;
+&lt;matplotlib.colorbar.Colorbar at 0x7fadbdd35310&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="_images/primary_demo_74_1.png" src="_images/primary_demo_74_1.png" />
+<img alt="_images/primary_demo_77_1.png" src="_images/primary_demo_77_1.png" />
 </div>
 </div>
-<p>We can also downsample or reduce the spatial resolution of the mosaic. This is helpful to reduce the file size of a large mosaic.</p>
+<p>We can also downsample the mosaic to reduce its spatial resolution. This is useful for decreasing the file size when working with large mosaics.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[78]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?downsample
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>?dronewq.downsample
 </pre></div>
 </div>
 </div>
@@ -1613,85 +1862,106 @@ plt.colorbar(mappable_0, label=&#39;Chlorophyll a (mg $m^{-3}$)&#39;)
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 <span class="ansi-red-fg">Signature:</span>
-downsample<span class="ansi-blue-fg">(</span>
-    input_dir<span class="ansi-blue-fg">,</span>
-    output_dir<span class="ansi-blue-fg">,</span>
-    scale_x<span class="ansi-blue-fg">,</span>
-    scale_y<span class="ansi-blue-fg">,</span>
-    method<span class="ansi-blue-fg">=</span><span class="ansi-blue-fg">&lt;</span>Resampling<span class="ansi-blue-fg">.</span>average<span class="ansi-blue-fg">:</span> <span class="ansi-cyan-fg">5</span><span class="ansi-blue-fg">&gt;</span><span class="ansi-blue-fg">,</span>
-<span class="ansi-blue-fg">)</span>
+dronewq.downsample(
+    input_tif,
+    output_dir,
+    scale_x,
+    scale_y,
+    method=&lt;Resampling.average: <span class="ansi-green-fg">5</span>&gt;,
+)
 <span class="ansi-red-fg">Docstring:</span>
-This function performs a downsampling to reduce the spatial resolution of the final mosaic.
+Downsample a raster by reducing its spatial resolution.
 
-Inputs:
-input_dir: A string containing input directory filepath
-output_dir: A string containing output directory filepath
-scale_x: proportion by which the width of each file will be resized
-scale_y: proportion by which the height of each file will be resized
-method: the resampling method to perform. Defaults to Resampling.nearest. Please see
-https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling for other resampling methods.
-<span class="ansi-red-fg">File:</span>      /glusteruser/awindled/DroneWQ/utils.py
+This function reads the input raster and resizes it by the specified
+factors (`scale_x`, `scale_y`) using the given resampling method.
+The resulting downsampled raster is saved to `output_dir`.
+
+Parameters
+----------
+input_tif : str
+    Path to the input GeoTIFF to downsample.
+
+output_dir : str
+    Directory where the downsampled raster will be saved.
+    The directory is created if it does not exist.
+
+scale_x : int
+    Horizontal downsampling factor.
+    For example, `scale_x=2` halves the raster width.
+
+scale_y : int
+    Vertical downsampling factor.
+    For example, `scale_y=2` halves the raster height.
+
+method : rasterio.enums.Resampling, optional
+    The resampling algorithm to apply (e.g., `Resampling.average`,
+    `Resampling.nearest`, `Resampling.bilinear`).
+    Default is `Resampling.average`.
+
+Returns
+-------
+str
+    The filepath of the generated downsampled raster.
+
+Notes
+-----
+- The affine transform is automatically scaled to match the new resolution.
+- For a full list of resampling methods, see Rasterio&#39;s documentation.
+<span class="ansi-red-fg">File:</span>      ~/Developer/DroneWQ/src/dronewq/core/mosaic.py
 <span class="ansi-red-fg">Type:</span>      function
 </pre></div></div>
 </div>
 <p>We will downsample the width and height of the mosaic by 15%, using a nearest neighbor resampling algorithm.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[79]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>input_dir = os.path.join(project_path, &#39;mosaic_chl_hu_ocx&#39;)
-output_dir = os.path.join(project_path, &#39;mosaic_chl_hu_ocx&#39;)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>input_dir = settings.output_dir / &#39;mosaic_chl_hu_ocx&#39; / &quot;mean_mosaic_chl_hu_ocx.tif&quot;
+output_dir = settings.output_dir / &#39;mosaic_chl_hu_ocx&#39;
 
-downsample(input_dir, output_dir, scale_x = 15, scale_y = 15, method = Resampling.nearest)
+dronewq.downsample(input_dir, output_dir, scale_x = 15, scale_y = 15, method = Resampling.nearest)
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[79]:
+</pre></div>
 </div>
-<div class="output_area stderr docutils container">
+<div class="output_area docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1/1 [00:00&lt;00:00,  7.90it/s]
+&#39;../Lake_Erie/hedley_dls_rrs/mosaic_chl_hu_ocx/mean_mosaic_chl_hu_ocx_x_15_y_15_method_nearest.tif&#39;
 </pre></div></div>
 </div>
-<p>And we can plot it</p>
+<p>And let’s plot it:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[80]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize=(12, 6), subplot_kw = dict(projection = Mercator()))
-ax_0, mappable_0 = plot_georeferenced_data(ax=ax, filename=&quot;Lake_Erie/mosaic_chl_hu_ocx/mean_mosaic_chl_hu_ocx_x_15_y_15_method_nearest.tif&quot;,
+ax_0, mappable_0 = dronewq.plot_georeferenced_data(ax=ax, filename=f&quot;{settings.output_dir}/mosaic_chl_hu_ocx/mean_mosaic_chl_hu_ocx_x_15_y_15_method_nearest.tif&quot;,
                                            vmin=5, vmax=15, cmap=&#39;Greens&#39;, norm=None, basemap = cx.providers.Esri.WorldImagery)
-ax_0.set_title(&#39;Hu OCX Chl Downsampled&#39;)
+ax_0.set_title(&#39;&#39;)
 plt.colorbar(mappable_0, label=&#39;Chlorophyll a (mg $m^{-3}$)&#39;)
 </pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[80]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.colorbar.Colorbar at 0x7f9d08db37f0&gt;
+&lt;matplotlib.colorbar.Colorbar at 0x7fad35190690&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="_images/primary_demo_80_1.png" src="_images/primary_demo_80_1.png" />
+<img alt="_images/primary_demo_83_1.png" src="_images/primary_demo_83_1.png" />
 </div>
 </div>
-<p>Some striping in the mosaic is visible due to the drone/sensor changing yaw angles every transect. Processing and mosaicking a larger dataset has the potential to reveal water quality patterns or algal blooms.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
-</pre></div>
-</div>
-</div>
+<p>Some striping in the mosaic is visible because the drone/sensor changes yaw angles between transects. Processing and mosaicking a larger dataset could reveal broader water quality patterns or the presence of algal blooms.</p>
 </section>
 </section>
 
