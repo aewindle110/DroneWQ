@@ -229,3 +229,10 @@ See the `primary_demo.ipynb` notebook for a complete example workflow using the 
 
 Example orthomosaic of UAS images collected over Western Lake Erie, processed to chlorophyll a concentration using DroneWQ.
 
+## Contributions
+
+Contributions are welcome, and they are greatly appreciated! Every little bit helps, and credit will always be given.
+
+Report bugs, request features, or submit feedback as a GitHub Issue.
+Make fixes, add content or improvements using GitHub Pull Requests.
+
