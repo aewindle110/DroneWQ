@@ -40,6 +40,12 @@ class Blackpixel(Base_Compute_Method):
     - Negligible water-leaving radiance in the NIR
     - Spatially uniform surface reflectance properties
     - Stable sky conditions during data collection
+
+    References
+    ----------
+    David A. Siegel, Menghua Wang, Stéphane Maritorena, and Wayne Robinson,
+    "Atmospheric correction of satellite ocean color imagery: the black pixel assumption,"
+    Appl. Opt. 39, 3582-3591 (2000). https://doi.org/10.1364/AO.39.003582
     """
 
     def __init__(self, save_images: bool = False):

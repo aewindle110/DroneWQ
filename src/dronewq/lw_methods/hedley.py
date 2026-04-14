@@ -56,9 +56,9 @@ class Hedley(Base_Compute_Method):
 
     References
     ----------
-    Hedley, J. D., Harborne, A. R., & Mumby, P. J. (2005). Simple and robust
-    removal of sun glint for mapping shallow-water benthos. International Journal
-    of Remote Sensing, 26(10), 2107-2112.
+    Hedley, J. D., Harborne, A. R., & Mumby, P. J. (2005). Technical note: Simple and
+    robust removal of sun glint for mapping shallow-water benthos. International Journal
+    of Remote Sensing, 26(10), 2107-2112. https://doi.org/10.1080/01431160500034086
     """
 
     def __init__(self, save_images: bool = False, random_n: int = 10):

@@ -52,21 +52,21 @@ def __compute(filename, wq_algs, main_dir):
         rrs = np.squeeze(src.read())
         profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
 
-        for wq_alg in wq_algs:
-            try:
+        try:
+            for wq_alg in wq_algs:
                 wq_dir_name = "masked_" + wq_alg + "_imgs"
                 wq_dir = main_dir / wq_dir_name
                 wq = algorithms[wq_alg](rrs)
 
                 save_wq(wq, wq_dir / filename.name, profile)
-            except Exception as e:
-                logger.error(
-                    "File %s: %s using algorithm %s",
-                    filename,
-                    str(e),
-                    wq_alg,
-                )
-                return False
+        except Exception as e:
+            logger.exception(
+                "File %s: %s using algorithm %s",
+                filename,
+                str(e),
+                wq_alg,
+            )
+            return False
         return True
 
 
@@ -153,8 +153,7 @@ def chl_hu(Rrs):
     Compute chlorophyll-a using the Hu et al. (2012) Color Index (CI) algorithm.
 
     This three-band reflectance difference algorithm is recommended for very low
-    chlorophyll concentrations (< 0.15 mg m⁻³). See:
-    https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/
+    chlorophyll concentrations (< 0.15 mg m⁻³).
 
     Parameters
     ----------
@@ -166,8 +165,12 @@ def chl_hu(Rrs):
     -------
     numpy.ndarray
         Chlorophyll-a estimate (mg m⁻³).
-    """
 
+    References
+    ----------
+    Hu et al., 2012. doi:10.1029/2011JC007395
+    https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/
+    """
     Rrsblue = Rrs[0, :, :]
     Rrsgreen = Rrs[1, :, :]
     Rrsred = Rrs[2, :, :]
@@ -188,9 +191,6 @@ def chl_ocx(Rrs):
     for Landsat-8 (O'Reilly et al., 1998). Best suited for chlorophyll levels
     above ~0.2 mg m⁻³.
 
-    Documentation:
-    https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/
-
     Parameters
     ----------
     Rrs : numpy.ndarray
@@ -201,8 +201,12 @@ def chl_ocx(Rrs):
     -------
     numpy.ndarray
         Chlorophyll-a estimate (mg m⁻³).
-    """
 
+    References
+    ----------
+    https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/
+    O'Reilly et al., 1998. doi:10.1029/98JC02160
+    """
     Rrsblue = Rrs[0, :, :]
     Rrsgreen = Rrs[1, :, :]
 
@@ -241,9 +245,6 @@ def chl_hu_ocx(Rrs):
     - OCx dominates above 0.20 mg m⁻³
     - Linear blend in the transition region
 
-    Implementation follows the NASA HyperInSPACE reference:
-    https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0
-
     Parameters
     ----------
     Rrs : numpy.ndarray
@@ -253,8 +254,11 @@ def chl_hu_ocx(Rrs):
     -------
     numpy.ndarray
         Chlorophyll-a estimate (mg m⁻³).
-    """
 
+    References
+    ----------
+    https://www.earthdata.nasa.gov/apt/documents/chlor-a/v1.0
+    """
     # Thresholds from NASA specs (mg m^-3)
     lo, hi = 0.15, 0.20
 
@@ -289,9 +293,6 @@ def chl_gitelson(Rrs):
     Designed primarily for optically complex (Case-2) waters and uses the red
     and red-edge bands.
 
-    Reference:
-    Gitelson et al., 2007. doi:10.1016/j.rse.2007.01.016
-
     Parameters
     ----------
     Rrs : numpy.ndarray
@@ -302,8 +303,11 @@ def chl_gitelson(Rrs):
     -------
     numpy.ndarray
         Chlorophyll-a concentration (mg m⁻³).
-    """
 
+    References
+    ----------
+    Gitelson et al., 2007. doi:10.1016/j.rse.2007.01.016
+    """
     Rrsred = Rrs[2, :, :]
     Rrsrededge = Rrs[3, :, :]
 
@@ -320,9 +324,6 @@ def tsm_nechad(Rrs):
 
     Uses a semi-empirical relationship based on red-band reflectance.
 
-    Reference:
-    Nechad et al., 2010. doi:10.1016/j.rse.2009.11.022
-
     Parameters
     ----------
     Rrs : numpy.ndarray
@@ -333,8 +334,11 @@ def tsm_nechad(Rrs):
     -------
     numpy.ndarray
         TSM concentration (mg m⁻³).
-    """
 
+    References
+    ----------
+    Nechad et al., 2010. doi:10.1016/j.rse.2009.11.022
+    """
     Rrsred = Rrs[2, :, :]
     A = 374.11
     B = 1.61
