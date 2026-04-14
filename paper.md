@@ -115,5 +115,10 @@ Contributions are welcome, and they are greatly appreciated! Every little bit he
 Report bugs, request features or submit feedback as a GitHub Issue.
 Make fixes, add content or improvements using GitHub Pull Requests.
 
+# AI usage disclosure
+
+The creation of this software was mostly done by humans.
+AI assisted in identifying and diagnosing bugs, as well as generating docstrings, both of which were thoroughly reviewed by humans.
+
 # References
 

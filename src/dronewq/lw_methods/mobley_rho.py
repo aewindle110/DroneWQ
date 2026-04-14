@@ -53,6 +53,7 @@ class Mobley_rho(Base_Compute_Method):
     ----------
     Mobley, C. D. (1999). Estimation of the remote-sensing reflectance from
     above-surface measurements. Applied Optics, 38(7), 7442-7455.
+    https://doi.org/10.1364/AO.38.007442
     """
 
     def __init__(self, save_images: bool = False, rho: float = 0.028):
