@@ -55,11 +55,23 @@ bibliography: paper.bib
 
 # Summary
 
-Small aerial drones, or unoccupied aerial systems (UAS), conveniently achieve scales of observation between satellite resolutions and in situ sampling, effectively diminishing the “blind spot” between these established measurement techniques [@gray_larsen_johnston_2022]. UAS equipped with off-the-shelf multispectral sensors originally designed for terrestrial applications are being increasingly used to derive water quality properties. Multispectral UAS imagery requires post processing to radiometrically calibrate raw pixel values to useful radiometric units such as reflectance. In aquatic applications, there are additional steps to remove surface reflected light and sun glint, and different approaches to estimate water quality parameters. Georeferencing and mapping UAS imagery over water also comes with challenges since typical structure from motion photogrammtey techniques fail due to lack of feature matching. `DroneWQ` can **1)** convert raw multispectral imagery to total radiance (L<sub>t</sub>) with units of W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>, **2)** remove surface reflected light (L<sub>sr</sub>) to calculate water leaving radiance (L<sub>w</sub>), **3)** measure downwelling irradiance (E<sub>d</sub>) from either the calibrated reflectance panel, downwelling light sensor (DLS), or a combination of the two, **4)** calculate remote sensing reflectance (R<sub>rs</sub>) by dividing E<sub>d</sub> by L<sub>w</sub>, and **5)** mask pixels containing specular sun glint or instances of vegetation, shadowing, etc., **6)** use R<sub>rs</sub> as input into various bio-optical algorithms to derive chlorophyll a and total suspended sediment concentrations, and **7)** georeference using image metadata and sensor specifications to orient and map to a known coordinate system. 
+Small aerial drones, or unoccupied aerial systems (UAS), conveniently achieve scales of observation between satellite resolutions and in situ sampling, effectively diminishing the “blind spot” between these established measurement techniques [@gray_larsen_johnston_2022]. UAS equipped with off-the-shelf multispectral sensors originally designed for terrestrial applications are being increasingly used to derive water quality properties. Multispectral UAS imagery requires post processing to radiometrically calibrate raw pixel values to useful radiometric units such as reflectance. In aquatic applications, there are additional steps to remove surface reflected light and sun glint, and different approaches to estimate water quality parameters. Georeferencing and mapping UAS imagery over water also comes with challenges since typical structure from motion photogrammetry techniques fail due to lack of feature matching. `DroneWQ` can **1)** convert raw multispectral imagery to total radiance (L<sub>t</sub>) with units of W m<sup>-2</sup> nm<sup>-1</sup> sr<sup>-1</sup>, **2)** remove surface reflected light (L<sub>sr</sub>) to calculate water leaving radiance (L<sub>w</sub>), **3)** measure downwelling irradiance (E<sub>d</sub>) from either the calibrated reflectance panel, downwelling light sensor (DLS), or a combination of the two, **4)** calculate remote sensing reflectance (R<sub>rs</sub>) by dividing E<sub>d</sub> by L<sub>w</sub>, and **5)** mask pixels containing specular sun glint or instances of vegetation, shadowing, etc., **6)** use R<sub>rs</sub> as input into various bio-optical algorithms to derive chlorophyll a and total suspended sediment concentrations, and **7)** georeference using image metadata and sensor specifications to orient and map to a known coordinate system. 
 
 # Statement of need
 
 `DroneWQ` is a Python package for multispectral UAS imagery processing to obtain remote sensing reflectance (R<sub>rs</sub>), the fundamental input into ocean color algorithms which can be used to estimate and map water quality parameters. The processing steps, calibrations, and corrections necessary to obtain research quality R<sub>rs</sub> data from UAS can be prohibitively difficult for those who do not specialize in optics and remote sensing, yet this data can reveal entirely new insight into aquatic ecosystems. `DroneWQ` was designed to be a simple pipeline for those who wish to utilize UAS multispectral remote sensing to analyze ocean color and water quality. The simple functionality of `DroneWQ` will enable effective water quality monitoring at fine spatial resolutions, leading to exciting scientific exploration of UAS remote sensing by students, scientists, and water quality managers. 
+
+# State of the field
+
+Private software and applications exist for UAS post-processing, georeferencing, and mapping (e.g., Pix4D, Agisoft Metashape); however, these tools are primarily designed for terrestrial imagery and often perform poorly over water due to lack of stable features for image matching. The MicaSense company (now EagleNXT) developed a codebase for Python-based image processing of MicaSense RedEdge and Altum imagery (https://github.com/micasense/imageprocessing) which is suitable for basic terrestrial remote sensing.
+
+`DroneWQ` builds upon these workflows to enable the calculation of aquatic remote sensing reflectance and derived water quality parameters. To our knowledge, `DroneWQ` is the first open-source software package that allows users to process raw multispectral UAS imagery into aquatic remote sensing reflectances and water quality metrics relevant to environmental research and management.
+
+
+# Software design
+`DroneWQ` is a modular, object oriented Python package that implements a processing pipeline for transforming raw multispectral UAS imagery into georeferenced remote sensing reflectance and derived water quality products. The software follows a workflow-oriented design in which individual processing steps (data ingestion, radiometric calibration, reflectance retrieval, quality control, bio-optical inversion, georeferencing, and mosaicking) are implemented in reusable classes. This architecture promotes transparency, flexibility, and ease of extension, allowing users to modify or replace individual components without altering the overall pipeline.
+A key design feature of `DroneWQ` is the ability to project and georeference imagery, which leverages onboard GPS and orientation metadata to map imagery without relying on conventional structure-from-motion approaches that often fail over water due to limited spatial feature contrast. The package integrates radiometric corrections, glint correction methods, and established ocean color algorithms to produce remote sensing reflectance and water quality products within a unified framework. Configuration is handled through a centralized setup function that manages file paths and processing parameters, supporting reproducible workflows. The software has fairly minimal dependencies and can be integrated into a wide range of development workflows. Here it is demonstrated within a Jupyter notebook, enabling interactive analysis while maintaining reproducibility for batch processing.
+
 
 # Background/Theory
 
@@ -95,30 +107,20 @@ A secondary challenge with aquatic UAS remote sensing is georeferencing and mosa
 
 ![Caption for example figure.\label{fig:chl_mosaic}](figs/chl_mosaic.png)
 <br/>
-Figure 2. Final orthmosaic of UAS images collected over Western Lake Erie processed to chlorophyll a concentration.
+Figure 2. Final orthomosaic of UAS images collected over Western Lake Erie processed to chlorophyll a concentration.
 
-# Publications utilizing `DroneWQ`
+# Research impact statement
 
-Román, A., Heredia, S., Windle, A. E., Tovar-Sánchez, A., & Navarro, G. (2024). Enhancing Georeferencing and Mosaicking Techniques over Water Surfaces with High-Resolution Unmanned Aerial Vehicle (UAV) Imagery. Remote Sensing, 16(2), 290.
+`DroneWQ` has demonstrated growing research impact and community engagement since its initial development. The project has expanded beyond its original authors (@aewindle110; @patrickcgray) to include contributions from four additional developers, reflecting increasing adoption and collaborative development. Community involvement has supported the evolution of the software through feature requests, bug reports, and user feedback submitted via GitHub Issues and direct communication, indicating active use by a broader research community.
+`DroneWQ` has been used in multiple peer-reviewed studies focused on UAS aquatic remote sensing and water quality retrievals [@roman_heredia_windle_tovar; @gray_windle_dale_savelyev_johnson_silsbe_larsen_johnston_2022; @windle_silsbe_2021]. These applications demonstrate the utility of the software for advancing research using multispectral UAS imagery in aquatic environments, particularly where traditional processing approaches are limited. As interest in UAS-based water quality monitoring continues to grow, `DroneWQ` provides an open, extensible framework that supports both scientific investigation and applied environmental monitoring.
 
-Gray, P. C., Windle, A. E., Dale, J., Savelyev, I. B., Johnson, Z. I., Silsbe, G. M., ... & Johnston, D. W. (2022). Robust ocean color from drones: Viewing geometry, sky reflection removal, uncertainty analysis, and a survey of the Gulf Stream front. Limnology and Oceanography: Methods, 20(10), 656-673.
+# AI usage disclosure
 
-Windle, A. E., & Silsbe, G. M. (2021). Evaluation of unoccupied aircraft system (UAS) remote sensing reflectance retrievals for water quality monitoring in coastal waters. Frontiers in Environmental Science, 9, 674247.
+The creation of this software was mostly done by humans. AI assisted in identifying and diagnosing bugs, as well as generating docstrings, both of which were thoroughly reviewed by humans.
 
 # Acknowledgements
 
 We acknowledge and appreciate helpful support from the Micasense team. We thank Julian Dale for assisting with UAS flights. 
-
-# Contributions 
-Contributions are welcome, and they are greatly appreciated! Every little bit helps, and credit will always be given.
-
-Report bugs, request features or submit feedback as a GitHub Issue.
-Make fixes, add content or improvements using GitHub Pull Requests.
-
-# AI usage disclosure
-
-The creation of this software was mostly done by humans.
-AI assisted in identifying and diagnosing bugs, as well as generating docstrings, both of which were thoroughly reviewed by humans.
 
 # References
 
