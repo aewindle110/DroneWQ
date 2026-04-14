@@ -3,7 +3,7 @@
 # DroneWQ: A Python library for measuring water quality with a multispectral drone sensor
 
 
-DroneWQ is a Python package that can be used to analyze multispectral data collected from a drone to derive ocean color radiometry and estimate water quality concentrations. These scripts are specific for the MicaSense RedEdge and Altum cameras. Please note that since this code was originally developed, changes to proprietary sensor branding have occurred. In 2021, MicaSense was acquired by AgEagle Aerial Systems, which subsequently rebranded as EagleNXT in 2025. The [MicaSense sensor product line](https://eaglenxt.com/solutions/micasense-series-multispectral-cameras/) remains available and is expected to remain compatible with DroneWQ.
+DroneWQ is a Python package that can be used to analyze multispectral data collected from a drone to derive ocean color radiometry and estimate water quality concentrations. These scripts are specific for the MicaSense RedEdge and Altum cameras. Please note that since this code was originally developed, changes to proprietary sensor branding have occurred. In 2021, MicaSense was acquired by AgEagle Aerial Systems, which subsequently rebranded as EagleNXT in 2025. The [MicaSense sensor product line](https://eaglenxt.com/products/sensors/micasense-series/) remains available and is expected to remain compatible with DroneWQ.
 
 
 ![Caption for example figure.\label{fig:DroneWQ_workflow}](figs/DroneWQ.png)
