@@ -77,9 +77,11 @@ A key design feature of `DroneWQ` is the ability to project and georeference ima
 
 UAS can measure remote sensing reflectance ($R_{rs}$) defined as:
 
-\[
-R_{rs}(\theta, \phi, \lambda) = \frac{L_W(\theta, \phi, \lambda)}{E_d(\theta, \phi, \lambda)}
-\]
+$$
+R_{rs}(\theta, \phi, \lambda) =
+\frac{L_W(\theta, \phi, \lambda)}
+{E_d(\theta, \phi, \lambda)}
+$$
 
 where $L_W$ ($W\,m^{-2}\,nm^{-1}\,sr^{-1}$) is water-leaving radiance, $E_d$ ($W\,m^{-2}\,nm^{-1}$) is downwelling irradiance, θ represents the sensor viewing angle between the sun and the vertical (zenith), φ represents the angular direction relative to the sun (azimuth) and λ represents wavelength. 
 
