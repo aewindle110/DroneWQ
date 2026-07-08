@@ -87,15 +87,15 @@ where $L_W$ ($W\,m^{-2}\,nm^{-1}\,sr^{-1}$) is water-leaving radiance, $E_d$ ($W
 
 UAS do not measure $R_{rs}$ directly as the at-sensor total radiance ($L_T$, $W\,m^{-2}\,nm^{-1}\,sr^{-1}$) constitutes the sum of $L_W$ and incident radiance reflected off the sea surface into the detector's field of view, referred to as surface reflected radiance ($L_{SR}$). $L_W$ is the radiance that emanates from the water and contains a spectral shape and magnitude governed by optically active water constituents, while $L_{SR}$ is independent of water constituents and instead governed by the water surface reflecting the downwelling light; a familiar example is sun glint. Here we define UAS total reflectance ($R_{UAS}$) as:
 
-\[
+$$
 R_{UAS}(\theta, \phi, \lambda) = \frac{L_T(\theta, \phi, \lambda)}{E_d(\lambda)}
-\]
+$$
 
 where:
 
-\[
+$$
 L_T(\theta, \phi, \lambda) = L_W(\theta, \phi, \lambda) + L_{SR}(\theta, \phi, \lambda)
-\]
+$$
 
 Due to the differing orientation of wave facets reflecting radiance from different parts of the sky, $L_{SR}$ can vary widely within a single UAS image. 'DroneWQ` provides multiple options from the literature for removing $L_{SR}$.
 
