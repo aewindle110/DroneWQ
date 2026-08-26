@@ -144,7 +144,7 @@ The main processing function converts raw imagery to calibrated remote sensing r
 ```python
 from dronewq import Hedley, DlsEd, ThresholdMasking
 # Process raw images to Rrs
-dronewq.RrSPipeline(
+dronewq.RrsPipeline(
     output_folder=output_folder,
     lw_method=Hedley(save_images=True),
     ed_method=DlsEd(output_folder),
