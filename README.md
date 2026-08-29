@@ -126,16 +126,21 @@ A sample drone dataset consisting of images collected over western Lake Erie is 
 
 ### 2. Configure Settings
 
-Before processing, configure the main directory path:
+Before processing, configure the main directory and output directory paths:
 
 ```python
 import dronewq
 
 # Configure the main directory containing your organized images
 dronewq.configure(main_dir="/path/to/your/main_directory")
+
+# Configure the output directory for processed data products
+dronewq.configure(output_dir="/path/to/your/output_directory")
+
+settings = dronewq.settings
 ```
 
-The `configure()` function automatically sets up all subdirectory paths based on the main directory.
+The `configure()` function sets up all subdirectory paths based on the provided directories.
 
 ### 3. Process Raw Imagery to Remote Sensing Reflectance
 
@@ -144,13 +149,13 @@ The main processing function converts raw imagery to calibrated remote sensing r
 ```python
 from dronewq import Hedley, DlsEd, ThresholdMasking
 # Process raw images to Rrs
-dronewq.RrsPipeline(
-    output_folder=output_folder,
+pipeline = dronewq.RrsPipeline(
     lw_method=Hedley(save_images=True),
-    ed_method=DlsEd(output_folder),
+    ed_method=DlsEd(settings.output_dir),
     masking_method=ThresholdMasking(nir_threshold=0.02),
     workers=4,
-    )
+)
+pipeline.run()
 ```
 
 **Processing workflow:**
@@ -166,7 +171,8 @@ Apply bio-optical algorithms to estimate water quality parameters:
 ```python
 # Calculate chlorophyll-a using Gitelson algorithm
 dronewq.save_wq_imgs(
-    wq_alg=["chl_gitelson"],  # Options: chl_gitelson, chl_hu, chl_ocx, chl_hu_ocx, nechad_tsm
+    rrs_dir=settings.masked_rrs_dir,
+    wq_algs=["chl_gitelson"],  # Options: chl_gitelson, chl_hu, chl_ocx, chl_hu_ocx, tsm_nechad
     num_workers=4
 )
 ```
@@ -191,7 +197,7 @@ flight_lines = dronewq.compute_flight_lines(
 # Georeference images
 dronewq.georeference(
     metadata=metadata,
-    input_dir=dronewq.settings.rrs_dir,
+    input_dir=settings.rrs_dir,
     output_dir="/path/to/georeferenced/",
     lines=flight_lines
 )
@@ -199,7 +205,8 @@ dronewq.georeference(
 # Create mosaic
 dronewq.mosaic(
     input_dir="/path/to/georeferenced/",
-    output_path="/path/to/mosaic.tif"
+    output_dir="/path/to/mosaic_output/",
+    output_name="mosaic"
 )
 ```
 
