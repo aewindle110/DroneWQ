@@ -14,7 +14,7 @@ First, create your conda environment:
 conda create -n {your project name} python=3.13 exiftool gdal zbar opencv -c conda-forge
 ```
 
-Then, activate your environemt:
+Then, activate your environment:
 
 ```bash
 conda activate {your project name}

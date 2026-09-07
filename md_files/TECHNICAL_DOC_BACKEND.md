@@ -103,7 +103,7 @@ This is the exact method I used to build the Dronewq.dmg build.
 
 You have to create the most minimal conda env possible so that the app size
 doesn't blow up. I would usually create a conda env dedicated to building the app
-and then not install anything except the `environement.yml` and the `dronewq` package.
+and then not install anything except the `environment.yml` and the `dronewq` package.
 
 ### 2. Copy that env to the app directory
 

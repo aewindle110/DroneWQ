@@ -284,7 +284,7 @@ hatch run test:run
 
 ## PyPi Release Process
 ### Github Trusted Publishing
-The PyPi package is already linked to the Github respository, so updating the package should be fairly straightforwards. 
+The PyPi package is already linked to the Github repository, so updating the package should be fairly straightforwards. 
 
 **Step 1**
 Update the version in all files, like pyproject.toml, setup.py, or __init__.py
