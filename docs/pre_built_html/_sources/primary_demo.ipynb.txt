@@ -122,7 +122,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "MicaSense raw images contain metatdata including sensor information, GPS coordianates, and more. We can use the `write_metadata_csv()` function to extract image metadata and save it as .csv. \n",
+    "MicaSense raw images contain metadata including sensor information, GPS coordianates, and more. We can use the `write_metadata_csv()` function to extract image metadata and save it as .csv. \n",
     "\n",
     "Let's open the first five lines of the .csv to take a look."
    ]
@@ -1939,7 +1939,7 @@
    "source": [
     "There are two options for georeferencing: you can either set fixed parameters or allow the function to use values saved in the image metadata.\n",
     "\n",
-    "In this example, the image metadata lists the altitude of ~260-265 m, but the flight was planned for 87 m. We will therfore use a set altitude of 87 m. \n",
+    "In this example, the image metadata lists the altitude of ~260-265 m, but the flight was planned for 87 m. We will therefore use a set altitude of 87 m. \n",
     "\n",
     "For the sensor yaw angle: if it remains consistent throughout the flight, a single fixed value can be used. If the yaw changes between transects, as in this example, you should provide a separate yaw value for each transect. The `georeference()` function can accept a `lines` parameter, which can be created manually or generated automatically using the `compute_flight_lines()` function. This produces a list of capture indices per transect with the median yaw angle, ignoring images collected during turns. More details are available in the Processing and Theory section of the [DroneWQ Read the Docs](https://dronewq.readthedocs.io/en/latest/index.html).\n",
     "\n",
