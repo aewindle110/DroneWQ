@@ -101,7 +101,7 @@ Due to the differing orientation of wave facets reflecting radiance from differe
 
 ![Caption for example figure.\label{fig:removal_Lsr_fig}](figs/removal_Lsr_fig.jpg)
 <br/>
-Figure 1. Example of an individual UAS image (green band) at different processing steps and methods: (A) $R_{UAS}$, (B) $R_{UAS}$ with initial sun glint masking and (C–F) remote sensing reflectance ($R_{rs}$) using various methods to remove surface reflected light: (C) ⍴ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR > 0, (F) Deglingting methods following @hedley_harborne_mumby_2005. Figure taken from @windle_silsbe_2021.
+Figure 1. Example of an individual UAS image (green band) at different processing steps and methods: (A) $R_{UAS}$, (B) $R_{UAS}$ with initial sun glint masking and (C–F) remote sensing reflectance ($R_{rs}$) using various methods to remove surface reflected light: (C) $\rho$ look-up table (LUT) from HydroLight simulations, (D) Dark pixel assumption with NIR = 0, (E) Dark pixel assumption with NIR > 0, (F) Deglinting methods following @hedley_harborne_mumby_2005. Figure taken from @windle_silsbe_2021.
 
 A secondary challenge in aquatic UAS remote sensing is the georeferencing and mosaicking of imagery. Conventional photogrammetry techniques, such as Structure-from-Motion (SfM), rely on identifying common key points between overlapping images. Over large bodies of water, however, the relatively homogeneous surface and dynamic wave patterns provide few stable features for image matching, often resulting in poor image alignment or failed reconstructions. Rather than relying on feature-based image matching, `DroneWQ` uses the sensor pose information recorded during image acquisition (i.e., the position and orientation of the sensor) to project each image into geographic space and generate georeferenced mosaics. The resulting mosaics provide a spatially consistent foundation for retrieving aquatic remote-sensing reflectance and subsequent water quality products. The accuracy of the resulting georeferenced and mosaicked imagery depends on factors including GPS quality, flight altitude, image overlap, and environmental conditions. <br>
 
@@ -120,7 +120,7 @@ The creation of this software was mostly done by humans. AI assisted in identify
 
 # Acknowledgements
 
-We acknowledge and appreciate helpful support from the Micasense team. We thank Julian Dale for assisting with UAS flights. 
+We acknowledge and appreciate helpful support from the MicaSense team. We thank Julian Dale for assisting with UAS flights. 
 
 # References
 
