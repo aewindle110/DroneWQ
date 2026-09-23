@@ -1,3 +1,4 @@
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.10900/status.svg)](https://doi.org/10.21105/joss.10900)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14018788.svg)](https://doi.org/10.5281/zenodo.14018788)
 
 # DroneWQ: A Python library for measuring water quality with a multispectral drone sensor
